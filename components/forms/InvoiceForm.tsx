@@ -73,6 +73,7 @@ export default function InvoiceForm() {
           <input
             id="totalAmount"
             className="input"
+            type="number"
             value={form.totalAmount}
             onChange={(event) => updateField("totalAmount", event.target.value)}
             required

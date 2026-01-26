@@ -29,5 +29,12 @@ export async function POST(
   }
 
   await sendSms(parsed.data.to, parsed.data.message);
+  const admin = createAdminClient();
+  await admin.from("sms_messages").insert({
+    phone_number: parsed.data.to,
+    content: parsed.data.message,
+    direction: "outbound",
+    created_at: new Date().toISOString(),
+  });
   return NextResponse.json({ ok: true });
 }

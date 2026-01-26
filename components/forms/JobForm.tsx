@@ -146,6 +146,7 @@ export default function JobForm() {
         <input
           id="estimatedRevenue"
           className="input"
+          type="number"
           value={form.estimatedRevenue}
           onChange={(event) => updateField("estimatedRevenue", event.target.value)}
         />
