@@ -41,7 +41,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  const path = (user as Record<string, string | null>)[column];
+  const path = user[column as keyof typeof user] as string | null;
   if (!path) {
     return NextResponse.json({ error: "Document missing" }, { status: 404 });
   }
