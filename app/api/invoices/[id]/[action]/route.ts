@@ -75,7 +75,8 @@ export async function POST(
       dueDate: data.due_date,
     });
 
-    return new NextResponse(pdfBytes, {
+    const body = Buffer.from(pdfBytes);
+    return new NextResponse(body, {
       headers: { "Content-Type": "application/pdf" },
     });
   }
@@ -112,7 +113,8 @@ export async function GET(
     dueDate: data.due_date,
   });
 
-  return new NextResponse(pdfBytes, {
+  const body = Buffer.from(pdfBytes);
+  return new NextResponse(body, {
     headers: { "Content-Type": "application/pdf" },
   });
 }

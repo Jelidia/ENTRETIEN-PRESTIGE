@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
-import { gpsCheckinSchema, gpsPingSchema } from "@/lib/validators";
+import { geofenceCreateSchema, gpsCheckinSchema, gpsPingSchema } from "@/lib/validators";
 
 export async function POST(
   request: Request,
@@ -71,6 +71,22 @@ export async function POST(
       return NextResponse.json({ error: "Unable to load history" }, { status: 400 });
     }
     return NextResponse.json({ data });
+  }
+
+  if (action === "geofence") {
+    const parsed = geofenceCreateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid geofence" }, { status: 400 });
+    }
+    await client.from("geofences").insert({
+      company_id: profile.company_id,
+      job_id: parsed.data.jobId,
+      customer_id: parsed.data.customerId,
+      latitude: parsed.data.latitude,
+      longitude: parsed.data.longitude,
+      radius_meters: parsed.data.radiusMeters ?? 50,
+    });
+    return NextResponse.json({ ok: true });
   }
 
   return NextResponse.json({ error: "Unsupported action" }, { status: 400 });

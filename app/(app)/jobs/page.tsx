@@ -17,8 +17,12 @@ export default function JobsPage() {
   const [jobs, setJobs] = useState<JobRow[]>([]);
   const [assignForm, setAssignForm] = useState({ jobId: "", technicianId: "" });
   const [statusForm, setStatusForm] = useState({ jobId: "", status: "confirmed" });
+  const [actionForm, setActionForm] = useState({ jobId: "", action: "complete" });
+  const [upsellForm, setUpsellForm] = useState({ jobId: "", upsells: "[]", actualRevenue: "" });
   const [assignStatus, setAssignStatus] = useState("");
   const [updateStatus, setUpdateStatus] = useState("");
+  const [actionStatus, setActionStatus] = useState("");
+  const [upsellStatus, setUpsellStatus] = useState("");
 
   useEffect(() => {
     void loadJobs();
@@ -63,6 +67,52 @@ export default function JobsPage() {
     }
     setUpdateStatus("Status updated.");
     setStatusForm({ jobId: "", status: "confirmed" });
+    void loadJobs();
+  }
+
+  async function submitAction(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setActionStatus("");
+    const response = await fetch(`/api/jobs/${actionForm.jobId}/${actionForm.action}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setActionStatus(json.error ?? "Unable to update job");
+      return;
+    }
+    setActionStatus(`Job ${actionForm.action} updated.`);
+    setActionForm({ jobId: "", action: "complete" });
+    void loadJobs();
+  }
+
+  async function submitUpsell(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setUpsellStatus("");
+    let upsells: any[] = [];
+    try {
+      upsells = JSON.parse(upsellForm.upsells);
+    } catch (error) {
+      setUpsellStatus("Upsells JSON is invalid.");
+      return;
+    }
+    const response = await fetch(`/api/jobs/${upsellForm.jobId}/upsell`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        upsells,
+        actualRevenue: Number(upsellForm.actualRevenue || 0),
+      }),
+    });
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setUpsellStatus(json.error ?? "Unable to save upsell");
+      return;
+    }
+    setUpsellStatus("Upsell recorded.");
+    setUpsellForm({ jobId: "", upsells: "[]", actualRevenue: "" });
     void loadJobs();
   }
 
@@ -166,6 +216,71 @@ export default function JobsPage() {
               </div>
               <button className="button-primary" type="submit">Update status</button>
               {updateStatus ? <div className="hint">{updateStatus}</div> : null}
+            </form>
+          </div>
+          <div className="card">
+            <h3 className="card-title">Job actions</h3>
+            <form className="form-grid" onSubmit={submitAction}>
+              <div className="form-row">
+                <label className="label" htmlFor="actionJob">Job ID</label>
+                <input
+                  id="actionJob"
+                  className="input"
+                  value={actionForm.jobId}
+                  onChange={(event) => setActionForm({ ...actionForm, jobId: event.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-row">
+                <label className="label" htmlFor="actionType">Action</label>
+                <select
+                  id="actionType"
+                  className="select"
+                  value={actionForm.action}
+                  onChange={(event) => setActionForm({ ...actionForm, action: event.target.value })}
+                >
+                  <option value="complete">Complete</option>
+                  <option value="no-show">No show</option>
+                </select>
+              </div>
+              <button className="button-secondary" type="submit">Apply action</button>
+              {actionStatus ? <div className="hint">{actionStatus}</div> : null}
+            </form>
+          </div>
+          <div className="card">
+            <h3 className="card-title">Upsell</h3>
+            <form className="form-grid" onSubmit={submitUpsell}>
+              <div className="form-row">
+                <label className="label" htmlFor="upsellJob">Job ID</label>
+                <input
+                  id="upsellJob"
+                  className="input"
+                  value={upsellForm.jobId}
+                  onChange={(event) => setUpsellForm({ ...upsellForm, jobId: event.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-row">
+                <label className="label" htmlFor="upsellItems">Upsells JSON</label>
+                <textarea
+                  id="upsellItems"
+                  className="textarea"
+                  value={upsellForm.upsells}
+                  onChange={(event) => setUpsellForm({ ...upsellForm, upsells: event.target.value })}
+                />
+              </div>
+              <div className="form-row">
+                <label className="label" htmlFor="upsellRevenue">Actual revenue</label>
+                <input
+                  id="upsellRevenue"
+                  className="input"
+                  type="number"
+                  value={upsellForm.actualRevenue}
+                  onChange={(event) => setUpsellForm({ ...upsellForm, actualRevenue: event.target.value })}
+                />
+              </div>
+              <button className="button-ghost" type="submit">Record upsell</button>
+              {upsellStatus ? <div className="hint">{upsellStatus}</div> : null}
             </form>
           </div>
         </div>

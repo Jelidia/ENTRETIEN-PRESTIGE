@@ -500,6 +500,22 @@ alter table jobs enable row level security;
 alter table customers enable row level security;
 alter table invoices enable row level security;
 alter table notifications enable row level security;
+alter table leads enable row level security;
+alter table sales_territories enable row level security;
+alter table leaderboard enable row level security;
+alter table shift_checklists enable row level security;
+alter table incidents enable row level security;
+alter table job_quality_issues enable row level security;
+alter table employee_commissions enable row level security;
+alter table payroll_statements enable row level security;
+alter table sms_messages enable row level security;
+alter table gps_locations enable row level security;
+alter table geofences enable row level security;
+alter table auth_challenges enable row level security;
+alter table customer_blacklist enable row level security;
+alter table customer_communication enable row level security;
+alter table job_assignments enable row level security;
+alter table job_history enable row level security;
 
 create policy users_self_or_admin on users
   for select
@@ -551,3 +567,121 @@ create policy invoices_company_read on invoices
 create policy notifications_owner_read on notifications
   for select
   using (user_id = auth.uid());
+
+create policy leads_company_read on leads
+  for select
+  using (company_id = (select company_id from users where user_id = auth.uid()));
+
+create policy leads_company_write on leads
+  for insert
+  with check (company_id = (select company_id from users where user_id = auth.uid()));
+
+create policy territories_company_read on sales_territories
+  for select
+  using (company_id = (select company_id from users where user_id = auth.uid()));
+
+create policy territories_company_write on sales_territories
+  for insert
+  with check (company_id = (select company_id from users where user_id = auth.uid()));
+
+create policy leaderboard_company_read on leaderboard
+  for select
+  using (company_id = (select company_id from users where user_id = auth.uid()));
+
+create policy checklist_company_read on shift_checklists
+  for select
+  using (company_id = (select company_id from users where user_id = auth.uid()));
+
+create policy checklist_company_write on shift_checklists
+  for insert
+  with check (company_id = (select company_id from users where user_id = auth.uid()));
+
+create policy incidents_company_read on incidents
+  for select
+  using (company_id = (select company_id from users where user_id = auth.uid()));
+
+create policy incidents_company_write on incidents
+  for insert
+  with check (company_id = (select company_id from users where user_id = auth.uid()));
+
+create policy quality_company_read on job_quality_issues
+  for select
+  using (company_id = (select company_id from users where user_id = auth.uid()));
+
+create policy quality_company_write on job_quality_issues
+  for insert
+  with check (company_id = (select company_id from users where user_id = auth.uid()));
+
+create policy commissions_company_read on employee_commissions
+  for select
+  using (company_id = (select company_id from users where user_id = auth.uid()));
+
+create policy commissions_company_write on employee_commissions
+  for insert
+  with check (company_id = (select company_id from users where user_id = auth.uid()));
+
+create policy payroll_company_read on payroll_statements
+  for select
+  using (company_id = (select company_id from users where user_id = auth.uid()));
+
+create policy payroll_company_write on payroll_statements
+  for insert
+  with check (company_id = (select company_id from users where user_id = auth.uid()));
+
+create policy sms_company_read on sms_messages
+  for select
+  using (company_id = (select company_id from users where user_id = auth.uid()));
+
+create policy gps_company_read on gps_locations
+  for select
+  using (company_id = (select company_id from users where user_id = auth.uid()));
+
+create policy gps_company_write on gps_locations
+  for insert
+  with check (company_id = (select company_id from users where user_id = auth.uid()));
+
+create policy geofence_company_read on geofences
+  for select
+  using (company_id = (select company_id from users where user_id = auth.uid()));
+
+create policy challenges_owner_read on auth_challenges
+  for select
+  using (user_id = auth.uid());
+
+create policy blacklist_company_read on customer_blacklist
+  for select
+  using (company_id = (select company_id from users where user_id = auth.uid()));
+
+create policy blacklist_company_write on customer_blacklist
+  for insert
+  with check (company_id = (select company_id from users where user_id = auth.uid()));
+
+create policy comm_company_read on customer_communication
+  for select
+  using (
+    exists (
+      select 1 from customers
+      where customers.customer_id = customer_communication.customer_id
+        and customers.company_id = (select company_id from users where user_id = auth.uid())
+    )
+  );
+
+create policy assignments_company_read on job_assignments
+  for select
+  using (
+    exists (
+      select 1 from jobs
+      where jobs.job_id = job_assignments.job_id
+        and jobs.company_id = (select company_id from users where user_id = auth.uid())
+    )
+  );
+
+create policy history_company_read on job_history
+  for select
+  using (
+    exists (
+      select 1 from jobs
+      where jobs.job_id = job_history.job_id
+        and jobs.company_id = (select company_id from users where user_id = auth.uid())
+    )
+  );

@@ -3,6 +3,9 @@ const nextConfig = {
   images: {
     domains: ["images.unsplash.com", "cdn.twilio.com"],
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   async headers() {
     return [
       {

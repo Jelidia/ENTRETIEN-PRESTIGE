@@ -15,10 +15,21 @@ type CustomerRow = {
   account_balance?: number;
 };
 
+type SmsRow = {
+  sms_id: string;
+  phone_number: string;
+  content: string;
+  direction: string;
+  status: string;
+  created_at: string;
+};
+
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<CustomerRow[]>([]);
   const [blacklistStatus, setBlacklistStatus] = useState("");
   const [complaintStatus, setComplaintStatus] = useState("");
+  const [smsStatus, setSmsStatus] = useState("");
+  const [emailStatus, setEmailStatus] = useState("");
   const [blacklistForm, setBlacklistForm] = useState({
     customerId: "",
     reason: "non_payment",
@@ -33,6 +44,9 @@ export default function CustomersPage() {
     description: "",
     severity: "major",
   });
+  const [smsForm, setSmsForm] = useState({ to: "", message: "" });
+  const [emailForm, setEmailForm] = useState({ to: "", subject: "", html: "" });
+  const [smsMessages, setSmsMessages] = useState<SmsRow[]>([]);
 
   useEffect(() => {
     void loadCustomers();
@@ -42,6 +56,11 @@ export default function CustomersPage() {
     const response = await fetch("/api/customers");
     const json = await response.json().catch(() => ({ data: [] }));
     setCustomers(json.data ?? []);
+    const smsResponse = await fetch("/api/sms/list");
+    if (smsResponse.ok) {
+      const smsJson = await smsResponse.json().catch(() => ({ data: [] }));
+      setSmsMessages(smsJson.data ?? []);
+    }
   }
 
   async function submitBlacklist(event: React.FormEvent<HTMLFormElement>) {
@@ -98,6 +117,41 @@ export default function CustomersPage() {
       description: "",
       severity: "major",
     });
+  }
+
+  async function submitSms(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSmsStatus("");
+    const response = await fetch("/api/sms/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(smsForm),
+    });
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setSmsStatus(json.error ?? "Unable to send SMS");
+      return;
+    }
+    setSmsStatus("SMS sent.");
+    setSmsForm({ to: "", message: "" });
+    void loadCustomers();
+  }
+
+  async function submitEmail(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setEmailStatus("");
+    const response = await fetch("/api/email/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(emailForm),
+    });
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setEmailStatus(json.error ?? "Unable to send email");
+      return;
+    }
+    setEmailStatus("Email sent.");
+    setEmailForm({ to: "", subject: "", html: "" });
   }
 
   return (
@@ -264,6 +318,85 @@ export default function CustomersPage() {
               <button className="button-primary" type="submit">Submit complaint</button>
               {complaintStatus ? <div className="hint">{complaintStatus}</div> : null}
             </form>
+          </div>
+          <div className="card">
+            <h3 className="card-title">Communications</h3>
+            <form className="form-grid" onSubmit={submitSms}>
+              <div className="form-row">
+                <label className="label" htmlFor="smsTo">SMS to</label>
+                <input
+                  id="smsTo"
+                  className="input"
+                  value={smsForm.to}
+                  onChange={(event) => setSmsForm({ ...smsForm, to: event.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-row">
+                <label className="label" htmlFor="smsMessage">Message</label>
+                <textarea
+                  id="smsMessage"
+                  className="textarea"
+                  value={smsForm.message}
+                  onChange={(event) => setSmsForm({ ...smsForm, message: event.target.value })}
+                  required
+                />
+              </div>
+              <button className="button-primary" type="submit">Send SMS</button>
+              {smsStatus ? <div className="hint">{smsStatus}</div> : null}
+            </form>
+
+            <form className="form-grid" onSubmit={submitEmail} style={{ marginTop: 20 }}>
+              <div className="form-row">
+                <label className="label" htmlFor="emailTo">Email to</label>
+                <input
+                  id="emailTo"
+                  className="input"
+                  type="email"
+                  value={emailForm.to}
+                  onChange={(event) => setEmailForm({ ...emailForm, to: event.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-row">
+                <label className="label" htmlFor="emailSubject">Subject</label>
+                <input
+                  id="emailSubject"
+                  className="input"
+                  value={emailForm.subject}
+                  onChange={(event) => setEmailForm({ ...emailForm, subject: event.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-row">
+                <label className="label" htmlFor="emailBody">Body</label>
+                <textarea
+                  id="emailBody"
+                  className="textarea"
+                  value={emailForm.html}
+                  onChange={(event) => setEmailForm({ ...emailForm, html: event.target.value })}
+                  required
+                />
+              </div>
+              <button className="button-secondary" type="submit">Send email</button>
+              {emailStatus ? <div className="hint">{emailStatus}</div> : null}
+            </form>
+
+            <div className="card" style={{ marginTop: 20 }}>
+              <div className="card-title">SMS log</div>
+              <div className="list" style={{ marginTop: 12 }}>
+                {smsMessages.map((sms) => (
+                  <div className="list-item" key={sms.sms_id}>
+                    <div>
+                      <strong>{sms.phone_number}</strong>
+                      <div className="card-meta">{sms.content}</div>
+                      <div className="card-meta">{new Date(sms.created_at).toLocaleString()}</div>
+                    </div>
+                    <span className="tag">{sms.direction}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>

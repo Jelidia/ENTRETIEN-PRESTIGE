@@ -181,6 +181,14 @@ export const gpsPingSchema = z.object({
   accuracyMeters: z.number().optional(),
 });
 
+export const geofenceCreateSchema = z.object({
+  jobId: z.string().optional(),
+  customerId: z.string().optional(),
+  latitude: z.number(),
+  longitude: z.number(),
+  radiusMeters: z.number().optional(),
+});
+
 export const notificationSettingsSchema = z.object({
   jobAlerts: z.boolean(),
   invoiceReminders: z.boolean(),
