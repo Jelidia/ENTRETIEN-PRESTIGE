@@ -2,13 +2,13 @@ import { NextResponse } from "next/server";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { invoiceUpdateSchema } from "@/lib/validators";
-import { requireUser } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  const auth = await requireUser(request);
+  const auth = await requirePermission(request, "invoices");
   if ("response" in auth) {
     return auth.response;
   }
@@ -25,7 +25,7 @@ export async function PATCH(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  const auth = await requireUser(request);
+  const auth = await requirePermission(request, "invoices");
   if ("response" in auth) {
     return auth.response;
   }

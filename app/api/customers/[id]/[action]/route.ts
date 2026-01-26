@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { blacklistSchema, complaintSchema } from "@/lib/validators";
@@ -8,7 +8,7 @@ export async function POST(
   request: Request,
   { params }: { params: { id: string; action: string } }
 ) {
-  const auth = await requireUser(request);
+  const auth = await requirePermission(request, "customers");
   if ("response" in auth) {
     return auth.response;
   }
@@ -73,7 +73,7 @@ export async function GET(
   request: Request,
   { params }: { params: { id: string; action: string } }
 ) {
-  const auth = await requireUser(request);
+  const auth = await requirePermission(request, "customers");
   if ("response" in auth) {
     return auth.response;
   }

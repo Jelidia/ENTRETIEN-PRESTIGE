@@ -2,11 +2,11 @@ import { NextResponse } from "next/server";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { jobCreateSchema } from "@/lib/validators";
-import { requireUser } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 
 export async function GET(request: Request) {
-  const auth = await requireUser(request);
+  const auth = await requirePermission(request, "jobs");
   if ("response" in auth) {
     return auth.response;
   }
@@ -37,7 +37,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const auth = await requireUser(request);
+  const auth = await requirePermission(request, "jobs");
   if ("response" in auth) {
     return auth.response;
   }

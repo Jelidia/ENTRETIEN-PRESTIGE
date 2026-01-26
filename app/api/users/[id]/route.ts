@@ -8,7 +8,7 @@ export async function PATCH(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  const auth = await requireRole(request, ["admin", "manager"]);
+  const auth = await requireRole(request, ["admin", "manager"], "team");
   if ("response" in auth) {
     return auth.response;
   }

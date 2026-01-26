@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { createUserClient, createAdminClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import {
@@ -14,7 +14,7 @@ export async function POST(
   request: Request,
   { params }: { params: { id: string; action: string } }
 ) {
-  const auth = await requireUser(request);
+  const auth = await requirePermission(request, "jobs");
   if ("response" in auth) {
     return auth.response;
   }

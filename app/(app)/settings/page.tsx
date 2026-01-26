@@ -129,14 +129,13 @@ export default function SettingsPage() {
     const teamJson = await teamRes.json().catch(() => ({ data: [] }));
     const companyJson = await companyRes.json().catch(() => ({ data: null }));
 
-    const teamData = teamJson.data ?? [];
+    const teamData = (teamJson.data ?? []) as TeamUser[];
     setTeam(teamData);
-    setTeamEdits(
-      teamData.reduce<Record<string, { role: string; status: string }>>((acc, member) => {
-        acc[member.user_id] = { role: member.role ?? "technician", status: member.status ?? "active" };
-        return acc;
-      }, {})
-    );
+    const nextEdits: Record<string, { role: string; status: string }> = {};
+    teamData.forEach((member) => {
+      nextEdits[member.user_id] = { role: member.role ?? "technician", status: member.status ?? "active" };
+    });
+    setTeamEdits(nextEdits);
 
     const mergedPermissions = mergeRolePermissions(companyJson.data?.role_permissions ?? null);
     setRolePermissions(mergedPermissions);

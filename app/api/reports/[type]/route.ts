@@ -29,7 +29,7 @@ export async function GET(
 ) {
   const type = params.type;
   const roles = type === "audit-log" ? ["admin"] : ["admin", "manager", "sales_rep", "technician"];
-  const auth = await requireRole(request, roles);
+  const auth = await requireRole(request, roles, "reports");
   if ("response" in auth) {
     return auth.response;
   }
@@ -196,7 +196,7 @@ export async function POST(
   const roles = ["checklists", "incidents", "quality-issues"].includes(type)
     ? ["admin", "manager", "technician"]
     : ["admin", "manager", "sales_rep"];
-  const auth = await requireRole(request, roles);
+  const auth = await requireRole(request, roles, "reports");
   if ("response" in auth) {
     return auth.response;
   }

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { createUserClient, createAdminClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { invoicePaymentSchema, invoiceSendSchema } from "@/lib/validators";
@@ -11,7 +11,7 @@ export async function POST(
   request: Request,
   { params }: { params: { id: string; action: string } }
 ) {
-  const auth = await requireUser(request);
+  const auth = await requirePermission(request, "invoices");
   if ("response" in auth) {
     return auth.response;
   }
@@ -92,7 +92,7 @@ export async function GET(
     return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
   }
 
-  const auth = await requireUser(request);
+  const auth = await requirePermission(request, "invoices");
   if ("response" in auth) {
     return auth.response;
   }

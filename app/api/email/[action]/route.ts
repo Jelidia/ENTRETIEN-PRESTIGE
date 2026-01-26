@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
 import { emailSendSchema } from "@/lib/validators";
 import { sendEmail } from "@/lib/resend";
+import { requirePermission } from "@/lib/auth";
 
 export async function POST(
   request: Request,
   { params }: { params: { action: string } }
 ) {
+  const auth = await requirePermission(request, "customers");
+  if ("response" in auth) {
+    return auth.response;
+  }
+
   if (params.action !== "send") {
     return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
   }
@@ -24,6 +30,11 @@ export async function GET(
   _request: Request,
   { params }: { params: { action: string } }
 ) {
+  const auth = await requirePermission(_request, "customers");
+  if ("response" in auth) {
+    return auth.response;
+  }
+
   if (params.action !== "template") {
     return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
   }

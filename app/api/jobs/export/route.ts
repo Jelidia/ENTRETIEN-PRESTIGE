@@ -4,7 +4,7 @@ import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 
 export async function GET(request: Request) {
-  const auth = await requireRole(request, ["admin", "manager"]);
+  const auth = await requireRole(request, ["admin", "manager"], "reports");
   if ("response" in auth) {
     return auth.response;
   }

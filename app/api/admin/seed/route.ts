@@ -9,7 +9,7 @@ function generatePassword() {
 }
 
 export async function POST(request: Request) {
-  const auth = await requireRole(request, ["admin"]);
+  const auth = await requireRole(request, ["admin"], "settings");
   if ("response" in auth) {
     return auth.response;
   }

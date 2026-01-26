@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
 import { geocodeAddress, getDistanceMatrix } from "@/lib/maps";
+import { requirePermission } from "@/lib/auth";
 
 export async function GET(
   request: Request,
   { params }: { params: { action: string } }
 ) {
+  const auth = await requirePermission(request, "dispatch");
+  if ("response" in auth) {
+    return auth.response;
+  }
+
   const { searchParams } = new URL(request.url);
   const action = params.action;
 

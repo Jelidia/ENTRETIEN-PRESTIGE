@@ -35,7 +35,7 @@ export async function POST(
     return NextResponse.json({ ok: true });
   }
 
-  const auth = await requireRole(request, ["admin", "manager", "sales_rep"]);
+  const auth = await requireRole(request, ["admin", "manager", "sales_rep"], "invoices");
   if ("response" in auth) {
     return auth.response;
   }
@@ -87,7 +87,7 @@ export async function GET(
     return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
   }
 
-  const auth = await requireRole(request, ["admin", "manager"]);
+  const auth = await requireRole(request, ["admin", "manager"], "invoices");
   if ("response" in auth) {
     return auth.response;
   }

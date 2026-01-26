@@ -9,7 +9,7 @@ export async function POST(
   { params }: { params: { action: string } }
 ) {
   const action = params.action;
-  const auth = await requireRole(request, ["admin", "manager", "dispatcher"]);
+  const auth = await requireRole(request, ["admin", "manager", "dispatcher"], "dispatch");
   if ("response" in auth) {
     return auth.response;
   }
@@ -90,7 +90,7 @@ export async function GET(
   { params }: { params: { action: string } }
 ) {
   const action = params.action;
-  const auth = await requireRole(request, ["admin", "manager", "dispatcher"]);
+  const auth = await requireRole(request, ["admin", "manager", "dispatcher"], "dispatch");
   if ("response" in auth) {
     return auth.response;
   }

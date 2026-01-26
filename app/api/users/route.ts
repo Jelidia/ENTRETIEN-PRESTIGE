@@ -5,7 +5,7 @@ import { getAccessTokenFromRequest } from "@/lib/session";
 import { userCreateSchema } from "@/lib/validators";
 
 export async function GET(request: Request) {
-  const auth = await requireRole(request, ["admin", "manager"]);
+  const auth = await requireRole(request, ["admin", "manager"], "team");
   if ("response" in auth) {
     return auth.response;
   }
@@ -26,7 +26,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const auth = await requireRole(request, ["admin"]);
+  const auth = await requireRole(request, ["admin"], "team");
   if ("response" in auth) {
     return auth.response;
   }
