@@ -3,6 +3,7 @@ import { loginSchema } from "@/lib/validators";
 import { createAnonClient, createAdminClient } from "@/lib/supabaseServer";
 import { setSessionCookies } from "@/lib/session";
 import { createChallenge, sendTwoFactorCode } from "@/lib/security";
+import { isSmsConfigured } from "@/lib/twilio";
 import { getRequestIp, rateLimit } from "@/lib/rateLimit";
 import { hashCode } from "@/lib/crypto";
 
@@ -63,7 +64,7 @@ export async function POST(request: Request) {
 
   const { data: profile } = await admin
     .from("users")
-    .select("two_factor_enabled, two_factor_method")
+    .select("two_factor_enabled, two_factor_method, phone")
     .eq("user_id", data.user.id)
     .single();
 
@@ -77,6 +78,15 @@ export async function POST(request: Request) {
     .eq("user_id", data.user.id);
 
   if (profile?.two_factor_enabled) {
+    if (profile.two_factor_method === "sms") {
+      if (!profile.phone) {
+        return NextResponse.json({ error: "SMS 2FA requires a phone number" }, { status: 400 });
+      }
+      if (!isSmsConfigured()) {
+        return NextResponse.json({ error: "SMS 2FA is not configured" }, { status: 400 });
+      }
+    }
+    try {
     const challenge = await createChallenge(admin, {
       userId: data.user.id,
       method: profile.two_factor_method ?? "sms",
@@ -84,6 +94,9 @@ export async function POST(request: Request) {
     });
     await sendTwoFactorCode(admin, data.user.id, challenge);
     return NextResponse.json({ mfaRequired: true, challengeId: challenge.challenge_id });
+    } catch (error) {
+      return NextResponse.json({ error: "Unable to send verification code" }, { status: 500 });
+    }
   }
 
   await admin.from("user_sessions").insert({

@@ -4,6 +4,10 @@ const accountSid = getEnv("TWILIO_ACCOUNT_SID");
 const authToken = getEnv("TWILIO_AUTH_TOKEN");
 const fromNumber = getEnv("TWILIO_FROM_NUMBER");
 
+export function isSmsConfigured() {
+  return Boolean(accountSid && authToken && fromNumber);
+}
+
 export async function sendSms(to: string, body: string) {
   if (!accountSid || !authToken || !fromNumber) {
     // TODO: Paste Twilio credentials in .env.local when ready.
