@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -39,12 +40,24 @@ export default function LoginForm({ redirect }: { redirect?: string }) {
 
   return (
     <div className="auth-card">
-      <div className="brand" style={{ marginBottom: 16 }}>
-        <div className="brand-mark" aria-hidden="true" />
-        Entretien Prestige
+      <div style={{ textAlign: "center", marginBottom: 32 }}>
+        <Image
+          src="/logo.png"
+          alt="Entretien Prestige"
+          width={180}
+          height={50}
+          priority
+          style={{ objectFit: "contain", margin: "0 auto" }}
+        />
+        <h2 style={{ marginTop: 16, fontSize: "24px", fontWeight: "bold", color: "#1E40AF" }}>
+          Entretien Prestige
+        </h2>
+        <p style={{ marginTop: 4, fontSize: "14px", color: "#6B7280" }}>
+          Faites briller votre maison
+        </p>
       </div>
       <h1 className="auth-title">Sign in</h1>
-      <p className="card-meta">Secure access with MFA enforced.</p>
+      <p className="card-meta">Enter your credentials to access your account.</p>
       {error ? <div className="alert" style={{ marginTop: 16 }}>{error}</div> : null}
       <form className="form-grid" style={{ marginTop: 20 }} onSubmit={handleSubmit}>
         <div className="form-row">
