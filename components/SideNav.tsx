@@ -7,17 +7,13 @@ import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import type { PermissionKey, PermissionMap } from "@/lib/permissions";
 
+// Simplified navigation - fewer items, more intuitive
 const navItems: { href: string; label: string; tone: string; permission: PermissionKey }[] = [
-  { href: "/dashboard", label: "Dashboard", tone: "#1e40af", permission: "dashboard" },
-  { href: "/dispatch", label: "Dispatch", tone: "#1e3a8a", permission: "dispatch" },
+  { href: "/dashboard", label: "Home", tone: "#1e40af", permission: "dashboard" },
   { href: "/jobs", label: "Jobs", tone: "#2563eb", permission: "jobs" },
-  { href: "/customers", label: "Customers", tone: "#3b82f6", permission: "customers" },
-  { href: "/invoices", label: "Invoices", tone: "#b8860b", permission: "invoices" },
-  { href: "/sales", label: "Sales", tone: "#1e40af", permission: "sales" },
-  { href: "/operations", label: "Operations", tone: "#334155", permission: "operations" },
-  { href: "/reports", label: "Reports", tone: "#1e3a8a", permission: "reports" },
-  { href: "/notifications", label: "Notifications", tone: "#475569", permission: "notifications" },
-  { href: "/settings", label: "Settings", tone: "#0f172a", permission: "settings" },
+  { href: "/customers", label: "Clients", tone: "#3b82f6", permission: "customers" },
+  { href: "/team", label: "Team", tone: "#1e3a8a", permission: "team" },
+  { href: "/reports", label: "Reports", tone: "#334155", permission: "reports" },
 ];
 
 const bottomNavItems: {
