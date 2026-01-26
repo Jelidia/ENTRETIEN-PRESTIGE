@@ -39,15 +39,29 @@ export default function TechnicianPage() {
       }
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          setLocation({
+          const next = {
             latitude: pos.coords.latitude,
             longitude: pos.coords.longitude,
             accuracy: pos.coords.accuracy,
-          });
+          };
+          setLocation(next);
+          void sendGpsPing(next);
           resolve();
         },
         () => resolve()
       );
+    });
+  }
+
+  async function sendGpsPing(next: { latitude: number; longitude: number; accuracy: number }) {
+    await fetch("/api/gps/hourly-ping", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        latitude: next.latitude,
+        longitude: next.longitude,
+        accuracyMeters: next.accuracy,
+      }),
     });
   }
 
