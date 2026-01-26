@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import clsx from "clsx";
 import { useEffect, useMemo, useState } from "react";
@@ -347,8 +348,14 @@ export default function SideNav() {
   return (
     <aside className="side-nav">
       <div className="brand">
-        <div className="brand-mark" aria-hidden="true" />
-        Entretien Prestige
+        <Image
+          src="/logo.png"
+          alt="Entretien Prestige"
+          width={140}
+          height={40}
+          priority
+          style={{ objectFit: "contain", marginBottom: "8px" }}
+        />
       </div>
       <nav className="nav-group" aria-label="Primary">
         {visibleNavItems.map((item) => {
