@@ -126,7 +126,7 @@ export default function JobsPage() {
 
       <div className="grid-2">
         <div className="card">
-          <table className="table">
+          <table className="table table-desktop">
             <thead>
               <tr>
                 <th>Job</th>
@@ -150,6 +150,19 @@ export default function JobsPage() {
               ))}
             </tbody>
           </table>
+          <div className="card-list-mobile" style={{ marginTop: 12 }}>
+            {jobs.map((job) => (
+              <div className="mobile-card" key={job.job_id}>
+                <div className="mobile-card-title">Job #{job.job_id}</div>
+                <div className="mobile-card-meta">{job.service_type}</div>
+                <div className="mobile-card-meta">{job.scheduled_date ?? ""}</div>
+                <div className="table-actions">
+                  <StatusBadge status={job.status} />
+                  <span className="tag">{job.estimated_revenue ? `$${job.estimated_revenue}` : ""}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
         <div className="stack">
           <div className="card">

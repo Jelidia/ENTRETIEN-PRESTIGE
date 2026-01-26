@@ -1,8 +1,17 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { requireRole } from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { dispatchReassignSchema, weatherCancelSchema } from "@/lib/validators";
+
+const dispatchScheduleSchema = z.object({
+  jobId: z.string().min(1),
+  technicianId: z.string().optional(),
+  scheduledDate: z.string().min(6),
+  scheduledStartTime: z.string().min(4),
+  scheduledEndTime: z.string().min(4),
+});
 
 export async function POST(
   request: Request,
@@ -30,6 +39,34 @@ export async function POST(
 
     if (error) {
       return NextResponse.json({ error: "Unable to reassign" }, { status: 400 });
+    }
+
+    return NextResponse.json({ ok: true });
+  }
+
+  if (action === "schedule") {
+    const parsed = dispatchScheduleSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid schedule" }, { status: 400 });
+    }
+
+    const updates: Record<string, string> = {
+      scheduled_date: parsed.data.scheduledDate,
+      scheduled_start_time: parsed.data.scheduledStartTime,
+      scheduled_end_time: parsed.data.scheduledEndTime,
+    };
+
+    if (parsed.data.technicianId) {
+      updates.technician_id = parsed.data.technicianId;
+    }
+
+    const { error } = await client
+      .from("jobs")
+      .update(updates)
+      .eq("job_id", parsed.data.jobId);
+
+    if (error) {
+      return NextResponse.json({ error: "Unable to update schedule" }, { status: 400 });
     }
 
     return NextResponse.json({ ok: true });

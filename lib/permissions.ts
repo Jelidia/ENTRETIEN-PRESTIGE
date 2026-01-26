@@ -41,7 +41,9 @@ export const defaultRolePermissions: Record<string, PermissionMap> = {
   technician: {
     ...emptyPermissions,
     dashboard: true,
+    customers: true,
     jobs: true,
+    reports: true,
     technician: true,
     notifications: true,
   },

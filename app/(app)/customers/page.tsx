@@ -163,7 +163,7 @@ export default function CustomersPage() {
       />
       <div className="grid-2">
         <div className="card">
-          <table className="table">
+          <table className="table table-desktop">
             <thead>
               <tr>
                 <th>Name</th>
@@ -187,6 +187,21 @@ export default function CustomersPage() {
               ))}
             </tbody>
           </table>
+          <div className="card-list-mobile" style={{ marginTop: 12 }}>
+            {customers.map((customer) => (
+              <div className="mobile-card" key={customer.customer_id}>
+                <div className="mobile-card-title">
+                  {customer.first_name} {customer.last_name}
+                </div>
+                <div className="mobile-card-meta">{customer.customer_type}</div>
+                <div className="mobile-card-meta">Last service: {customer.last_service_date ?? ""}</div>
+                <div className="table-actions">
+                  <StatusBadge status={customer.status} />
+                  <span className="tag">{customer.account_balance ? `$${customer.account_balance}` : "$0"}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
         <div className="stack">
           <div className="card">

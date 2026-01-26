@@ -1,10 +1,13 @@
-import SideNav from "./SideNav";
+import SideNav, { BottomNav } from "./SideNav";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="shell">
       <SideNav />
-      <main className="content">{children}</main>
+      <div className="app-body">
+        <main className="content">{children}</main>
+        <BottomNav />
+      </div>
     </div>
   );
 }

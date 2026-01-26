@@ -21,10 +21,14 @@ export type DispatchJob = {
   service: string;
   price: string;
   status: string;
+  scheduledDate?: string;
+  scheduledStartTime?: string;
+  scheduledEndTime?: string;
 };
 
 export type DispatchColumn = {
   technician: string;
+  technicianId?: string;
   jobs: DispatchJob[];
 };
 

@@ -216,7 +216,7 @@ export default function ReportsPage() {
       <div className="grid-2">
         <div className="card">
           <h3 className="card-title">Commissions</h3>
-          <table className="table">
+          <table className="table table-desktop">
             <thead>
               <tr>
                 <th>Employee</th>
@@ -236,10 +236,20 @@ export default function ReportsPage() {
               ))}
             </tbody>
           </table>
+          <div className="card-list-mobile" style={{ marginTop: 12 }}>
+            {commissions.map((commission) => (
+              <div className="mobile-card" key={commission.commission_id}>
+                <div className="mobile-card-title">Employee {commission.employee_id}</div>
+                <div className="mobile-card-meta">Estimated: {commission.estimated_commission ?? 0}</div>
+                <div className="mobile-card-meta">Confirmed: {commission.confirmed_commission ?? 0}</div>
+                <span className="tag">{commission.status}</span>
+              </div>
+            ))}
+          </div>
         </div>
         <div className="card">
           <h3 className="card-title">Payroll</h3>
-          <table className="table">
+          <table className="table table-desktop">
             <thead>
               <tr>
                 <th>Employee</th>
@@ -257,6 +267,15 @@ export default function ReportsPage() {
               ))}
             </tbody>
           </table>
+          <div className="card-list-mobile" style={{ marginTop: 12 }}>
+            {payroll.map((statement) => (
+              <div className="mobile-card" key={statement.statement_id}>
+                <div className="mobile-card-title">Employee {statement.employee_id}</div>
+                <div className="mobile-card-meta">Period: {statement.month}/{statement.year}</div>
+                <span className="tag">Net pay: {statement.net_pay ?? 0}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -504,7 +523,7 @@ export default function ReportsPage() {
           </div>
           {auditStatus ? <div className="hint">{auditStatus}</div> : null}
         </form>
-        <table className="table">
+        <table className="table table-desktop">
           <thead>
             <tr>
               <th>User</th>
@@ -524,6 +543,16 @@ export default function ReportsPage() {
             ))}
           </tbody>
         </table>
+        <div className="card-list-mobile" style={{ marginTop: 12 }}>
+          {audit.map((entry) => (
+            <div className="mobile-card" key={entry.audit_id}>
+              <div className="mobile-card-title">{entry.action}</div>
+              <div className="mobile-card-meta">User: {entry.user_id ?? "-"}</div>
+              <div className="mobile-card-meta">{new Date(entry.created_at).toLocaleString()}</div>
+              <span className="tag">{entry.status}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
