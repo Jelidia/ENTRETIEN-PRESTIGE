@@ -14,7 +14,7 @@ export async function GET(request: Request) {
   const client = createUserClient(token ?? "");
   const { data, error } = await client
     .from("users")
-    .select("user_id, full_name, email, phone, role, status, created_at")
+    .select("user_id, full_name, email, phone, role, status, created_at, access_permissions")
     .order("created_at", { ascending: false })
     .limit(200);
 
@@ -59,6 +59,7 @@ export async function POST(request: Request) {
     status: "active",
     two_factor_enabled: true,
     two_factor_method: "sms",
+    access_permissions: parsed.data.accessPermissions,
   });
 
   if (error) {

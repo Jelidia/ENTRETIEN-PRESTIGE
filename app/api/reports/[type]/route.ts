@@ -12,6 +12,17 @@ import {
   territoryCreateSchema,
 } from "@/lib/validators";
 
+function toCsvValue(value: unknown) {
+  if (value === null || value === undefined) {
+    return "";
+  }
+  const text = String(value);
+  if (text.includes("\n") || text.includes(",") || text.includes("\"")) {
+    return `"${text.replace(/"/g, '""')}"`;
+  }
+  return text;
+}
+
 export async function GET(
   request: Request,
   { params }: { params: { type: string } }
@@ -106,7 +117,71 @@ export async function GET(
   }
 
   if (type === "audit-log") {
-    const { data } = await client.from("user_audit_log").select("*").order("created_at", { ascending: false });
+    const url = new URL(request.url);
+    const action = url.searchParams.get("action")?.trim();
+    const status = url.searchParams.get("status")?.trim();
+    const userId = url.searchParams.get("userId")?.trim();
+    const from = url.searchParams.get("from")?.trim();
+    const to = url.searchParams.get("to")?.trim();
+    const format = url.searchParams.get("format");
+
+    let query = client.from("user_audit_log").select("*").order("created_at", { ascending: false });
+    if (action) {
+      query = query.ilike("action", `%${action}%`);
+    }
+    if (status) {
+      query = query.eq("status", status);
+    }
+    if (userId) {
+      query = query.eq("user_id", userId);
+    }
+    if (from) {
+      query = query.gte("created_at", from);
+    }
+    if (to) {
+      query = query.lte("created_at", to);
+    }
+
+    const { data } = await query;
+
+    if (format === "csv") {
+      const header = [
+        "audit_id",
+        "user_id",
+        "action",
+        "resource_type",
+        "resource_id",
+        "status",
+        "reason",
+        "created_at",
+        "ip_address",
+        "user_agent",
+      ];
+      const rows = (data ?? []).map((entry) =>
+        [
+          entry.audit_id,
+          entry.user_id,
+          entry.action,
+          entry.resource_type,
+          entry.resource_id,
+          entry.status,
+          entry.reason,
+          entry.created_at,
+          entry.ip_address,
+          entry.user_agent,
+        ]
+          .map(toCsvValue)
+          .join(",")
+      );
+      const csv = [header.join(","), ...rows].join("\n");
+      return new NextResponse(csv, {
+        headers: {
+          "Content-Type": "text/csv",
+          "Content-Disposition": "attachment; filename=audits.csv",
+        },
+      });
+    }
+
     return NextResponse.json({ data });
   }
 

@@ -17,7 +17,9 @@ export async function requireUser(request: Request) {
 
   const { data: profile } = await client
     .from("users")
-    .select("user_id, company_id, role, phone, two_factor_enabled, two_factor_method, full_name, email")
+    .select(
+      "user_id, company_id, role, phone, two_factor_enabled, two_factor_method, full_name, email, access_permissions"
+    )
     .eq("user_id", data.user.id)
     .single();
 

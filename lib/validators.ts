@@ -1,5 +1,14 @@
 import { z } from "zod";
 
+const permissionMapSchema = z.record(z.boolean());
+const rolePermissionsSchema = z.record(permissionMapSchema);
+const seedAccountSchema = z.object({
+  role: z.enum(["admin", "technician", "sales_rep"]),
+  fullName: z.string().min(2),
+  email: z.string().email(),
+  phone: z.string().optional(),
+});
+
 export const registerSchema = z.object({
   companyName: z.string().min(2),
   fullName: z.string().min(2),
@@ -195,6 +204,7 @@ export const userCreateSchema = z.object({
   phone: z.string().optional(),
   role: z.string().min(2),
   password: z.string().min(16),
+  accessPermissions: permissionMapSchema.optional(),
 });
 
 export const userUpdateSchema = z.object({
@@ -202,6 +212,7 @@ export const userUpdateSchema = z.object({
   phone: z.string().optional(),
   role: z.string().optional(),
   status: z.string().optional(),
+  access_permissions: permissionMapSchema.nullable().optional(),
 });
 
 export const companyUpdateSchema = z.object({
@@ -214,6 +225,7 @@ export const companyUpdateSchema = z.object({
   province: z.string().optional(),
   postal_code: z.string().optional(),
   timezone: z.string().optional(),
+  rolePermissions: rolePermissionsSchema.optional(),
 });
 
 export const notificationSettingsSchema = z.object({
@@ -221,6 +233,10 @@ export const notificationSettingsSchema = z.object({
   invoiceReminders: z.boolean(),
   qualityIncidents: z.boolean(),
   channel: z.string(),
+});
+
+export const seedAccountsSchema = z.object({
+  accounts: z.array(seedAccountSchema).min(1),
 });
 
 export const leadCreateSchema = z.object({

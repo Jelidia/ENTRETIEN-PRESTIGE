@@ -31,6 +31,7 @@ type PayrollRow = {
 
 type AuditRow = {
   audit_id: string;
+  user_id?: string;
   action: string;
   status: string;
   created_at: string;
@@ -40,6 +41,13 @@ export default function ReportsPage() {
   const [commissions, setCommissions] = useState<CommissionRow[]>([]);
   const [payroll, setPayroll] = useState<PayrollRow[]>([]);
   const [audit, setAudit] = useState<AuditRow[]>([]);
+  const [auditFilters, setAuditFilters] = useState({
+    action: "",
+    status: "",
+    userId: "",
+    from: "",
+    to: "",
+  });
   const [commissionForm, setCommissionForm] = useState({
     employeeId: "",
     jobId: "",
@@ -60,6 +68,7 @@ export default function ReportsPage() {
   });
   const [commissionStatus, setCommissionStatus] = useState("");
   const [payrollStatus, setPayrollStatus] = useState("");
+  const [auditStatus, setAuditStatus] = useState("");
 
   useEffect(() => {
     void loadData();
@@ -69,7 +78,7 @@ export default function ReportsPage() {
     const [commissionRes, payrollRes, auditRes] = await Promise.all([
       fetch("/api/reports/commission"),
       fetch("/api/reports/payroll"),
-      fetch("/api/reports/audit-log"),
+      fetch(`/api/reports/audit-log${buildAuditQuery()}`),
     ]);
     const commissionJson = await commissionRes.json().catch(() => ({ data: [] }));
     const payrollJson = await payrollRes.json().catch(() => ({ data: [] }));
@@ -77,7 +86,40 @@ export default function ReportsPage() {
 
     setCommissions(commissionJson.data ?? []);
     setPayroll(payrollJson.data ?? []);
-    setAudit((auditJson.data ?? []).slice(0, 6));
+    setAudit(auditJson.data ?? []);
+  }
+
+  function buildAuditQuery() {
+    const params = new URLSearchParams();
+    if (auditFilters.action) {
+      params.set("action", auditFilters.action);
+    }
+    if (auditFilters.status) {
+      params.set("status", auditFilters.status);
+    }
+    if (auditFilters.userId) {
+      params.set("userId", auditFilters.userId);
+    }
+    if (auditFilters.from) {
+      params.set("from", auditFilters.from);
+    }
+    if (auditFilters.to) {
+      params.set("to", auditFilters.to);
+    }
+    const query = params.toString();
+    return query ? `?${query}` : "";
+  }
+
+  async function applyAuditFilters(event?: React.FormEvent<HTMLFormElement>) {
+    event?.preventDefault();
+    setAuditStatus("");
+    const response = await fetch(`/api/reports/audit-log${buildAuditQuery()}`);
+    const json = await response.json().catch(() => ({ data: [] }));
+    if (!response.ok) {
+      setAuditStatus(json.error ?? "Unable to load audit log");
+      return;
+    }
+    setAudit(json.data ?? []);
   }
 
   async function submitCommission(event: React.FormEvent<HTMLFormElement>) {
@@ -395,9 +437,77 @@ export default function ReportsPage() {
 
       <div className="card">
         <h3 className="card-title">Audit trail</h3>
+        <form className="form-grid" onSubmit={applyAuditFilters} style={{ marginTop: 12 }}>
+          <div className="grid-3">
+            <div className="form-row">
+              <label className="label" htmlFor="auditAction">Action</label>
+              <input
+                id="auditAction"
+                className="input"
+                value={auditFilters.action}
+                onChange={(event) => setAuditFilters({ ...auditFilters, action: event.target.value })}
+                placeholder="Search action"
+              />
+            </div>
+            <div className="form-row">
+              <label className="label" htmlFor="auditStatus">Status</label>
+              <select
+                id="auditStatus"
+                className="select"
+                value={auditFilters.status}
+                onChange={(event) => setAuditFilters({ ...auditFilters, status: event.target.value })}
+              >
+                <option value="">All</option>
+                <option value="success">Success</option>
+                <option value="failed">Failed</option>
+                <option value="denied">Denied</option>
+              </select>
+            </div>
+            <div className="form-row">
+              <label className="label" htmlFor="auditUser">User ID</label>
+              <input
+                id="auditUser"
+                className="input"
+                value={auditFilters.userId}
+                onChange={(event) => setAuditFilters({ ...auditFilters, userId: event.target.value })}
+                placeholder="User UUID"
+              />
+            </div>
+          </div>
+          <div className="grid-2">
+            <div className="form-row">
+              <label className="label" htmlFor="auditFrom">From</label>
+              <input
+                id="auditFrom"
+                className="input"
+                type="date"
+                value={auditFilters.from}
+                onChange={(event) => setAuditFilters({ ...auditFilters, from: event.target.value })}
+              />
+            </div>
+            <div className="form-row">
+              <label className="label" htmlFor="auditTo">To</label>
+              <input
+                id="auditTo"
+                className="input"
+                type="date"
+                value={auditFilters.to}
+                onChange={(event) => setAuditFilters({ ...auditFilters, to: event.target.value })}
+              />
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <button className="button-primary" type="submit">Apply filters</button>
+            <a className="button-secondary" href={`/api/reports/audit-log${buildAuditQuery()}${buildAuditQuery() ? "&" : "?"}format=csv`}>
+              Export audit CSV
+            </a>
+          </div>
+          {auditStatus ? <div className="hint">{auditStatus}</div> : null}
+        </form>
         <table className="table">
           <thead>
             <tr>
+              <th>User</th>
               <th>Action</th>
               <th>Status</th>
               <th>Time</th>
@@ -406,6 +516,7 @@ export default function ReportsPage() {
           <tbody>
             {audit.map((entry) => (
               <tr key={entry.audit_id}>
+                <td>{entry.user_id ?? "-"}</td>
                 <td>{entry.action}</td>
                 <td>{entry.status}</td>
                 <td>{new Date(entry.created_at).toLocaleString()}</td>

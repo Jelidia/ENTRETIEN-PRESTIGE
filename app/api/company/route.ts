@@ -37,11 +37,17 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Invalid update" }, { status: 400 });
   }
 
+  const update = { ...parsed.data } as Record<string, unknown>;
+  if (parsed.data.rolePermissions !== undefined) {
+    update.role_permissions = parsed.data.rolePermissions;
+    delete update.rolePermissions;
+  }
+
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
   const { data, error } = await client
     .from("companies")
-    .update(parsed.data)
+    .update(update)
     .eq("company_id", profile.company_id)
     .select()
     .single();

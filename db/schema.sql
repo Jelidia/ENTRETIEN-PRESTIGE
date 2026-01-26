@@ -14,6 +14,7 @@ create table companies (
   timezone text default 'America/Montreal',
   status text check (status in ('active', 'inactive', 'suspended')) default 'active',
   settings jsonb,
+  role_permissions jsonb,
   created_at timestamptz default now(),
   updated_at timestamptz default now(),
   deleted_at timestamptz
@@ -44,6 +45,7 @@ create table users (
   hire_date date,
   employee_id text,
   notification_settings jsonb,
+  access_permissions jsonb,
   created_at timestamptz default now(),
   updated_at timestamptz default now(),
   deleted_at timestamptz
