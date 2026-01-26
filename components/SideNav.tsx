@@ -13,6 +13,7 @@ const navItems = [
   { href: "/sales", label: "Sales", tone: "#8c5f2f" },
   { href: "/operations", label: "Operations", tone: "#4a596b" },
   { href: "/reports", label: "Reports", tone: "#3c5d79" },
+  { href: "/team", label: "Team", tone: "#425e8a" },
   { href: "/notifications", label: "Notifications", tone: "#4d4d4d" },
   { href: "/settings", label: "Settings", tone: "#2c384a" },
 ];

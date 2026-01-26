@@ -189,6 +189,33 @@ export const geofenceCreateSchema = z.object({
   radiusMeters: z.number().optional(),
 });
 
+export const userCreateSchema = z.object({
+  fullName: z.string().min(2),
+  email: z.string().email(),
+  phone: z.string().optional(),
+  role: z.string().min(2),
+  password: z.string().min(16),
+});
+
+export const userUpdateSchema = z.object({
+  full_name: z.string().min(2).optional(),
+  phone: z.string().optional(),
+  role: z.string().optional(),
+  status: z.string().optional(),
+});
+
+export const companyUpdateSchema = z.object({
+  name: z.string().min(2).optional(),
+  legal_name: z.string().optional(),
+  email: z.string().email().optional(),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  province: z.string().optional(),
+  postal_code: z.string().optional(),
+  timezone: z.string().optional(),
+});
+
 export const notificationSettingsSchema = z.object({
   jobAlerts: z.boolean(),
   invoiceReminders: z.boolean(),

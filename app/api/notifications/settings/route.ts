@@ -29,3 +29,24 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ ok: true });
 }
+
+export async function GET(request: Request) {
+  const auth = await requireUser(request);
+  if ("response" in auth) {
+    return auth.response;
+  }
+  const { user } = auth;
+  const token = getAccessTokenFromRequest(request);
+  const client = createUserClient(token ?? "");
+  const { data, error } = await client
+    .from("users")
+    .select("notification_settings")
+    .eq("user_id", user.id)
+    .single();
+
+  if (error) {
+    return NextResponse.json({ error: "Unable to load settings" }, { status: 400 });
+  }
+
+  return NextResponse.json({ data: data?.notification_settings ?? {} });
+}
