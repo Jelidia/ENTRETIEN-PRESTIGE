@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabaseServer";
-import { requireUser } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import { generateAuthenticatorSecret } from "@/lib/security";
 
 export async function POST(request: Request) {
-  const auth = await requireUser(request);
+  const auth = await requireRole(request, ["admin"]);
   if ("response" in auth) {
     return auth.response;
   }

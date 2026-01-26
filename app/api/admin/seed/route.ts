@@ -65,7 +65,7 @@ export async function POST(request: Request) {
       continue;
     }
 
-    const enableSms2fa = Boolean(account.phone && smsConfigured);
+    const enableSms2fa = Boolean(account.role === "admin" && account.phone && smsConfigured);
     const { error: insertError } = await admin.from("users").insert({
       user_id: userData.user.id,
       company_id: profile.company_id,

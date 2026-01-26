@@ -40,7 +40,8 @@ export async function POST(request: Request) {
 
   const admin = createAdminClient();
   const smsConfigured = isSmsConfigured();
-  const enableSms2fa = Boolean(parsed.data.phone && smsConfigured);
+  const isAdmin = parsed.data.role === "admin";
+  const enableSms2fa = Boolean(isAdmin && parsed.data.phone && smsConfigured);
   const twoFactorMethod = enableSms2fa ? "sms" : "authenticator";
   const twoFactorEnabled = enableSms2fa;
   const { data: userData, error: authError } = await admin.auth.admin.createUser({
@@ -68,6 +69,16 @@ export async function POST(request: Request) {
     two_factor_enabled: twoFactorEnabled,
     two_factor_method: twoFactorMethod,
     access_permissions: parsed.data.accessPermissions,
+    address: parsed.data.address,
+    city: parsed.data.city,
+    province: parsed.data.province,
+    postal_code: parsed.data.postal_code,
+    country: parsed.data.country,
+    id_document_front_url: parsed.data.id_document_front_url,
+    id_document_back_url: parsed.data.id_document_back_url,
+    contract_document_url: parsed.data.contract_document_url,
+    contract_signature_url: parsed.data.contract_signature_url,
+    contract_signed_at: parsed.data.contract_signed_at,
   });
 
   if (error) {

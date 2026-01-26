@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { registerSchema } from "@/lib/validators";
 import { createAdminClient } from "@/lib/supabaseServer";
 import { logAudit } from "@/lib/audit";
+import { isSmsConfigured } from "@/lib/twilio";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -35,6 +36,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unable to create user" }, { status: 400 });
   }
 
+  const smsConfigured = isSmsConfigured();
+  const enableSms2fa = Boolean(phone && smsConfigured);
   const { error: profileError } = await admin.from("users").insert({
     user_id: authData.user.id,
     company_id: company.company_id,
@@ -43,8 +46,8 @@ export async function POST(request: Request) {
     full_name: fullName,
     role: "admin",
     status: "active",
-    two_factor_enabled: true,
-    two_factor_method: "sms",
+    two_factor_enabled: enableSms2fa,
+    two_factor_method: enableSms2fa ? "sms" : "authenticator",
   });
 
   if (profileError) {

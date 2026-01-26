@@ -64,7 +64,7 @@ export async function POST(request: Request) {
 
   const { data: profile } = await admin
     .from("users")
-    .select("two_factor_enabled, two_factor_method, phone")
+    .select("role, two_factor_enabled, two_factor_method, phone")
     .eq("user_id", data.user.id)
     .single();
 
@@ -77,7 +77,7 @@ export async function POST(request: Request) {
     })
     .eq("user_id", data.user.id);
 
-  if (profile?.two_factor_enabled) {
+  if (profile?.role === "admin" && profile?.two_factor_enabled) {
     if (profile.two_factor_method === "sms") {
       if (!profile.phone) {
         return NextResponse.json({ error: "SMS 2FA requires a phone number" }, { status: 400 });

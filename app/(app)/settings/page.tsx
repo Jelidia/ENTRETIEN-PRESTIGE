@@ -1,6 +1,7 @@
 "use client";
 
 import TopBar from "@/components/TopBar";
+import Link from "next/link";
 import NotificationSettingsForm from "@/components/forms/NotificationSettingsForm";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -459,9 +460,14 @@ export default function SettingsPage() {
                       {member.access_permissions ? <span className="tag">Custom</span> : "Role default"}
                     </td>
                     <td>
-                      <button className="button-secondary" type="button" onClick={() => saveTeamMember(member)}>
-                        Save
-                      </button>
+                      <div className="table-actions">
+                        <button className="button-secondary" type="button" onClick={() => saveTeamMember(member)}>
+                          Save
+                        </button>
+                        <Link className="button-ghost" href={`/team/${member.user_id}`}>
+                          Profile
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -509,9 +515,14 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   <div className="hint">Access: {member.access_permissions ? "Custom" : "Role default"}</div>
-                  <button className="button-secondary" type="button" onClick={() => saveTeamMember(member)}>
-                    Save
-                  </button>
+                  <div className="table-actions">
+                    <button className="button-secondary" type="button" onClick={() => saveTeamMember(member)}>
+                      Save
+                    </button>
+                    <Link className="button-ghost" href={`/team/${member.user_id}`}>
+                      Profile
+                    </Link>
+                  </div>
                 </div>
               );
             })}

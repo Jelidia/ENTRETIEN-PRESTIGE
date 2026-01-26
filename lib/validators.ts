@@ -205,6 +205,16 @@ export const userCreateSchema = z.object({
   role: z.string().min(2),
   password: z.string().min(16),
   accessPermissions: permissionMapSchema.optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  province: z.string().optional(),
+  postal_code: z.string().optional(),
+  country: z.string().optional(),
+  id_document_front_url: z.string().optional(),
+  id_document_back_url: z.string().optional(),
+  contract_document_url: z.string().optional(),
+  contract_signature_url: z.string().optional(),
+  contract_signed_at: z.string().optional(),
 });
 
 export const userUpdateSchema = z.object({
@@ -213,6 +223,16 @@ export const userUpdateSchema = z.object({
   role: z.string().optional(),
   status: z.string().optional(),
   access_permissions: permissionMapSchema.nullable().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  province: z.string().optional(),
+  postal_code: z.string().optional(),
+  country: z.string().optional(),
+  id_document_front_url: z.string().optional(),
+  id_document_back_url: z.string().optional(),
+  contract_document_url: z.string().optional(),
+  contract_signature_url: z.string().optional(),
+  contract_signed_at: z.string().optional(),
 });
 
 export const companyUpdateSchema = z.object({
