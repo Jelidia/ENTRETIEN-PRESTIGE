@@ -1,6 +1,6 @@
 import { getEnv } from "./env";
 
-const mapsKey = getEnv("GOOGLE_MAPS_API_KEY");
+const mapsKey = getEnv("NEXT_PUBLIC_GOOGLE_MAPS_API_KEY", getEnv("GOOGLE_MAPS_API_KEY"));
 
 export async function geocodeAddress(address: string) {
   if (!mapsKey) {
