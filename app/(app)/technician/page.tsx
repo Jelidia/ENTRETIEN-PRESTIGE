@@ -127,7 +127,7 @@ export default function TechnicianPage() {
     <div className="page">
       <div className="tech-header">
         <div>
-          <div className="card-label">Today's jobs</div>
+          <div className="card-label">{"Today's jobs"}</div>
           <div className="tech-title">{todayLabel}</div>
         </div>
         <a className="button-ghost" href="/notifications">Alerts</a>

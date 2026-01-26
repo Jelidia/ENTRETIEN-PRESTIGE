@@ -2,7 +2,7 @@
 
 import clsx from "clsx";
 import TopBar from "@/components/TopBar";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type DispatchJob = {
   id: string;
@@ -108,9 +108,81 @@ export default function DispatchPage() {
   const rafRef = useRef<number | null>(null);
   const createRafRef = useRef<number | null>(null);
 
+  const loadDispatch = useCallback(async () => {
+    const [boardRes, conflictsRes] = await Promise.all([
+      fetch("/api/dispatch/calendar"),
+      fetch("/api/dispatch/conflicts"),
+    ]);
+    const boardJson = await boardRes.json().catch(() => ({ data: [] }));
+    const conflictsJson = await conflictsRes.json().catch(() => ({ data: [] }));
+    setBoard(boardJson.data ?? []);
+    setConflicts(conflictsJson.data ?? []);
+  }, []);
+
+  const openQuickCreate = useCallback(
+    (preview: DragPreview) => {
+      const date = selectedDate || new Date().toISOString().slice(0, 10);
+      const technician = boardRef.current.find((item) => getTechKey(item) === preview.techKey);
+      setQuickCreateTechnician({
+        id: preview.technicianId ?? "",
+        name: technician?.technician ?? "",
+      });
+      setQuickCreateAssign(Boolean(preview.technicianId));
+      setQuickCreateForm((prev) => ({
+        ...prev,
+        scheduledDate: date,
+        scheduledStartTime: formatTime(preview.startMinutes),
+        scheduledEndTime: formatTime(preview.endMinutes),
+      }));
+      setQuickCreateStatus("");
+      setQuickCreateOpen(true);
+    },
+    [selectedDate]
+  );
+
+  const commitSchedule = useCallback(
+    async (preview: DragPreview) => {
+      if (!selectedDate) {
+        setStatus("Select a date before rescheduling.");
+        return;
+      }
+
+      const previous = boardRef.current;
+      const next = moveJob(previous, preview, selectedDate);
+      setBoard(next);
+
+      if (!preview.technicianId) {
+        setStatus("Preview updated (not saved). Missing technician ID.");
+        return;
+      }
+
+      const response = await fetch("/api/dispatch/schedule", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jobId: preview.jobId,
+          technicianId: preview.technicianId,
+          scheduledDate: selectedDate,
+          scheduledStartTime: formatTime(preview.startMinutes),
+          scheduledEndTime: formatTime(preview.endMinutes),
+        }),
+      });
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setBoard(previous);
+        setStatus(json.error ?? "Unable to update schedule");
+        return;
+      }
+
+      setStatus("Schedule updated.");
+      void loadDispatch();
+    },
+    [selectedDate, loadDispatch]
+  );
+
   useEffect(() => {
     void loadDispatch();
-  }, []);
+  }, [loadDispatch]);
 
   useEffect(() => {
     boardRef.current = board;
@@ -130,10 +202,13 @@ export default function DispatchPage() {
   }, [board, selectedDate]);
 
   useEffect(() => {
-    if (!dragState) return;
+    const activeDrag = dragState;
+    if (!activeDrag) return;
 
     function handleMove(event: PointerEvent) {
-      const activeKey = resolveTechKey(event.clientX, columnRefs.current) ?? dragState.techKey;
+      const currentDrag = activeDrag;
+      if (!currentDrag) return;
+      const activeKey = resolveTechKey(event.clientX, columnRefs.current) ?? currentDrag.techKey;
       const column = columnRefs.current[activeKey];
       if (!column) return;
 
@@ -142,20 +217,20 @@ export default function DispatchPage() {
       const gridEndMinutes = END_HOUR * 60;
       const minuteHeight = HOUR_HEIGHT / 60;
       const gridHeight = (END_HOUR - START_HOUR) * HOUR_HEIGHT;
-      const durationPx = dragState.duration * minuteHeight;
+      const durationPx = currentDrag.duration * minuteHeight;
       const maxTop = Math.max(0, gridHeight - durationPx);
-      const rawTop = event.clientY - rect.top - dragState.offsetY;
+      const rawTop = event.clientY - rect.top - currentDrag.offsetY;
       const clampedTop = clamp(rawTop, 0, maxTop);
       const snapPixels = SNAP_MINUTES * minuteHeight;
       const snappedTop = Math.round(clampedTop / snapPixels) * snapPixels;
       const startMinutes = gridStartMinutes + snappedTop / minuteHeight;
-      const clampedStart = clamp(startMinutes, gridStartMinutes, gridEndMinutes - dragState.duration);
-      const endMinutes = clampedStart + dragState.duration;
+      const clampedStart = clamp(startMinutes, gridStartMinutes, gridEndMinutes - currentDrag.duration);
+      const endMinutes = clampedStart + currentDrag.duration;
 
       const columnMeta = boardRef.current.find((item) => getTechKey(item) === activeKey);
 
       queuePreview({
-        jobId: dragState.jobId,
+        jobId: currentDrag.jobId,
         techKey: activeKey,
         technicianId: columnMeta?.technicianId,
         startMinutes: clampedStart,
@@ -178,13 +253,16 @@ export default function DispatchPage() {
       window.removeEventListener("pointermove", handleMove);
       document.body.style.cursor = "";
     };
-  }, [dragState]);
+  }, [dragState, commitSchedule]);
 
   useEffect(() => {
-    if (!resizeState) return;
+    const activeResize = resizeState;
+    if (!activeResize) return;
 
     function handleMove(event: PointerEvent) {
-      const column = columnRefs.current[resizeState.techKey];
+      const currentResize = activeResize;
+      if (!currentResize) return;
+      const column = columnRefs.current[currentResize.techKey];
       if (!column) return;
 
       const rect = column.getBoundingClientRect();
@@ -193,16 +271,16 @@ export default function DispatchPage() {
       const minuteHeight = HOUR_HEIGHT / 60;
       const rawMinutes = gridStartMinutes + (event.clientY - rect.top) / minuteHeight;
       const snappedEnd = Math.round(rawMinutes / SNAP_MINUTES) * SNAP_MINUTES;
-      const minEnd = resizeState.startMinutes + SNAP_MINUTES;
+      const minEnd = currentResize.startMinutes + SNAP_MINUTES;
       const endMinutes = clamp(snappedEnd, minEnd, gridEndMinutes);
 
-      const columnMeta = boardRef.current.find((item) => getTechKey(item) === resizeState.techKey);
+      const columnMeta = boardRef.current.find((item) => getTechKey(item) === currentResize.techKey);
 
       queuePreview({
-        jobId: resizeState.jobId,
-        techKey: resizeState.techKey,
+        jobId: currentResize.jobId,
+        techKey: currentResize.techKey,
         technicianId: columnMeta?.technicianId,
-        startMinutes: resizeState.startMinutes,
+        startMinutes: currentResize.startMinutes,
         endMinutes,
       });
       maybeAutoScroll(event.clientY);
@@ -222,13 +300,16 @@ export default function DispatchPage() {
       window.removeEventListener("pointermove", handleMove);
       document.body.style.cursor = "";
     };
-  }, [resizeState]);
+  }, [resizeState, commitSchedule]);
 
   useEffect(() => {
-    if (!createState) return;
+    const currentCreate = createState;
+    if (!currentCreate) return;
 
     function handleMove(event: PointerEvent) {
-      const column = columnRefs.current[createState.techKey];
+      const activeCreate = currentCreate;
+      if (!activeCreate) return;
+      const column = columnRefs.current[activeCreate.techKey];
       if (!column) return;
 
       const rect = column.getBoundingClientRect();
@@ -238,13 +319,13 @@ export default function DispatchPage() {
       const rawMinutes = gridStartMinutes + (event.clientY - rect.top) / minuteHeight;
       const snappedMinutes = Math.round(rawMinutes / SNAP_MINUTES) * SNAP_MINUTES;
       const clampedMinutes = clamp(snappedMinutes, gridStartMinutes, gridEndMinutes - SNAP_MINUTES);
-      const startMinutes = Math.min(createState.startMinutes, clampedMinutes);
-      const endMinutes = Math.max(createState.startMinutes + SNAP_MINUTES, clampedMinutes + SNAP_MINUTES);
+      const startMinutes = Math.min(activeCreate.startMinutes, clampedMinutes);
+      const endMinutes = Math.max(activeCreate.startMinutes + SNAP_MINUTES, clampedMinutes + SNAP_MINUTES);
 
       queueCreatePreview({
         jobId: "new",
-        techKey: createState.techKey,
-        technicianId: createState.technicianId,
+        techKey: activeCreate.techKey,
+        technicianId: activeCreate.technicianId,
         startMinutes: clamp(startMinutes, gridStartMinutes, gridEndMinutes - SNAP_MINUTES),
         endMinutes: clamp(endMinutes, gridStartMinutes + SNAP_MINUTES, gridEndMinutes),
       });
@@ -265,7 +346,7 @@ export default function DispatchPage() {
       window.removeEventListener("pointermove", handleMove);
       document.body.style.cursor = "";
     };
-  }, [createState]);
+  }, [createState, openQuickCreate]);
 
   function cleanupInteraction() {
     if (rafRef.current) {
@@ -306,17 +387,6 @@ export default function DispatchPage() {
       createPreviewRef.current = preview;
       setCreatePreview(preview);
     });
-  }
-
-  async function loadDispatch() {
-    const [boardRes, conflictsRes] = await Promise.all([
-      fetch("/api/dispatch/calendar"),
-      fetch("/api/dispatch/conflicts"),
-    ]);
-    const boardJson = await boardRes.json().catch(() => ({ data: [] }));
-    const conflictsJson = await conflictsRes.json().catch(() => ({ data: [] }));
-    setBoard(boardJson.data ?? []);
-    setConflicts(conflictsJson.data ?? []);
   }
 
   async function autoAssign() {
@@ -388,60 +458,6 @@ export default function DispatchPage() {
       return;
     }
     setGpsResults(json.data ?? []);
-  }
-
-  async function commitSchedule(preview: DragPreview) {
-    if (!selectedDate) {
-      setStatus("Select a date before rescheduling.");
-      return;
-    }
-
-    const previous = boardRef.current;
-    const next = moveJob(previous, preview, selectedDate);
-    setBoard(next);
-
-    if (!preview.technicianId) {
-      setStatus("Preview updated (not saved). Missing technician ID.");
-      return;
-    }
-
-    const response = await fetch("/api/dispatch/schedule", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        jobId: preview.jobId,
-        technicianId: preview.technicianId,
-        scheduledDate: selectedDate,
-        scheduledStartTime: formatTime(preview.startMinutes),
-        scheduledEndTime: formatTime(preview.endMinutes),
-      }),
-    });
-    const json = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      setBoard(previous);
-      setStatus(json.error ?? "Unable to update schedule");
-      return;
-    }
-
-    setStatus("Schedule updated.");
-  }
-
-  function openQuickCreate(preview: DragPreview) {
-    const date = selectedDate || new Date().toISOString().slice(0, 10);
-    const technician = boardRef.current.find((item) => getTechKey(item) === preview.techKey);
-    setQuickCreateTechnician({
-      id: preview.technicianId ?? "",
-      name: technician?.technician ?? "",
-    });
-    setQuickCreateAssign(Boolean(preview.technicianId));
-    setQuickCreateForm((prev) => ({
-      ...prev,
-      scheduledDate: date,
-      scheduledStartTime: formatTime(preview.startMinutes),
-      scheduledEndTime: formatTime(preview.endMinutes),
-    }));
-    setQuickCreateStatus("");
-    setQuickCreateOpen(true);
   }
 
   function handleCreatePointerDown(
@@ -1152,8 +1168,9 @@ function moveJob(board: DispatchColumnType[], preview: DragPreview, selectedDate
     return board;
   }
 
-  const updatedJob = {
-    ...movedJob,
+  const baseJob = movedJob as DispatchJob;
+  const updatedJob: DispatchJob = {
+    ...baseJob,
     scheduledDate: selectedDate,
     scheduledStartTime: formatTime(preview.startMinutes),
     scheduledEndTime: formatTime(preview.endMinutes),

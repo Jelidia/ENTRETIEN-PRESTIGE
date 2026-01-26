@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import clsx from "clsx";
 import { useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import type { PermissionKey, PermissionMap } from "@/lib/permissions";
 
 const navItems: { href: string; label: string; tone: string; permission: PermissionKey }[] = [
@@ -23,7 +24,7 @@ const bottomNavItems: {
   href: string;
   label: string;
   permission: PermissionKey;
-  icon: (props: { active: boolean }) => JSX.Element;
+  icon: (props: { active: boolean }) => ReactNode;
 }[] = [
   {
     href: "/dashboard",

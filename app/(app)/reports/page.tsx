@@ -2,7 +2,7 @@
 
 import KpiCard from "@/components/KpiCard";
 import TopBar from "@/components/TopBar";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const defaultKpis = [
   { label: "Total revenue", value: "$118,450", meta: "Last 30 days" },
@@ -48,6 +48,7 @@ export default function ReportsPage() {
     from: "",
     to: "",
   });
+  const auditFiltersRef = useRef(auditFilters);
   const [commissionForm, setCommissionForm] = useState({
     employeeId: "",
     jobId: "",
@@ -71,14 +72,36 @@ export default function ReportsPage() {
   const [auditStatus, setAuditStatus] = useState("");
 
   useEffect(() => {
-    void loadData();
+    auditFiltersRef.current = auditFilters;
+  }, [auditFilters]);
+
+  const buildAuditQuery = useCallback((filters: typeof auditFilters) => {
+    const params = new URLSearchParams();
+    if (filters.action) {
+      params.set("action", filters.action);
+    }
+    if (filters.status) {
+      params.set("status", filters.status);
+    }
+    if (filters.userId) {
+      params.set("userId", filters.userId);
+    }
+    if (filters.from) {
+      params.set("from", filters.from);
+    }
+    if (filters.to) {
+      params.set("to", filters.to);
+    }
+    const query = params.toString();
+    return query ? `?${query}` : "";
   }, []);
 
-  async function loadData() {
+  const loadData = useCallback(async () => {
+    const filters = auditFiltersRef.current;
     const [commissionRes, payrollRes, auditRes] = await Promise.all([
       fetch("/api/reports/commission"),
       fetch("/api/reports/payroll"),
-      fetch(`/api/reports/audit-log${buildAuditQuery()}`),
+      fetch(`/api/reports/audit-log${buildAuditQuery(filters)}`),
     ]);
     const commissionJson = await commissionRes.json().catch(() => ({ data: [] }));
     const payrollJson = await payrollRes.json().catch(() => ({ data: [] }));
@@ -87,33 +110,16 @@ export default function ReportsPage() {
     setCommissions(commissionJson.data ?? []);
     setPayroll(payrollJson.data ?? []);
     setAudit(auditJson.data ?? []);
-  }
+  }, [buildAuditQuery]);
 
-  function buildAuditQuery() {
-    const params = new URLSearchParams();
-    if (auditFilters.action) {
-      params.set("action", auditFilters.action);
-    }
-    if (auditFilters.status) {
-      params.set("status", auditFilters.status);
-    }
-    if (auditFilters.userId) {
-      params.set("userId", auditFilters.userId);
-    }
-    if (auditFilters.from) {
-      params.set("from", auditFilters.from);
-    }
-    if (auditFilters.to) {
-      params.set("to", auditFilters.to);
-    }
-    const query = params.toString();
-    return query ? `?${query}` : "";
-  }
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
 
   async function applyAuditFilters(event?: React.FormEvent<HTMLFormElement>) {
     event?.preventDefault();
     setAuditStatus("");
-    const response = await fetch(`/api/reports/audit-log${buildAuditQuery()}`);
+    const response = await fetch(`/api/reports/audit-log${buildAuditQuery(auditFilters)}`);
     const json = await response.json().catch(() => ({ data: [] }));
     if (!response.ok) {
       setAuditStatus(json.error ?? "Unable to load audit log");
@@ -517,7 +523,7 @@ export default function ReportsPage() {
           </div>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             <button className="button-primary" type="submit">Apply filters</button>
-            <a className="button-secondary" href={`/api/reports/audit-log${buildAuditQuery()}${buildAuditQuery() ? "&" : "?"}format=csv`}>
+            <a className="button-secondary" href={`/api/reports/audit-log${buildAuditQuery(auditFilters)}${buildAuditQuery(auditFilters) ? "&" : "?"}format=csv`}>
               Export audit CSV
             </a>
           </div>
