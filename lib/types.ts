@@ -80,3 +80,44 @@ export type ReportSummary = {
   kpis: Kpi[];
   revenueBars: number[];
 };
+
+export type Lead = {
+  lead_id: string;
+  first_name: string;
+  last_name: string;
+  status: string;
+  estimated_job_value?: number;
+  follow_up_date?: string;
+  city?: string;
+};
+
+export type Territory = {
+  territory_id: string;
+  territory_name: string;
+  monthly_revenue?: number;
+  total_customers?: number;
+  active_customers?: number;
+};
+
+export type Commission = {
+  commission_id: string;
+  employee_id: string;
+  estimated_commission?: number;
+  confirmed_commission?: number;
+  status: string;
+};
+
+export type Payroll = {
+  statement_id: string;
+  employee_id: string;
+  year: number;
+  month: number;
+  net_pay?: number;
+};
+
+export type Checklist = {
+  checklist_id: string;
+  technician_id: string;
+  work_date: string;
+  shift_status: string;
+};

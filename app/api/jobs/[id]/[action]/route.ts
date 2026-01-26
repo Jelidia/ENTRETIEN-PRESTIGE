@@ -114,12 +114,20 @@ export async function POST(
       .update({ status: "completed", updated_by: user.id })
       .eq("job_id", params.id);
 
+    const { data: job } = await client
+      .from("jobs")
+      .select("customer_id, estimated_revenue, actual_revenue")
+      .eq("job_id", params.id)
+      .single();
+
     const invoiceNumber = `INV-${Date.now()}`;
     await client.from("invoices").insert({
       company_id: profile.company_id,
       job_id: params.id,
+      customer_id: job?.customer_id ?? null,
       invoice_number: invoiceNumber,
       issued_date: new Date().toISOString(),
+      total_amount: job?.actual_revenue ?? job?.estimated_revenue ?? null,
       payment_status: "draft",
     });
 

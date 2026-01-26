@@ -16,7 +16,9 @@ export async function GET(request: Request) {
 
   let query = client
     .from("jobs")
-    .select("job_id, service_type, status, scheduled_date, estimated_revenue, actual_revenue, customer_id")
+    .select(
+      "job_id, service_type, status, scheduled_date, scheduled_start_time, scheduled_end_time, address, estimated_revenue, actual_revenue, customer_id"
+    )
     .order("scheduled_date", { ascending: true })
     .limit(100);
 

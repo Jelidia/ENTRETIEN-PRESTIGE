@@ -72,6 +72,13 @@ button {
   background: transparent;
 }
 
+code {
+  font-family: "Courier New", monospace;
+  background: var(--surface-muted);
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+
 .shell {
   display: grid;
   grid-template-columns: 260px 1fr;

@@ -5,7 +5,9 @@ type StatusBadgeProps = {
 export default function StatusBadge({ status }: StatusBadgeProps) {
   const normalized = status.toLowerCase();
   const tone =
-    normalized.includes("delay") || normalized.includes("overdue")
+    normalized.includes("delay") ||
+    normalized.includes("overdue") ||
+    normalized.includes("unread")
       ? "badge-warning"
       : normalized.includes("risk") ||
           normalized.includes("issue") ||

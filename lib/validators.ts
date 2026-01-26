@@ -187,3 +187,75 @@ export const notificationSettingsSchema = z.object({
   qualityIncidents: z.boolean(),
   channel: z.string(),
 });
+
+export const leadCreateSchema = z.object({
+  firstName: z.string().min(2),
+  lastName: z.string().min(2),
+  phone: z.string().optional(),
+  email: z.string().email().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  postalCode: z.string().optional(),
+  estimatedJobValue: z.number().optional(),
+  followUpDate: z.string().optional(),
+  status: z.string().optional(),
+  notes: z.string().optional(),
+  salesRepId: z.string().optional(),
+});
+
+export const territoryCreateSchema = z.object({
+  territoryName: z.string().min(2),
+  salesRepId: z.string().min(1),
+  neighborhoods: z.array(z.string()).optional(),
+  polygonCoordinates: z.array(z.any()).optional(),
+});
+
+export const commissionCreateSchema = z.object({
+  employeeId: z.string().min(1),
+  jobId: z.string().min(1).optional(),
+  servicePrice: z.number().min(0),
+  commissionRate: z.number().min(0),
+  estimatedCommission: z.number().optional(),
+});
+
+export const payrollCreateSchema = z.object({
+  employeeId: z.string().min(1),
+  year: z.number().min(2000),
+  month: z.number().min(1).max(12),
+  baseSalary: z.number().min(0),
+  commissionConfirmed: z.number().optional(),
+  deductions: z.number().optional(),
+  netPay: z.number().min(0),
+  jobsCompleted: z.number().optional(),
+  totalRevenue: z.number().optional(),
+});
+
+export const checklistCreateSchema = z.object({
+  technicianId: z.string().min(1),
+  workDate: z.string().min(6),
+  startCompleted: z.boolean().optional(),
+  startTime: z.string().optional(),
+  startItems: z.array(z.record(z.any())).optional(),
+  endCompleted: z.boolean().optional(),
+  endTime: z.string().optional(),
+  endItems: z.array(z.record(z.any())).optional(),
+  shiftStatus: z.string().optional(),
+});
+
+export const incidentCreateSchema = z.object({
+  technicianId: z.string().min(1).optional(),
+  jobId: z.string().min(1).optional(),
+  description: z.string().min(2),
+  incidentType: z.string().optional(),
+  severity: z.string().optional(),
+  estimatedCost: z.number().optional(),
+});
+
+export const qualityIssueCreateSchema = z.object({
+  jobId: z.string().min(1),
+  customerId: z.string().min(1),
+  complaintType: z.string().min(1),
+  description: z.string().min(2),
+  severity: z.string().optional(),
+  reportedBy: z.string().optional(),
+});
