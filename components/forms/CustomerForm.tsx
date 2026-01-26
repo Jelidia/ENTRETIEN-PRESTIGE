@@ -35,6 +35,7 @@ export default function CustomerForm() {
     }
 
     setStatus("Customer saved.");
+    window.location.reload();
   }
 
   return (

@@ -1,3 +1,5 @@
+"use client";
+
 type KpiCardProps = {
   label: string;
   value: string;

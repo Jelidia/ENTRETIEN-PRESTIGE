@@ -1,3 +1,5 @@
+"use client";
+
 type TopBarProps = {
   title: string;
   subtitle?: string;

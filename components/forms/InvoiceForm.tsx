@@ -32,6 +32,7 @@ export default function InvoiceForm() {
     }
 
     setStatusMessage("Invoice created.");
+    window.location.reload();
   }
 
   return (

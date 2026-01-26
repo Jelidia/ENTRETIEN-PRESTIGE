@@ -38,6 +38,7 @@ export default function JobForm() {
     }
 
     setStatus("Job created.");
+    window.location.reload();
   }
 
   return (
