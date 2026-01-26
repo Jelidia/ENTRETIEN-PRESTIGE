@@ -9,11 +9,10 @@ export default function HomePage() {
           <div className="brand">Entretien Prestige</div>
         </div>
         <h1 className="hero-title" style={{ marginTop: 24 }}>
-          Dispatch, quality, and revenue in one secure workspace.
+          Dispatch Entretien Prestige
         </h1>
         <p className="hero-subtitle">
-          A Homebase-inspired operations hub built for field services. Track jobs, dispatch
-          crews, and keep customer records locked to the right role and company.
+          youssef t gay
         </p>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 24 }}>
           <Link className="button-primary" href="/login">

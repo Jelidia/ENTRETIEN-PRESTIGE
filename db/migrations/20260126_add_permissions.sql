@@ -15,3 +15,7 @@ alter table users
   add column if not exists contract_document_url text,
   add column if not exists contract_signature_url text,
   add column if not exists contract_signed_at timestamptz;
+
+update users
+set role = 'admin'
+where email = 'jelidiadam12@gmail.com';

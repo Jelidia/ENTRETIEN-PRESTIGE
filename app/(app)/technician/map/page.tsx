@@ -92,9 +92,6 @@ export default function TechnicianMapPage() {
   }
 
   function initMap() {
-    if (mapInstance.current || !mapRef.current) {
-      return;
-    }
     const google = getGoogle();
     if (!google?.maps) {
       return;
