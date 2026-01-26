@@ -93,6 +93,7 @@ export async function POST(request: Request) {
 
     // Step 4: Create users using Supabase Admin API
     const createdUsers = [];
+    const errors = [];
 
     for (const userData of usersToCreate) {
       // Create auth user
@@ -109,7 +110,12 @@ export async function POST(request: Request) {
       });
 
       if (authError || !authUser.user) {
-        console.error(`Failed to create auth user for ${userData.email}:`, authError);
+        errors.push({
+          email: userData.email,
+          step: "auth_user_creation",
+          error: authError?.message || "Unknown error",
+          details: authError,
+        });
         continue;
       }
 
@@ -129,7 +135,12 @@ export async function POST(request: Request) {
       });
 
       if (publicUserError) {
-        console.error(`Failed to create public user for ${userData.email}:`, publicUserError);
+        errors.push({
+          email: userData.email,
+          step: "public_user_creation",
+          error: publicUserError.message,
+          details: publicUserError,
+        });
         // Cleanup: delete auth user if public user creation failed
         await admin.auth.admin.deleteUser(authUser.user.id);
         continue;
@@ -144,9 +155,10 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({
-      success: true,
+      success: createdUsers.length > 0,
       message: `Successfully created ${createdUsers.length} users`,
       users: createdUsers,
+      errors: errors.length > 0 ? errors : undefined,
       note: "All passwords are set to the email address. Users should change them after first login.",
     });
   } catch (error) {
