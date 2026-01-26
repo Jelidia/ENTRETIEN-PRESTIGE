@@ -8,15 +8,27 @@ export async function POST(request: Request) {
   const admin = createAdminClient();
 
   try {
-    // Step 1: Delete all existing users
-    const { data: existingUsers } = await admin.from("users").select("user_id");
+    // Step 1: Delete all existing users (both auth.users and public.users)
 
-    if (existingUsers && existingUsers.length > 0) {
-      for (const user of existingUsers) {
-        // Delete from auth.users (cascades to public.users via FK)
-        await admin.auth.admin.deleteUser(user.user_id);
+    // Get all auth.users
+    const { data: authUsers, error: listError } = await admin.auth.admin.listUsers();
+
+    if (listError) {
+      return NextResponse.json(
+        { error: "Failed to list existing users", details: listError.message },
+        { status: 500 }
+      );
+    }
+
+    // Delete all auth.users (cascades to public.users via FK)
+    if (authUsers.users && authUsers.users.length > 0) {
+      for (const user of authUsers.users) {
+        await admin.auth.admin.deleteUser(user.id);
       }
     }
+
+    // Also clean up any orphaned public.users (shouldn't exist with FK, but just in case)
+    await admin.from("users").delete().neq("user_id", "00000000-0000-0000-0000-000000000000");
 
     // Step 2: Ensure company exists
     const { data: company } = await admin
