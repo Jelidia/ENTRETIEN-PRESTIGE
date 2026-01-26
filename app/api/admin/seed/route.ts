@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabaseServer";
 import { seedAccountsSchema } from "@/lib/validators";
+import { isSmsConfigured } from "@/lib/twilio";
 
 function generatePassword() {
   return crypto.randomBytes(24).toString("hex");
@@ -22,6 +23,7 @@ export async function POST(request: Request) {
 
   const { profile } = auth;
   const admin = createAdminClient();
+  const smsConfigured = isSmsConfigured();
   const results: {
     role: string;
     email: string;
@@ -63,6 +65,7 @@ export async function POST(request: Request) {
       continue;
     }
 
+    const enableSms2fa = Boolean(account.phone && smsConfigured);
     const { error: insertError } = await admin.from("users").insert({
       user_id: userData.user.id,
       company_id: profile.company_id,
@@ -71,8 +74,8 @@ export async function POST(request: Request) {
       full_name: account.fullName,
       role: account.role,
       status: "active",
-      two_factor_enabled: true,
-      two_factor_method: "sms",
+      two_factor_enabled: enableSms2fa,
+      two_factor_method: enableSms2fa ? "sms" : "authenticator",
     });
 
     if (insertError) {
@@ -80,7 +83,7 @@ export async function POST(request: Request) {
         role: account.role,
         email: account.email,
         status: "failed",
-        error: "Unable to store user profile",
+        error: insertError.message ?? "Unable to store user profile",
       });
       continue;
     }

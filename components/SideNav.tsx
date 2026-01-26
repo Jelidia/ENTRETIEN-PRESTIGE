@@ -94,6 +94,29 @@ const bottomNavItems: {
     ),
   },
   {
+    href: "/invoices",
+    label: "Invoices",
+    permission: "invoices",
+    icon: ({ active }) => (
+      <svg viewBox="0 0 24 24" aria-hidden="true" className={clsx("bottom-nav-icon", active && "bottom-nav-icon-active")}>
+        <path
+          d="M6 3h8l4 4v14H6Z"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M8 11h8M8 15h6"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+        />
+      </svg>
+    ),
+  },
+  {
     href: "/sales",
     label: "Sales",
     permission: "sales",
@@ -108,6 +131,36 @@ const bottomNavItems: {
           strokeLinejoin="round"
         />
         <circle cx="18" cy="9" r="2" fill="currentColor" />
+      </svg>
+    ),
+  },
+  {
+    href: "/operations",
+    label: "Ops",
+    permission: "operations",
+    icon: ({ active }) => (
+      <svg viewBox="0 0 24 24" aria-hidden="true" className={clsx("bottom-nav-icon", active && "bottom-nav-icon-active")}>
+        <path
+          d="M12 4 4 8l8 4 8-4-8-4Z"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M4 12l8 4 8-4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M4 16l8 4 8-4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
       </svg>
     ),
   },
@@ -242,11 +295,13 @@ const bottomNavItems: {
   },
 ];
 
+const defaultAppTabs = navItems.map((item) => item.href);
+
 const preferredTabsByRole: Record<string, string[]> = {
-  admin: ["/dashboard", "/dispatch", "/jobs", "/customers", "/notifications"],
-  manager: ["/dashboard", "/dispatch", "/jobs", "/customers", "/notifications"],
-  dispatcher: ["/dispatch", "/jobs", "/customers", "/notifications", "/dashboard"],
-  sales_rep: ["/dashboard", "/customers", "/sales", "/reports", "/notifications"],
+  admin: defaultAppTabs,
+  manager: defaultAppTabs,
+  dispatcher: defaultAppTabs,
+  sales_rep: defaultAppTabs,
   technician: [
     "/technician",
     "/technician/map",
@@ -359,13 +414,7 @@ export function BottomNav() {
       ? bottomNavItems.filter((item) => permissions[item.permission])
       : bottomNavItems;
 
-    const preferred = preferredTabsByRole[role] ?? [
-      "/dashboard",
-      "/dispatch",
-      "/jobs",
-      "/customers",
-      "/notifications",
-    ];
+    const preferred = preferredTabsByRole[role] ?? defaultAppTabs;
 
     const selected: typeof bottomNavItems = [];
     for (const href of preferred) {
@@ -375,16 +424,13 @@ export function BottomNav() {
       }
     }
 
-    if (selected.length < 5) {
-      for (const item of allowed) {
-        if (selected.length >= 5) break;
-        if (!selected.some((existing) => existing.href === item.href)) {
-          selected.push(item);
-        }
+    for (const item of allowed) {
+      if (!selected.some((existing) => existing.href === item.href)) {
+        selected.push(item);
       }
     }
 
-    return selected.slice(0, 5);
+    return selected;
   }, [permissions, role]);
 
   return (

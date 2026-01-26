@@ -112,6 +112,10 @@ export default function SettingsPage() {
   }, []);
 
   useEffect(() => {
+    setUserForm((prev) => (prev.password ? prev : { ...prev, password: generatePassword() }));
+  }, []);
+
+  useEffect(() => {
     if (!selectedUser) {
       setUserOverrides(emptyPermissions);
       return;
@@ -327,19 +331,27 @@ export default function SettingsPage() {
       <TopBar
         title="Settings"
         subtitle="Security, access control, and notifications"
-        actions={<button className="button-primary" type="button">Save changes</button>}
       />
 
-      <div className="grid-2">
-        <div className="card">
-          <h3 className="card-title">Security controls</h3>
+      <section className="section">
+        <div className="section-header">
+          <div>
+            <div className="card-label">Security</div>
+            <h2 className="section-title">Account protection</h2>
+            <div className="section-subtitle">Two-factor, sessions, and alert preferences.</div>
+          </div>
+        </div>
+        <div className="grid-2">
+          <div className="card">
+            <h3 className="card-title">Security controls</h3>
+            <div className="card-meta">Two-factor can be enabled per user.</div>
           <div className="list" style={{ marginTop: 12 }}>
             <div className="list-item">
               <div>
-                <strong>Two-factor required</strong>
-                <div className="card-meta">SMS and authenticator enforced</div>
+                <strong>Two-factor protection</strong>
+                <div className="card-meta">Enable SMS or authenticator per user.</div>
               </div>
-              <span className="tag">Enabled</span>
+              <span className="tag">Recommended</span>
             </div>
             <div className="list-item">
               <div>
@@ -373,16 +385,32 @@ export default function SettingsPage() {
             {securityStatus ? <div className="hint">{securityStatus}</div> : null}
           </div>
         </div>
-        <div className="card">
-          <h3 className="card-title">Notification rules</h3>
-          <NotificationSettingsForm />
+          <div className="card">
+            <h3 className="card-title">Notification rules</h3>
+            <div className="card-meta">Control how the team gets updates.</div>
+            <NotificationSettingsForm />
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div className="grid-2" style={{ marginTop: 24 }}>
+      <section className="section">
+        <div className="section-header">
+          <div>
+            <div className="card-label">Team</div>
+            <h2 className="section-title">People and access</h2>
+            <div className="section-subtitle">Invite staff, manage roles, and review access.</div>
+          </div>
+        </div>
+        <div className="grid-2">
         <div className="card">
-          <h3 className="card-title">Team roster</h3>
-          <table className="table">
+          <div className="card-header">
+            <div>
+              <h3 className="card-title">Team roster</h3>
+              <div className="card-meta">Assign roles, status, and access overrides.</div>
+            </div>
+          </div>
+          <div className="table-scroll">
+          <table className="table table-desktop">
             <thead>
               <tr>
                 <th>Member</th>
@@ -440,11 +468,64 @@ export default function SettingsPage() {
               })}
             </tbody>
           </table>
+          </div>
+          <div className="card-list-mobile">
+            {team.map((member) => {
+              const edits = teamEdits[member.user_id] ?? { role: member.role, status: member.status };
+              return (
+                <div key={member.user_id} className="mobile-card">
+                  <div className="mobile-card-title">{member.full_name}</div>
+                  <div className="mobile-card-meta">{member.email}</div>
+                  <div className="grid-2">
+                    <div className="form-row">
+                      <label className="label" htmlFor={`role-${member.user_id}`}>Role</label>
+                      <select
+                        id={`role-${member.user_id}`}
+                        className="select"
+                        value={edits.role}
+                        onChange={(event) => updateTeamEdit(member.user_id, "role", event.target.value)}
+                      >
+                        {roleOptions.map((role) => (
+                          <option key={role.value} value={role.value}>
+                            {role.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-row">
+                      <label className="label" htmlFor={`status-${member.user_id}`}>Status</label>
+                      <select
+                        id={`status-${member.user_id}`}
+                        className="select"
+                        value={edits.status}
+                        onChange={(event) => updateTeamEdit(member.user_id, "status", event.target.value)}
+                      >
+                        {statusOptions.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="hint">Access: {member.access_permissions ? "Custom" : "Role default"}</div>
+                  <button className="button-secondary" type="button" onClick={() => saveTeamMember(member)}>
+                    Save
+                  </button>
+                </div>
+              );
+            })}
+          </div>
           {teamStatus ? <div className="hint">{teamStatus}</div> : null}
         </div>
 
         <div className="card">
-          <h3 className="card-title">Add team member</h3>
+          <div className="card-header">
+            <div>
+              <h3 className="card-title">Add team member</h3>
+              <div className="card-meta">Create logins for technicians, sales, and admins.</div>
+            </div>
+          </div>
           <form className="form-grid" onSubmit={createTeamMember}>
             <div className="form-row">
               <label className="label" htmlFor="teamFullName">Full name</label>
@@ -476,6 +557,7 @@ export default function SettingsPage() {
                   value={userForm.phone}
                   onChange={(event) => setUserForm({ ...userForm, phone: event.target.value })}
                 />
+                <div className="hint">Needed for SMS 2FA and alerts.</div>
               </div>
               <div className="form-row">
                 <label className="label" htmlFor="teamRole">Role</label>
@@ -503,6 +585,7 @@ export default function SettingsPage() {
                 minLength={16}
                 required
               />
+              <div className="hint">16+ characters. Without a phone, 2FA stays off until they set up an authenticator.</div>
             </div>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               <button className="button-primary" type="submit">Create user</button>
@@ -517,11 +600,25 @@ export default function SettingsPage() {
             {createStatus ? <div className="hint">{createStatus}</div> : null}
           </form>
         </div>
-      </div>
+        </div>
+      </section>
 
-      <div className="grid-2" style={{ marginTop: 24 }}>
+      <section className="section">
+        <div className="section-header">
+          <div>
+            <div className="card-label">Access</div>
+            <h2 className="section-title">Permissions</h2>
+            <div className="section-subtitle">Fine-tune what each role can see.</div>
+          </div>
+        </div>
+        <div className="grid-2">
         <div className="card">
-          <h3 className="card-title">Role access control</h3>
+          <div className="card-header">
+            <div>
+              <h3 className="card-title">Role access control</h3>
+              <div className="card-meta">Set the default access level per role.</div>
+            </div>
+          </div>
           <div style={{ overflowX: "auto" }}>
             <table className="table">
               <thead>
@@ -561,7 +658,12 @@ export default function SettingsPage() {
         </div>
 
         <div className="card">
-          <h3 className="card-title">User access overrides</h3>
+          <div className="card-header">
+            <div>
+              <h3 className="card-title">User access overrides</h3>
+              <div className="card-meta">Give specific teammates extra access.</div>
+            </div>
+          </div>
           <div className="form-row">
             <label className="label" htmlFor="overrideUser">Team member</label>
             <select
@@ -607,11 +709,25 @@ export default function SettingsPage() {
           </div>
           {userOverrideStatus ? <div className="hint">{userOverrideStatus}</div> : null}
         </div>
-      </div>
+        </div>
+      </section>
 
-      <div className="card" style={{ marginTop: 24 }}>
-        <h3 className="card-title">Seed starter accounts</h3>
-        <form className="form-grid" onSubmit={seedAccounts}>
+      <section className="section">
+        <div className="section-header">
+          <div>
+            <div className="card-label">Onboarding</div>
+            <h2 className="section-title">Seed starter accounts</h2>
+            <div className="section-subtitle">Create the first admin, technician, and seller in one step.</div>
+          </div>
+        </div>
+        <div className="card">
+          <div className="card-header">
+            <div>
+              <h3 className="card-title">Seed starter accounts</h3>
+              <div className="card-meta">We will generate temporary passwords for each role.</div>
+            </div>
+          </div>
+          <form className="form-grid" onSubmit={seedAccounts}>
           <div className="grid-3">
             <div className="form-row">
               <label className="label" htmlFor="seedAdminName">Admin name</label>
@@ -733,7 +849,8 @@ export default function SettingsPage() {
           {seedStatus ? <div className="hint">{seedStatus}</div> : null}
         </form>
         {seedResults.length ? (
-          <table className="table" style={{ marginTop: 16 }}>
+          <div className="table-scroll" style={{ marginTop: 16 }}>
+          <table className="table">
             <thead>
               <tr>
                 <th>Role</th>
@@ -753,8 +870,10 @@ export default function SettingsPage() {
               ))}
             </tbody>
           </table>
+          </div>
         ) : null}
-      </div>
+        </div>
+      </section>
     </div>
   );
 }
