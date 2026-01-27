@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
-import { sendSMS } from "@/lib/twilio";
+import { sendSms } from "@/lib/twilio";
 import { smsTemplates, formatPhoneNumber } from "@/lib/smsTemplates";
 
 // Trigger SMS based on job events
@@ -135,7 +135,7 @@ export async function POST(request: Request) {
         for (const assignment of assignments) {
           if (assignment.user && (assignment.user.role === "manager" || assignment.user.role === "sales_rep")) {
             if (assignment.user.phone) {
-              await sendSMS(
+              await sendSms(
                 formatPhoneNumber(assignment.user.phone),
                 `No-show: ${customer.full_name} n'était pas disponible pour le rendez-vous (Job #${jobId.substring(0, 8)})`
               );
@@ -156,7 +156,7 @@ export async function POST(request: Request) {
     const phoneNumber = formatPhoneNumber(customer.phone);
 
     try {
-      await sendSMS(phoneNumber, message);
+      await sendSms(phoneNumber, message);
 
       // Log SMS in database
       await client.from("sms_messages").insert({

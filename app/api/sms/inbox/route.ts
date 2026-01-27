@@ -73,11 +73,15 @@ export async function GET(request: Request) {
     if (!threadId) continue;
 
     if (!threadsMap.has(threadId)) {
+      const customer = Array.isArray(msg.customer) ? msg.customer[0] : msg.customer;
+      const customerName = (customer as { full_name?: string } | null | undefined)?.full_name || "Unknown";
+      const customerPhone = (customer as { phone?: string } | null | undefined)?.phone || msg.recipient_phone || msg.sender_phone;
+
       threadsMap.set(threadId, {
         thread_id: threadId,
         customer_id: msg.related_customer_id,
-        customer_name: msg.customer?.full_name || "Unknown",
-        customer_phone: msg.customer?.phone || msg.recipient_phone || msg.sender_phone,
+        customer_name: customerName,
+        customer_phone: customerPhone,
         last_message: msg.message_body,
         last_message_at: msg.sent_at,
         unread_count: 0,

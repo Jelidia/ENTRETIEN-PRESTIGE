@@ -11,7 +11,7 @@
 -- Update existing dispatcher users to manager role
 UPDATE users
 SET role = 'manager'
-WHERE role = 'dispatcher';
+WHERE role::text = 'dispatcher';
 
 -- Remove dispatcher from role enum (safe approach)
 DO $$
@@ -22,6 +22,9 @@ BEGIN
   SELECT data_type INTO current_type
   FROM information_schema.columns
   WHERE table_name = 'users' AND column_name = 'role';
+
+  -- Drop legacy role check constraint if present
+  ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
 
   -- If role column is already user_role enum type
   IF current_type = 'USER-DEFINED' THEN
@@ -43,7 +46,7 @@ BEGIN
     -- Convert column to new enum
     ALTER TABLE users
     ALTER COLUMN role TYPE user_role
-    USING role::user_role;
+    USING role::text::user_role;
 
     -- Drop old type
     DROP TYPE user_role_old;
@@ -64,7 +67,7 @@ BEGIN
     -- Convert text to enum
     ALTER TABLE users
     ALTER COLUMN role TYPE user_role
-    USING role::user_role;
+    USING role::text::user_role;
 
   ELSE
     RAISE NOTICE 'Role column type is %, skipping migration', current_type;
@@ -506,7 +509,7 @@ WHERE NOT EXISTS (
 -- Insert default upsell items
 INSERT INTO upsell_items (company_id, name, description, price, is_permanent)
 SELECT
-  c.company_id,
+  defaults.company_id,
   item_name,
   description,
   price,

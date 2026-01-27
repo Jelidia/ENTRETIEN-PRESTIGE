@@ -5,10 +5,13 @@
 -- Update existing dispatcher users to manager (if any exist)
 UPDATE users
 SET role = 'manager'
-WHERE role = 'dispatcher';
+WHERE role::text = 'dispatcher';
 
 -- Fix role column type - convert to text first
 ALTER TABLE users ALTER COLUMN role TYPE text;
+
+-- Drop legacy role check constraint if present
+ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
 
 -- Drop old enum if exists
 DROP TYPE IF EXISTS user_role CASCADE;
@@ -25,7 +28,7 @@ CREATE TYPE user_role AS ENUM (
 -- Convert role column to use the enum
 ALTER TABLE users
 ALTER COLUMN role TYPE user_role
-USING role::user_role;
+USING role::text::user_role;
 
 -- Verify
 SELECT role, COUNT(*) as count

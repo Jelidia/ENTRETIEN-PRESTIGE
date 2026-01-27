@@ -118,9 +118,9 @@ declare
   orphan_count int;
 begin
   select count(*) into orphan_count
-  from users
+  from users u
   where not exists (
-    select 1 from auth.users where auth.users.id = users.user_id
+    select 1 from auth.users au where au.id = u.user_id
   );
 
   if orphan_count > 0 then
