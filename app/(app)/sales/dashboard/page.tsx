@@ -42,24 +42,50 @@ type FollowUp = {
 export default function SalesDashboard() {
   const [stats, setStats] = useState<SalesStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     loadStats();
   }, []);
 
   async function loadStats() {
+    setLoading(true);
+    setError("");
     const res = await fetch("/api/sales/dashboard");
-    if (res.ok) {
-      const data = await res.json();
-      setStats(data);
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data) {
+      setError(data?.error ?? "Unable to load sales dashboard");
+      setStats(null);
+      setLoading(false);
+      return;
     }
+    setStats(data);
     setLoading(false);
   }
 
-  if (loading || !stats) {
+  if (loading) {
     return (
       <div className="page">
         <TopBar title="Sales Dashboard" subtitle="Loading..." />
+      </div>
+    );
+  }
+
+  if (error || !stats) {
+    return (
+      <div className="page">
+        <TopBar
+          title="Sales Dashboard"
+          subtitle="Unable to load stats"
+          actions={
+            <button className="button-secondary" onClick={loadStats}>
+              ↻ Refresh
+            </button>
+          }
+        />
+        <div className="alert" style={{ marginTop: "16px" }}>
+          {error || "No data available."}
+        </div>
       </div>
     );
   }

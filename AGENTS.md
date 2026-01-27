@@ -2,175 +2,146 @@
 
 Guidance for agentic coding assistants working in this repo.
 
-Read `CLAUDE.md` first for the full spec and business rules.
+Read `CLAUDE.md` first. It is the authoritative spec for business rules and architecture.
 
 ## Repo Snapshot
 - Product: Entretien Prestige (field-service ERP for a Quebec cleaning company)
 - Stack: Next.js 14 App Router, TypeScript, Tailwind, Supabase (Postgres + RLS)
 - Language: French for UI/SMS/customer content; English for code and comments
 - Mobile-first: max width 640px, bottom nav always, no sidebar, exactly 5 tabs per role
-- Progress: ~70-75% complete (foundation solid, APIs mostly working, UI has critical gaps)
-- Status: **NOT READY** - Sales dashboard broken (404), admin dashboard shows fake data, missing photos/ratings
 
 ## Commands
 Install and run:
-- npm install
-- npm run dev (local dev server)
-- npm run build (production build)
-- npm run start (serve production build)
-- npm run lint (ESLint)
+```
+npm install
+npm run dev
+npm run build
+npm run start
+npm run lint
+```
 
 Tests:
-- npm test (vitest run with 100% coverage thresholds)
-- npm run test:watch (watch mode)
+```
+npm test
+npm run test:watch
+```
 
-Run a single test:
-- npx vitest run auth (matches test name or file substring)
-- npx vitest run --grep "login" (pattern match)
-- npx vitest run lib/pricing.test.ts (specific file)
+Run a single test (Vitest):
+```
+npx vitest run auth
+npx vitest run --grep "login"
+npx vitest run lib/pricing.test.ts
+```
 
 Type check only:
-- npx tsc --noEmit
+```
+npx tsc --noEmit
+```
 
 ## Cursor/Copilot Rules
-- No .cursor/rules, .cursorrules, or .github/copilot-instructions.md found.
+- No `.cursor/rules/`, `.cursorrules`, or `.github/copilot-instructions.md` found.
 
-## Project Structure
-- app/: Next.js App Router pages and API routes
-  - (app)/: Authenticated pages (route group)
-  - (auth)/: Auth pages (login, register, reset password)
-  - api/: API routes (auth, jobs, customers, sms, users, etc.)
-- components/: Shared UI components (BottomNav, Forms, StatusBadge, etc.)
-- lib/: Business logic (auth, permissions, pricing, validators, integrations)
-- db/: Schema and migrations (manual SQL apply in Supabase)
-- tests/: Vitest tests (currently 5 files, need more coverage)
+## Project Layout
+- `app/` - Next.js App Router pages and API routes
+  - `(app)/` - authenticated pages
+  - `(auth)/` - login/reset pages
+  - `api/` - API routes
+- `components/` - shared UI components
+- `lib/` - business logic and integrations
+- `db/` - schema and SQL migrations
+- `tests/` - Vitest tests
 
 ## Code Style and Conventions
-TypeScript:
-- Strict mode; avoid any (use unknown + type guards)
+TypeScript and types:
+- Strict mode; avoid `any` (use `unknown` + type guards)
 - Prefer named exports over default exports
-- Use type-only imports when possible
+- Use type-only imports where possible
 - Avoid type assertions unless required by an API surface
 
-Imports and paths:
-- Use @/ absolute imports from repo root (tsconfig paths)
-- Avoid relative traversals like ../../
-- Group imports: external, internal (@/), then relative
+Imports and module paths:
+- Use `@/` path alias for repo-root imports
+- Avoid relative traversals like `../../` when `@/` works
+- Group imports: external, internal (`@/`), then relative
 
-Formatting and files:
+Naming conventions:
+- Components and types: `PascalCase`
+- Functions and variables: `camelCase`
+- Constants: `UPPER_SNAKE_CASE`
+- API route folders: `kebab-case`
+- Zod schemas: `camelCase` + `Schema` suffix (e.g., `loginSchema`)
+
+Formatting and comments:
 - Follow existing formatting; keep diffs minimal
-- Keep ASCII for new content unless file already uses Unicode
-- Avoid unnecessary comments; only explain non-obvious logic
+- Tailwind utilities are standard; avoid new global styles unless needed
+- Add comments only for non-obvious logic; keep comments in English
+- Keep user-facing strings in French
 
-Naming:
-- Components and types: PascalCase (CustomerCard, JobPayload)
-- Functions and variables: camelCase (createJob, sendSms)
-- Constants: UPPER_SNAKE_CASE for fixed config values
-- API route folders: kebab-case (app/api/reset-password/route.ts)
-- Zod schemas: camelCase + Schema (loginSchema)
+Error handling:
+- Validate all external input with Zod `safeParse`
+- Return user-friendly messages and appropriate HTTP status codes
+- Do not expose raw `error.message` to clients
+- Log server-side errors with context (e.g., jobId, userId, companyId)
 
 ## API Route Pattern
-Use the standard handler flow:
-1) Authenticate with requireUser/requireRole/requirePermission
-2) Validate input with Zod safeParse
-3) Perform Supabase query (RLS enforced)
-4) Return NextResponse.json with a friendly message
+1) Authenticate with `requireUser`, `requireRole`, or `requirePermission`
+2) Validate input with Zod `safeParse`
+3) Query Supabase with RLS and `company_id` filtering
+4) Return `NextResponse.json`
 
-Example response shape:
-- Success: { success: true, data }
-- Error: { error: "User-friendly message", details?: techDetails }
+Response shape:
+- Success: `{ success: true, data }`
+- Error: `{ error: "Message", details?: technicalDetails }`
 
-## Auth and Permissions
-- Use requireUser/requireRole/requirePermission from lib/auth
-- Early return if auth returns { response }
-- Combine role + permission checks when needed
+## Data Access Rules
+- No ORM; use Supabase client directly
+- Use `createUserClient` for RLS-enforced access
+- Use admin client only in trusted server code
+- Always filter by `company_id`
+- Prefer explicit column lists over `select("*")`
+- Use `.single()` when exactly one row is expected
+- Use `.maybeSingle()` when a row might not exist
 
-## Supabase and Data Access
-- No ORM; use Supabase client queries directly
-- Always filter by company_id for multi-tenancy
-- Prefer explicit select columns (avoid select *)
-- Use .single() for exactly one row; .maybeSingle() if optional
-- Use createUserClient for normal access; admin client only in trusted server code
-
-## Validation and Security
-- Validate all external input with Zod (lib/validators)
-- Never trust request.json without validation
-- Do not expose raw error.message to clients
-- Log errors with context (jobId, userId, companyId, etc.)
-
-## Error Handling
-- Log server-side errors with context
-- Return user-friendly errors with appropriate HTTP status
-- Avoid leaking DB or provider details in responses
-
-## UI and UX Rules
-- Mobile-first layout; max width 640px and centered on desktop
-- BottomNavMobile always present; exactly 5 tabs per role
+## UI/UX Rules
+- Mobile-first layout, max width 640px, centered on desktop
+- `BottomNavMobile` always present, exactly 5 tabs per role
 - No sidebar; no horizontal scroll
-- Preserve existing design patterns unless explicitly requested
-
-## Styling and Layout
-- Tailwind utility classes are standard; avoid custom CSS unless needed
-- Use Pagination/BottomSheet patterns instead of long scrolls
-- Keep spacing consistent with existing components
-- Avoid new global styles unless required in app/globals.css
+- Prefer pagination or bottom sheets over long scrolls
 
 ## Localization
-- French text for user-facing UI, SMS templates, and customer messages
-- Keep labels concise for mobile screens
-- Technical logs and comments can stay in English
+- French for UI text, SMS templates, and customer-facing messages
+- English is acceptable for technical comments and logs
 
 ## Testing Guidelines
 - Vitest + Testing Library + jsdom
 - 100% coverage required (statements, branches, functions, lines)
-- Unit tests live in tests/ for lib logic
-- Mock Supabase clients in integration tests
-
-## Domain Rules to Respect
-- No-show flow: call, SMS, wait 10 minutes before skip; no commission for no-show ✅ WORKING
-- Photo requirements: before/after, 4 sides each (8 photos minimum) ❌ NOT IMPLEMENTED
-- Exactly 5 bottom-nav tabs per role ✅ ENFORCED (BottomNavMobile.tsx)
-- Equipment checklist: start/end of shift ✅ WORKING (/technician/equipment)
-- Commission tracking ⚠️ PARTIAL (earnings pages exist but may not show real data)
-- No customer login ✅ CORRECT (SMS/email only)
-- French primary language ✅ CORRECT (all templates in French)
-
-## Known Critical Issues
-- ❌ Sales dashboard page broken (calls /api/sales/dashboard which doesn't exist)
-- ❌ Admin dashboard shows fake mock data (not querying Supabase)
-- ❌ Job photo upload not implemented (database ready, no UI/API)
-- ❌ Public rating page not implemented (database ready)
-- ⚠️ PDF generation incomplete (no GST/QST breakdown for Quebec compliance)
-
-## Rate Limiting
-- API rate limiting enforced in middleware.ts
-- Avoid removing or bypassing rate limit checks
+- Unit tests for `lib/` logic in `tests/`
+- Mock Supabase clients for integration tests
 
 ## Database Migrations
-- Add SQL files to db/migrations/YYYYMMDD_description.sql
-- Apply manually in Supabase SQL editor (copy-paste and execute)
-- Keep schema and migrations in sync with code changes
-- Latest: 20260127_complete_spec_implementation.sql (16+ new tables)
-- See SQL_MIGRATION_GUIDE.md for troubleshooting (if file exists)
+- Add SQL files to `db/migrations/YYYYMMDD_description.sql`
+- Apply manually in Supabase SQL editor
+- Keep `db/schema.sql` and migrations in sync with code
 
 ## Environment Variables
-- See .env.example for all required and optional keys
-- **Required:** NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, APP_ENCRYPTION_KEY
-- **Optional:** TWILIO_*, STRIPE_*, RESEND_*, NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
-- Do not commit secrets (service role key, Stripe, Twilio tokens)
-- Only expose NEXT_PUBLIC_ vars to the client
-- Generate encryption key: `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`
+Required (local + deploy):
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY` (server only)
+- `APP_ENCRYPTION_KEY`
+- `NEXT_PUBLIC_BASE_URL`
+
+Common optional keys:
+- `TWILIO_*`, `STRIPE_*`, `RESEND_*`, `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`
+
+Never commit secrets. Only `NEXT_PUBLIC_*` may be exposed to the client.
 
 ## Useful Files
-- **CLAUDE.md** - Authoritative architecture and business rules (READ THIS FIRST)
-- **READY_TO_DEPLOY.md** - Implementation status (~85% complete), deployment checklist
-- **README.md** - Quick start guide
-- **ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md** - Complete business requirements (48+ specs)
-- middleware.ts - Auth checks + rate limiting
-- lib/auth.ts - Auth helpers (requireUser, requireRole, requirePermission)
-- lib/permissions.ts - Permission resolution (13 permissions, 4 roles)
-- lib/validators.ts - 33+ Zod schemas for all API inputs
-- lib/pricing.ts - Dynamic pricing calculator (size + time + holiday + discounts)
-- lib/smsTemplates.ts - French SMS templates (10+ types)
-- components/BottomNavMobile.tsx - Main navigation (5 tabs, role-based)
-- vitest.config.ts - Test config (100% coverage required)
+- `CLAUDE.md` - full spec and business rules
+- `READY_TO_DEPLOY.md` - implementation status and checklist
+- `README.md` - developer quick start
+- `middleware.ts` - auth checks and rate limiting
+- `lib/auth.ts` - auth helpers
+- `lib/permissions.ts` - permission resolution
+- `lib/validators.ts` - Zod schemas
+- `components/BottomNavMobile.tsx` - 5-tab nav enforcement
+- `vitest.config.ts` - coverage thresholds and test config

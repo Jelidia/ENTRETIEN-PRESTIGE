@@ -1,5 +1,6 @@
 import { getAccessTokenFromCookies } from "./session";
 import { createUserClient } from "./supabaseServer";
+import { buildDashboardData, formatDateKey } from "./dashboardMetrics";
 import {
   customers as fallbackCustomers,
   dashboardKpis,
@@ -17,7 +18,53 @@ import {
 } from "./data";
 
 export async function getDashboardData() {
-  return { kpis: dashboardKpis, revenueBars, scheduleToday };
+  const token = getAccessTokenFromCookies();
+  if (!token) {
+    return { kpis: dashboardKpis, revenueBars, scheduleToday };
+  }
+
+  const client = createUserClient(token);
+  const { data: userData } = await client.auth.getUser();
+  if (!userData?.user) {
+    return { kpis: dashboardKpis, revenueBars, scheduleToday };
+  }
+
+  const { data: profile } = await client
+    .from("users")
+    .select("company_id")
+    .eq("user_id", userData.user.id)
+    .maybeSingle();
+  if (!profile?.company_id) {
+    return { kpis: dashboardKpis, revenueBars, scheduleToday };
+  }
+
+  const now = new Date();
+  const rangeStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 11, 1));
+  const rangeKey = formatDateKey(rangeStart);
+
+  const { data: jobs, error: jobsError } = await client
+    .from("jobs")
+    .select(
+      "job_id, customer_id, service_type, status, scheduled_date, scheduled_start_time, scheduled_end_time, estimated_revenue, actual_revenue"
+    )
+    .eq("company_id", profile.company_id)
+    .gte("scheduled_date", rangeKey);
+
+  const { data: customers, error: customersError } = await client
+    .from("customers")
+    .select("customer_id, first_name, last_name, status, average_rating")
+    .eq("company_id", profile.company_id);
+
+  if (jobsError || customersError || !jobs || !customers) {
+    console.error("Failed to load dashboard data", {
+      jobsError,
+      customersError,
+      companyId: profile.company_id,
+    });
+    return { kpis: dashboardKpis, revenueBars, scheduleToday };
+  }
+
+  return buildDashboardData({ jobs, customers, now });
 }
 
 export async function getDispatchBoard() {
