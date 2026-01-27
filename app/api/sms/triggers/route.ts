@@ -51,7 +51,7 @@ export async function POST(request: Request) {
   }
 
   let message = "";
-  let sendSms = false;
+  let shouldSendSms = false;
 
   // Determine which SMS to send based on event
   switch (event) {
@@ -65,7 +65,7 @@ export async function POST(request: Request) {
         }),
         address: job.address || "",
       });
-      sendSms = true;
+      shouldSendSms = true;
       break;
 
     case "reminder_24h":
@@ -76,7 +76,7 @@ export async function POST(request: Request) {
           minute: "2-digit",
         }),
       });
-      sendSms = true;
+      shouldSendSms = true;
       break;
 
     case "reminder_1h":
@@ -86,7 +86,7 @@ export async function POST(request: Request) {
           minute: "2-digit",
         }),
       });
-      sendSms = true;
+      shouldSendSms = true;
       break;
 
     case "job_completed":
@@ -117,13 +117,13 @@ export async function POST(request: Request) {
         } else if (invoice.payment_method === "cash") {
           message = smsTemplates.jobCompletedCash();
         }
-        sendSms = true;
+        shouldSendSms = true;
       }
       break;
 
     case "no_show":
       message = smsTemplates.noShow();
-      sendSms = true;
+      shouldSendSms = true;
 
       // Also notify manager and sales rep
       const { data: assignments } = await client
@@ -133,10 +133,11 @@ export async function POST(request: Request) {
 
       if (assignments) {
         for (const assignment of assignments) {
-          if (assignment.user && (assignment.user.role === "manager" || assignment.user.role === "sales_rep")) {
-            if (assignment.user.phone) {
+          const user = Array.isArray(assignment.user) ? assignment.user[0] : assignment.user;
+          if (user && (user.role === "manager" || user.role === "sales_rep")) {
+            if (user.phone) {
               await sendSms(
-                formatPhoneNumber(assignment.user.phone),
+                formatPhoneNumber(user.phone),
                 `No-show: ${customer.full_name} n'était pas disponible pour le rendez-vous (Job #${jobId.substring(0, 8)})`
               );
             }
@@ -152,7 +153,7 @@ export async function POST(request: Request) {
       );
   }
 
-  if (sendSms && message) {
+  if (shouldSendSms && message) {
     const phoneNumber = formatPhoneNumber(customer.phone);
 
     try {
