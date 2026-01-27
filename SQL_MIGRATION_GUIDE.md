@@ -11,6 +11,20 @@ This happens because the `role` column type needs to be fixed first.
 
 ---
 
+## ✅ Also Required: Permissions Columns (New)
+
+If you see errors about `users.access_permissions` missing, you must add the
+permissions columns before running the app.
+
+**Run once (fast):**
+
+**File:** `db/migrations/20260126_add_permissions.sql`
+
+**Alternative:** Re-run `db/migrations/20260127_complete_spec_implementation.sql`
+(it now includes the permissions/user profile columns with `IF NOT EXISTS`).
+
+---
+
 ## ✅ SOLUTION: Run These 2 Files in Order
 
 ### **STEP 1: Fix Enum Type** (Run First)

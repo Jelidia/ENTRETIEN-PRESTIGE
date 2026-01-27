@@ -5,6 +5,28 @@
 -- ============================================================================
 
 -- ============================================================================
+-- PHASE 0: PERMISSIONS & USER PROFILE COLUMNS
+-- ============================================================================
+
+ALTER TABLE companies
+  ADD COLUMN IF NOT EXISTS role_permissions jsonb;
+
+ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS access_permissions jsonb;
+
+ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS address text,
+  ADD COLUMN IF NOT EXISTS city text,
+  ADD COLUMN IF NOT EXISTS province text,
+  ADD COLUMN IF NOT EXISTS postal_code text,
+  ADD COLUMN IF NOT EXISTS country text DEFAULT 'CA',
+  ADD COLUMN IF NOT EXISTS id_document_front_url text,
+  ADD COLUMN IF NOT EXISTS id_document_back_url text,
+  ADD COLUMN IF NOT EXISTS contract_document_url text,
+  ADD COLUMN IF NOT EXISTS contract_signature_url text,
+  ADD COLUMN IF NOT EXISTS contract_signed_at timestamptz;
+
+-- ============================================================================
 -- PHASE 1: REMOVE DISPATCHER ROLE
 -- ============================================================================
 

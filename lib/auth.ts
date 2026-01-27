@@ -42,7 +42,7 @@ export async function requireUser(request: Request) {
       .select("user_id, company_id, role, phone, two_factor_enabled, two_factor_method, full_name, email")
       .eq("user_id", data.user.id)
       .maybeSingle();
-    profile = fallback.data ?? null;
+    profile = fallback.data ? ({ ...fallback.data, access_permissions: null } as typeof profile) : null;
     profileError = fallback.error;
   }
 
@@ -60,7 +60,7 @@ export async function requireUser(request: Request) {
         .select("user_id, company_id, role, phone, two_factor_enabled, two_factor_method, full_name, email")
         .eq("user_id", data.user.id)
         .maybeSingle();
-      adminProfile = fallback.data ?? null;
+      adminProfile = fallback.data ? ({ ...fallback.data, access_permissions: null } as typeof adminProfile) : null;
       adminProfileError = fallback.error;
     }
 

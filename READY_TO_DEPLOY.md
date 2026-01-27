@@ -1,92 +1,190 @@
-# Entretien Prestige - Ready to Deploy ✅
+# Entretien Prestige - Deployment Status
+
 **Date:** 2026-01-27
-**Status:** Major Features Implemented
-**Progress:** ~50% Complete
+**Version:** 1.0 (In Development)
+**Status:** Foundation Complete, Core Features In Progress
 
 ---
 
-## 🎉 WHAT'S BEEN COMPLETED
+## ✅ COMPLETED FEATURES
 
-### 1. ✅ FOUNDATION (100% Complete)
-- **Mobile-First Navigation** - Bottom nav on ALL devices, no sidebar ever
-- **5 Tabs Per Role** - Exact spec compliance
-- **640px Max Width** - Centered content on all screens
-- **Dispatcher Role Removed** - Completely eliminated from system
-- **No-Scroll Components** - Pagination, BottomSheet, Accordion ready
+### 1. Foundation (100%)
+- ✅ Mobile-first navigation (bottom nav, 5 tabs per role)
+- ✅ 640px max width, centered layout
+- ✅ No sidebar anywhere
+- ✅ Role-based routing (admin, manager, sales_rep, technician)
+- ✅ Authentication with session management
+- ✅ Middleware with rate limiting
+- ✅ TypeScript strict mode
+- ✅ Testing setup (Vitest, 100% coverage requirement)
 
-### 2. ✅ DATABASE (100% Complete)
-**File:** `db/migrations/20260127_complete_spec_implementation.sql`
+### 2. Database Architecture (100%)
+- ✅ Base schema with RLS policies
+- ✅ 16 new tables for complete spec:
+  - `job_photos` (mandatory before/after, 4 sides)
+  - `upsell_items` & `job_upsells`
+  - `customer_subscriptions` (auto-billing)
+  - `customer_ratings` & `google_review_bonuses`
+  - `job_rework` (commission adjustments)
+  - `employee_availability` (hourly grid Mon-Sun)
+  - `onboarding_progress`
+  - `termination_records`
+  - `referrals` ($50 gift card tracking)
+  - `loyalty_points` & `loyalty_transactions`
+  - `equipment_checklist_templates` (admin customizable)
+- ✅ Multi-company support (company_id isolation)
+- ✅ Permission system (role + company + user overrides)
 
-**All 16 new tables created:**
-- job_photos (mandatory before/after, 4 sides)
-- upsell_items & job_upsells
-- customer_subscriptions
-- customer_ratings & google_review_bonuses
-- job_rework
-- employee_availability
-- onboarding_progress
-- termination_records
-- referrals
-- loyalty_points & loyalty_transactions
-- equipment_checklist_templates
-- Plus enhancements to existing tables
+### 3. Authentication & Security (100%)
+- ✅ Three Supabase client types (anon, user, admin)
+- ✅ Auth helpers: `requireUser`, `requireRole`, `requirePermission`
+- ✅ Permission resolution hierarchy
+- ✅ Session encryption (2FA secrets)
+- ✅ Rate limiting on all API routes (IP-based)
+- ✅ RLS policies on all tables
 
-**Fixed:** Enum creation error - now handles existing and new installations
+### 4. SMS System (100%)
+- ✅ Twilio integration
+- ✅ French SMS templates (all 10+ types)
+- ✅ Auto-triggers:
+  - Job scheduled
+  - 24h reminder
+  - 1h reminder
+  - Job completed (with payment link)
+  - No-show notification
+- ✅ Two-way inbox with threads
+- ✅ Role-based filtering (Manager sees all, Tech/Sales see assigned)
+- ✅ Unread badge tracking
 
-### 3. ✅ SMS SYSTEM (100% Complete)
-- **SMS Templates** (French) - All 10+ message types
-- **Auto-Triggers** - Job scheduled, 24h, 1h, completed, no-show
-- **Two-Way Inbox** - Thread view with role filtering
-- **Manager sees all** conversations
-- **Tech/Sales see assigned** customers only
-- **Unread badges** and mark as read
+### 5. Pricing Engine (100%)
+- ✅ Dynamic calculator with all factors:
+  - Size-based (sq ft, windows)
+  - Time surcharges (+20% evening/weekend)
+  - Holiday surcharges (+15% Quebec holidays)
+  - Volume discounts (-10% for 5+ jobs)
+- ✅ Subscription pricing (-10% permanent)
+- ✅ Loyalty point redemption (100 points = $10)
+- ✅ Quebec holiday calendar (2026)
 
-### 4. ✅ SALES REP FEATURES (100% Complete)
-- **Sales Dashboard** - KPIs, leaderboard rank, pipeline visualization
-- **Leads Management** - 5 states (new, contacted, estimated, won, lost)
-- **Quick Actions** - Call, SMS buttons with activity logging
-- **Pagination** - 5 leads per page
-- **Follow-up Reminders** - Integrated into dashboard
+### 6. UI Components (90%)
+- ✅ BottomNavMobile (5 tabs, role-based)
+- ✅ Pagination (no-scroll, 5 items per page)
+- ✅ BottomSheet (mobile modal pattern)
+- ✅ Accordion (collapsible sections)
+- ✅ NoShowDialog (call → SMS → skip workflow)
+- ✅ StatusBadge (consistent status chips)
+- ⏳ Photo upload component (planned)
+- ⏳ Availability calendar grid (planned)
 
-### 5. ✅ JOB MANAGEMENT (90% Complete)
-- **No-Show Protocol** - Call → SMS → Skip workflow with notifications
-- **Dynamic Pricing** - Size, time, holiday, volume discounts all working
-- **Commission Splits** - Database ready for multi-technician jobs
-- **Photo Tables** - Ready for mandatory before/after uploads
-
-### 6. ✅ PERMISSIONS & ROLES (100% Complete)
-- 5 roles only: admin, manager, sales_rep, technician, customer
-- Updated permission system
-- No customer login (SMS only)
-- Role-based features working
+### 7. Sales Rep Features (100%)
+- ✅ Dashboard with KPIs
+- ✅ Leaderboard ranking (rank only, earnings hidden)
+- ✅ Pipeline visualization (5 states)
+- ✅ Leads management page
+- ✅ Quick actions (call, SMS, convert)
+- ✅ Territory assignment (read-only for reps)
 
 ---
 
-## 📝 SQL TO RUN (REQUIRED)
+## 🚧 IN PROGRESS
 
-### **STEP 1: Run This SQL File**
+### Photo Upload System (Priority 1)
+- **Status:** Database ready, UI needed
+- **Requirement:** Before/after, 4 sides (front, back, left, right)
+- **Blocker:** Cannot complete job without all photos
+- **Files to create:**
+  - `components/PhotoUpload.tsx`
+  - `app/api/photos/upload/route.ts`
 
-Open Supabase SQL Editor and execute:
+### Public Rating Page (Priority 2)
+- **Status:** Database ready, page needed
+- **Requirement:** Tokenized link, no login
+- **Logic:** 1-3★ internal only, 4-5★ redirect to Google + $5 bonus
+- **Files to create:**
+  - `app/(public)/rate/[token]/page.tsx`
+  - `app/api/ratings/submit/route.ts`
 
+### Availability Calendar (Priority 3)
+- **Status:** Database table exists, UI needed
+- **Requirement:** Hourly grid Mon-Sun, 7am-10pm
+- **For:** Technicians AND Sales Reps
+- **Files to create:**
+  - `components/AvailabilityGrid.tsx`
+  - `app/api/availability/route.ts`
+
+---
+
+## 📋 PLANNED FEATURES
+
+### High Priority (2-3 weeks)
+- [ ] Re-work dialog with commission adjustments
+- [ ] Subscription management UI
+- [ ] Equipment checklist customization (admin)
+- [ ] Territory drawing on map (polygon tools)
+- [ ] Manager approval workflow for invoices
+
+### Medium Priority (3-4 weeks)
+- [ ] Sales Rep schedule page (`/sales/schedule`)
+- [ ] Sales Rep earnings page (`/sales/earnings`)
+- [ ] Technician pages refactor (use new components)
+- [ ] Upsell manager component
+- [ ] Multi-technician job splits UI
+
+### Lower Priority (4-6 weeks)
+- [ ] Referral tracking page ($50 gift cards)
+- [ ] Loyalty dashboard for customers
+- [ ] Late payment SMS cron job
+- [ ] Onboarding tracker (4-step checklist)
+- [ ] Termination flow with PDF generation
+- [ ] Quebec receipt generator (GST/QST compliant)
+
+---
+
+## 🔧 DEPLOYMENT CHECKLIST
+
+### Pre-Deployment
+
+#### 1. Run Database Migrations
 ```sql
--- Copy and paste entire contents of:
-db/migrations/20260127_complete_spec_implementation.sql
+-- In Supabase SQL Editor, run in this order:
+1. db/schema.sql (base schema)
+2. db/migrations/20260126_add_permissions.sql
+3. db/migrations/20260127_complete_spec_implementation.sql
 ```
 
-**What it does:**
-1. ✅ Updates dispatcher → manager (existing users)
-2. ✅ Creates/updates user_role enum (safe for existing DBs)
-3. ✅ Creates 16 new tables
-4. ✅ Adds all RLS policies
-5. ✅ Inserts default equipment items (4 items)
-6. ✅ Inserts default upsell items (4 items)
+See `SQL_MIGRATION_GUIDE.md` if you encounter enum errors.
 
-**Time:** ~2 minutes to run
+#### 2. Set Environment Variables
+Ensure all required variables are set in Vercel:
+```bash
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY
+APP_ENCRYPTION_KEY (32-byte base64)
+NEXT_PUBLIC_BASE_URL (production domain)
+```
 
-### **STEP 2: Verify**
+Configure integrations as you obtain credentials:
+```bash
+TWILIO_ACCOUNT_SID
+TWILIO_AUTH_TOKEN
+TWILIO_FROM_NUMBER
+STRIPE_SECRET_KEY
+STRIPE_WEBHOOK_SECRET
+RESEND_API_KEY
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+```
 
-Run this query to verify:
+#### 3. Verify Build
+```bash
+npm run build  # Should complete without errors
+npm run lint   # No ESLint errors
+npm test       # All tests pass
+```
 
+### Post-Deployment
+
+#### 1. Database Verification
 ```sql
 -- Check new tables exist
 SELECT table_name
@@ -101,263 +199,91 @@ AND table_name IN (
   'loyalty_points'
 )
 ORDER BY table_name;
+-- Should return 6+ rows
 
--- Should return 6 rows (and more)
-
--- Check default data
-SELECT * FROM equipment_checklist_templates;
-SELECT * FROM upsell_items;
+-- Verify RLS policies active
+SELECT COUNT(*) FROM users; -- Should work without errors
 ```
+
+#### 2. Test Core Features
+- [ ] Login as admin, manager, sales_rep, technician
+- [ ] Verify bottom nav shows 5 tabs per role
+- [ ] Check max width 640px on desktop
+- [ ] Test SMS sending (if Twilio configured)
+- [ ] Verify rate limiting (trigger 429 error)
+- [ ] Test permission checks (try forbidden action)
+
+#### 3. Monitor Logs
+- [ ] Supabase logs (check for RLS errors)
+- [ ] Vercel function logs (check for API errors)
+- [ ] Browser console (check for React errors)
 
 ---
 
-## 🚀 WHAT'S WORKING NOW
-
-### Navigation
-- Bottom nav visible on phones, tablets, desktops
-- 5 tabs per role (working)
-- No sidebar anywhere
-- 640px max width enforced
-
-### SMS Features
-- Auto-send on job scheduled ✅
-- Auto-send 24h reminder ✅
-- Auto-send 1h reminder ✅
-- Auto-send on job completed (with payment link) ✅
-- Auto-send on no-show ✅
-- Two-way inbox with threads ✅
-- Role-based filtering ✅
-
-### Sales Rep Features
-- Dashboard with KPIs ✅
-- Leaderboard ranking ✅
-- Pipeline visualization ✅
-- Lead management (5 states) ✅
-- Quick call/SMS actions ✅
-- Status updates ✅
-
-### Job Features
-- No-show dialog (call/SMS/skip) ✅
-- Dynamic pricing calculator ✅
-- Database ready for photos ✅
-- Database ready for upsells ✅
-
----
-
-## 🔨 WHAT STILL NEEDS WORK
-
-### High Priority (2-3 weeks)
-- [ ] **Public Rating Page** (no login, 4-5 stars → Google redirect)
-- [ ] **Photo Upload UI** (before/after, 4 sides mandatory)
-- [ ] **Re-Work Dialog** (commission adjustments)
-- [ ] **Availability Calendar** (hourly grid for tech/sales)
-- [ ] **Subscription Management Page** (auto-billing setup)
-- [ ] **Equipment Checklist UI** (admin customizable)
-
-### Medium Priority (2-3 weeks)
-- [ ] **Sales Rep Schedule** (`/sales/schedule`)
-- [ ] **Sales Rep Earnings** (`/sales/earnings`)
-- [ ] **Technician Pages Updates** (use new components)
-- [ ] **Upsell Manager Component** (pre-approved list)
-- [ ] **Territory Drawing** (Google Maps polygon)
-- [ ] **Admin Pages** (use pagination, no scroll)
-
-### Lower Priority (2-4 weeks)
-- [ ] **Referral Page** ($50 gift card tracking)
-- [ ] **Loyalty Dashboard** (customer points view)
-- [ ] **Late Payment Reminders** (cron job)
-- [ ] **Onboarding Tracker** (4-step checklist)
-- [ ] **Termination Flow** (PDF generation)
-- [ ] **Quebec Receipt Generator** (legal format)
-
----
-
-## 🎯 IMMEDIATE NEXT STEPS
-
-### For You (User):
-
-**1. Run SQL Migration** (5 minutes)
-```bash
-1. Open Supabase SQL Editor
-2. Copy contents of: db/migrations/20260127_complete_spec_implementation.sql
-3. Paste and click "Run"
-4. Verify no errors
-5. Check tables created (see verification query above)
-```
-
-**2. Test Navigation** (5 minutes)
-```bash
-1. Refresh browser
-2. Check bottom nav has exactly 5 tabs
-3. Verify no sidebar visible
-4. Test on mobile/tablet/desktop (should look identical with 640px max)
-5. Log in as different roles to see different tabs
-```
-
-**3. Test SMS (Optional)** (10 minutes)
-```bash
-# Test SMS trigger:
-POST /api/sms/triggers
-{
-  "event": "job_scheduled",
-  "jobId": "your-job-id-here"
-}
-
-# Test inbox:
-GET /api/sms/inbox
-```
-
-**4. Review Sales Rep Features** (5 minutes)
-```bash
-1. Log in as sales_rep role
-2. Visit /sales/dashboard
-3. Visit /sales/leads
-4. Test lead status updates
-5. Test call/SMS buttons
-```
-
-### For Development (Next Phase):
-
-**Priority 1: Photo Upload** (1-2 days)
-- Create photo upload component
-- Validate 4 sides (front, back, left, right)
-- Validate before AND after
-- Block job completion without photos
-
-**Priority 2: Public Rating Page** (1 day)
-- Create `/app/(public)/rate/[token]/page.tsx`
-- No login required
-- 1-5 star rating
-- Logic: 1-3 = save internal, 4-5 = Google redirect + $5 bonus
-
-**Priority 3: Availability Calendar** (2 days)
-- Hourly grid Mon-Sun, 7am-10pm
-- Toggle available/unavailable
-- Sunday night SMS reminder
-- For technicians AND sales reps
-
----
-
-## 📊 CURRENT IMPLEMENTATION STATUS
+## 📊 IMPLEMENTATION PROGRESS
 
 ```
 Foundation:          [████████████████████] 100%
 Database:            [████████████████████] 100%
+Authentication:      [████████████████████] 100%
 SMS System:          [████████████████████] 100%
-Sales Rep:           [████████████████████] 100%
-Job Management:      [█████████████████░░░] 90%
-Employee Features:   [████████░░░░░░░░░░░░] 40%
+Pricing Engine:      [████████████████████] 100%
+Sales Features:      [████████████████████] 100%
+UI Components:       [██████████████████░░] 90%
+Job Management:      [████████████░░░░░░░░] 60%
 Quality Control:     [██████░░░░░░░░░░░░░░] 30%
 Advanced Features:   [████░░░░░░░░░░░░░░░░] 20%
 
-OVERALL:             [██████████████░░░░░░] 70%
+OVERALL:             [█████████████░░░░░░░] 65%
 ```
 
 ---
 
-## ✅ TESTING CHECKLIST
+## 🚨 KNOWN ISSUES
 
-### Foundation
-- [x] Bottom nav shows 5 tabs per role
-- [x] No sidebar visible on any screen size
-- [x] Content max 640px width
-- [x] Pagination component works
-- [x] BottomSheet modal works
-- [x] Accordion component works
+### Fixed
+- ✅ TypeScript error in `lib/auth.ts` (access_permissions type)
+- ✅ SQL enum creation error (handled existing/new installs)
+- ✅ RLS infinite loop (security definer functions)
+- ✅ Rate limiting works on all API routes
 
-### Database
-- [ ] Run SQL migration successfully
-- [ ] All 16 tables created
-- [ ] RLS policies active
-- [ ] Default data inserted
-
-### SMS
-- [ ] Job scheduled SMS sent
-- [ ] 24h reminder sent
-- [ ] 1h reminder sent
-- [ ] Job completed SMS sent (correct payment method)
-- [ ] No-show SMS sent
-- [ ] Inbox shows conversations
-- [ ] Role filtering works (manager vs tech/sales)
-
-### Sales Rep
-- [ ] Dashboard loads with KPIs
-- [ ] Leaderboard rank displays
-- [ ] Pipeline shows 5 stages
-- [ ] Leads page shows tabs
-- [ ] Can update lead status
-- [ ] Call button opens dialer
-- [ ] SMS button sends message
-
-### Jobs
-- [ ] No-show dialog opens
-- [ ] Call button works
-- [ ] SMS button works
-- [ ] Skip button marks no-show
-- [ ] Dynamic pricing calculates correctly
+### Open
+- ⚠️ Photo upload UI not implemented (database ready)
+- ⚠️ Public rating page not created (database ready)
+- ⚠️ Availability calendar grid not built (database ready)
 
 ---
 
-## 🔥 QUICK START GUIDE
+## 🎯 NEXT STEPS
 
-**1. Run SQL** → `db/migrations/20260127_complete_spec_implementation.sql`
+### For Deployment (Immediate)
+1. ✅ Fix TypeScript error (DONE)
+2. Run SQL migrations in Supabase
+3. Set environment variables in Vercel
+4. Push to main branch (auto-deploy)
+5. Verify deployment successful
+6. Test login with each role
 
-**2. Restart Dev Server** → `npm run dev`
-
-**3. Test Features:**
-- Login as **admin** → See: Home, Schedule, Customers, Team, Settings
-- Login as **sales_rep** → See: Home, Leads, Schedule, Earnings, Settings
-- Login as **technician** → See: Today, Schedule, Equipment, Earnings, Profile
-
-**4. Try New Pages:**
-- `/inbox` - Two-way SMS conversations
-- `/sales/dashboard` - Sales rep KPIs
-- `/sales/leads` - Lead management
-
-**5. Test APIs:**
-- `POST /api/sms/triggers` - Send auto-SMS
-- `GET /api/sms/inbox` - Get conversations
-- `POST /api/sms/send` - Send SMS reply
+### For Development (Next Sprint)
+1. Build photo upload component
+2. Create public rating page
+3. Build availability calendar grid
+4. Implement re-work dialog
+5. Add subscription management UI
 
 ---
 
 ## 📞 SUPPORT
 
-**If SQL fails:**
-- Check that Supabase connection is active
-- Verify you're in SQL Editor (not API tab)
-- Run queries one section at a time if needed
+**Specification:** See `ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md` for complete requirements
 
-**If features don't work:**
-- Check browser console for errors
-- Verify environment variables set
-- Check API routes exist
+**Architecture:** See `CLAUDE.md` for technical details
 
-**If navigation broken:**
-- Hard refresh browser (Ctrl+Shift+R)
-- Clear browser cache
-- Check that BottomNavMobile component imports correctly
+**Troubleshooting:** See `SQL_MIGRATION_GUIDE.md` for database issues
+
+**Status:** Foundation complete, ready for feature development
 
 ---
 
-## 🎉 CONGRATULATIONS!
-
-You now have a **mobile-first, SMS-enabled, sales-optimized** field service management platform with:
-
-✅ Bottom nav only (no sidebar)
-✅ 5 roles properly configured
-✅ SMS auto-triggers working
-✅ Two-way inbox with filtering
-✅ Sales pipeline management
-✅ Dynamic pricing
-✅ No-show protocol
-✅ And 16 new database tables ready for all features!
-
-**Next:** Run the SQL migration and start testing! 🚀
-
----
-
-**Created:** 2026-01-27
 **Last Updated:** 2026-01-27
-**Version:** 2.0
-**Status:** Ready for SQL execution and testing
+**Next Review:** After photo upload implementation
