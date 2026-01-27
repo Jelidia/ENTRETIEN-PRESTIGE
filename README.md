@@ -4,7 +4,7 @@
 
 Full-stack operations platform for Quebec cleaning company with dispatch, CRM, billing, SMS automation, sales pipeline, and commission tracking.
 
-**Status:** ~70% complete, foundation ready, core features implemented
+**Status:** ~70-75% complete, foundation solid, APIs working, UI has critical gaps (see READY_TO_DEPLOY.md)
 
 ---
 
@@ -724,8 +724,9 @@ SELECT company_id FROM jobs WHERE job_id = 'yyy';
 
 **Project:** Entretien Prestige
 **Location:** Grand Montréal, Quebec, Canada
-**Version:** 1.0 (In Development - 70% Complete)
+**Version:** 1.0 (In Development - 70-75% Complete)
 **Specification:** Version 2.0 - Final (January 27, 2026)
+**Status:** NOT READY FOR PRODUCTION (critical bugs found - see READY_TO_DEPLOY.md)
 
 **For technical questions:**
 - See `CLAUDE.md` - Complete architecture

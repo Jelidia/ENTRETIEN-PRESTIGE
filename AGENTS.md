@@ -9,8 +9,8 @@ Read `CLAUDE.md` first for the full spec and business rules.
 - Stack: Next.js 14 App Router, TypeScript, Tailwind, Supabase (Postgres + RLS)
 - Language: French for UI/SMS/customer content; English for code and comments
 - Mobile-first: max width 640px, bottom nav always, no sidebar, exactly 5 tabs per role
-- Progress: ~85% complete (foundation done, core features implemented)
-- Status: Ready for deployment, missing job photos, rating page, availability calendar UI
+- Progress: ~70-75% complete (foundation solid, APIs mostly working, UI has critical gaps)
+- Status: **NOT READY** - Sales dashboard broken (404), admin dashboard shows fake data, missing photos/ratings
 
 ## Commands
 Install and run:
@@ -127,13 +127,20 @@ Example response shape:
 - Mock Supabase clients in integration tests
 
 ## Domain Rules to Respect
-- No-show flow: call, SMS, wait 10 minutes before skip; no commission for no-show
-- Photo requirements: before/after, 4 sides each (8 photos minimum) - NOT YET IMPLEMENTED
-- Exactly 5 bottom-nav tabs per role (enforced in BottomNavMobile.tsx)
-- Equipment checklist: start/end of shift (IMPLEMENTED at /technician/equipment)
-- Commission tracking: Sales & tech earnings pages IMPLEMENTED
-- No customer login: SMS/email updates only
-- French primary language for all customer-facing content
+- No-show flow: call, SMS, wait 10 minutes before skip; no commission for no-show ✅ WORKING
+- Photo requirements: before/after, 4 sides each (8 photos minimum) ❌ NOT IMPLEMENTED
+- Exactly 5 bottom-nav tabs per role ✅ ENFORCED (BottomNavMobile.tsx)
+- Equipment checklist: start/end of shift ✅ WORKING (/technician/equipment)
+- Commission tracking ⚠️ PARTIAL (earnings pages exist but may not show real data)
+- No customer login ✅ CORRECT (SMS/email only)
+- French primary language ✅ CORRECT (all templates in French)
+
+## Known Critical Issues
+- ❌ Sales dashboard page broken (calls /api/sales/dashboard which doesn't exist)
+- ❌ Admin dashboard shows fake mock data (not querying Supabase)
+- ❌ Job photo upload not implemented (database ready, no UI/API)
+- ❌ Public rating page not implemented (database ready)
+- ⚠️ PDF generation incomplete (no GST/QST breakdown for Quebec compliance)
 
 ## Rate Limiting
 - API rate limiting enforced in middleware.ts
