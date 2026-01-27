@@ -195,10 +195,10 @@ export default function TechnicianPage() {
       </div>
 
       <div className="tech-actions">
-        <a className="button-secondary" href="/technician/map">Directions</a>
-        <a className="button-secondary" href="/technician/customers">Customers</a>
+        <a className="button-secondary" href="/technician/schedule">Schedule</a>
+        <a className="button-secondary" href="/technician/equipment">Equipment</a>
         <a className="button-secondary" href="/technician/earnings">Earnings</a>
-        <a className="button-secondary" href="/technician/profile">Profile</a>
+        <a className="button-secondary" href="/technician/profile">Settings</a>
       </div>
 
       <div className="card tech-shift">

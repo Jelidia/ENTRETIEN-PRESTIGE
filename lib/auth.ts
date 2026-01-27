@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createUserClient } from "./supabaseServer";
+import { createAdminClient, createUserClient } from "./supabaseServer";
 import { getAccessTokenFromRequest } from "./session";
 import { resolvePermissions, type PermissionKey } from "./permissions";
 
@@ -28,16 +28,30 @@ export async function requireUser(request: Request) {
     return { response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
   }
 
-  const { data: profile } = await client
+  const { data: profile, error: profileError } = await client
     .from("users")
     .select(
       "user_id, company_id, role, phone, two_factor_enabled, two_factor_method, full_name, email, access_permissions"
     )
     .eq("user_id", data.user.id)
-    .single();
+    .maybeSingle();
 
   if (!profile) {
-    return { response: NextResponse.json({ error: "Profile missing" }, { status: 403 }) };
+    const admin = createAdminClient();
+    const { data: adminProfile, error: adminProfileError } = await admin
+      .from("users")
+      .select(
+        "user_id, company_id, role, phone, two_factor_enabled, two_factor_method, full_name, email, access_permissions"
+      )
+      .eq("user_id", data.user.id)
+      .maybeSingle();
+
+    if (adminProfile) {
+      return { user: data.user, profile: adminProfile };
+    }
+
+    const details = profileError?.message ?? adminProfileError?.message;
+    return { response: NextResponse.json({ error: "Profile missing", details }, { status: 403 }) };
   }
 
   return { user: data.user, profile };

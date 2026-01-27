@@ -41,7 +41,7 @@ const allNavItems: NavItem[] = [
     ),
   },
   {
-    href: "/schedule",
+    href: "/dispatch",
     label: "Schedule",
     permission: "dispatch", // Schedule replaces dispatch
     roles: ["admin", "manager"],
@@ -113,7 +113,7 @@ const allNavItems: NavItem[] = [
   {
     href: "/sales/dashboard",
     label: "Home",
-    permission: "sales",
+    permission: "dashboard",
     roles: ["sales_rep"],
     icon: ({ active }) => (
       <svg viewBox="0 0 24 24" aria-hidden="true" className={clsx("bottom-nav-icon", active && "bottom-nav-icon-active")}>
@@ -232,7 +232,7 @@ const allNavItems: NavItem[] = [
   },
   {
     href: "/technician/profile",
-    label: "Profile",
+    label: "Settings",
     permission: "settings",
     roles: ["technician"],
     icon: ({ active }) => (

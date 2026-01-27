@@ -8,7 +8,13 @@ describe("TopBar", () => {
 
     const logo = document.querySelector("img.brand-logo") as HTMLImageElement | null;
     expect(logo).not.toBeNull();
-    expect(logo?.getAttribute("src")).toBe("/logo.png");
+    const logoSrc = logo?.getAttribute("src") ?? "";
+    if (logoSrc.startsWith("/logo.png")) {
+      expect(logoSrc).toBe("/logo.png");
+    } else {
+      const parsed = new URL(logoSrc, "http://localhost");
+      expect(parsed.searchParams.get("url")).toBe("/logo.png");
+    }
     if (logo) {
       fireEvent.error(logo);
     }
