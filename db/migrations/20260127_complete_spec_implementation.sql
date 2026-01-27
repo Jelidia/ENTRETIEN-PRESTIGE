@@ -13,22 +13,51 @@ UPDATE users
 SET role = 'manager'
 WHERE role = 'dispatcher';
 
--- Remove dispatcher from role enum
-ALTER TYPE user_role RENAME TO user_role_old;
+-- Remove dispatcher from role enum (safe approach)
+DO $$
+BEGIN
+  -- Check if the type exists
+  IF EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
+    -- Rename old type
+    ALTER TYPE user_role RENAME TO user_role_old;
 
-CREATE TYPE user_role AS ENUM (
-  'admin',
-  'manager',
-  'sales_rep',
-  'technician',
-  'customer'
-);
+    -- Create new type without dispatcher
+    CREATE TYPE user_role AS ENUM (
+      'admin',
+      'manager',
+      'sales_rep',
+      'technician',
+      'customer'
+    );
 
-ALTER TABLE users
-ALTER COLUMN role TYPE user_role
-USING role::text::user_role;
+    -- Update column to use new type
+    ALTER TABLE users
+    ALTER COLUMN role TYPE user_role
+    USING role::text::user_role;
 
-DROP TYPE user_role_old;
+    -- Drop old type
+    DROP TYPE user_role_old;
+  ELSE
+    -- Create type if it doesn't exist
+    CREATE TYPE user_role AS ENUM (
+      'admin',
+      'manager',
+      'sales_rep',
+      'technician',
+      'customer'
+    );
+
+    -- Update users table if role column exists but isn't typed
+    IF EXISTS (
+      SELECT 1 FROM information_schema.columns
+      WHERE table_name = 'users' AND column_name = 'role'
+    ) THEN
+      ALTER TABLE users
+      ALTER COLUMN role TYPE user_role
+      USING role::text::user_role;
+    END IF;
+  END IF;
+END $$;
 
 -- ============================================================================
 -- PHASE 2: JOB PHOTOS (MANDATORY BEFORE/AFTER)
