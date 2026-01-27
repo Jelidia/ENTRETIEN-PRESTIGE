@@ -28,23 +28,41 @@ export async function requireUser(request: Request) {
     return { response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
   }
 
-  const { data: profile, error: profileError } = await client
+  const selectFields =
+    "user_id, company_id, role, phone, two_factor_enabled, two_factor_method, full_name, email, access_permissions";
+  let { data: profile, error: profileError } = await client
     .from("users")
-    .select(
-      "user_id, company_id, role, phone, two_factor_enabled, two_factor_method, full_name, email, access_permissions"
-    )
+    .select(selectFields)
     .eq("user_id", data.user.id)
     .maybeSingle();
 
-  if (!profile) {
-    const admin = createAdminClient();
-    const { data: adminProfile, error: adminProfileError } = await admin
+  if (profileError?.message?.includes("access_permissions")) {
+    const fallback = await client
       .from("users")
-      .select(
-        "user_id, company_id, role, phone, two_factor_enabled, two_factor_method, full_name, email, access_permissions"
-      )
+      .select("user_id, company_id, role, phone, two_factor_enabled, two_factor_method, full_name, email")
       .eq("user_id", data.user.id)
       .maybeSingle();
+    profile = fallback.data ?? null;
+    profileError = fallback.error;
+  }
+
+  if (!profile) {
+    const admin = createAdminClient();
+    let { data: adminProfile, error: adminProfileError } = await admin
+      .from("users")
+      .select(selectFields)
+      .eq("user_id", data.user.id)
+      .maybeSingle();
+
+    if (adminProfileError?.message?.includes("access_permissions")) {
+      const fallback = await admin
+        .from("users")
+        .select("user_id, company_id, role, phone, two_factor_enabled, two_factor_method, full_name, email")
+        .eq("user_id", data.user.id)
+        .maybeSingle();
+      adminProfile = fallback.data ?? null;
+      adminProfileError = fallback.error;
+    }
 
     if (adminProfile) {
       return { user: data.user, profile: adminProfile };
