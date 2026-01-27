@@ -1,5 +1,5 @@
 import "./globals.css";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Poppins, IBM_Plex_Mono } from "next/font/google";
 
 const display = Poppins({
@@ -23,6 +23,14 @@ const mono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: "Entretien Prestige",
   description: "Operations platform for Entretien Prestige",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
