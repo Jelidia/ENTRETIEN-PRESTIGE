@@ -33,26 +33,22 @@ export const defaultRolePermissions: Record<string, PermissionMap> = {
   sales_rep: {
     ...emptyPermissions,
     dashboard: true,
+    jobs: true,
     customers: true,
     sales: true,
     reports: true,
     notifications: true,
+    settings: true,
   },
   technician: {
     ...emptyPermissions,
     dashboard: true,
-    customers: true,
     jobs: true,
+    customers: true,
     reports: true,
     technician: true,
     notifications: true,
-  },
-  dispatcher: {
-    ...emptyPermissions,
-    dashboard: true,
-    dispatch: true,
-    jobs: true,
-    notifications: true,
+    settings: true,
   },
 };
 
