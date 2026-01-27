@@ -15,13 +15,23 @@ WHERE role = 'dispatcher';
 
 -- Remove dispatcher from role enum (safe approach)
 DO $$
+DECLARE
+  current_type text;
 BEGIN
-  -- Check if the type exists
-  IF EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
-    -- Rename old type
+  -- Check current type of role column
+  SELECT data_type INTO current_type
+  FROM information_schema.columns
+  WHERE table_name = 'users' AND column_name = 'role';
+
+  -- If role column is already user_role enum type
+  IF current_type = 'USER-DEFINED' THEN
+    -- First convert to text to avoid type issues
+    ALTER TABLE users ALTER COLUMN role TYPE text;
+
+    -- Rename old enum type
     ALTER TYPE user_role RENAME TO user_role_old;
 
-    -- Create new type without dispatcher
+    -- Create new enum without dispatcher
     CREATE TYPE user_role AS ENUM (
       'admin',
       'manager',
@@ -30,32 +40,34 @@ BEGIN
       'customer'
     );
 
-    -- Update column to use new type
+    -- Convert column to new enum
     ALTER TABLE users
     ALTER COLUMN role TYPE user_role
-    USING role::text::user_role;
+    USING role::user_role;
 
     -- Drop old type
     DROP TYPE user_role_old;
-  ELSE
-    -- Create type if it doesn't exist
-    CREATE TYPE user_role AS ENUM (
-      'admin',
-      'manager',
-      'sales_rep',
-      'technician',
-      'customer'
-    );
 
-    -- Update users table if role column exists but isn't typed
-    IF EXISTS (
-      SELECT 1 FROM information_schema.columns
-      WHERE table_name = 'users' AND column_name = 'role'
-    ) THEN
-      ALTER TABLE users
-      ALTER COLUMN role TYPE user_role
-      USING role::text::user_role;
+  -- If role column is text/varchar
+  ELSIF current_type IN ('text', 'character varying') THEN
+    -- Create enum type if it doesn't exist
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
+      CREATE TYPE user_role AS ENUM (
+        'admin',
+        'manager',
+        'sales_rep',
+        'technician',
+        'customer'
+      );
     END IF;
+
+    -- Convert text to enum
+    ALTER TABLE users
+    ALTER COLUMN role TYPE user_role
+    USING role::user_role;
+
+  ELSE
+    RAISE NOTICE 'Role column type is %, skipping migration', current_type;
   END IF;
 END $$;
 
