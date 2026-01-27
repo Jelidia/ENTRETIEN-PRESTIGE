@@ -5,7 +5,6 @@
 **Version:** 2.0 - Final Specification  
 **Company:** Entretien Prestige - Services de Nettoyage Professionnel  
 **Status:** READY FOR DEVELOPMENT  
-**Timeline:** 12-16 weeks for v1.0 Launch  
 
 ---
 
@@ -705,6 +704,510 @@ ACTIONS: [+ NEW JOB]
 **Next Step:** Hand this document to development team  
 
 ---
+
+***
+
+## 🚨  CRITICAL SPECIFICATIONS
+
+### **1. NOTIFICATION SYSTEM (WHO GETS WHAT)**
+```
+MISSING: Complete notification matrix
+
+Need to specify:
+├─ Job created → Who is notified? (Admin, Manager, Technician, Customer)
+├─ Job cancelled → Who is notified?
+├─ Payment received → Who is notified?
+├─ Quality complaint → Who is notified?
+├─ Employee late → Who is notified?
+├─ New customer inquiry → Who is notified?
+├─ Equipment damage reported → Who is notified?
+└─ Commission approved → Who is notified?
+```
+
+***
+
+### **2. SMS & EMAIL TEMPLATES (EXACT FRENCH TEXT)**
+```
+MISSING: Complete message templates
+
+Need ALL SMS messages in French:
+├─ Job scheduled confirmation
+├─ 24h reminder
+├─ 1h reminder
+├─ Technician on the way
+├─ Job completed (Interac/Stripe/Cash variants)
+├─ Invoice sent
+├─ Payment received
+├─ Payment overdue (3 days, 7 days, 14 days)
+├─ No-show message
+├─ Appointment rescheduling
+├─ Referral invitation
+└─ Rating request
+
+Need ALL email templates:
+├─ Welcome email
+├─ Invoice email
+├─ Receipt email
+├─ Password reset
+├─ Commission statement
+└─ Employee termination notice
+```
+
+***
+
+### **3. JOB WORKFLOW STATES**
+```
+MISSING: Complete job state machine
+
+Job states lifecycle:
+├─ Created
+├─ Assigned
+├─ Confirmed
+├─ In Progress
+├─ Paused (no-show scenario)
+├─ Completed
+├─ Under Review (photo review)
+├─ Approved
+├─ Invoiced
+├─ Paid
+├─ Cancelled
+└─ Rework Required
+
+Who can transition between states?
+What triggers auto-transitions?
+```
+
+***
+
+### **4. PERMISSIONS MATRIX (DETAILED CRUD)**
+```
+MISSING: Granular permissions per role
+
+For each entity (Jobs, Customers, Employees, etc.):
+├─ Admin: Create, Read, Update, Delete
+├─ Manager: Create, Read, Update, Delete (territory only)
+├─ Sales Rep: Create (leads), Read (assigned), Update (own), Cannot Delete
+├─ Technician: Read (assigned), Update (status/photos), Cannot Create/Delete
+
+Example for JOBS:
+┌────────────┬────────┬──────┬────────┬────────┐
+│   ROLE     │ CREATE │ READ │ UPDATE │ DELETE │
+├────────────┼────────┼──────┼────────┼────────┤
+│ Admin      │   ✅   │  ✅  │   ✅   │   ✅   │
+│ Manager    │   ✅   │  ✅  │   ✅   │   ✅   │
+│ Sales Rep  │   ✅   │  Own │   Own  │   ❌   │
+│ Technician │   ❌   │  Own │ Status │   ❌   │
+└────────────┴────────┴──────┴────────┴────────┘
+```
+
+***
+
+### **5. COMMISSION CALCULATION FORMULAS**
+```
+MISSING: Exact calculation rules
+
+Need formulas:
+├─ Base commission: Job revenue × 5%
+├─ Multi-tech split: How to divide?
+├─ Subscription discount impact: Does commission apply to discounted amount?
+├─ Upsell commission: Same 5% or different?
+├─ Refund handling: Full deduction or prorated?
+├─ Tax impact: Commission on pre-tax or post-tax amount?
+└─ Payment timing: When does pending → confirmed?
+
+Example:
+Job Revenue: $250
+Tax (GST+QST): $250 × 14.975% = $37.44
+Total with tax: $287.44
+Commission: $250 × 5% = $12.50 (pre-tax)
+or $287.44 × 5% = $14.37 (post-tax)?
+```
+
+***
+
+### **6. INVOICE & RECEIPT FORMAT**
+```
+MISSING: Exact invoice layout
+
+Quebec legal requirements:
+├─ Invoice number format: EP-2026-0001234
+├─ GST number: [Your GST number]
+├─ QST number: [Your QST number]
+├─ Tax breakdown:
+│  ├─ Subtotal: $250.00
+│  ├─ GST (5%): $12.50
+│  ├─ QST (9.975%): $24.94
+│  └─ Total: $287.44
+├─ Payment terms: Net 7, Net 15, etc.
+├─ Due date: Calculated from invoice date
+└─ Late fee policy: % per day or flat fee?
+```
+
+***
+
+### **7. SEARCH FUNCTIONALITY**
+```
+MISSING: Search specifications
+
+Customer search:
+├─ Searchable fields: Name, Phone, Email, Address
+├─ Fuzzy matching: Yes/No?
+├─ Partial match: Minimum 3 characters
+└─ Results limit: 50 max
+
+Job search:
+├─ Searchable fields: Job ID, Customer name, Address, Service type
+├─ Date range filters
+└─ Status filters
+
+Employee search:
+├─ Searchable fields: Name, Role, Territory
+```
+
+***
+
+### **8. FILE UPLOAD SPECIFICATIONS**
+```
+MISSING: Photo/file requirements
+
+Before/After Photos:
+├─ Max size: 5 MB per photo
+├─ Formats: JPEG, PNG, HEIC
+├─ Auto-compression: Yes (to 1920px max width)
+├─ Storage: AWS S3 / Cloudflare R2
+├─ Naming convention: {job_id}_{timestamp}_{before|after}_{side}.jpg
+├─ Minimum resolution: 800×600
+└─ EXIF data: Preserve GPS coordinates?
+
+Equipment Check Photos:
+├─ Max size: 3 MB per photo
+├─ Formats: JPEG, PNG
+└─ Auto-compression: Yes
+```
+
+***
+
+### **9. OFFLINE FUNCTIONALITY (TECHNICIAN)**
+```
+MISSING: Offline mode specifications
+
+What works offline?
+├─ View today's jobs: ✅ (cached)
+├─ View job details: ✅ (cached)
+├─ Check in/out: ✅ (queued, syncs when online)
+├─ Upload photos: ✅ (queued)
+├─ View customer info: ✅ (cached)
+├─ Call customer: ✅ (native phone app)
+├─ View earnings: ❌ (requires real-time data)
+└─ Update availability: ❌ (requires sync)
+
+Sync behavior:
+├─ Auto-sync when connection restored
+├─ Show pending actions: "3 photos waiting to upload"
+└─ Conflict resolution: Last write wins or manual merge?
+```
+
+***
+
+### **10. ERROR HANDLING & EDGE CASES**
+```
+MISSING: Error scenarios
+
+What happens when:
+├─ Payment fails: Retry? How many times? Manual follow-up?
+├─ GPS signal lost: Show last known location? Timeout?
+├─ Photo upload fails: Retry? Queue? Block completion?
+├─ SMS delivery fails: Retry? Alternative (email)? Manual flag?
+├─ Duplicate customer: Auto-merge? Manual review?
+├─ Technician doesn't check out: Auto-check out at midnight?
+├─ Manager doesn't approve invoice: Reminder after 24h?
+├─ Customer disputes invoice: Workflow?
+└─ Commission calculation error: Manual override by admin?
+```
+
+***
+
+### **11. INTEGRATION DETAILS**
+```
+MISSING: API integration specifics
+
+Twilio (SMS):
+├─ Account SID: [From admin settings]
+├─ Auth Token: [Stored encrypted]
+├─ Webhook URL: [Your domain]/webhooks/twilio
+├─ Delivery receipts: Track success/failure
+├─ Opt-out handling: Automatic STOP keyword
+└─ Rate limiting: 100 SMS/second
+
+Stripe (Payments):
+├─ Webhook URL: [Your domain]/webhooks/stripe
+├─ Events to listen:
+│  ├─ payment_intent.succeeded
+│  ├─ payment_intent.payment_failed
+│  ├─ invoice.payment_succeeded
+│  └─ customer.subscription.deleted
+├─ Idempotency keys: Yes
+└─ Test mode toggle: Admin setting
+
+Google Maps:
+├─ API Key: [Stored encrypted]
+├─ Geocoding API: For address → coordinates
+├─ Directions API: For route calculation
+├─ Places API: For address autocomplete
+└─ Usage limits: 28,000 calls/month free tier
+```
+
+***
+
+### **12. PERFORMANCE REQUIREMENTS**
+```
+MISSING: SLA specifications
+
+Response times:
+├─ Page load: < 2 seconds (initial)
+├─ API response: < 500ms (95th percentile)
+├─ Search results: < 1 second
+├─ Image upload: < 5 seconds per photo
+└─ GPS update: < 3 seconds
+
+Concurrent users:
+├─ Expected: 10-20 concurrent
+├─ Maximum capacity: 100 concurrent
+└─ Database connections: Pool of 20
+
+Uptime:
+├─ Target: 99.9% (43 minutes downtime/month)
+├─ Maintenance window: Sundays 2-4 AM EST
+└─ Monitoring: Uptime Robot / Pingdom
+```
+
+***
+
+### **13. AUTHENTICATION FLOW DETAILS**
+```
+MISSING: 2FA process step-by-step
+
+Login flow:
+1. User enters email + password
+2. System validates credentials
+3. If valid → Generate 6-digit SMS code
+4. Send SMS: "Votre code: 123456. Valide 10 minutes."
+5. User enters code
+6. System validates code (10-minute expiry)
+7. If valid → Create session token (JWT)
+8. Session expires after 15 minutes inactivity
+9. Refresh token valid for 7 days
+
+Password reset:
+1. User enters email
+2. System generates unique token (valid 24h)
+3. Send reset link: [domain]/reset-password?token=abc123
+4. User clicks link → Verify token
+5. If valid → Show password reset form
+6. User enters new password (16+ chars, 1 uppercase, 1 number, 1 symbol)
+7. System updates password + invalidates token
+8. Auto-login or redirect to login page?
+```
+
+***
+
+### **14. CUSTOMER ONBOARDING FLOW**
+```
+MISSING: How new customers are added
+
+Option 1: Sales Rep creates customer
+├─ Navigate to Leads tab
+├─ Click [+ NEW LEAD]
+├─ Fill form: Name, Phone, Email, Address, Service interest
+├─ Save → Lead created (status: New)
+├─ Follow up → Convert to customer
+├─ Schedule first job
+
+Option 2: Customer inquiry (web form)
+├─ Customer fills form on website
+├─ Creates lead in CRM (status: New)
+├─ Admin/Manager assigns to Sales Rep
+├─ Sales Rep contacts customer
+├─ Converts to customer → Schedules job
+
+Option 3: Phone call
+├─ Customer calls office
+├─ Manager creates customer directly
+├─ Skips lead stage
+├─ Schedules job immediately
+```
+
+***
+
+### **15. PAYMENT FLOW (STRIPE)**
+```
+MISSING: Step-by-step payment process
+
+Interac flow:
+1. Manager approves invoice
+2. System sends email with invoice PDF
+3. Email contains: "Payez par Interac: comptabilite@entretienprestige.ca"
+4. Customer sends Interac e-Transfer
+5. Manager receives email notification
+6. Manager manually marks invoice as paid in system
+7. Customer receives receipt via email
+
+Stripe flow:
+1. Manager approves invoice
+2. System generates Stripe payment link
+3. SMS sent: "Payez ici: https://pay.stripe.com/abc123"
+4. Customer clicks link → Stripe Checkout
+5. Customer enters card details
+6. Payment processed
+7. Webhook triggers: payment_intent.succeeded
+8. System auto-marks invoice as paid
+9. Customer receives receipt via email
+10. Technician commission updated (pending → confirmed)
+
+Cash flow:
+1. Technician collects cash on-site
+2. Technician marks job as "Paid - Cash" in app
+3. Manager reviews and approves
+4. System marks invoice as paid
+5. Technician must deposit cash (tracked separately)
+```
+
+***
+
+### **16. TAX CALCULATION (QUEBEC)**
+```
+MISSING: Exact tax formulas
+
+GST: 5%
+QST: 9.975%
+
+Example calculation:
+Subtotal: $250.00
+GST: $250.00 × 0.05 = $12.50
+QST: $250.00 × 0.09975 = $24.94
+Total: $250.00 + $12.50 + $24.94 = $287.44
+
+Rounding: To nearest cent (0.01)
+
+Tax-exempt customers:
+├─ Charitable organizations
+├─ Government entities
+└─ Require tax exemption certificate number
+```
+
+***
+
+### **17. LANGUAGE/LOCALIZATION**
+```
+MISSING: Complete French translations
+
+All UI text must be in French:
+├─ Button labels: "Enregistrer", "Annuler", "Confirmer"
+├─ Form labels: "Nom", "Téléphone", "Adresse"
+├─ Error messages: "Champ requis", "Format invalide"
+├─ Success messages: "Enregistré avec succès"
+├─ Email subjects: "Votre facture #EP-2026-001234"
+└─ SMS templates: All in French
+
+Date format: DD/MM/YYYY (European format used in Quebec)
+Time format: 24-hour (14:00 not 2:00 PM)
+Currency: $ CAD (always show CAD)
+Phone format: (514) 555-0123
+```
+
+***
+
+### **18. ACCESSIBILITY (WCAG 2.1 AA)**
+```
+MISSING: Accessibility checklist
+
+Keyboard navigation:
+├─ All buttons tabbable
+├─ Modal dialogs trap focus
+├─ Escape key closes modals
+└─ Enter key submits forms
+
+Screen readers:
+├─ ARIA labels on all icons
+├─ Form inputs associated with labels
+├─ Error messages announced
+└─ Loading states announced
+
+Color contrast:
+├─ Text: Minimum 4.5:1 ratio
+├─ Large text: Minimum 3:1
+└─ Test with WebAIM Contrast Checker
+
+Touch targets:
+├─ Minimum 44×44px
+├─ Spacing between: 8px minimum
+```
+
+***
+
+### **19. TESTING REQUIREMENTS**
+```
+MISSING: QA checklist
+
+Unit tests:
+├─ Commission calculation
+├─ Tax calculation
+├─ Date/time utilities
+├─ Search functions
+└─ Validation rules
+
+Integration tests:
+├─ Job creation → Assignment → Completion workflow
+├─ Invoice generation → Payment → Receipt
+├─ SMS sending → Delivery confirmation
+├─ Photo upload → Compression → Storage
+└─ GPS tracking → Location updates
+
+E2E tests:
+├─ Login flow (with 2FA)
+├─ Complete job workflow (technician perspective)
+├─ Schedule job (admin perspective)
+├─ Generate invoice → Payment (full cycle)
+└─ Customer rating → Google review redirect
+
+Manual testing:
+├─ Cross-browser (Chrome, Safari, Firefox, Edge)
+├─ Mobile devices (iOS, Android)
+├─ Offline mode (airplane mode)
+└─ Slow network (throttle to 3G)
+```
+
+***
+
+### **20. MONITORING & LOGGING**
+```
+MISSING: Observability setup
+
+Error tracking:
+├─ Tool: Sentry
+├─ Track: All unhandled exceptions
+├─ Alert: Admin email when critical error
+└─ Retention: 90 days
+
+Analytics:
+├─ Tool: Plausible / Google Analytics
+├─ Track: Page views, user actions, conversion rates
+└─ Privacy: GDPR/Quebec Law 25 compliant
+
+Application logs:
+├─ Info: User login, job created, payment received
+├─ Warning: GPS signal lost, photo upload delayed
+├─ Error: Payment failed, SMS delivery failed
+└─ Storage: CloudWatch / Papertrail (30-day retention)
+
+Performance monitoring:
+├─ Tool: New Relic / DataDog
+├─ Track: API response times, database queries
+├─ Alert: If response time > 2 seconds
+```
+
+
+
 
 **END OF COMPLETE SPECIFICATION DOCUMENT**
 
