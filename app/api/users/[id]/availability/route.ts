@@ -1,0 +1,170 @@
+import { NextResponse } from "next/server";
+import { requireRole } from "@/lib/auth";
+import { createUserClient } from "@/lib/supabaseServer";
+import { getAccessTokenFromRequest } from "@/lib/session";
+import { z } from "zod";
+
+const availabilitySlotSchema = z.object({
+  day_of_week: z.enum(["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]),
+  hour: z.number().int().min(0).max(23),
+  is_available: z.boolean(),
+});
+
+const availabilityUpdateSchema = z.object({
+  availability: z.array(availabilitySlotSchema),
+});
+
+// GET /api/users/[id]/availability - Get user's availability
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  const auth = await requireRole(request, ["admin", "manager", "technician"], ["team"]);
+  if ("response" in auth) return auth.response;
+
+  const { profile, user } = auth;
+  const token = getAccessTokenFromRequest(request);
+  const client = createUserClient(token ?? "");
+
+  // Technicians can only view their own availability
+  if (profile.role === "technician" && params.id !== user.id) {
+    return NextResponse.json(
+      { error: "Vous ne pouvez voir que votre propre disponibilité" },
+      { status: 403 }
+    );
+  }
+
+  // Verify user exists and belongs to the same company
+  const { data: targetUser, error: userError } = await client
+    .from("users")
+    .select("user_id, company_id")
+    .eq("user_id", params.id)
+    .maybeSingle();
+
+  if (userError || !targetUser) {
+    return NextResponse.json(
+      { error: "Utilisateur introuvable" },
+      { status: 404 }
+    );
+  }
+
+  if (targetUser.company_id !== profile.company_id) {
+    return NextResponse.json(
+      { error: "Utilisateur introuvable" },
+      { status: 404 }
+    );
+  }
+
+  // Get availability
+  const { data: availability, error } = await client
+    .from("employee_availability")
+    .select("availability_id, day_of_week, hour, is_available")
+    .eq("user_id", params.id)
+    .eq("company_id", profile.company_id)
+    .order("day_of_week", { ascending: true })
+    .order("hour", { ascending: true });
+
+  if (error) {
+    console.error("Failed to fetch availability:", error);
+    return NextResponse.json(
+      { error: "Échec du chargement de la disponibilité" },
+      { status: 500 }
+    );
+  }
+
+  return NextResponse.json({
+    availability: availability ?? [],
+  });
+}
+
+// POST /api/users/[id]/availability - Update user's availability
+export async function POST(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  const auth = await requireRole(request, ["admin", "manager", "technician"], ["team"]);
+  if ("response" in auth) return auth.response;
+
+  const { profile, user } = auth;
+  const token = getAccessTokenFromRequest(request);
+  const client = createUserClient(token ?? "");
+
+  // Technicians can only update their own availability
+  if (profile.role === "technician" && params.id !== user.id) {
+    return NextResponse.json(
+      { error: "Vous ne pouvez modifier que votre propre disponibilité" },
+      { status: 403 }
+    );
+  }
+
+  // Verify user exists and belongs to the same company
+  const { data: targetUser, error: userError } = await client
+    .from("users")
+    .select("user_id, company_id")
+    .eq("user_id", params.id)
+    .maybeSingle();
+
+  if (userError || !targetUser) {
+    return NextResponse.json(
+      { error: "Utilisateur introuvable" },
+      { status: 404 }
+    );
+  }
+
+  if (targetUser.company_id !== profile.company_id) {
+    return NextResponse.json(
+      { error: "Utilisateur introuvable" },
+      { status: 404 }
+    );
+  }
+
+  // Validate input
+  const body = await request.json();
+  const validation = availabilityUpdateSchema.safeParse(body);
+
+  if (!validation.success) {
+    return NextResponse.json(
+      { error: "Données invalides", details: validation.error.format() },
+      { status: 400 }
+    );
+  }
+
+  const { availability } = validation.data;
+
+  // Delete existing availability
+  await client
+    .from("employee_availability")
+    .delete()
+    .eq("user_id", params.id)
+    .eq("company_id", profile.company_id);
+
+  // Insert new availability (only for slots marked as available)
+  const availableSlots = availability
+    .filter((slot) => slot.is_available)
+    .map((slot) => ({
+      company_id: profile.company_id,
+      user_id: params.id,
+      day_of_week: slot.day_of_week,
+      hour: slot.hour,
+      is_available: true,
+    }));
+
+  if (availableSlots.length > 0) {
+    const { error: insertError } = await client
+      .from("employee_availability")
+      .insert(availableSlots);
+
+    if (insertError) {
+      console.error("Failed to save availability:", insertError);
+      return NextResponse.json(
+        { error: "Échec de l'enregistrement de la disponibilité" },
+        { status: 500 }
+      );
+    }
+  }
+
+  return NextResponse.json({
+    success: true,
+    count: availableSlots.length,
+  });
+}

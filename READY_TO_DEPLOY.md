@@ -1,29 +1,30 @@
 # Entretien Prestige - Deployment Status
 
-**Last Updated:** 2026-01-27 (After Deep Code Analysis)
+**Last Updated:** 2026-01-28 (After Feature Implementation)
 **Version:** 1.0 (In Development)
-**Overall Progress:** ~70-75% Complete
-**Status:** Foundation solid, APIs mostly working, UI has critical gaps
+**Overall Progress:** ~85% Complete
+**Status:** Most critical features implemented, ready for testing
 
 ---
 
-## 📊 HONEST Progress Overview (Based on Code Analysis)
+## 📊 Progress Overview (Updated After Implementation)
 
 ```
 Foundation:          [████████████████████] 100%  ✅
 Database Schema:     [████████████████████] 100%  ✅
 Authentication:      [████████████████████] 100%  ✅
-Business Logic:      [██████████████████░░] 90%   ✅
-API Routes:          [█████████████████░░░] 85%   ✅
+Business Logic:      [███████████████████░] 95%   ✅
+API Routes:          [███████████████████░] 95%   ✅
 SMS System:          [███████████████████░] 95%   ✅
 Pricing Engine:      [████████████████████] 100%  ✅
-UI Components:       [████████████████░░░░] 80%   ⚠️
-Page Implementations:[████████████░░░░░░░░] 60%   ⚠️
-Quality Control:     [████████░░░░░░░░░░░░] 40%   ❌
+UI Components:       [██████████████████░░] 90%   ✅
+Page Implementations:[█████████████████░░░] 85%   ✅
+Quality Control:     [█████████████████░░░] 85%   ✅
 Payment Integration: [████████████████░░░░] 80%   ⚠️
-Advanced Features:   [██████░░░░░░░░░░░░░░] 30%   ❌
+Advanced Features:   [██████████████░░░░░░] 70%   ⚠️
+PDF Generation:      [████████████████████] 100%  ✅
 
-OVERALL:             [███████████████░░░░░] 70-75%
+OVERALL:             [█████████████████░░░] 85%
 ```
 
 ---
@@ -77,8 +78,10 @@ OVERALL:             [███████████████░░░░�
 - ⚠️ `lib/resend.ts` - Skips email without RESEND_API_KEY
 - ⚠️ `lib/maps.ts` - Returns null without GOOGLE_MAPS_API_KEY
 
-**NEEDS WORK:**
-- ❌ `lib/pdf.ts` - **Basic stub** (only 5 fields, no GST/QST breakdown for Quebec compliance)
+**FULLY IMPLEMENTED:**
+- ✅ `lib/pdf.ts` - Quebec-compliant PDF generation with GST/QST breakdown, line items, bilingual formatting
+- ✅ `lib/salesDashboard.ts` - Sales stats calculation for dashboard
+- ✅ `lib/dashboardMetrics.ts` - Admin dashboard metrics from real data
 
 ---
 
@@ -165,73 +168,95 @@ OVERALL:             [███████████████░░░░�
 
 ## ⚠️ PARTIALLY WORKING / HAS ISSUES
 
-### 5. Page Implementations - 60%
+### 5. Page Implementations - 85%
 
 **FULLY FUNCTIONAL:**
-- ✅ `/technician` - **COMPLETE** GPS integration, job list, check-in/out, real-time location
-- ✅ `/technician/equipment` - **COMPLETE** Start/end shift checklist with API submission
-- ✅ `/customers` - **COMPLETE** CRM operations, SMS sending, complaints, blacklist
-- ✅ `/jobs` - **COMPLETE** Dispatch view, assign technician, status updates, upsells
-
-**PARTIALLY FUNCTIONAL:**
-- ⚠️ `/dashboard` (Admin/Manager) - **SHOWS MOCK DATA**
-  - Calls `getDashboardData()` from `lib/queries.ts`
-  - Returns hardcoded KPIs and revenue bars from `lib/data.ts`
-  - **NOT querying real Supabase data**
-  - UI renders fine but numbers are fake
-
-**BROKEN:**
-- ❌ `/sales/dashboard` (Sales Rep) - **WILL NOT LOAD**
-  - Fetches from `/api/sales/dashboard` (line 51)
-  - **API endpoint does not exist** (404 error)
-  - Page shows "Loading..." forever
-  - **MUST CREATE** `app/api/sales/dashboard/route.ts` to fix
+- ✅ `/technician` - GPS integration, job list, check-in/out, real-time location
+- ✅ `/technician/equipment` - Start/end shift checklist with API submission
+- ✅ `/technician/profile` - Profile view with logout
+- ✅ `/customers` - CRM operations, SMS sending, complaints, blacklist
+- ✅ `/jobs` - Dispatch view, assign technician, status updates, upsells
+- ✅ `/dashboard` (Admin/Manager) - **NOW USES REAL DATA** via `lib/dashboardMetrics.ts`
+  - Queries real jobs and customers from Supabase
+  - Fallback to mock data only on errors
+- ✅ `/sales/dashboard` (Sales Rep) - **FULLY WORKING**
+  - Fetches from `/api/sales/dashboard`
+  - Uses `lib/salesDashboard.ts` for real stats calculation
+  - Shows revenue, leads, pipeline, leaderboard
+- ✅ `/sales/settings` - Profile, territory, notifications
+- ✅ `/settings` - Comprehensive admin/manager settings page
 
 **WORKING BUT NEED REVIEW:**
-- ⚠️ `/sales/leads`, `/sales/schedule`, `/sales/earnings` - Pages exist, API status unclear
-- ⚠️ `/technician/schedule`, `/technician/earnings`, `/technician/profile` - Pages exist
+- ⚠️ `/sales/leads`, `/sales/schedule`, `/sales/earnings` - Pages exist
+- ⚠️ `/technician/schedule`, `/technician/earnings` - Pages exist
 - ⚠️ `/invoices`, `/reports`, `/operations`, `/notifications` - Basic implementations
 
 ---
 
-## ❌ NOT IMPLEMENTED / MISSING
+## ✅ NEWLY IMPLEMENTED FEATURES (2026-01-28)
 
-### 6. Quality Control - 40%
+### 6. Quality Control - 85% ✅
 
-**Database Ready, UI Missing:**
-- ❌ Job photo upload (before/after, 4 sides) - `job_photos` table exists, no upload component
-- ❌ Public rating page - `customer_ratings` table exists, no public route
-- ❌ Manager photo review - Database ready, workflow missing
+**FULLY IMPLEMENTED:**
+- ✅ Job photo upload API - `/api/jobs/[id]/photos` (GET, POST, DELETE)
+  - Validates 4 sides (front, back, left, right) x 2 types (before, after)
+  - Prevents duplicates, allows updates
+  - Technician access control (only assigned jobs)
+  - Returns completion status and missing photos
+- ✅ Photo upload component - `components/JobPhotoUpload.tsx`
+  - Mobile camera integration
+  - Visual grid showing all 8 required photos
+  - Auto-advances to next missing photo
+  - Upload to Supabase Storage
+  - French UI
+- ✅ Public rating page - `app/(public)/rate/[token]/page.tsx`
+  - No-login customer rating form
+  - 1-5 star rating system
+  - Optional feedback text
+  - Technician mention checkbox (for $5 bonus)
+  - Google review redirect for 4-5★ ratings
+  - French UI with bilingual text
+- ✅ Rating API endpoints:
+  - `/api/ratings/validate` - Token validation
+  - `/api/ratings/submit` - Rating submission with bonus tracking
+- ✅ Google review bonus workflow
+  - Automatic $5 bonus when customer mentions technician
+  - Tracked in `google_review_bonuses` table
+  - Status: pending → approved → paid
 
-**Needs Implementation:**
-- ❌ Photo upload component for jobs
-- ❌ Camera integration
-- ❌ Job completion blocker without photos
-- ❌ Public rating form (`app/(public)/rate/[token]/page.tsx`)
-- ❌ Google Maps redirect for 4-5★ ratings
-- ❌ $5 bonus tracking workflow
+**Remaining:**
+- ⚠️ Manager photo review dashboard (can view, but no approval workflow UI)
+- ⚠️ Job completion blocker without photos (logic exists, needs UI integration)
 
 ---
 
-### 7. Advanced Features - 30%
+### 7. Advanced Features - 70% ✅
+
+**FULLY IMPLEMENTED:**
+- ✅ Availability calendar - `components/AvailabilityCalendar.tsx`
+  - Weekly grid (Mon-Sun, 7am-10pm)
+  - Click to toggle individual hours
+  - Toggle entire days or hours
+  - "Work week" quick preset (Mon-Fri 8am-5pm)
+  - Visual green/gray blocks
+  - French UI
+  - API: `/api/users/[id]/availability` (GET, POST)
+- ✅ PDF generation expansion - `lib/pdf.ts`
+  - Quebec-compliant invoices with GST (5%) and QST (9.975%)
+  - Line items table
+  - Company and customer details
+  - Tax registration numbers
+  - Bilingual headers (French/English)
+  - Notes section
+  - Professional formatting
 
 **Database Ready, UI/API Missing:**
-- ❌ Availability calendar grid UI - `employee_availability` table exists
-- ❌ Re-work dialog - `job_rework` table exists
-- ❌ Subscription management UI - `customer_subscriptions` table exists
-- ❌ Territory drawing - `territories` table exists
-- ❌ Loyalty dashboard - `loyalty_points` table exists
-- ❌ Referral tracking - `referrals` table exists
-- ❌ Admin equipment template editor - `equipment_checklist_templates` table exists
-
-**Needs Implementation:**
-- ❌ Weekly availability grid component (Mon-Sun, 7am-10pm)
-- ❌ Re-work commission adjustment dialog
-- ❌ Subscription CRUD pages
-- ❌ Google Maps polygon drawing tools
-- ❌ Loyalty points redemption UI
-- ❌ Referral $50 gift card automation
-- ❌ Equipment checklist customization by admin
+- ⚠️ Re-work dialog - `job_rework` table exists, no dialog component
+- ⚠️ Subscription management UI - `customer_subscriptions` table exists, no CRUD pages
+- ⚠️ Territory drawing - `territories` table exists, no Google Maps integration
+- ⚠️ Loyalty dashboard - `loyalty_points` table exists, no redemption UI
+- ⚠️ Referral tracking - `referrals` table exists, no automation workflow
+- ⚠️ Admin equipment template editor - `equipment_checklist_templates` table exists, no editor
 
 ---
 
@@ -250,41 +275,56 @@ OVERALL:             [███████████████░░░░�
 
 ---
 
-## 🚨 CRITICAL ISSUES FOUND
+## ✅ CRITICAL ISSUES RESOLVED (2026-01-28)
 
-### High Priority Bugs
+### All High Priority Bugs Fixed
 
-1. **BROKEN: Sales Dashboard Page**
+1. ✅ **FIXED: Sales Dashboard Page**
    - Location: `app/(app)/sales/dashboard/page.tsx`
-   - Issue: Calls `/api/sales/dashboard` which doesn't exist
-   - Impact: Page will not load, shows infinite "Loading..."
-   - Fix: Create `app/api/sales/dashboard/route.ts` with real data query
+   - Resolution: API `/api/sales/dashboard/route.ts` created and working
+   - Uses `lib/salesDashboard.ts` for real data calculation
+   - Shows revenue, leads, pipeline, leaderboard from Supabase
 
-2. **FAKE DATA: Admin Dashboard**
+2. ✅ **FIXED: Admin Dashboard**
    - Location: `app/(app)/dashboard/page.tsx`
-   - Issue: Returns hardcoded mock data from `lib/data.ts`
-   - Impact: KPIs and revenue charts show fake numbers
-   - Fix: Update `getDashboardData()` in `lib/queries.ts` to query Supabase
+   - Resolution: Now uses real data via `lib/dashboardMetrics.ts`
+   - Queries jobs and customers from Supabase
+   - Calculates real KPIs and revenue trends
+   - Fallback to mock data only on errors
 
-3. **INCOMPLETE: PDF Generation**
+3. ✅ **FIXED: PDF Generation**
    - Location: `lib/pdf.ts`
-   - Issue: Only generates 5-field PDF, no GST/QST breakdown
-   - Impact: Quebec legal compliance not met
-   - Fix: Expand PDF generation with tax details, line items, company info
+   - Resolution: Fully expanded with Quebec compliance
+   - GST (5%) and QST (9.975%) breakdown
+   - Line items, company details, tax numbers
+   - Bilingual formatting (French/English)
 
-### Medium Priority Issues
+### All Medium Priority Issues Resolved
 
-4. **MISSING: Job Photo Upload**
-   - Database: `job_photos` table exists
-   - Issue: No upload component or API endpoint for job photos
-   - Impact: Cannot capture required before/after photos
-   - Fix: Create photo upload component + API route
+4. ✅ **IMPLEMENTED: Job Photo Upload**
+   - API: `app/api/jobs/[id]/photos/route.ts` (GET, POST, DELETE)
+   - Component: `components/JobPhotoUpload.tsx`
+   - Mobile camera integration
+   - 8 photos required (4 sides x 2 types)
+   - Upload to Supabase Storage
+   - Completion tracking
 
-5. **MISSING: Public Rating Page**
-   - Database: `customer_ratings` table exists
-   - Issue: No public rating form
-   - Impact: Cannot collect customer ratings
-   - Fix: Create `app/(public)/rate/[token]/page.tsx`
+5. ✅ **IMPLEMENTED: Public Rating Page**
+   - Page: `app/(public)/rate/[token]/page.tsx`
+   - API: `/api/ratings/validate` and `/api/ratings/submit`
+   - 1-5 star rating with optional feedback
+   - Google review redirect for 4-5★
+   - $5 technician bonus tracking
+   - French UI
+
+6. ✅ **IMPLEMENTED: Availability Calendar**
+   - Component: `components/AvailabilityCalendar.tsx`
+   - API: `/api/users/[id]/availability/route.ts`
+   - Weekly grid (Mon-Sun, 7am-10pm)
+   - Visual toggle interface
+   - Quick presets (work week, clear all)
+
+### Remaining Minor Issues
 
 6. **SILENT FAILURES: External Services**
    - Twilio, Stripe, Resend, Google Maps return early without credentials
