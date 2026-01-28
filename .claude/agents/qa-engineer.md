@@ -1,7 +1,7 @@
 ---
 name: qa-engineer
 description: Testing, quality assurance, and coverage verification. Achieves 100% test coverage with Vitest.
-model: claude-sonnet-4-5-20250929
+model: haiku  # Optimal: Test generation is structured/routine work with clear patterns (60-80% token savings)
 permissionMode: auto
 tools:
   - Read

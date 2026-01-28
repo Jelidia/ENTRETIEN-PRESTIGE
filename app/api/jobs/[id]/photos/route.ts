@@ -2,13 +2,7 @@ import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
-import { z } from "zod";
-
-const photoUploadSchema = z.object({
-  photo_type: z.enum(["before", "after"]),
-  side: z.enum(["front", "back", "left", "right"]),
-  photo_url: z.string().url(),
-});
+import { photoUploadSchema } from "@/lib/validators";
 
 // GET /api/jobs/[id]/photos - List all photos for a job
 export async function GET(

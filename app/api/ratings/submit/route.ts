@@ -1,13 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAnonClient } from "@/lib/supabaseServer";
-import { z } from "zod";
-
-const ratingSubmitSchema = z.object({
-  token: z.string().min(1),
-  rating_score: z.number().int().min(1).max(5),
-  feedback: z.string().nullable().optional(),
-  technician_mentioned: z.boolean().optional(),
-});
+import { ratingSubmitSchema } from "@/lib/validators";
 
 // Get Google review URL from company settings
 async function getGoogleReviewUrl(companyId: string): Promise<string | null> {

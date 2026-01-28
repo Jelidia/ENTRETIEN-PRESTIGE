@@ -2,17 +2,7 @@ import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
-import { z } from "zod";
-
-const availabilitySlotSchema = z.object({
-  day_of_week: z.enum(["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]),
-  hour: z.number().int().min(0).max(23),
-  is_available: z.boolean(),
-});
-
-const availabilityUpdateSchema = z.object({
-  availability: z.array(availabilitySlotSchema),
-});
+import { availabilityUpdateSchema } from "@/lib/validators";
 
 // GET /api/users/[id]/availability - Get user's availability
 export async function GET(

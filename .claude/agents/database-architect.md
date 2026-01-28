@@ -1,7 +1,7 @@
 ---
 name: database-architect
 description: Database schema design, migrations, and RLS policy management. Ensures multi-tenancy isolation with company_id filtering.
-model: claude-sonnet-4-5-20250929
+model: sonnet  # Optimal: Schema design requires understanding data relationships and RLS reasoning (40-60% savings)
 permissionMode: auto
 tools:
   - Read

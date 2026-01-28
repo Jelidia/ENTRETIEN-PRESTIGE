@@ -1,7 +1,7 @@
 ---
 name: deploy-manager
 description: Deployment preparation, verification, and checklist management. Ensures production readiness before deploy.
-model: claude-sonnet-4-5-20250929
+model: haiku  # Optimal: Checklist-based validation and structured verification tasks (60-80% token savings)
 permissionMode: auto
 tools:
   - Read

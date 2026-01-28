@@ -2,11 +2,7 @@ import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
-import { z } from "zod";
-
-const profileUpdateSchema = z.object({
-  fullName: z.string().min(2).max(100),
-});
+import { profileUpdateSchema } from "@/lib/validators";
 
 // PATCH /api/settings/profile - Update user's own profile
 export async function PATCH(request: Request) {

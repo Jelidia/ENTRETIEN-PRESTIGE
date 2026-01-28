@@ -8,17 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run --coverage",
-    "test:watch": "vitest",
-    "claude:agent": "bash scripts/claude-automation.sh agent",
-    "claude:skill": "bash scripts/claude-automation.sh skill",
-    "claude:generate-api": "bash scripts/claude-automation.sh generate-api",
-    "claude:generate-feature": "bash scripts/claude-automation.sh generate-feature",
-    "claude:review": "bash scripts/claude-automation.sh review",
-    "claude:fix-bug": "bash scripts/claude-automation.sh fix-bug",
-    "claude:pre-deploy": "bash scripts/claude-automation.sh pre-deploy",
-    "claude:generate-tests": "bash scripts/claude-automation.sh generate-tests",
-    "claude:update-docs": "bash scripts/claude-automation.sh update-docs",
-    "claude:ci": "bash scripts/claude-automation.sh ci"
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.48.1",

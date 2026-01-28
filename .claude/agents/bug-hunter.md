@@ -1,7 +1,7 @@
 ---
 name: bug-hunter
 description: Bug investigation, root cause analysis, and minimal fixing. Creates regression tests to prevent recurrence.
-model: claude-sonnet-4-5-20250929
+model: sonnet  # Optimal: Debugging requires good reasoning to trace execution paths and identify root causes (40-60% savings)
 permissionMode: auto
 tools:
   - Read

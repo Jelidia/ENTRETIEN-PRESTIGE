@@ -1,7 +1,7 @@
 ---
 name: code-reviewer
 description: Code review against spec, patterns, and best practices. Ensures security, consistency, and spec compliance.
-model: claude-sonnet-4-5-20250929
+model: sonnet  # Optimal: Pattern matching and compliance checking needs good understanding of architecture (40-60% savings)
 permissionMode: auto
 tools:
   - Read

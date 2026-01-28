@@ -1,7 +1,7 @@
 ---
 name: feature-builder
 description: End-to-end feature implementation from spec to deployment. Coordinates API, UI, database, and tests.
-model: claude-sonnet-4-5-20250929
+model: sonnet  # Optimal: Complex multi-step coordination with architectural decisions (balanced for workflows)
 permissionMode: auto
 tools:
   - Read

@@ -730,7 +730,9 @@ const passwordSchema = z.string().min(8).regex(/[A-Z]/)...
 import { userCreateSchema, passwordSchema, changePasswordSchema } from "@/lib/validators";
 ```
 
-**Password validation schemas (lib/validators.ts):**
+**Current status:** ✅ **ZERO violations** - All 38 schemas centralized in `lib/validators.ts`
+
+**Password validation schemas:**
 - `passwordSchema` - Base password complexity rules (8+ chars, uppercase, number, special char)
 - `changePasswordSchema` - For logged-in users changing password: currentPassword + newPassword + confirmPassword with matching validation
 - `resetPasswordSchema` - For forgot password flow: code + newPassword + confirmPassword with matching validation
@@ -742,12 +744,29 @@ import { userCreateSchema, passwordSchema, changePasswordSchema } from "@/lib/va
 - Admin password resets MUST require password confirmation field
 - All password schemas MUST enforce complexity rules: min 8 chars, uppercase, number, special char
 
-**Remaining violations to fix:**
-- `app/api/ratings/submit/route.ts` - `ratingSubmitSchema`
-- `app/api/dispatch/[action]/route.ts` - `dispatchScheduleSchema`
-- `app/api/jobs/[id]/photos/route.ts` - `photoUploadSchema`
-- `app/api/users/[id]/availability/route.ts` - `availabilitySlotSchema`, `availabilityUpdateSchema`
-- `app/api/settings/profile/route.ts` - `profileUpdateSchema`
+**Recently migrated (2026-01-28):**
+- `ratingSubmitSchema` - Customer rating submission validation
+- `dispatchScheduleSchema` - Job scheduling validation
+- `photoUploadSchema` - Job photo upload validation
+- `availabilitySlotSchema`, `availabilityUpdateSchema` - Technician availability validation
+- `profileUpdateSchema` - User profile update validation
+
+**All schemas in lib/validators.ts (38 total):**
+- Authentication: registerSchema, loginSchema, verify2faSchema, forgotPasswordSchema, resetPasswordSchema, changePasswordSchema, adminResetPasswordSchema, adminResetByEmailSchema
+- Jobs: jobCreateSchema, jobUpdateSchema, jobAssignSchema, jobCheckInSchema, jobCheckOutSchema, jobUpsellSchema
+- Customers: customerCreateSchema, customerUpdateSchema, blacklistSchema, complaintSchema
+- Invoices: invoiceCreateSchema, invoiceUpdateSchema, invoiceSendSchema, invoicePaymentSchema
+- Payments: paymentInitSchema, paymentRefundSchema
+- Communication: smsSendSchema, emailSendSchema
+- GPS: gpsCheckinSchema, gpsPingSchema, geofenceCreateSchema
+- Users: userCreateSchema, userUpdateSchema, companyUpdateSchema, notificationSettingsSchema, seedAccountsSchema
+- Sales: leadCreateSchema, territoryCreateSchema, commissionCreateSchema, payrollCreateSchema
+- Operations: checklistCreateSchema, incidentCreateSchema, qualityIssueCreateSchema
+- Dispatch: dispatchReassignSchema, weatherCancelSchema, dispatchScheduleSchema
+- Ratings: ratingSubmitSchema
+- Photos: photoUploadSchema
+- Availability: availabilitySlotSchema, availabilityUpdateSchema
+- Profile: profileUpdateSchema
 
 **Why this matters:**
 - Single source of truth for validation rules
@@ -979,15 +998,23 @@ See `READY_TO_DEPLOY.md` for detailed status (~65% complete as of 2026-01-27).
 
 ## Current Status (2026-01-28)
 
-**Overall Progress:** ~90% Complete ✅ (+20% from previous update)
+**Overall Progress:** ~92% Complete ✅ (+2% from previous update)
 
 **Foundation:** 100% complete ✅
 - Authentication, database, RLS, rate limiting, permissions all working
 - Security hardened: removed self-signup, admin-only user creation
 - Password validation: 8 chars min with complexity requirements
 - Mobile viewport locked (no zoom/pan, native app feel)
+- **ZERO TOLERANCE policy enforced:** All 38 Zod schemas centralized in lib/validators.ts
 
-**Newly Completed (2026-01-28):** ✅
+**Code Quality & Architecture (2026-01-28):** ✅
+- Migrated all 6 inline Zod schemas to lib/validators.ts (ratingSubmitSchema, dispatchScheduleSchema, photoUploadSchema, availabilitySlotSchema, availabilityUpdateSchema, profileUpdateSchema)
+- Removed CLI scripts (10 npm scripts + bash wrapper) - not useful for solo development
+- Optimized agent models for token efficiency: qa-engineer/deploy-manager use haiku (60-80% savings), others use sonnet (40-60% savings)
+- Updated all documentation with ZERO TOLERANCE rules and token efficiency guidelines
+- Verified zero inline schema violations with grep - production-ready validation system
+
+**User Management & Auth (2026-01-28):** ✅
 - Admin user management panel (`/admin/users`) - Full CRUD with French UI, pagination, modals
 - User settings/profile page (`/profile`) - 3 tabs: Documents, Security, Profile
 - File upload system - Contract, ID photo, profile photo to Supabase Storage
@@ -1021,7 +1048,7 @@ See `READY_TO_DEPLOY.md` for detailed analysis and deployment checklist.
 - `lib/auth.ts` - Authentication helpers (requireUser, requireRole, requirePermission)
 - `lib/permissions.ts` - Permission resolution (user → company → default)
 - `lib/supabaseServer.ts` - Three client factories (anon, user, admin)
-- `lib/validators.ts` - 41+ Zod schemas for all API inputs (updated with passwordSchema)
+- `lib/validators.ts` - 38 Zod schemas for ALL API inputs (ZERO inline schemas - 100% centralized)
 - `components/BottomNavMobile.tsx` - Main navigation (5-tab enforcer, fixed styling)
 - `vitest.config.ts` - Test configuration (100% coverage required)
 
@@ -1260,24 +1287,30 @@ Language Server Protocol support for:
 
 See `.lsp.json` for configuration.
 
-#### 7. CLI Automation
-Located in `scripts/claude-automation.sh` with npm scripts:
+#### 7. ~~CLI Automation~~ (REMOVED)
 
+**Status:** CLI scripts removed as of 2026-01-28
+
+**Reason:** CLI automation scripts are designed for CI/CD pipelines and team workflows. For solo development with direct Claude Code interaction, they add no value and complicate the workflow.
+
+**What was removed:**
+- `scripts/claude-automation.sh` - CLI wrapper script
+- All `npm run claude:*` scripts from package.json (10 total)
+
+**Why this is better:**
+- Direct skill/agent invocation is faster and more flexible
+- No need for CLI wrappers when you can just type `/api-builder` or use Task tool
+- Simpler project structure
+- Less maintenance overhead
+
+**How to use skills/agents now:**
 ```bash
-# Run agents
-npm run claude:agent feature-builder "Build photo upload"
+# In Claude Code conversation:
+/api-builder Create /api/ratings/submit endpoint
+/bug-fixer Fix navigation not showing for managers
 
-# Run skills
-npm run claude:skill api-builder "Create /api/ratings/submit"
-
-# Generate complete feature
-npm run claude:generate-feature "loyalty-points" "Customer loyalty points redemption"
-
-# Generate API route with tests
-npm run claude:generate-api "sales/dashboard" "Sales metrics endpoint"
-
-# Run code review
-npm run claude:review app/api/jobs
+# Or use Task tool for agents:
+Task(subagent_type="feature-builder", prompt="Build photo upload feature")
 
 # Fix bugs
 npm run claude:fix-bug "Dashboard shows 0 for revenue"

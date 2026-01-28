@@ -366,3 +366,38 @@ export const qualityIssueCreateSchema = z.object({
   severity: z.string().optional(),
   reportedBy: z.string().optional(),
 });
+
+export const ratingSubmitSchema = z.object({
+  token: z.string().min(1),
+  rating_score: z.number().int().min(1).max(5),
+  feedback: z.string().nullable().optional(),
+  technician_mentioned: z.boolean().optional(),
+});
+
+export const dispatchScheduleSchema = z.object({
+  jobId: z.string().min(1),
+  technicianId: z.string().optional(),
+  scheduledDate: z.string().min(6),
+  scheduledStartTime: z.string().min(4),
+  scheduledEndTime: z.string().min(4),
+});
+
+export const photoUploadSchema = z.object({
+  photo_type: z.enum(["before", "after"]),
+  side: z.enum(["front", "back", "left", "right"]),
+  photo_url: z.string().url(),
+});
+
+export const availabilitySlotSchema = z.object({
+  day_of_week: z.enum(["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]),
+  hour: z.number().int().min(0).max(23),
+  is_available: z.boolean(),
+});
+
+export const availabilityUpdateSchema = z.object({
+  availability: z.array(availabilitySlotSchema),
+});
+
+export const profileUpdateSchema = z.object({
+  fullName: z.string().min(2).max(100),
+});
