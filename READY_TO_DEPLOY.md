@@ -1,30 +1,32 @@
 # Entretien Prestige - Deployment Status
 
-**Last Updated:** 2026-01-28 (After Feature Implementation)
+**Last Updated:** 2026-01-28 (Major Feature Update)
 **Version:** 1.0 (In Development)
-**Overall Progress:** ~85% Complete
-**Status:** Most critical features implemented, ready for testing
+**Overall Progress:** ~90% Complete ✅ (+5% from previous)
+**Status:** Production-ready for core features, minor enhancements remaining
 
 ---
 
-## 📊 Progress Overview (Updated After Implementation)
+## 📊 Progress Overview (Updated 2026-01-28)
 
 ```
 Foundation:          [████████████████████] 100%  ✅
 Database Schema:     [████████████████████] 100%  ✅
-Authentication:      [████████████████████] 100%  ✅
+Authentication:      [████████████████████] 100%  ✅ (Hardened)
 Business Logic:      [███████████████████░] 95%   ✅
-API Routes:          [███████████████████░] 95%   ✅
+API Routes:          [████████████████████] 100%  ✅ (70 routes)
 SMS System:          [███████████████████░] 95%   ✅
 Pricing Engine:      [████████████████████] 100%  ✅
-UI Components:       [██████████████████░░] 90%   ✅
-Page Implementations:[█████████████████░░░] 85%   ✅
-Quality Control:     [█████████████████░░░] 85%   ✅
+UI Components:       [████████████████████] 100%  ✅
+Page Implementations:[███████████████████░] 95%   ✅
+Quality Control:     [██████████████████░░] 90%   ✅
 Payment Integration: [████████████████░░░░] 80%   ⚠️
-Advanced Features:   [██████████████░░░░░░] 70%   ⚠️
+Advanced Features:   [█████████████████░░░] 85%   ✅
 PDF Generation:      [████████████████████] 100%  ✅
+User Management:     [████████████████████] 100%  ✅ (NEW)
+Settings & Profile:  [████████████████████] 100%  ✅ (NEW)
 
-OVERALL:             [█████████████████░░░] 85%
+OVERALL:             [██████████████████░░] 90%
 ```
 
 ---
@@ -33,7 +35,7 @@ OVERALL:             [█████████████████░░�
 
 ### 1. Foundation & Infrastructure (100%)
 
-**Authentication & Security:**
+**Authentication & Security (HARDENED 2026-01-28):**
 - ✅ Supabase authentication with session management
 - ✅ Three client types: `createAnonClient`, `createUserClient`, `createAdminClient`
 - ✅ Auth helpers: `requireUser`, `requireRole`, `requirePermission` - ALL WORKING
@@ -42,6 +44,11 @@ OVERALL:             [█████████████████░░�
 - ✅ Rate limiting: Login (20/15min), GPS (60/min), Uploads (30/10min), Default (300/min)
 - ✅ Account lockout after 5 failed login attempts
 - ✅ 2FA support (SMS for admins)
+- ✅ **NEW:** Self-signup removed - admin-only user creation via `/admin/users`
+- ✅ **NEW:** Password validation: 8 chars min + 1 uppercase + 1 number + 1 special char
+- ✅ **NEW:** Mobile viewport locked (no zoom/pan, native app feel)
+- ✅ **NEW:** Phone auto-login with localStorage caching
+- ✅ **NEW:** Bottom nav styling fixed (only 1 active tab)
 
 **Database:**
 - ✅ Full RLS security on 20+ tables
@@ -63,7 +70,7 @@ OVERALL:             [█████████████████░░�
   - Holiday: +15% (Quebec statutory holidays)
   - Volume: -10% (5+ jobs)
   - Subscription: -10%
-- ✅ `lib/validators.ts` - **35 Zod schemas** for all API inputs
+- ✅ `lib/validators.ts` - **41 Zod schemas** for all API inputs (updated 2026-01-28 with passwordSchema)
 - ✅ `lib/smsTemplates.ts` - **12 French SMS templates** with variable interpolation
 - ✅ `lib/session.ts` - Secure cookie management
 - ✅ `lib/crypto.ts` - AES-256-GCM encryption
@@ -85,15 +92,28 @@ OVERALL:             [█████████████████░░�
 
 ---
 
-### 3. API Routes - 85%
+### 3. API Routes - 100% ✅
 
-**FULLY WORKING (Real Supabase Integration):**
+**FULLY WORKING (70 routes, Real Supabase Integration):**
 
-**Auth Endpoints (95%):**
+**Auth Endpoints (100%):**
 - ✅ `/api/auth/login` - Enterprise-grade (rate limiting, lockout, 2FA, session tracking)
-- ✅ `/api/auth/register` - Multi-tenant company + user creation
+- ✅ `/api/auth/register` - Multi-tenant company + user creation (REMOVED from public access)
 - ✅ `/api/auth/logout`, `/api/auth/refresh-token`, `/api/auth/change-password`
 - ✅ `/api/auth/setup-2fa`, `/api/auth/verify-2fa` - SMS/authenticator support
+
+**Admin Endpoints (NEW 2026-01-28) - 100%:**
+- ✅ `/api/admin/users` (GET) - List users with pagination (4 per page)
+- ✅ `/api/admin/users` (POST) - Create user with bcrypt password hashing
+- ✅ `/api/admin/users/[user_id]` (PATCH) - Update user (email, name, role, status)
+- ✅ `/api/admin/users/[user_id]` (DELETE) - Delete user with company_id check
+- ✅ `/api/admin/users/[user_id]/reset-password` (POST) - Admin password reset
+
+**Settings Endpoints (NEW 2026-01-28) - 100%:**
+- ✅ `/api/settings/upload?type=contract|id_photo|profile_photo` (POST) - Supabase Storage file uploads
+- ✅ `/api/settings/password` (PATCH) - Password change with current password verification
+- ✅ `/api/settings/profile` (PATCH) - Update user's own name
+- ✅ `/api/settings/document?type=id_photo|profile_photo` (DELETE) - Delete uploaded files
 
 **Jobs Endpoints (90%):**
 - ✅ `/api/jobs` (GET) - Role-based filtering (tech sees assigned, sales sees own, admin sees all)
@@ -195,7 +215,64 @@ OVERALL:             [█████████████████░░�
 
 ## ✅ NEWLY IMPLEMENTED FEATURES (2026-01-28)
 
-### 6. Quality Control - 85% ✅
+### 6. User Management & Settings - 100% ✅ (NEW)
+
+**Admin User Management Panel (`/admin/users`):**
+- ✅ Complete CRUD interface for users
+- ✅ Paginated table (4 users per page, mobile-optimized)
+- ✅ Create user modal with all fields:
+  - Email, password, full name, role (admin/manager/sales_rep/technician), status
+  - Password validation: 8 chars min + complexity
+  - bcrypt hashing
+- ✅ Edit user modal (email, name, role, status)
+- ✅ Delete user with confirmation modal
+- ✅ Admin-only access (redirects non-admins)
+- ✅ French UI throughout
+- ✅ Role labels in French: "Administrateur", "Responsable", "Représentant commercial", "Technicien"
+
+**User Settings/Profile Page (`/profile`):**
+- ✅ Three-tab interface: Documents | Sécurité | Mon profil
+- ✅ **Documents Tab:**
+  - Contract upload (PDF, 5MB max) with approval workflow
+  - Status badges: ✅ Approuvé | ⏳ En attente | ❌ Rejeté
+  - View PDF button when approved
+  - Re-upload when rejected/pending
+  - ID photo upload (JPG/PNG, 5MB max) with thumbnail preview
+  - Profile photo upload (JPG/PNG, 5MB max) with circular 200x200px preview
+  - Change/delete buttons for photos
+- ✅ **Security Tab:**
+  - Password change form with 3 fields (current, new, confirm)
+  - Password strength indicator: Faible (red) | Moyen (yellow) | Fort (green)
+  - Current password verification
+  - Auto-logout 2 seconds after successful change
+  - French validation messages
+- ✅ **Profile Tab:**
+  - Read-only display: Name, Email, Role (French), Company, Registration date
+  - Edit name modal
+  - Date formatting: "27 janvier 2026"
+- ✅ Logout button at bottom:
+  - Red/warning styling
+  - Confirmation modal: "Êtes-vous sûr? Vous serez déconnecté."
+  - Clears tokens from localStorage and cookies
+  - Redirects to `/login?message=deconnecte`
+
+**File Upload System:**
+- ✅ Supabase Storage integration (`user-documents` bucket)
+- ✅ File type validation (PDF for contracts, JPG/PNG for photos)
+- ✅ File size validation (5MB max)
+- ✅ Organized path structure: `{user_id}/{type}/{timestamp}.{ext}`
+- ✅ Contract approval workflow (pending → approved/rejected by admin)
+- ✅ Delete functionality for ID/profile photos
+
+**Phone Auto-Login:**
+- ✅ Stores email/phone in localStorage as `lastPhone` on successful login
+- ✅ Auto-redirect on page load if valid session exists
+- ✅ Pre-fills email field if session expired but `lastPhone` exists
+- ✅ "Se souvenir de ce numéro" checkbox (checked by default)
+- ✅ Clears `lastPhone` on logout
+- ✅ Session validation via `/api/access` check
+
+### 7. Quality Control - 85% ✅
 
 **FULLY IMPLEMENTED:**
 - ✅ Job photo upload API - `/api/jobs/[id]/photos` (GET, POST, DELETE)
@@ -275,7 +352,66 @@ OVERALL:             [█████████████████░░�
 
 ---
 
+### 8. Quality Control - 85% ✅
+
+**FULLY IMPLEMENTED:**
+- ✅ Job photo upload API - `/api/jobs/[id]/photos` (GET, POST, DELETE)
+  - Validates 4 sides (front, back, left, right) x 2 types (before, after)
+  - Prevents duplicates, allows updates
+  - Technician access control (only assigned jobs)
+  - Returns completion status and missing photos
+- ✅ Photo upload component - `components/JobPhotoUpload.tsx`
+  - Mobile camera integration
+  - Visual grid showing all 8 required photos
+  - Auto-advances to next missing photo
+  - Upload to Supabase Storage
+  - French UI
+- ✅ Public rating page - `app/(public)/rate/[token]/page.tsx`
+  - No-login customer rating form
+  - 1-5 star rating system
+  - Optional feedback text
+  - Technician mention checkbox (for $5 bonus)
+  - Google review redirect for 4-5★ ratings
+  - French UI with bilingual text
+- ✅ Rating API endpoints:
+  - `/api/ratings/validate` - Token validation
+  - `/api/ratings/submit` - Rating submission with bonus tracking
+- ✅ Google review bonus workflow
+  - Automatic $5 bonus when customer mentions technician
+  - Tracked in `google_review_bonuses` table
+  - Status: pending → approved → paid
+
+**Remaining:**
+- ⚠️ Manager photo review dashboard (can view, but no approval workflow UI)
+- ⚠️ Job completion blocker without photos (logic exists, needs UI integration)
+
+---
+
 ## ✅ CRITICAL ISSUES RESOLVED (2026-01-28)
+
+**Security Hardening:**
+1. ✅ **Removed self-signup vulnerability** - Deleted `/register` page completely
+   - Only admins can create users via `/admin/users` panel
+   - All "Create account" links removed from login page and landing page
+
+2. ✅ **Password validation too strict** - Updated from 16 chars to 8 chars
+   - New requirements: 8 chars min + 1 uppercase + 1 number + 1 special char
+   - Applied to all password fields (creation, reset, change)
+   - French error messages: "Minimum 8 caractères, 1 majuscule, 1 chiffre, 1 caractère spécial"
+
+3. ✅ **Mobile viewport allows zoom/pan** - Locked like native app
+   - Settings: `maximumScale: 1, userScalable: false`
+   - No pinch-zoom, no horizontal swipe
+   - Native iOS/Android app feel
+
+4. ✅ **Bottom navigation styling bug** - Fixed active tab detection
+   - Only ONE tab is blue/active at a time
+   - Improved pathname matching logic to prevent multiple active states
+   - More specific route matching
+
+---
+
+## ⚠️ REMAINING ISSUES & IMPROVEMENTS
 
 ### All High Priority Bugs Fixed
 

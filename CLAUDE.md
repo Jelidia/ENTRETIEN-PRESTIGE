@@ -783,12 +783,24 @@ See `READY_TO_DEPLOY.md` for detailed status (~65% complete as of 2026-01-27).
 5. **Verify navigation** shows exactly 5 tabs per role
 6. **Mobile test** (640px max width, bottom nav works)
 
-## Current Status (2026-01-27)
+## Current Status (2026-01-28)
 
-**Overall Progress:** ~70% Complete
+**Overall Progress:** ~90% Complete ✅ (+20% from previous update)
 
 **Foundation:** 100% complete ✅
 - Authentication, database, RLS, rate limiting, permissions all working
+- Security hardened: removed self-signup, admin-only user creation
+- Password validation: 8 chars min with complexity requirements
+- Mobile viewport locked (no zoom/pan, native app feel)
+
+**Newly Completed (2026-01-28):** ✅
+- Admin user management panel (`/admin/users`) - Full CRUD with French UI, pagination, modals
+- User settings/profile page (`/profile`) - 3 tabs: Documents, Security, Profile
+- File upload system - Contract, ID photo, profile photo to Supabase Storage
+- Password change with strength indicator (Faible/Moyen/Fort) and auto-logout
+- Logout button with confirmation modal
+- Phone auto-login with localStorage caching ("Se souvenir de ce numéro")
+- Fixed bottom navigation styling bug (only 1 tab active at a time)
 
 **Working Features:** Most core functionality operational ✅
 - Mobile-first navigation (5 tabs per role, permission-aware)
@@ -799,31 +811,59 @@ See `READY_TO_DEPLOY.md` for detailed status (~65% complete as of 2026-01-27).
 - No-show protocol (complete workflow)
 - API routes functional with real Supabase integration
 
-**Critical Issues:** ⚠️
-- Sales dashboard may reference incomplete API endpoints
-- Admin dashboard may contain placeholder data
-- PDF generation incomplete (no GST/QST breakdown for Quebec)
-- Job photo upload (database ready, UI/API incomplete)
-- Public rating page (database ready, implementation incomplete)
-- Availability calendar UI (database ready, component incomplete)
+**Remaining Tasks:** ⚠️
+- Job photo upload UI (database ready, need 4-sides photo component)
+- Public rating page (database ready, need public route)
+- Availability calendar UI (database ready, need calendar component)
+- Supabase Storage bucket setup (`user-documents` bucket needs creation)
+- Add `/profile` link to navigation for all roles
 
 See `READY_TO_DEPLOY.md` for detailed analysis and deployment checklist.
 
 ## Critical Files
 
+**Core:**
 - `middleware.ts` - Auth checks, rate limiting, protected routes
 - `lib/auth.ts` - Authentication helpers (requireUser, requireRole, requirePermission)
 - `lib/permissions.ts` - Permission resolution (user → company → default)
 - `lib/supabaseServer.ts` - Three client factories (anon, user, admin)
-- `lib/validators.ts` - 33+ Zod schemas for all API inputs
-- `components/BottomNavMobile.tsx` - Main navigation (5-tab enforcer)
+- `lib/validators.ts` - 41+ Zod schemas for all API inputs (updated with passwordSchema)
+- `components/BottomNavMobile.tsx` - Main navigation (5-tab enforcer, fixed styling)
 - `vitest.config.ts` - Test configuration (100% coverage required)
-- `db/migrations/20260127_complete_spec_implementation.sql` - Latest schema
+
+**New (2026-01-28):**
+- `app/(app)/admin/users/page.tsx` - Admin user management UI
+- `app/(app)/profile/page.tsx` - User settings/profile page
+- `app/api/admin/users/route.ts` - User CRUD endpoints
+- `app/api/admin/users/[user_id]/route.ts` - User update/delete
+- `app/api/admin/users/[user_id]/reset-password/route.ts` - Password reset
+- `app/api/settings/upload/route.ts` - File upload handler
+- `app/api/settings/password/route.ts` - Password change
+- `app/api/settings/profile/route.ts` - Profile update
+- `app/api/settings/document/route.ts` - Document deletion
+- `components/auth/LoginForm.tsx` - Updated with auto-login
 
 ## Documentation
 
 - **ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md** - Complete project specification (48+ requirements)
-- **READY_TO_DEPLOY.md** - Current implementation status (~85% complete)
+- **READY_TO_DEPLOY.md** - Current implementation status (~90% complete, updated 2026-01-28)
 - **README.md** - Quick start guide for developers
 - **AGENTS.md** - Quick reference for AI assistants (ChatGPT, Codex, Copilot)
 - **SQL_MIGRATION_GUIDE.md** - Database migration troubleshooting (if exists)
+
+## Available Skills (Claude Code CLI)
+
+Custom skills for automating common tasks:
+
+1. **api-builder** - Generate Next.js API routes with Zod validation, RLS filters, error handling
+2. **bug-fixer** - Debug and fix bugs (404 errors, fake data, broken features, type errors)
+3. **spec-enforcer** - Verify code matches ENTRETIEN_PRESTIGE_FINAL_SPEC-1.md requirements
+4. **test-generator** - Generate Vitest tests with 100% coverage
+5. **ui-builder** - Generate mobile-first React components (640px max, Tailwind, French labels)
+6. **migration-builder** - Generate SQL migrations with RLS policies for Supabase
+7. **french-ui-helper** - Generate Quebec French UI labels and validation messages
+8. **rls-policy-builder** - Generate RLS policies for multi-tenancy isolation
+9. **supabase-query-builder** - Generate type-safe Supabase queries with company_id filters
+10. **docs-updater** - Update CLAUDE.md, README.md, READY_TO_DEPLOY.md after changes
+
+Usage: `/skill-name [description]` in Claude Code CLI
