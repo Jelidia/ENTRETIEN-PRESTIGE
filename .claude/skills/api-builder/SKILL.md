@@ -1,6 +1,26 @@
 ---
 name: api-builder
 description: Generate production-ready Next.js API routes with Zod validation, RLS filters, and error handling. Use when creating new API endpoints.
+argument-hint: "Endpoint path and fields/requirements (e.g., 'Create /api/sales/dashboard with leads_count, revenue')"
+user-invocable: true
+allowed-tools:
+  - Read
+  - Write
+  - Bash
+  - Grep
+  - Glob
+model: claude-sonnet-4-5-20250929
+context: fork
+agent: feature-builder
+hooks:
+  - type: PostToolUse
+    tool: Write
+    condition: path.includes('app/api/')
+    script: !`.claude/hooks/validate-api-route.sh`
+  - type: PostToolUse
+    tool: Write
+    condition: path.includes('app/api/')
+    script: !`npm run lint -- --fix ${path}`
 ---
 
 # api-builder Skill

@@ -1,3 +1,35 @@
+---
+name: code-reviewer
+description: Code review against spec, patterns, and best practices. Ensures security, consistency, and spec compliance.
+model: claude-sonnet-4-5-20250929
+permissionMode: auto
+tools:
+  - Read
+  - Glob
+  - Grep
+  - Skill
+disallowedTools:
+  - Write
+  - Edit
+  - Bash
+skills:
+  - spec-enforcer
+hooks:
+  - type: PreToolUse
+    tool: Read
+    condition: path.includes('app/api/')
+    message: "Checking API route for auth, validation, and RLS compliance..."
+  - type: PostToolUse
+    tool: Grep
+    script: !`.claude/hooks/analyze-security.sh`
+context:
+  - ENTRETIEN_PRESTIGE_FINAL_SPEC-1.md
+  - CLAUDE.md
+  - lib/auth.ts
+  - lib/validators.ts
+  - middleware.ts
+---
+
 # Code Reviewer Agent
 
 **Purpose:** Code review against spec, patterns, and best practices

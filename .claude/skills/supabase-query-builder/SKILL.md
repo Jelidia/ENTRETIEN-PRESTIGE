@@ -1,6 +1,19 @@
 ---
 name: supabase-query-builder
 description: Generate type-safe Supabase queries with RLS filtering, error handling, and proper TypeScript types. Ensures company_id filtering for multi-tenancy.
+argument-hint: "Query description (e.g., 'Query all jobs for technician with status pending')"
+user-invocable: true
+allowed-tools:
+  - Read
+  - Write
+model: claude-sonnet-4-5-20250929
+context: fork
+agent: database-architect
+hooks:
+  - type: PostToolUse
+    tool: Write
+    condition: content.includes('supabase.from')
+    script: !`.claude/hooks/validate-supabase-query.sh`
 ---
 
 # supabase-query-builder Skill

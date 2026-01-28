@@ -1,6 +1,23 @@
 ---
 name: docs-updater
 description: Update CLAUDE.md, README.md, and READY_TO_DEPLOY.md after completing features. Keeps documentation synchronized with codebase changes.
+argument-hint: "What changed (e.g., 'Update docs: added loyalty points redemption feature')"
+user-invocable: true
+disable-model-invocation: false
+allowed-tools:
+  - Read
+  - Edit
+  - Bash
+  - Grep
+  - Glob
+model: claude-sonnet-4-5-20250929
+context: fork
+agent: deploy-manager
+hooks:
+  - type: PostToolUse
+    tool: Edit
+    condition: path.includes('CLAUDE.md') || path.includes('README.md')
+    script: !`.claude/hooks/validate-docs.sh`
 ---
 
 # docs-updater Skill

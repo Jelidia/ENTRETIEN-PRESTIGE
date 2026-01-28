@@ -1,3 +1,37 @@
+---
+name: feature-builder
+description: End-to-end feature implementation from spec to deployment. Coordinates API, UI, database, and tests.
+model: claude-sonnet-4-5-20250929
+permissionMode: auto
+tools:
+  - Read
+  - Write
+  - Edit
+  - Bash
+  - Glob
+  - Grep
+  - Task
+  - Skill
+skills:
+  - api-builder
+  - ui-builder
+  - migration-builder
+  - test-generator
+  - docs-updater
+  - spec-enforcer
+hooks:
+  - type: PreToolUse
+    tool: Write
+    script: !`.claude/hooks/validate-write.sh`
+  - type: PostToolUse
+    tool: Write
+    script: !`.claude/hooks/auto-format.sh`
+context:
+  - ENTRETIEN_PRESTIGE_FINAL_SPEC-1.md
+  - CLAUDE.md
+  - READY_TO_DEPLOY.md
+---
+
 # Feature Builder Agent
 
 **Purpose:** End-to-end feature implementation from spec to deployment

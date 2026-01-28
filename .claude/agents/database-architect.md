@@ -1,3 +1,38 @@
+---
+name: database-architect
+description: Database schema design, migrations, and RLS policy management. Ensures multi-tenancy isolation with company_id filtering.
+model: claude-sonnet-4-5-20250929
+permissionMode: auto
+tools:
+  - Read
+  - Write
+  - Edit
+  - Bash
+  - Glob
+  - Grep
+  - Skill
+disallowedTools:
+  - WebFetch
+  - WebSearch
+skills:
+  - migration-builder
+  - rls-policy-builder
+  - supabase-query-builder
+hooks:
+  - type: PreToolUse
+    tool: Write
+    condition: path.includes('db/migrations/')
+    script: !`.claude/hooks/validate-migration.sh`
+  - type: PostToolUse
+    tool: Write
+    condition: path.includes('db/migrations/')
+    script: !`.claude/hooks/validate-sql-syntax.sh`
+context:
+  - db/schema.sql
+  - db/migrations/*.sql
+  - CLAUDE.md
+---
+
 # Database Architect Agent
 
 **Purpose:** Database schema design, migrations, and RLS policy management

@@ -1,0 +1,378 @@
+{
+  "$schema": "https://modelcontextprotocol.io/schema/mcp.json",
+  "version": "1.0.0",
+  "name": "entretien-prestige-mcp",
+  "description": "Model Context Protocol configuration for Entretien Prestige development",
+  "servers": {
+    "supabase-local": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["supabase-mcp-server"],
+      "env": {
+        "SUPABASE_URL": "${NEXT_PUBLIC_SUPABASE_URL}",
+        "SUPABASE_SERVICE_KEY": "${SUPABASE_SERVICE_ROLE_KEY}",
+        "PROJECT_ID": "entretien-prestige"
+      },
+      "description": "Local Supabase development server integration",
+      "enabled": true,
+      "capabilities": {
+        "resources": true,
+        "tools": true,
+        "prompts": false
+      },
+      "tools": [
+        {
+          "name": "query",
+          "description": "Execute SQL query on Supabase database",
+          "parameters": {
+            "query": {
+              "type": "string",
+              "description": "SQL query to execute"
+            }
+          }
+        },
+        {
+          "name": "schema",
+          "description": "Get database schema information",
+          "parameters": {
+            "table": {
+              "type": "string",
+              "description": "Table name (optional, returns all if omitted)"
+            }
+          }
+        },
+        {
+          "name": "migrate",
+          "description": "Test migration file locally",
+          "parameters": {
+            "file": {
+              "type": "string",
+              "description": "Path to migration file"
+            }
+          }
+        }
+      ]
+    },
+    "git-integration": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["git-mcp-server"],
+      "env": {
+        "GIT_DIR": "${PWD}/.git",
+        "WORKING_DIR": "${PWD}"
+      },
+      "description": "Git operations and repository management",
+      "enabled": true,
+      "capabilities": {
+        "resources": true,
+        "tools": true,
+        "prompts": true
+      },
+      "tools": [
+        {
+          "name": "status",
+          "description": "Get git status"
+        },
+        {
+          "name": "diff",
+          "description": "Show git diff",
+          "parameters": {
+            "file": {
+              "type": "string",
+              "description": "Specific file to diff (optional)"
+            },
+            "staged": {
+              "type": "boolean",
+              "description": "Show staged changes only"
+            }
+          }
+        },
+        {
+          "name": "log",
+          "description": "Show commit history",
+          "parameters": {
+            "limit": {
+              "type": "number",
+              "description": "Number of commits to show",
+              "default": 10
+            }
+          }
+        },
+        {
+          "name": "branch",
+          "description": "List or create branches",
+          "parameters": {
+            "name": {
+              "type": "string",
+              "description": "Branch name (omit to list all)"
+            },
+            "create": {
+              "type": "boolean",
+              "description": "Create new branch"
+            }
+          }
+        }
+      ]
+    },
+    "file-search": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["ripgrep-mcp-server"],
+      "env": {
+        "SEARCH_PATH": "${PWD}",
+        "EXCLUDE_DIRS": "node_modules,.next,.git,coverage"
+      },
+      "description": "Fast file and content search using ripgrep",
+      "enabled": true,
+      "capabilities": {
+        "resources": false,
+        "tools": true,
+        "prompts": false
+      },
+      "tools": [
+        {
+          "name": "search",
+          "description": "Search file contents",
+          "parameters": {
+            "pattern": {
+              "type": "string",
+              "description": "Search pattern (regex supported)"
+            },
+            "fileType": {
+              "type": "string",
+              "description": "File type filter (ts, tsx, sql, md, etc.)"
+            },
+            "caseSensitive": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        },
+        {
+          "name": "find",
+          "description": "Find files by name",
+          "parameters": {
+            "pattern": {
+              "type": "string",
+              "description": "File name pattern (glob supported)"
+            }
+          }
+        }
+      ]
+    },
+    "typescript-language": {
+      "type": "http",
+      "url": "http://localhost:6789",
+      "description": "TypeScript language server for type checking and IntelliSense",
+      "enabled": false,
+      "requiresSetup": true,
+      "setupInstructions": "Start TypeScript language server: npx typescript-language-server --stdio",
+      "capabilities": {
+        "resources": false,
+        "tools": true,
+        "prompts": false
+      },
+      "tools": [
+        {
+          "name": "typeCheck",
+          "description": "Type check TypeScript file",
+          "parameters": {
+            "file": {
+              "type": "string",
+              "description": "Path to TypeScript file"
+            }
+          }
+        },
+        {
+          "name": "getDefinition",
+          "description": "Get type definition",
+          "parameters": {
+            "file": {
+              "type": "string"
+            },
+            "line": {
+              "type": "number"
+            },
+            "character": {
+              "type": "number"
+            }
+          }
+        }
+      ]
+    },
+    "testing": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["vitest-mcp-server"],
+      "env": {
+        "TEST_DIR": "${PWD}/tests",
+        "CONFIG_FILE": "${PWD}/vitest.config.ts"
+      },
+      "description": "Vitest testing integration",
+      "enabled": true,
+      "capabilities": {
+        "resources": true,
+        "tools": true,
+        "prompts": false
+      },
+      "tools": [
+        {
+          "name": "runTests",
+          "description": "Run test suite",
+          "parameters": {
+            "file": {
+              "type": "string",
+              "description": "Specific test file (optional)"
+            },
+            "pattern": {
+              "type": "string",
+              "description": "Test name pattern filter"
+            },
+            "coverage": {
+              "type": "boolean",
+              "description": "Generate coverage report"
+            }
+          }
+        },
+        {
+          "name": "getCoverage",
+          "description": "Get current test coverage"
+        },
+        {
+          "name": "watchMode",
+          "description": "Start watch mode",
+          "parameters": {
+            "file": {
+              "type": "string",
+              "description": "File to watch (optional)"
+            }
+          }
+        }
+      ]
+    },
+    "stripe-integration": {
+      "type": "http",
+      "url": "https://api.stripe.com/v1",
+      "headers": {
+        "Authorization": "Bearer ${STRIPE_SECRET_KEY}",
+        "Content-Type": "application/json"
+      },
+      "description": "Stripe payment processing integration",
+      "enabled": true,
+      "requiresAuth": true,
+      "capabilities": {
+        "resources": false,
+        "tools": true,
+        "prompts": false
+      },
+      "tools": [
+        {
+          "name": "createPaymentIntent",
+          "description": "Create payment intent for job",
+          "parameters": {
+            "amount": {
+              "type": "number",
+              "description": "Amount in cents"
+            },
+            "currency": {
+              "type": "string",
+              "default": "cad"
+            },
+            "metadata": {
+              "type": "object",
+              "description": "Job/customer metadata"
+            }
+          }
+        },
+        {
+          "name": "getPayment",
+          "description": "Get payment status",
+          "parameters": {
+            "paymentId": {
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    "twilio-sms": {
+      "type": "http",
+      "url": "https://api.twilio.com/2010-04-01",
+      "auth": {
+        "type": "basic",
+        "username": "${TWILIO_ACCOUNT_SID}",
+        "password": "${TWILIO_AUTH_TOKEN}"
+      },
+      "description": "Twilio SMS integration for customer notifications",
+      "enabled": true,
+      "requiresAuth": true,
+      "capabilities": {
+        "resources": false,
+        "tools": true,
+        "prompts": false
+      },
+      "tools": [
+        {
+          "name": "sendSMS",
+          "description": "Send SMS message",
+          "parameters": {
+            "to": {
+              "type": "string",
+              "description": "Phone number (E.164 format)"
+            },
+            "message": {
+              "type": "string",
+              "description": "Message content (French)"
+            },
+            "from": {
+              "type": "string",
+              "default": "${TWILIO_FROM_NUMBER}"
+            }
+          }
+        },
+        {
+          "name": "getSMSHistory",
+          "description": "Get SMS history for phone number",
+          "parameters": {
+            "phone": {
+              "type": "string"
+            },
+            "limit": {
+              "type": "number",
+              "default": 20
+            }
+          }
+        }
+      ]
+    }
+  },
+  "managed": {
+    "enabled": false,
+    "configFile": "./managed-mcp.json",
+    "autoUpdate": true
+  },
+  "security": {
+    "requireAuth": true,
+    "allowedOrigins": ["http://localhost:3000", "https://*.vercel.app"],
+    "rateLimiting": {
+      "enabled": true,
+      "maxRequestsPerMinute": 60
+    },
+    "encryption": {
+      "enabled": true,
+      "algorithm": "aes-256-gcm"
+    }
+  },
+  "logging": {
+    "enabled": true,
+    "level": "info",
+    "destination": "./.claude/logs/mcp.log",
+    "maxSize": "10mb",
+    "maxFiles": 5
+  },
+  "errorHandling": {
+    "retryAttempts": 3,
+    "retryDelay": 1000,
+    "timeout": 30000
+  }
+}

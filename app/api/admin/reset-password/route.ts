@@ -1,67 +1,64 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { requireRole } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabaseServer";
+import { adminResetByEmailSchema } from "@/lib/validators";
 
+// POST /api/admin/reset-password - Admin resets password by email
 export async function POST(request: Request) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  // 1. Authenticate as admin
+  const auth = await requireRole(request, ["admin"]);
+  if ("response" in auth) return auth.response;
 
-  if (!supabaseUrl || !supabaseServiceKey) {
+  // 2. Validate input
+  const body = await request.json().catch(() => null);
+  const result = adminResetByEmailSchema.safeParse(body);
+
+  if (!result.success) {
     return NextResponse.json(
-      { error: "Missing Supabase configuration" },
-      { status: 500 }
-    );
-  }
-
-  const admin = createClient(supabaseUrl, supabaseServiceKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  });
-
-  const { email, newPassword } = await request.json();
-
-  if (!email || !newPassword) {
-    return NextResponse.json(
-      { error: "Email and newPassword are required" },
+      { error: "Données invalides", details: result.error.format() },
       { status: 400 }
     );
   }
 
-  // Get the user by email
+  const { email, newPassword } = result.data;
+
+  // 3. Find user by email
+  const admin = createAdminClient();
   const { data: users, error: listError } = await admin.auth.admin.listUsers();
 
   if (listError) {
+    console.error("Failed to list users:", listError);
     return NextResponse.json(
-      { error: "Failed to list users", details: listError.message },
+      { error: "Impossible de lister les utilisateurs" },
       { status: 500 }
     );
   }
 
-  const user = users.users.find((u) => u.email === email);
+  const targetUser = users.users.find((u) => u.email === email);
 
-  if (!user) {
+  if (!targetUser) {
     return NextResponse.json(
-      { error: "User not found" },
+      { error: "Utilisateur introuvable" },
       { status: 404 }
     );
   }
 
-  // Update the user's password
-  const { data, error } = await admin.auth.admin.updateUserById(user.id, {
+  // 4. Update password
+  const { error: updateError } = await admin.auth.admin.updateUserById(targetUser.id, {
     password: newPassword,
   });
 
-  if (error) {
+  if (updateError) {
+    console.error("Failed to reset password:", updateError);
     return NextResponse.json(
-      { error: "Failed to reset password", details: error.message },
+      { error: "Impossible de réinitialiser le mot de passe" },
       { status: 500 }
     );
   }
 
   return NextResponse.json({
     success: true,
-    message: "Password reset successfully",
-    userId: data.user.id,
+    message: "Mot de passe réinitialisé avec succès",
+    userId: targetUser.id,
   });
 }

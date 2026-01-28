@@ -3,15 +3,106 @@
 ## Project Context
 - Type: Quebec cleaning ERP
 - Tech: Next.js 14, TypeScript, Supabase, Tailwind CSS
-- Status: 70% complete, 6 bugs blocking deployment
+- Status: 90% complete, actively in development
+
+## CRITICAL: Token Efficiency Requirements
+
+**YOU MUST USE SKILLS AND AGENTS - NOT OPTIONAL:**
+
+Skills and agents are designed to minimize token usage by reducing context and automating workflows. Using them is REQUIRED, not a suggestion.
+
+### When to Use Skills (IMMEDIATELY on relevant tasks)
+
+**Skills are specialized tools for focused tasks. Use them FIRST before doing work manually.**
+
+- **api-builder** - Generating any API route (use ALWAYS for new endpoints)
+- **bug-fixer** - Fixing ANY bug (404s, type errors, broken features, fake data)
+- **spec-enforcer** - Before completing features or deploying (verify spec compliance)
+- **test-generator** - Generating tests (ALWAYS use for 100% coverage)
+- **ui-builder** - Building ANY UI component or page (640px mobile-first, French labels)
+- **migration-builder** - Creating database migrations (schema changes, RLS policies)
+- **french-ui-helper** - Generating French text (labels, validation messages, SMS templates)
+- **rls-policy-builder** - Creating RLS policies (multi-tenancy isolation)
+- **supabase-query-builder** - Writing Supabase queries (type-safe, company_id filters)
+- **docs-updater** - Updating docs after changes (CLAUDE.md, README.md, READY_TO_DEPLOY.md)
+
+**Pattern:** When user asks for something a skill handles, invoke the skill IMMEDIATELY. Do NOT manually code it.
+
+### When to Use Agents (Complex multi-step work)
+
+**Agents are autonomous workers for complex tasks requiring multiple steps. Delegate to them instead of doing work yourself.**
+
+- **feature-builder** - Implementing complete features (API + UI + tests + docs, end-to-end)
+- **database-architect** - Database design (schema, migrations, RLS policies, indexes)
+- **qa-engineer** - Testing & quality assurance (test generation, coverage verification, CI/CD)
+- **bug-hunter** - Complex bug investigation (root cause analysis, fix verification)
+- **deploy-manager** - Deployment preparation (checklist, verification, environment setup)
+- **code-reviewer** - Code review (spec compliance, pattern adherence, best practices)
+
+**Pattern:** When user asks for multi-step work (feature, deployment, etc.), delegate to an agent IMMEDIATELY. Do NOT do it yourself.
+
+### Why This Matters
+
+- **Token efficiency:** Skills/agents use specialized context, not full codebase
+- **Consistency:** Skills enforce patterns automatically
+- **Speed:** Pre-built workflows are faster than manual coding
+- **Quality:** Skills include testing, validation, and error handling
+- **Cost:** Using skills reduces token consumption by 70-90%
+
+### Examples
+
+❌ **WRONG** - User asks "Create an API for updating customer addresses"
+```
+Let me create that API route for you... [writes code manually]
+```
+
+✅ **CORRECT** - User asks "Create an API for updating customer addresses"
+```
+[Immediately invokes api-builder skill]
+```
+
+❌ **WRONG** - User asks "Build the photo upload feature"
+```
+Let me implement this feature... [manually codes API, UI, tests]
+```
+
+✅ **CORRECT** - User asks "Build the photo upload feature"
+```
+[Immediately delegates to feature-builder agent]
+```
+
+❌ **WRONG** - User asks "Fix the navigation bug where multiple tabs are active"
+```
+Let me investigate and fix that... [manually debugs]
+```
+
+✅ **CORRECT** - User asks "Fix the navigation bug where multiple tabs are active"
+```
+[Immediately invokes bug-fixer skill]
+```
 
 ## Code Generation Rules
 
-### API Endpoints
-- Always use Zod validation
+### ZERO TOLERANCE FOR HALF-MEASURES
+- **Production-ready code ONLY** - Every line of code must be deployment-ready from the start
+- **NO shortcuts EVER** - No "TODO", no "FIXME", no "temporary" solutions
+- **NO inline code duplication** - Always use existing utilities, schemas, and helpers from lib/
+- **NO inline Zod schemas** - ALL schemas MUST be in lib/validators.ts
+- **NO duplicate schemas** - If a schema exists, use it. If it needs modification, update it in validators.ts
+- **NO inline validation logic** - Password rules, email validation, etc. belong in validators.ts
+- **CHECK lib/ FIRST** - Before writing ANY new code, search lib/ for existing patterns
+- **100% rule compliance** - If a rule exists, follow it. No exceptions, no workarounds.
+
+### API Endpoints - STRICT REQUIREMENTS
+- **CRITICAL:** ALL Zod schemas MUST be defined in lib/validators.ts and imported - NEVER inline in route files
+- **CRITICAL:** NO duplicate password schemas - use passwordSchema, changePasswordSchema, resetPasswordSchema, or adminResetPasswordSchema from validators.ts
+- **CRITICAL:** Password changes MUST verify current password before allowing update
+- **CRITICAL:** Password resets MUST require password confirmation
 - Always filter with company_id (RLS)
 - Pattern: await supabase.from('table').select().eq('company_id', company_id)
 - Return { success: true, data } or { error: "message" }
+- Import schemas: import { schemaName } from "@/lib/validators"
+- Error messages in French for user-facing endpoints
 
 ### React Components
 - Mobile-first: 640px max width

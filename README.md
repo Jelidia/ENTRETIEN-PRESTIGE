@@ -6,9 +6,35 @@ Full-stack operations platform for Quebec cleaning company with dispatch, CRM, b
 
 **Status:** ~70-75% complete, foundation solid, APIs working, UI has critical gaps (see READY_TO_DEPLOY.md)
 
+**Claude Code Integration:** Full development environment with 6 agents, 10 skills, comprehensive hooks, and MCP integration
+
 ---
 
 ## 🚀 Quick Start
+
+### Claude Code Setup (Recommended)
+
+If you're using Claude Code for development:
+
+```bash
+# The plugin is already configured in this project
+# Just start Claude Code and the session hook will guide you:
+claude
+
+# Or run setup manually:
+.claude/hooks/project-setup.sh
+```
+
+You'll have access to:
+- 🤖 6 Specialized Agents (feature-builder, database-architect, qa-engineer, bug-hunter, deploy-manager, code-reviewer)
+- 🔧 10 Custom Skills (api-builder, ui-builder, test-generator, migration-builder, etc.)
+- 🎨 3 Output Styles (quebec-french, production-ready, code-review)
+- 🔗 Comprehensive Hooks (validation, formatting, testing)
+- 📡 MCP Integration (Supabase, Git, Stripe, Twilio)
+
+See `.claude/README.md` for complete Claude Code documentation.
+
+### Standard Setup
 
 ### 1. Install Dependencies
 

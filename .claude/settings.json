@@ -1,0 +1,199 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "tool": "Bash",
+        "condition": "command.includes('rm -rf') || command.includes('DROP TABLE') || command.includes('DELETE FROM')",
+        "message": "⚠️ DESTRUCTIVE COMMAND DETECTED. Are you sure? This cannot be undone.",
+        "requireConfirmation": true
+      },
+      {
+        "tool": "Bash",
+        "condition": "command.includes('git push --force')",
+        "message": "⚠️ Force push detected. Use with extreme caution.",
+        "requireConfirmation": true
+      },
+      {
+        "tool": "Write",
+        "condition": "path.includes('app/api/') && !content.includes('requireUser') && !content.includes('requireRole')",
+        "message": "⚠️ API route missing authentication. Add requireUser() or requireRole()."
+      },
+      {
+        "tool": "Edit",
+        "condition": "path.includes('db/schema.sql')",
+        "message": "⚠️ Editing base schema. Consider creating a migration instead in db/migrations/."
+      },
+      {
+        "tool": "Write",
+        "condition": "path.includes('.env') || path.includes('credentials')",
+        "message": "⚠️ Writing sensitive file. Ensure no secrets are committed to git.",
+        "requireConfirmation": true
+      }
+    ],
+    "PostToolUse": [
+      {
+        "tool": "Write",
+        "condition": "path.endsWith('.ts') || path.endsWith('.tsx')",
+        "script": "npx prettier --write ${path}"
+      },
+      {
+        "tool": "Write",
+        "condition": "path.endsWith('.md')",
+        "script": "npx prettier --write ${path}"
+      },
+      {
+        "tool": "Write",
+        "condition": "path.includes('app/api/')",
+        "script": "npm run lint -- --fix ${path}"
+      },
+      {
+        "tool": "Write",
+        "condition": "path.includes('tests/') || path.endsWith('.test.ts')",
+        "script": "npm test -- --run ${path}"
+      },
+      {
+        "tool": "Edit",
+        "condition": "path.includes('lib/validators.ts')",
+        "notification": "✅ Validator updated. Remember to update tests."
+      },
+      {
+        "tool": "Write",
+        "condition": "path.includes('db/migrations/')",
+        "script": ".claude/hooks/validate-migration.sh ${path}"
+      },
+      {
+        "tool": "Write",
+        "condition": "path.includes('app/api/') && content.includes('from(')",
+        "script": ".claude/hooks/check-rls-filter.sh ${path}"
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "action": "Bash",
+        "condition": "command.includes('npm install')",
+        "autoApprove": true,
+        "message": "Installing npm package..."
+      },
+      {
+        "action": "Bash",
+        "condition": "command.includes('npm run build')",
+        "autoApprove": true,
+        "message": "Building project..."
+      },
+      {
+        "action": "Bash",
+        "condition": "command.includes('npm test')",
+        "autoApprove": true,
+        "message": "Running tests..."
+      },
+      {
+        "action": "Bash",
+        "condition": "command.includes('git commit')",
+        "requireConfirmation": true,
+        "message": "Ready to commit changes. Review git diff first?"
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "condition": "prompt.toLowerCase().includes('deploy') || prompt.toLowerCase().includes('production')",
+        "message": "🚀 Deployment detected. Running pre-deploy checks...",
+        "script": ".claude/hooks/pre-deploy-check.sh"
+      }
+    ],
+    "Notification": [
+      {
+        "type": "desktop",
+        "condition": "message.includes('test') && message.includes('fail')",
+        "title": "Tests Failed",
+        "body": "Some tests are failing. Check the output."
+      },
+      {
+        "type": "desktop",
+        "condition": "message.includes('build') && message.includes('error')",
+        "title": "Build Failed",
+        "body": "Build encountered errors. Review the log."
+      },
+      {
+        "type": "desktop",
+        "condition": "message.includes('coverage') && !message.includes('100%')",
+        "title": "Coverage Below 100%",
+        "body": "Test coverage is not at 100%. Add more tests."
+      }
+    ],
+    "Stop": [
+      {
+        "script": ".claude/hooks/cleanup-session.sh",
+        "message": "Cleaning up session..."
+      }
+    ],
+    "SubagentStop": [
+      {
+        "script": ".claude/hooks/subagent-report.sh ${agentName}",
+        "message": "Generating subagent report..."
+      }
+    ],
+    "PreCompact": [
+      {
+        "script": ".claude/hooks/save-context.sh",
+        "message": "Saving important context before compacting..."
+      }
+    ],
+    "Setup": [
+      {
+        "script": ".claude/hooks/project-setup.sh",
+        "message": "Setting up Claude Code for Entretien Prestige..."
+      }
+    ],
+    "SessionStart": [
+      {
+        "script": ".claude/hooks/session-start.sh",
+        "message": "👋 Starting Claude Code session for Entretien Prestige"
+      }
+    ],
+    "SessionEnd": [
+      {
+        "script": ".claude/hooks/session-end.sh",
+        "message": "📊 Generating session summary..."
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(git *)",
+      "Bash(npx *)",
+      "Bash(ls *)",
+      "Bash(grep *)",
+      "Bash(tree *)",
+      "Bash(mkdir *)",
+      "Bash(cat *)",
+      "Read(*)",
+      "Write(*)",
+      "Edit(*)",
+      "Glob(*)",
+      "Grep(*)",
+      "Task(*)",
+      "Skill(*)"
+    ],
+    "deny": [
+      "Bash(rm -rf /)",
+      "Bash(sudo *)",
+      "Bash(chmod 777 *)"
+    ]
+  },
+  "outputStyles": {
+    "default": "production-ready",
+    "available": [
+      "production-ready",
+      "quebec-french",
+      "code-review"
+    ]
+  },
+  "context": {
+    "alwaysInclude": [
+      "CLAUDE.md",
+      "ENTRETIEN_PRESTIGE_FINAL_SPEC-1.md"
+    ],
+    "maxTokens": 50000
+  }
+}

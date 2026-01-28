@@ -1,0 +1,233 @@
+{
+  "name": "entretien-prestige-dev",
+  "version": "1.0.0",
+  "description": "Complete Claude Code development environment for Entretien Prestige - Quebec cleaning company ERP system",
+  "author": "Entretien Prestige Development Team",
+  "repository": "https://github.com/your-org/entretien-prestige",
+  "license": "UNLICENSED",
+  "private": true,
+  "keywords": [
+    "next.js",
+    "typescript",
+    "supabase",
+    "erp",
+    "field-service",
+    "quebec",
+    "cleaning",
+    "french-ui",
+    "mobile-first"
+  ],
+  "claudeVersion": ">=4.5.0",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "main": {
+    "agents": "./agents",
+    "skills": "./skills",
+    "hooks": "./hooks",
+    "outputStyles": "./output-styles"
+  },
+  "agents": [
+    {
+      "name": "feature-builder",
+      "path": "./agents/feature-builder.md",
+      "description": "End-to-end feature implementation from spec to deployment"
+    },
+    {
+      "name": "database-architect",
+      "path": "./agents/database-architect.md",
+      "description": "Database schema design, migrations, and RLS policies"
+    },
+    {
+      "name": "qa-engineer",
+      "path": "./agents/qa-engineer.md",
+      "description": "Testing and quality assurance with 100% coverage"
+    },
+    {
+      "name": "bug-hunter",
+      "path": "./agents/bug-hunter.md",
+      "description": "Bug investigation and minimal fixes"
+    },
+    {
+      "name": "deploy-manager",
+      "path": "./agents/deploy-manager.md",
+      "description": "Deployment preparation and verification"
+    },
+    {
+      "name": "code-reviewer",
+      "path": "./agents/code-reviewer.md",
+      "description": "Code review against spec and best practices"
+    }
+  ],
+  "skills": [
+    {
+      "name": "api-builder",
+      "path": "./skills/api-builder/SKILL.md",
+      "description": "Generate production-ready Next.js API routes"
+    },
+    {
+      "name": "ui-builder",
+      "path": "./skills/ui-builder/SKILL.md",
+      "description": "Generate mobile-first React components"
+    },
+    {
+      "name": "test-generator",
+      "path": "./skills/test-generator/SKILL.md",
+      "description": "Generate Vitest tests with 100% coverage"
+    },
+    {
+      "name": "bug-fixer",
+      "path": "./skills/bug-fixer/SKILL.md",
+      "description": "Debug and fix bugs with minimal changes"
+    },
+    {
+      "name": "migration-builder",
+      "path": "./skills/migration-builder/SKILL.md",
+      "description": "Generate SQL migrations with RLS policies"
+    },
+    {
+      "name": "french-ui-helper",
+      "path": "./skills/french-ui-helper/SKILL.md",
+      "description": "Generate French UI labels and SMS templates"
+    },
+    {
+      "name": "rls-policy-builder",
+      "path": "./skills/rls-policy-builder/SKILL.md",
+      "description": "Generate Row Level Security policies"
+    },
+    {
+      "name": "supabase-query-builder",
+      "path": "./skills/supabase-query-builder/SKILL.md",
+      "description": "Generate type-safe Supabase queries"
+    },
+    {
+      "name": "docs-updater",
+      "path": "./skills/docs-updater/SKILL.md",
+      "description": "Update project documentation"
+    },
+    {
+      "name": "spec-enforcer",
+      "path": "./skills/spec-enforcer/SKILL.md",
+      "description": "Verify code matches spec requirements"
+    }
+  ],
+  "outputStyles": [
+    {
+      "name": "quebec-french",
+      "path": "./output-styles/quebec-french.md",
+      "description": "Quebec-focused French UI development"
+    },
+    {
+      "name": "production-ready",
+      "path": "./output-styles/production-ready.md",
+      "description": "Zero-tolerance production-ready code"
+    },
+    {
+      "name": "code-review",
+      "path": "./output-styles/code-review.md",
+      "description": "Structured code review feedback"
+    }
+  ],
+  "hooks": {
+    "setup": "./hooks/project-setup.sh",
+    "sessionStart": "./hooks/session-start.sh",
+    "sessionEnd": "./hooks/session-end.sh",
+    "preToolUse": {
+      "bash": "./hooks/validate-bash.sh",
+      "write": "./hooks/validate-write.sh"
+    },
+    "postToolUse": {
+      "write": "./hooks/auto-format.sh"
+    }
+  },
+  "mcp": {
+    "configPath": "./.mcp.json",
+    "servers": [
+      {
+        "name": "supabase-local",
+        "type": "stdio",
+        "description": "Local Supabase development server integration"
+      },
+      {
+        "name": "git-integration",
+        "type": "stdio",
+        "description": "Git operations and repository management"
+      }
+    ]
+  },
+  "lsp": {
+    "configPath": "./.lsp.json",
+    "servers": [
+      {
+        "name": "typescript",
+        "language": "typescript",
+        "description": "TypeScript language server"
+      },
+      {
+        "name": "tailwindcss",
+        "language": "css",
+        "description": "Tailwind CSS IntelliSense"
+      }
+    ]
+  },
+  "context": {
+    "alwaysInclude": [
+      "CLAUDE.md",
+      "ENTRETIEN_PRESTIGE_FINAL_SPEC-1.md",
+      "READY_TO_DEPLOY.md"
+    ],
+    "documentation": [
+      "README.md",
+      "AGENTS_GUIDE.md",
+      "SKILLS_GUIDE.md",
+      "SQL_MIGRATION_GUIDE.md"
+    ]
+  },
+  "scripts": {
+    "setup": "npm install && npm run build",
+    "test": "npm test",
+    "validate": "npm run build && npm run lint && npm test"
+  },
+  "requirements": {
+    "environment": [
+      "NEXT_PUBLIC_SUPABASE_URL",
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+      "SUPABASE_SERVICE_ROLE_KEY",
+      "APP_ENCRYPTION_KEY",
+      "NEXT_PUBLIC_BASE_URL"
+    ],
+    "optional": [
+      "TWILIO_ACCOUNT_SID",
+      "TWILIO_AUTH_TOKEN",
+      "TWILIO_FROM_NUMBER",
+      "STRIPE_SECRET_KEY",
+      "STRIPE_WEBHOOK_SECRET",
+      "RESEND_API_KEY",
+      "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY"
+    ]
+  },
+  "features": {
+    "authentication": "Supabase Auth with RLS",
+    "database": "PostgreSQL with Row Level Security",
+    "frontend": "Next.js 14 App Router with TypeScript",
+    "styling": "Tailwind CSS with mobile-first design (640px)",
+    "testing": "Vitest with 100% coverage requirement",
+    "validation": "Zod schemas for all inputs",
+    "localization": "French primary (Quebec), English for code",
+    "rateLimit": "In-memory sliding window",
+    "sms": "Twilio integration with French templates",
+    "payments": "Stripe integration",
+    "email": "Resend integration"
+  },
+  "qualityStandards": {
+    "coverage": "100% required (statements, branches, functions, lines)",
+    "maxWidth": "640px for all UI components",
+    "language": "French for UI, English for code",
+    "authentication": "All API routes must use requireUser/requireRole/requirePermission",
+    "rls": "All queries must filter by company_id",
+    "validation": "All inputs must use Zod validation",
+    "errorHandling": "Comprehensive try-catch and error responses",
+    "typescript": "Strict mode, no any types"
+  }
+}

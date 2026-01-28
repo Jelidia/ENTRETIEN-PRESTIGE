@@ -1,6 +1,26 @@
 ---
 name: rls-policy-builder
 description: Generate Row Level Security (RLS) policies for Supabase tables. Ensures multi-tenancy isolation by company_id and role-based access control.
+argument-hint: "Table name and policy requirements (e.g., 'Create RLS policies for invoices table')"
+user-invocable: true
+allowed-tools:
+  - Read
+  - Write
+  - Bash
+  - Grep
+  - Glob
+model: claude-sonnet-4-5-20250929
+context: fork
+agent: database-architect
+hooks:
+  - type: PreToolUse
+    tool: Write
+    condition: path.includes('db/') && content.includes('CREATE POLICY')
+    message: "Remember: company_id filter, role checks, auth.uid()"
+  - type: PostToolUse
+    tool: Write
+    condition: content.includes('CREATE POLICY')
+    script: !`.claude/hooks/validate-rls-policy.sh`
 ---
 
 # rls-policy-builder Skill

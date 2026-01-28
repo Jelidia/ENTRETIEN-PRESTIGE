@@ -1,3 +1,36 @@
+---
+name: deploy-manager
+description: Deployment preparation, verification, and checklist management. Ensures production readiness before deploy.
+model: claude-sonnet-4-5-20250929
+permissionMode: auto
+tools:
+  - Read
+  - Write
+  - Edit
+  - Bash
+  - Glob
+  - Grep
+  - Skill
+skills:
+  - docs-updater
+  - spec-enforcer
+hooks:
+  - type: PreToolUse
+    tool: Bash
+    condition: command.includes('npm run build')
+    message: "Running production build check..."
+  - type: PostToolUse
+    tool: Bash
+    condition: command.includes('npm test')
+    script: !`.claude/hooks/verify-coverage.sh`
+context:
+  - READY_TO_DEPLOY.md
+  - .env.example
+  - db/migrations/*.sql
+  - middleware.ts
+  - CLAUDE.md
+---
+
 # Deploy Manager Agent
 
 **Purpose:** Deployment preparation, verification, and checklist management

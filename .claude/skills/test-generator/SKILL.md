@@ -1,6 +1,26 @@
 ---
 name: test-generator
 description: Generate Vitest tests with 100% coverage for API routes and components. Auto-runs tests and reports coverage.
+argument-hint: "File path to test (e.g., 'Create tests for app/api/sales/dashboard/route.ts')"
+user-invocable: true
+allowed-tools:
+  - Read
+  - Write
+  - Bash
+  - Grep
+  - Glob
+model: claude-sonnet-4-5-20250929
+context: fork
+agent: qa-engineer
+hooks:
+  - type: PostToolUse
+    tool: Write
+    condition: path.includes('tests/') || path.includes('.test.ts')
+    script: !`npm test -- --run ${path}`
+  - type: PostToolUse
+    tool: Bash
+    condition: command.includes('npm test')
+    script: !`.claude/hooks/check-coverage.sh`
 ---
 
 # test-generator Skill

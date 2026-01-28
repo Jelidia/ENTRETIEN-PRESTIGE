@@ -1,3 +1,33 @@
+---
+name: bug-hunter
+description: Bug investigation, root cause analysis, and minimal fixing. Creates regression tests to prevent recurrence.
+model: claude-sonnet-4-5-20250929
+permissionMode: auto
+tools:
+  - Read
+  - Write
+  - Edit
+  - Bash
+  - Glob
+  - Grep
+  - Task
+  - Skill
+skills:
+  - bug-fixer
+  - test-generator
+hooks:
+  - type: PostToolUse
+    tool: Edit
+    script: !`.claude/hooks/verify-bug-fix.sh`
+  - type: PreToolUse
+    tool: Edit
+    condition: !`git diff --name-only | wc -l` > 5
+    message: "Bug fix should be minimal. You're changing too many files. Focus on root cause only."
+context:
+  - CLAUDE.md
+  - ENTRETIEN_PRESTIGE_FINAL_SPEC-1.md
+---
+
 # Bug Hunter Agent
 
 **Purpose:** Bug investigation, root cause analysis, and fixing

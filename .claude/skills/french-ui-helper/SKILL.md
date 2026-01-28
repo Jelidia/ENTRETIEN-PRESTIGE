@@ -1,6 +1,18 @@
 ---
 name: french-ui-helper
 description: Generate French UI labels, validation messages, and SMS templates for Quebec. Converts English to proper Quebec French with correct grammar and idioms.
+argument-hint: "English text to translate (e.g., 'Translate: Customer not found')"
+user-invocable: true
+allowed-tools:
+  - Read
+  - Write
+model: claude-sonnet-4-5-20250929
+context: fork
+agent: feature-builder
+hooks:
+  - type: PostToolUse
+    tool: Write
+    script: !`.claude/hooks/validate-french-text.sh`
 ---
 
 # french-ui-helper Skill

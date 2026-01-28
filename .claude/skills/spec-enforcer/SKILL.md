@@ -1,6 +1,24 @@
 ---
 name: spec-enforcer
 description: Verify code matches ENTRETIEN_PRESTIGE_FINAL_SPEC-1.md requirements. Use before completing features or deploying.
+argument-hint: "What to verify (e.g., 'Verify that photo upload matches spec')"
+user-invocable: true
+disable-model-invocation: false
+allowed-tools:
+  - Read
+  - Grep
+  - Glob
+model: claude-sonnet-4-5-20250929
+context: fork
+agent: code-reviewer
+hooks:
+  - type: PreToolUse
+    tool: Read
+    condition: path.includes('ENTRETIEN_PRESTIGE_FINAL_SPEC')
+    message: "Analyzing spec requirements..."
+  - type: PostToolUse
+    tool: Grep
+    script: !`.claude/hooks/generate-compliance-report.sh`
 ---
 
 # spec-enforcer Skill

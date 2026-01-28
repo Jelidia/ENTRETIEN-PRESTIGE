@@ -1,6 +1,24 @@
 ---
 name: bug-fixer
 description: Debug and fix bugs including 404 errors, fake data, broken features, and type errors. Finds root cause and makes minimal fixes.
+argument-hint: "Bug description (e.g., 'Fix: admin dashboard shows fake data')"
+user-invocable: true
+allowed-tools:
+  - Read
+  - Edit
+  - Bash
+  - Grep
+  - Glob
+model: claude-sonnet-4-5-20250929
+context: fork
+agent: bug-hunter
+hooks:
+  - type: PostToolUse
+    tool: Edit
+    script: !`.claude/hooks/verify-fix.sh`
+  - type: PostToolUse
+    tool: Edit
+    script: !`npm test -- --run ${path.replace(/\.(ts|tsx)$/, '.test.$1')}`
 ---
 
 # bug-fixer Skill

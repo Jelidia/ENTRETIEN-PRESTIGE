@@ -1,6 +1,30 @@
 ---
 name: migration-builder
 description: Generate SQL migration files with RLS policies, triggers, and indexes. Creates Quebec-compliant database schemas for Supabase PostgreSQL.
+argument-hint: "Migration description (e.g., 'Add loyalty_rewards table with points tracking')"
+user-invocable: true
+allowed-tools:
+  - Read
+  - Write
+  - Bash
+  - Grep
+  - Glob
+model: claude-sonnet-4-5-20250929
+context: fork
+agent: database-architect
+hooks:
+  - type: PreToolUse
+    tool: Write
+    condition: path.includes('db/migrations/')
+    message: "Ensure: company_id column, RLS policies, indexes, timestamps"
+  - type: PostToolUse
+    tool: Write
+    condition: path.includes('db/migrations/')
+    script: !`.claude/hooks/validate-migration-syntax.sh`
+  - type: PostToolUse
+    tool: Write
+    condition: path.includes('db/migrations/')
+    script: !`.claude/hooks/check-rls-policies.sh`
 ---
 
 # migration-builder Skill

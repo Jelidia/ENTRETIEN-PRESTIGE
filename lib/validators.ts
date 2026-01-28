@@ -41,11 +41,34 @@ export const forgotPasswordSchema = z.object({
 
 export const resetPasswordSchema = z.object({
   code: z.string().min(6),
-  password: passwordSchema,
+  newPassword: passwordSchema,
+  confirmPassword: z.string().min(1),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Les mots de passe ne correspondent pas",
+  path: ["confirmPassword"],
 });
 
 export const changePasswordSchema = z.object({
   currentPassword: z.string().min(1),
+  newPassword: passwordSchema,
+  confirmPassword: z.string().min(1),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Les mots de passe ne correspondent pas",
+  path: ["confirmPassword"],
+});
+
+// Admin password reset (for admins resetting other users' passwords)
+export const adminResetPasswordSchema = z.object({
+  newPassword: passwordSchema,
+  confirmPassword: z.string().min(1),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Les mots de passe ne correspondent pas",
+  path: ["confirmPassword"],
+});
+
+// Admin password reset by email (for /api/admin/reset-password route)
+export const adminResetByEmailSchema = z.object({
+  email: z.string().email(),
   newPassword: passwordSchema,
   confirmPassword: z.string().min(1),
 }).refine((data) => data.newPassword === data.confirmPassword, {

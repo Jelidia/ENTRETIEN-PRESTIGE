@@ -1,3 +1,33 @@
+---
+name: qa-engineer
+description: Testing, quality assurance, and coverage verification. Achieves 100% test coverage with Vitest.
+model: claude-sonnet-4-5-20250929
+permissionMode: auto
+tools:
+  - Read
+  - Write
+  - Edit
+  - Bash
+  - Glob
+  - Grep
+  - Skill
+skills:
+  - test-generator
+hooks:
+  - type: PostToolUse
+    tool: Write
+    condition: path.includes('tests/') || path.includes('.test.ts')
+    script: !`.claude/hooks/run-tests.sh`
+  - type: PreToolUse
+    tool: Bash
+    condition: command.includes('npm test')
+    script: !`.claude/hooks/validate-test-command.sh`
+context:
+  - vitest.config.ts
+  - tests/**/*.test.ts
+  - CLAUDE.md
+---
+
 # QA Engineer Agent
 
 **Purpose:** Testing, quality assurance, and coverage verification

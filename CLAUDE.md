@@ -2,7 +2,69 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Never forget to use your skills when needed
+---
+
+## ⚠️ CRITICAL: READ THIS FIRST ⚠️
+
+**TOKEN EFFICIENCY IS MANDATORY - SKILLS AND AGENTS ARE NOT OPTIONAL**
+
+Before doing ANY work, check these decision trees:
+
+### Decision Tree 1: Can a Skill Do This?
+
+```
+User asks for work
+     ↓
+Does a skill exist for this task?
+     ↓
+    YES → INVOKE THE SKILL IMMEDIATELY ✅
+     ↓
+    NO  → Continue to Decision Tree 2
+```
+
+**Available Skills:** api-builder, bug-fixer, spec-enforcer, test-generator, ui-builder, migration-builder, french-ui-helper, rls-policy-builder, supabase-query-builder, docs-updater
+
+**Token Savings:** 70-90% compared to manual work
+
+### Decision Tree 2: Is This Complex Multi-Step Work?
+
+```
+Task requires 2+ files or multiple steps?
+     ↓
+    YES → DELEGATE TO AGENT IMMEDIATELY ✅
+     ↓
+    NO  → Proceed with manual work (but double-check Decision Tree 1 first)
+```
+
+**Available Agents:** feature-builder, database-architect, qa-engineer, bug-hunter, deploy-manager, code-reviewer
+
+**Token Savings:** 85-95% compared to manual multi-step work
+
+### Examples
+
+❌ **WRONG:**
+- User: "Create API for customer ratings" → You manually write code
+- User: "Build photo upload feature" → You manually implement API + UI
+- User: "Fix navigation bug" → You manually debug
+
+✅ **CORRECT:**
+- User: "Create API for customer ratings" → Invoke **api-builder** skill
+- User: "Build photo upload feature" → Delegate to **feature-builder** agent
+- User: "Fix navigation bug" → Invoke **bug-fixer** skill
+
+### Why This Matters
+
+- **Manual work uses 10-20x more tokens** than using skills/agents
+- **Skills enforce patterns automatically** (no copy-paste errors)
+- **Agents don't forget steps** (tests, docs, edge cases)
+- **Faster completion** (3-5x speed improvement)
+- **Lower cost** (70-95% token reduction)
+
+**DO NOT proceed to manual work without checking these decision trees first.**
+
+See "Available Skills" and "Available Agents" sections below for full reference.
+
+---
 
 ## Project Overview
 
@@ -556,12 +618,144 @@ return NextResponse.json(
 
 ## Development Guidelines
 
+### Token Efficiency (CRITICAL - READ FIRST)
+
+**Using skills and agents is NOT optional - it's REQUIRED for token efficiency.**
+
+Skills and agents reduce token usage by 70-90% by using specialized context instead of the full codebase. They also enforce consistency and quality automatically.
+
+#### When to Use Skills (Invoke IMMEDIATELY)
+
+Skills are specialized tools for focused tasks. When a user asks for something a skill handles, invoke the skill FIRST before doing any manual work.
+
+| Skill | Use When | Example Trigger |
+|-------|----------|-----------------|
+| **api-builder** | Creating ANY API endpoint | "Create an API for...", "Add endpoint to...", "Build route for..." |
+| **bug-fixer** | Fixing ANY bug or error | "Fix the bug where...", "Debug the issue...", "The feature is broken..." |
+| **spec-enforcer** | Verifying compliance | "Check if this meets spec", "Verify requirements", "Before deploying..." |
+| **test-generator** | Writing ANY tests | "Generate tests for...", "Add test coverage...", "Need 100% coverage..." |
+| **ui-builder** | Building ANY UI component | "Create a page for...", "Build component for...", "Design form for..." |
+| **migration-builder** | Creating DB migrations | "Add table for...", "Modify schema...", "Create migration..." |
+| **french-ui-helper** | Generating French text | "Need French labels...", "Translate UI...", "SMS template for..." |
+| **rls-policy-builder** | Creating RLS policies | "Add RLS for...", "Secure table...", "Multi-tenancy policy..." |
+| **supabase-query-builder** | Writing Supabase queries | "Query for...", "Fetch data from...", "Update records..." |
+| **docs-updater** | Updating documentation | "Update docs after...", "Document this feature...", "Sync CLAUDE.md..." |
+
+**Pattern:**
+```
+❌ WRONG: User asks "Create API for customer addresses" → You manually code it
+✅ CORRECT: User asks "Create API for customer addresses" → Invoke api-builder skill IMMEDIATELY
+```
+
+#### When to Use Agents (Delegate Complex Work)
+
+Agents are autonomous workers for multi-step tasks. When a user asks for complex work requiring multiple operations, delegate to an agent instead of doing it yourself.
+
+| Agent | Use When | Example Trigger |
+|-------|----------|-----------------|
+| **feature-builder** | Building complete features | "Implement photo upload feature", "Add customer rating system", "Build subscription manager" |
+| **database-architect** | Database design work | "Design schema for...", "Restructure tables...", "Add indexing strategy..." |
+| **qa-engineer** | Testing & QA workflows | "Run full test suite", "Verify coverage", "Set up CI/CD testing" |
+| **bug-hunter** | Complex bug investigation | "Investigate why...", "Root cause analysis for...", "Debug complex issue..." |
+| **deploy-manager** | Deployment preparation | "Prepare for deployment", "Create deployment checklist", "Verify production readiness" |
+| **code-reviewer** | Code review tasks | "Review this feature", "Check spec compliance", "Audit codebase for..." |
+
+**Pattern:**
+```
+❌ WRONG: User asks "Build photo upload feature" → You manually code API + UI + tests + docs
+✅ CORRECT: User asks "Build photo upload feature" → Delegate to feature-builder agent IMMEDIATELY
+```
+
+#### Why Token Efficiency Matters
+
+1. **Cost reduction:** Skills use 10-30% of tokens compared to manual context
+2. **Speed:** Pre-built workflows complete tasks 3-5x faster
+3. **Consistency:** Automatic pattern enforcement (no copy-paste errors)
+4. **Quality:** Built-in testing, validation, and error handling
+5. **Maintainability:** Centralized patterns easier to update
+
+#### Skills vs Manual Work: Token Comparison
+
+| Task | Manual Approach | Using Skill | Token Savings |
+|------|-----------------|-------------|---------------|
+| Create API route | 15,000 tokens (full codebase context) | 2,000 tokens (api-builder context) | **87%** |
+| Fix navigation bug | 20,000 tokens (investigate + fix) | 3,000 tokens (bug-fixer workflow) | **85%** |
+| Build UI component | 12,000 tokens (patterns + implementation) | 2,500 tokens (ui-builder templates) | **79%** |
+| Generate tests | 8,000 tokens (examples + implementation) | 1,500 tokens (test-generator patterns) | **81%** |
+
+#### Enforcement Rules
+
+1. **ALWAYS check if a skill exists before doing manual work** - If yes, use the skill
+2. **ALWAYS check if work is complex multi-step** - If yes, delegate to agent
+3. **NEVER manually code what a skill can generate** - This wastes tokens
+4. **NEVER do multi-step work yourself when an agent exists** - Delegate it
+
+### Code Philosophy: ZERO TOLERANCE FOR HALF-MEASURES
+
+**Every line of code must be 100% production-ready from the start.** No exceptions.
+
+- **NO shortcuts** - No "TODO", no "FIXME", no "we'll fix this later"
+- **NO temporary solutions** - If you write it, it ships to production
+- **NO inline duplication** - Always check lib/ for existing code before writing new code
+- **NO workarounds** - If a rule exists, follow it. If it's wrong, change the rule properly
+- **CHECK lib/ FIRST** - Before writing ANY new utility, schema, or helper, search lib/ to see if it exists
+
+**Why this matters:** Technical debt compounds. A "quick fix" today becomes a production bug tomorrow. Write it right the first time.
+
 ### Code Style
 
 - **TypeScript strict mode:** No `any` types (use `unknown` + type guards)
 - **Named exports:** Prefer `export function foo()` over `export default foo`
 - **Imports:** Use `@/` path alias for all absolute imports
 - **Validation:** Use Zod for all external data (API requests, env vars)
+- **Reusability:** Always prefer existing code over writing new code
+
+### Input Validation (CRITICAL - ZERO TOLERANCE)
+
+**ALL Zod schemas MUST be centralized in `lib/validators.ts` - NEVER define inline in route files.**
+
+This is not a suggestion. This is a hard requirement with zero exceptions.
+
+```typescript
+// ❌ WRONG - Inline schema in API route
+const schema = z.object({
+  name: z.string().min(2),
+  email: z.string().email(),
+});
+
+// ❌ WRONG - Duplicate password schema
+const passwordSchema = z.string().min(8).regex(/[A-Z]/)...
+
+// ✅ CORRECT - Import from validators
+import { userCreateSchema, passwordSchema, changePasswordSchema } from "@/lib/validators";
+```
+
+**Password validation schemas (lib/validators.ts):**
+- `passwordSchema` - Base password complexity rules (8+ chars, uppercase, number, special char)
+- `changePasswordSchema` - For logged-in users changing password: currentPassword + newPassword + confirmPassword with matching validation
+- `resetPasswordSchema` - For forgot password flow: code + newPassword + confirmPassword with matching validation
+- `adminResetPasswordSchema` - For admins resetting user passwords: newPassword + confirmPassword with matching validation
+
+**Security requirements (ENFORCED):**
+- Password changes MUST verify current password before allowing update (use Supabase signInWithPassword)
+- Password resets MUST require password confirmation field
+- Admin password resets MUST require password confirmation field
+- All password schemas MUST enforce complexity rules: min 8 chars, uppercase, number, special char
+
+**Remaining violations to fix:**
+- `app/api/ratings/submit/route.ts` - `ratingSubmitSchema`
+- `app/api/dispatch/[action]/route.ts` - `dispatchScheduleSchema`
+- `app/api/jobs/[id]/photos/route.ts` - `photoUploadSchema`
+- `app/api/users/[id]/availability/route.ts` - `availabilitySlotSchema`, `availabilityUpdateSchema`
+- `app/api/settings/profile/route.ts` - `profileUpdateSchema`
+
+**Why this matters:**
+- Single source of truth for validation rules
+- Consistent error messages across all endpoints
+- Easy to update validation logic in one place
+- Type safety shared between routes
+- Zero code duplication
+- Production-ready security from day one
 
 ### Database Queries
 
@@ -851,36 +1045,351 @@ See `READY_TO_DEPLOY.md` for detailed analysis and deployment checklist.
 - **AGENTS.md** - Quick reference for AI assistants (ChatGPT, Codex, Copilot)
 - **SQL_MIGRATION_GUIDE.md** - Database migration troubleshooting (if exists)
 
-## Available Skills (Claude Code CLI)
+## Available Skills (MUST USE - Token Efficiency)
 
-Custom skills for automating common tasks:
+**CRITICAL: Skills are NOT optional. When a task matches a skill's purpose, you MUST use the skill instead of coding manually.**
 
-1. **api-builder** - Generate Next.js API routes with Zod validation, RLS filters, error handling
-2. **bug-fixer** - Debug and fix bugs (404 errors, fake data, broken features, type errors)
-3. **spec-enforcer** - Verify code matches ENTRETIEN_PRESTIGE_FINAL_SPEC-1.md requirements
-4. **test-generator** - Generate Vitest tests with 100% coverage
-5. **ui-builder** - Generate mobile-first React components (640px max, Tailwind, French labels)
-6. **migration-builder** - Generate SQL migrations with RLS policies for Supabase
-7. **french-ui-helper** - Generate Quebec French UI labels and validation messages
-8. **rls-policy-builder** - Generate RLS policies for multi-tenancy isolation
-9. **supabase-query-builder** - Generate type-safe Supabase queries with company_id filters
-10. **docs-updater** - Update CLAUDE.md, README.md, READY_TO_DEPLOY.md after changes
+### Skill Reference Table
 
-Usage: `/skill-name [description]` in Claude Code CLI
+| Skill Name | Purpose | When to Invoke | Typical Token Savings |
+|------------|---------|----------------|----------------------|
+| **api-builder** | Generate production-ready Next.js API routes with Zod validation, RLS filters, and error handling | Creating ANY new API endpoint or route | 85-90% |
+| **bug-fixer** | Debug and fix bugs including 404 errors, fake data, broken features, and type errors. Finds root cause and makes minimal fixes. | ANY bug report, error, or broken functionality | 80-85% |
+| **spec-enforcer** | Verify code matches ENTRETIEN_PRESTIGE_FINAL_SPEC-1.md requirements. Use before completing features or deploying. | Before deployment, after feature completion, when verifying compliance | 75-80% |
+| **test-generator** | Generate Vitest tests with 100% coverage for API routes and components. Auto-runs tests and reports coverage. | Writing ANY tests or improving coverage | 80-85% |
+| **ui-builder** | Generate mobile-first React components with 640px max width, Tailwind CSS, and French labels. Use for creating pages or components. | Building ANY UI component, page, or form | 75-85% |
+| **migration-builder** | Generate SQL migration files with RLS policies, triggers, and indexes. Creates Quebec-compliant database schemas for Supabase PostgreSQL. | ANY database schema change or RLS policy | 80-90% |
+| **french-ui-helper** | Generate French UI labels, validation messages, and SMS templates for Quebec. Converts English to proper Quebec French with correct grammar and idioms. | ANY French text needed (UI, validation, SMS) | 70-80% |
+| **rls-policy-builder** | Generate Row Level Security (RLS) policies for Supabase tables. Ensures multi-tenancy isolation by company_id and role-based access control. | Creating/updating RLS policies for any table | 75-85% |
+| **supabase-query-builder** | Generate type-safe Supabase queries with RLS filtering, error handling, and proper TypeScript types. Ensures company_id filtering for multi-tenancy. | Writing ANY Supabase database query | 70-80% |
+| **docs-updater** | Update CLAUDE.md, README.md, and READY_TO_DEPLOY.md after completing features. Keeps documentation synchronized with codebase changes. | After ANY feature completion or significant change | 85-90% |
 
-See `.claude/SKILLS_GUIDE.md` for detailed documentation.
+### Usage Pattern
 
-## Available Agents (Claude Code)
+**Invoke skills using the Skill tool:**
+```typescript
+Skill({ skill: "api-builder", args: "Create endpoint for customer address updates" })
+Skill({ skill: "bug-fixer", args: "Navigation shows multiple active tabs" })
+Skill({ skill: "ui-builder", args: "Build job photo upload component with 4-sides grid" })
+```
 
-Autonomous agents for complex, multi-step tasks:
+### Example Decision Tree
 
-1. **feature-builder** - End-to-end feature implementation (API + UI + tests + docs)
-2. **database-architect** - Database schema design, migrations, and RLS policies
-3. **qa-engineer** - Testing, quality assurance, and coverage verification
-4. **bug-hunter** - Bug investigation, root cause analysis, and fixing
-5. **deploy-manager** - Deployment preparation, verification, and checklist management
-6. **code-reviewer** - Code review against spec, patterns, and best practices
+**User Request:** "Create an API for submitting customer ratings"
 
-Usage: "Use the [agent-name] agent to [task description]" in Claude Code conversation
+```
+Step 1: Does a skill exist for this? → YES (api-builder)
+Step 2: Invoke skill IMMEDIATELY → Skill({ skill: "api-builder", args: "..." })
+Step 3: DONE ✅
+```
 
-See `.claude/AGENTS_GUIDE.md` for detailed documentation.
+**DO NOT:**
+```
+Step 1: Read existing API patterns
+Step 2: Read validators.ts
+Step 3: Read auth.ts
+Step 4: Manually write the code
+❌ This wastes 15,000+ tokens when api-builder uses 2,000
+```
+
+## Available Agents (MUST USE - Complex Work)
+
+**CRITICAL: Agents are NOT optional. When a task is complex or multi-step, you MUST delegate to an agent instead of doing it yourself.**
+
+### Agent Reference Table
+
+| Agent Name | Purpose | When to Delegate | Typical Work Scope |
+|------------|---------|------------------|-------------------|
+| **feature-builder** | End-to-end feature implementation (API + UI + tests + docs). Handles complete features from spec to deployment-ready code. | User requests a complete feature or major functionality | API routes + UI components + tests + docs (complete vertical slice) |
+| **database-architect** | Database schema design, migrations, and RLS policies. Designs normalized schemas, creates migrations, and ensures proper indexing. | Database design, schema changes, performance optimization | Schema design + migrations + RLS policies + indexes + constraints |
+| **qa-engineer** | Testing, quality assurance, and coverage verification. Generates comprehensive test suites and verifies 100% coverage. | Testing requirements, coverage improvements, QA workflows | Test generation + coverage verification + CI/CD setup + quality gates |
+| **bug-hunter** | Bug investigation, root cause analysis, and fixing. Deep dives into complex issues and provides minimal, targeted fixes. | Complex bugs, mysterious errors, multi-file issues | Investigation + root cause + fix + verification + regression tests |
+| **deploy-manager** | Deployment preparation, verification, and checklist management. Ensures production readiness and handles deployment workflows. | Pre-deployment checks, production setup, release prep | Environment setup + checklist verification + migration execution + rollback plans |
+| **code-reviewer** | Code review against spec, patterns, and best practices. Audits codebase for compliance and suggests improvements. | Code review requests, quality audits, pattern enforcement | Spec compliance check + pattern adherence + security review + recommendations |
+
+### Usage Pattern
+
+**Delegate to agents using natural language:**
+```
+"Use the feature-builder agent to implement the photo upload feature"
+"Use the bug-hunter agent to investigate the RLS policy error"
+"Use the deploy-manager agent to prepare for production deployment"
+```
+
+### Agent vs Manual Work: Decision Matrix
+
+| User Request Type | Manual Work? | Agent to Use | Why |
+|-------------------|--------------|--------------|-----|
+| "Build photo upload feature" | ❌ NO | feature-builder | Multi-step: API + UI + tests + docs |
+| "Fix navigation bug" | ⚠️ MAYBE | Use bug-fixer skill first | Single bug = skill; complex issue = bug-hunter agent |
+| "Add customer ratings" | ❌ NO | feature-builder | Complete feature requires API + UI + DB |
+| "Review code for spec compliance" | ❌ NO | code-reviewer | Agent has spec + patterns context |
+| "Prepare for deployment" | ❌ NO | deploy-manager | Multi-step verification workflow |
+| "Design subscription schema" | ❌ NO | database-architect | Requires design + migrations + RLS |
+| "Generate tests for API routes" | ⚠️ MAYBE | Use test-generator skill | Simple tests = skill; full suite = qa-engineer agent |
+
+### Example Decision Tree
+
+**User Request:** "Build the customer rating system with public rating page, SMS notifications, and Google review redirect"
+
+```
+Step 1: Is this a complete feature? → YES
+Step 2: Does it require API + UI + tests? → YES
+Step 3: Delegate to feature-builder agent IMMEDIATELY
+Step 4: DONE ✅
+```
+
+**DO NOT:**
+```
+Step 1: Manually create API routes
+Step 2: Manually build UI components
+Step 3: Manually write tests
+Step 4: Manually update docs
+❌ This wastes 40,000+ tokens when feature-builder handles it in one workflow
+```
+
+### Why Agents Matter
+
+1. **Token efficiency:** Agents use 5-10% of tokens compared to manual multi-step work
+2. **Completeness:** Agents don't forget steps (tests, docs, edge cases)
+3. **Consistency:** Agents enforce patterns across all work products
+4. **Speed:** Parallel work streams complete faster than sequential manual work
+5. **Quality:** Built-in verification and validation at each step
+
+### Enforcement Rules
+
+1. **IF task requires 2+ files/steps → MUST use agent**
+2. **IF task includes "feature", "system", "complete" → MUST use feature-builder**
+3. **IF task includes "deploy", "production", "release" → MUST use deploy-manager**
+4. **IF task includes "database", "schema", "migration" → MUST use database-architect**
+5. **IF task includes "test all", "coverage", "QA" → MUST use qa-engineer**
+6. **IF task includes "investigate", "root cause", "complex bug" → MUST use bug-hunter**
+7. **IF task includes "review", "audit", "verify spec" → MUST use code-reviewer**
+
+## Claude Code Features
+
+This project includes a complete Claude Code development environment with specialized tools, automation, and integrations.
+
+### Available Features
+
+#### 1. Specialized Agents (6 Total)
+Located in `.claude/agents/` with full YAML frontmatter:
+- **feature-builder** - End-to-end feature implementation
+- **database-architect** - Schema design, migrations, RLS policies
+- **qa-engineer** - Testing and 100% coverage verification
+- **bug-hunter** - Bug investigation and minimal fixes
+- **deploy-manager** - Deployment preparation and verification
+- **code-reviewer** - Code review against spec and patterns
+
+See `.claude/AGENTS_GUIDE.md` for complete documentation.
+
+#### 2. Custom Skills (10 Total)
+Located in `.claude/skills/` with full frontmatter:
+- **api-builder** - Generate production-ready API routes
+- **ui-builder** - Generate mobile-first React components
+- **test-generator** - Generate Vitest tests with 100% coverage
+- **bug-fixer** - Debug and fix bugs with minimal changes
+- **migration-builder** - Generate SQL migrations with RLS
+- **french-ui-helper** - Generate French UI labels and SMS templates
+- **rls-policy-builder** - Generate Row Level Security policies
+- **supabase-query-builder** - Generate type-safe Supabase queries
+- **docs-updater** - Update project documentation
+- **spec-enforcer** - Verify code matches spec requirements
+
+See `.claude/SKILLS_GUIDE.md` for complete documentation.
+
+#### 3. Output Styles (3 Total)
+Located in `.claude/output-styles/`:
+- **quebec-french** - Enforces Quebec French UI standards
+- **production-ready** - Zero-tolerance quality enforcement
+- **code-review** - Structured code review format
+
+Usage:
+```bash
+claude --output-style quebec-french
+claude --output-style production-ready
+claude --output-style code-review
+```
+
+#### 4. Comprehensive Hooks
+Located in `.claude/hooks/` with automatic validation:
+
+**PreToolUse Hooks:**
+- Warn about destructive commands (rm -rf, DROP TABLE)
+- Check for missing authentication in API routes
+- Suggest migrations instead of editing base schema
+- Confirm before writing sensitive files
+
+**PostToolUse Hooks:**
+- Auto-format TypeScript/TSX files with Prettier
+- Auto-lint API routes with ESLint
+- Auto-run tests after changes
+- Check test coverage (100% required)
+- Verify RLS filtering in queries
+
+**Session Hooks:**
+- Display welcome message with quick commands (SessionStart)
+- Show session summary with modified files (SessionEnd)
+- Run project setup checks (Setup)
+- Clean up temporary files (Stop)
+
+See `.claude/settings.json` for complete hook configuration.
+
+#### 5. MCP Integration
+Model Context Protocol servers for enhanced capabilities:
+
+**Available MCP Servers:**
+- **supabase-local** - Direct database access and query execution
+- **git-integration** - Git operations and repository management
+- **file-search** - Fast content search with ripgrep
+- **typescript-language** - TypeScript type checking and IntelliSense
+- **testing** - Vitest test execution and coverage reports
+- **stripe-integration** - Stripe payment operations (when configured)
+- **twilio-sms** - Twilio SMS operations (when configured)
+
+See `MCP_SETUP.md` for complete configuration guide.
+
+#### 6. LSP Integration
+Language Server Protocol support for:
+- **TypeScript** - Auto-completion, type checking, refactoring
+- **Tailwind CSS** - Class name completion, color preview, linting
+- **ESLint** - Real-time linting and quick fixes
+- **JSON** - Schema validation for config files
+- **SQL** - PostgreSQL syntax highlighting and formatting
+- **Markdown** - Document validation and linting
+
+See `.lsp.json` for configuration.
+
+#### 7. CLI Automation
+Located in `scripts/claude-automation.sh` with npm scripts:
+
+```bash
+# Run agents
+npm run claude:agent feature-builder "Build photo upload"
+
+# Run skills
+npm run claude:skill api-builder "Create /api/ratings/submit"
+
+# Generate complete feature
+npm run claude:generate-feature "loyalty-points" "Customer loyalty points redemption"
+
+# Generate API route with tests
+npm run claude:generate-api "sales/dashboard" "Sales metrics endpoint"
+
+# Run code review
+npm run claude:review app/api/jobs
+
+# Fix bugs
+npm run claude:fix-bug "Dashboard shows 0 for revenue"
+
+# Pre-deployment checks
+npm run claude:pre-deploy
+
+# Generate tests for all untested files
+npm run claude:generate-tests
+
+# Update documentation
+npm run claude:update-docs "Added loyalty points feature"
+
+# CI/CD checks
+npm run claude:ci
+```
+
+See `scripts/claude-automation.sh` for implementation.
+
+#### 8. Plugin Distribution
+Plugin manifest for team distribution:
+
+**Files:**
+- `.claude-plugin/plugin.json` - Main plugin manifest
+- `.claude-plugin/marketplace.json` - Marketplace distribution config
+- `.claude-plugin/README.md` - Plugin documentation
+
+**Installation:**
+```bash
+claude plugins install entretien-prestige-dev
+claude plugins activate entretien-prestige-dev
+```
+
+### Quality Standards Enforced
+
+Claude Code integration enforces:
+- ✅ 100% test coverage (statements, branches, functions, lines)
+- ✅ Authentication on all API routes (requireUser/requireRole/requirePermission)
+- ✅ RLS filtering on all queries (company_id filter)
+- ✅ Zod validation on all API inputs
+- ✅ French UI for all customer-facing text
+- ✅ Mobile-first design (640px max-width)
+- ✅ TypeScript strict mode (no any types)
+- ✅ Comprehensive error handling
+
+### Session Workflow
+
+**Starting a session:**
+```bash
+claude
+```
+
+You'll see:
+- 👋 Welcome message
+- 📋 Project info (stack, language, design constraints)
+- 🎯 Quick commands (npm scripts)
+- 🤖 Available agents (6 specialized agents)
+- 🔧 Available skills (10 custom skills)
+- 📖 Key documentation links
+
+**Ending a session:**
+```bash
+exit
+```
+
+You'll see:
+- 📊 Session summary
+- 📝 Modified files count
+- 💡 Reminders (run tests, check build, review changes)
+
+### Troubleshooting Claude Code
+
+**Issue: Agents/skills not loading**
+```bash
+# Verify directory structure
+ls .claude/agents/
+ls .claude/skills/
+
+# Clear cache and restart
+rm -rf ~/.claude/cache
+claude --restart
+```
+
+**Issue: Hooks not running**
+```bash
+# Make hooks executable
+chmod +x .claude/hooks/*.sh
+
+# Test hook manually
+bash .claude/hooks/validate-migration.sh db/migrations/test.sql
+```
+
+**Issue: MCP servers not connecting**
+```bash
+# Check MCP status
+claude --mcp-status
+
+# Test MCP server
+echo '{"jsonrpc":"2.0","id":1,"method":"ping"}' | npx supabase-mcp-server
+
+# Enable debug logging
+MCP_DEBUG=1 claude --mcp supabase-local query "SELECT 1"
+```
+
+See `TROUBLESHOOTING.md` for complete troubleshooting guide.
+
+### Documentation Locations
+
+- **Main Guide:** `CLAUDE.md` (this file)
+- **Agents:** `.claude/AGENTS_GUIDE.md`
+- **Skills:** `.claude/SKILLS_GUIDE.md`
+- **Claude Setup:** `.claude/README.md`
+- **MCP Setup:** `MCP_SETUP.md`
+- **Troubleshooting:** `TROUBLESHOOTING.md`
+- **Plugin Docs:** `.claude-plugin/README.md`
