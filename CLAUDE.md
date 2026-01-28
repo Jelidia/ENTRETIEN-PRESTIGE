@@ -867,3 +867,20 @@ Custom skills for automating common tasks:
 10. **docs-updater** - Update CLAUDE.md, README.md, READY_TO_DEPLOY.md after changes
 
 Usage: `/skill-name [description]` in Claude Code CLI
+
+See `.claude/SKILLS_GUIDE.md` for detailed documentation.
+
+## Available Agents (Claude Code)
+
+Autonomous agents for complex, multi-step tasks:
+
+1. **feature-builder** - End-to-end feature implementation (API + UI + tests + docs)
+2. **database-architect** - Database schema design, migrations, and RLS policies
+3. **qa-engineer** - Testing, quality assurance, and coverage verification
+4. **bug-hunter** - Bug investigation, root cause analysis, and fixing
+5. **deploy-manager** - Deployment preparation, verification, and checklist management
+6. **code-reviewer** - Code review against spec, patterns, and best practices
+
+Usage: "Use the [agent-name] agent to [task description]" in Claude Code conversation
+
+See `.claude/AGENTS_GUIDE.md` for detailed documentation.
