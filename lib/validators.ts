@@ -9,17 +9,25 @@ const seedAccountSchema = z.object({
   phone: z.string().optional(),
 });
 
+// Password schema with complexity requirements
+const passwordSchema = z.string()
+  .min(8, "Minimum 8 caractères")
+  .max(128, "Maximum 128 caractères")
+  .regex(/[A-Z]/, "Minimum 1 lettre majuscule (A-Z)")
+  .regex(/[0-9]/, "Minimum 1 chiffre (0-9)")
+  .regex(/[!@#$%^&*]/, "Minimum 1 caractère spécial (!@#$%^&*)");
+
 export const registerSchema = z.object({
   companyName: z.string().min(2),
   fullName: z.string().min(2),
   email: z.string().email(),
   phone: z.string().min(7).optional(),
-  password: z.string().min(16),
+  password: passwordSchema,
 });
 
 export const loginSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(16),
+  password: z.string().min(1), // Login doesn't need complexity validation
 });
 
 export const verify2faSchema = z.object({
@@ -33,11 +41,16 @@ export const forgotPasswordSchema = z.object({
 
 export const resetPasswordSchema = z.object({
   code: z.string().min(6),
-  password: z.string().min(16),
+  password: passwordSchema,
 });
 
 export const changePasswordSchema = z.object({
-  password: z.string().min(16),
+  currentPassword: z.string().min(1),
+  newPassword: passwordSchema,
+  confirmPassword: z.string().min(1),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Les mots de passe ne correspondent pas",
+  path: ["confirmPassword"],
 });
 
 export const jobCreateSchema = z.object({
@@ -203,7 +216,7 @@ export const userCreateSchema = z.object({
   email: z.string().email(),
   phone: z.string().optional(),
   role: z.string().min(2),
-  password: z.string().min(16),
+  password: passwordSchema,
   accessPermissions: permissionMapSchema.optional(),
   address: z.string().optional(),
   city: z.string().optional(),

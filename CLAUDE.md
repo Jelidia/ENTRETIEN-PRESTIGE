@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+Never forget to use your skills when needed
+
 ## Project Overview
 
 **Entretien Prestige** - Full-stack ERP for a Quebec cleaning company. Mobile-first field service management platform with dispatch, CRM, billing, SMS automation, sales pipeline, and commission tracking.

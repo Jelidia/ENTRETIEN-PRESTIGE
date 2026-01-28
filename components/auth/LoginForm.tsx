@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function LoginForm({ redirect }: { redirect?: string }) {
   const router = useRouter();
@@ -11,6 +11,37 @@ export default function LoginForm({ redirect }: { redirect?: string }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
+
+  // Auto-login check on component mount
+  useEffect(() => {
+    const lastPhone = localStorage.getItem("lastPhone");
+    const sessionToken = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("ep_access_token="))
+      ?.split("=")[1];
+
+    if (lastPhone && sessionToken) {
+      // Check if session is valid by calling an API endpoint
+      fetch("/api/access")
+        .then((res) => {
+          if (res.ok) {
+            // Valid session - auto-redirect to dashboard
+            router.push(redirect ?? "/dashboard");
+          } else {
+            // Session expired - pre-fill email/phone
+            setEmail(lastPhone);
+          }
+        })
+        .catch(() => {
+          // Error checking session - pre-fill email/phone
+          setEmail(lastPhone);
+        });
+    } else if (lastPhone) {
+      // No session but has remembered phone - pre-fill
+      setEmail(lastPhone);
+    }
+  }, [redirect, router]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -28,6 +59,13 @@ export default function LoginForm({ redirect }: { redirect?: string }) {
       setError(data.error ?? "Unable to sign in");
       setLoading(false);
       return;
+    }
+
+    // Store email/phone if "Remember me" is checked
+    if (rememberMe) {
+      localStorage.setItem("lastPhone", email);
+    } else {
+      localStorage.removeItem("lastPhone");
     }
 
     if (data.mfaRequired) {
@@ -81,7 +119,19 @@ export default function LoginForm({ redirect }: { redirect?: string }) {
             onChange={(event) => setPassword(event.target.value)}
             required
           />
-          <div className="hint">Minimum 16 characters with mixed types.</div>
+          <div className="hint">Minimum 8 caractères, 1 majuscule, 1 chiffre, 1 caractère spécial.</div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+          <input
+            type="checkbox"
+            id="rememberMe"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+            style={{ width: 16, height: 16, cursor: "pointer" }}
+          />
+          <label htmlFor="rememberMe" style={{ fontSize: 14, color: "#6B7280", cursor: "pointer" }}>
+            Se souvenir de ce numéro
+          </label>
         </div>
         <button className="button-primary" type="submit" disabled={loading}>
           {loading ? "Signing in..." : "Sign in"}
@@ -89,7 +139,6 @@ export default function LoginForm({ redirect }: { redirect?: string }) {
       </form>
       <div className="auth-links">
         <Link href="/forgot-password">Forgot password?</Link>
-        <Link href="/register">Create account</Link>
       </div>
     </div>
   );

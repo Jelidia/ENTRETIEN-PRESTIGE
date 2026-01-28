@@ -279,7 +279,23 @@ export default function BottomNavMobile() {
   return (
     <nav className="bottom-nav" aria-label="Primary navigation">
       {tabs.map((item) => {
-        const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+        // More precise active tab detection
+        // Only mark as active if:
+        // 1. Exact match, OR
+        // 2. Pathname starts with href + "/" (sub-route), but not if it matches a longer href
+        let isActive = pathname === item.href;
+
+        if (!isActive && pathname.startsWith(item.href + "/")) {
+          // Check if any other tab has a more specific match
+          const hasMoreSpecificMatch = tabs.some(
+            (otherItem) =>
+              otherItem.href !== item.href &&
+              otherItem.href.length > item.href.length &&
+              (pathname === otherItem.href || pathname.startsWith(otherItem.href + "/"))
+          );
+          isActive = !hasMoreSpecificMatch;
+        }
+
         return (
           <Link
             key={item.href}

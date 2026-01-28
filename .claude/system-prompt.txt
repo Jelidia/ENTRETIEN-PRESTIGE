@@ -1,0 +1,38 @@
+﻿# ENTRETIEN PRESTIGE - SYSTEM INSTRUCTIONS
+
+## Project Context
+- Type: Quebec cleaning ERP
+- Tech: Next.js 14, TypeScript, Supabase, Tailwind CSS
+- Status: 70% complete, 6 bugs blocking deployment
+
+## Code Generation Rules
+
+### API Endpoints
+- Always use Zod validation
+- Always filter with company_id (RLS)
+- Pattern: await supabase.from('table').select().eq('company_id', company_id)
+- Return { success: true, data } or { error: "message" }
+
+### React Components
+- Mobile-first: 640px max width
+- Tailwind only, NO external CSS
+- French UI labels: use dict.locale[key]
+- Zod form validation
+- Accessibility: ARIA labels, keyboard nav
+
+### Database
+- NEVER use mock data in production
+- Always filter by company_id
+- Use Supabase RLS
+- Test with: npm run test
+
+### Testing
+- Use Vitest (not Jest)
+- 100% coverage target
+- Test success AND error cases
+- Run: npm run test
+
+### Reference Files
+- CLAUDE.md (your architecture)
+- ENTRETIEN_PRESTIGE_FINAL_SPEC-1.md (requirements)
+- CODE_ANALYSIS_REPORT.md (current status)

@@ -18,9 +18,6 @@ export default function HomePage() {
           <Link className="button-primary" href="/login">
             Sign in
           </Link>
-          <Link className="button-secondary" href="/register">
-            Create account
-          </Link>
         </div>
       </div>
 
