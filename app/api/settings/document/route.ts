@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
+import { logAudit } from "@/lib/audit";
+import { getRequestIp } from "@/lib/rateLimit";
+import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 
 // DELETE /api/settings/document?type=id_photo|profile_photo
 export async function DELETE(request: Request) {
@@ -9,6 +12,7 @@ export async function DELETE(request: Request) {
   if ("response" in auth) return auth.response;
 
   const { profile } = auth;
+  const ip = getRequestIp(request);
   const { searchParams } = new URL(request.url);
   const type = searchParams.get("type");
 
@@ -21,6 +25,19 @@ export async function DELETE(request: Request) {
 
   try {
     const client = createUserClient(getAccessTokenFromRequest(request) ?? "");
+    const idempotency = await beginIdempotency(client, request, profile.user_id, {
+      action: "delete",
+      type,
+    });
+    if (idempotency.action === "replay") {
+      return NextResponse.json(idempotency.body, { status: idempotency.status });
+    }
+    if (idempotency.action === "conflict") {
+      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    }
+    if (idempotency.action === "in_progress") {
+      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    }
 
     // Get current file URL
     const { data: user } = await client
@@ -66,10 +83,18 @@ export async function DELETE(request: Request) {
       );
     }
 
-    return NextResponse.json({
+    await logAudit(client, profile.user_id, "document_delete", "user", profile.user_id, "success", {
+      ipAddress: ip,
+      userAgent: request.headers.get("user-agent") ?? null,
+      newValues: { type },
+    });
+
+    const responseBody = {
       success: true,
       message: "Document deleted",
-    });
+    };
+    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+    return NextResponse.json(responseBody);
   } catch (err) {
     console.error("Error deleting document:", err);
     return NextResponse.json(

@@ -335,7 +335,7 @@ export default function AdminUsersPage() {
       {showEditModal && selectedUser && (
         <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
           <div style={{ backgroundColor: "white", padding: 24, borderRadius: 12, maxWidth: 500, width: "90%" }}>
-            <h2 style={{ fontSize: 20, fontWeight: "bold", marginBottom: 16 }}>Modifier l'utilisateur</h2>
+            <h2 style={{ fontSize: 20, fontWeight: "bold", marginBottom: 16 }}>Modifier l&apos;utilisateur</h2>
             <form onSubmit={handleUpdate}>
               <div className="form-row">
                 <label className="label">Email</label>

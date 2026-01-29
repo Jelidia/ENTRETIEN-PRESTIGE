@@ -5,6 +5,9 @@ import { getAccessTokenFromRequest } from "@/lib/session";
 import { userUpdateSchema } from "@/lib/validators";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { logAudit } from "@/lib/audit";
+import { getRequestIp } from "@/lib/rateLimit";
+import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 
 // PATCH /api/admin/users/[user_id] - Update user
 export async function PATCH(
@@ -16,6 +19,7 @@ export async function PATCH(
 
   const { profile } = auth;
   const userId = params.user_id;
+  const ip = getRequestIp(request);
 
   try {
     const body = await request.json();
@@ -31,6 +35,19 @@ export async function PATCH(
     if (body.accessPermissions !== undefined) updateData.access_permissions = body.accessPermissions;
 
     const client = createUserClient(getAccessTokenFromRequest(request) ?? "");
+    const idempotency = await beginIdempotency(client, request, profile.user_id, {
+      action: "update",
+      payload: updateData,
+    });
+    if (idempotency.action === "replay") {
+      return NextResponse.json(idempotency.body, { status: idempotency.status });
+    }
+    if (idempotency.action === "conflict") {
+      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    }
+    if (idempotency.action === "in_progress") {
+      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    }
 
     // Verify user belongs to same company
     const { data: existingUser } = await client
@@ -63,10 +80,18 @@ export async function PATCH(
       );
     }
 
-    return NextResponse.json({
+    await logAudit(client, profile.user_id, "admin_user_update", "user", userId, "success", {
+      ipAddress: ip,
+      userAgent: request.headers.get("user-agent") ?? null,
+      newValues: updateData,
+    });
+
+    const responseBody = {
       success: true,
       data: updatedUser,
-    });
+    };
+    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+    return NextResponse.json(responseBody);
   } catch (err) {
     console.error("Error updating user:", err);
     return NextResponse.json(
@@ -86,8 +111,22 @@ export async function DELETE(
 
   const { profile } = auth;
   const userId = params.user_id;
+  const ip = getRequestIp(request);
 
   const client = createUserClient(getAccessTokenFromRequest(request) ?? "");
+  const idempotency = await beginIdempotency(client, request, profile.user_id, {
+    action: "delete",
+    userId,
+  });
+  if (idempotency.action === "replay") {
+    return NextResponse.json(idempotency.body, { status: idempotency.status });
+  }
+  if (idempotency.action === "conflict") {
+    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+  }
+  if (idempotency.action === "in_progress") {
+    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+  }
 
   // Verify user belongs to same company
   const { data: existingUser } = await client
@@ -126,8 +165,15 @@ export async function DELETE(
     );
   }
 
-  return NextResponse.json({
+  await logAudit(client, profile.user_id, "admin_user_delete", "user", userId, "success", {
+    ipAddress: ip,
+    userAgent: request.headers.get("user-agent") ?? null,
+  });
+
+  const responseBody = {
     success: true,
     message: "User deleted",
-  });
+  };
+  await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+  return NextResponse.json(responseBody);
 }

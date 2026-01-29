@@ -19,159 +19,11 @@
 
 # P0 Items
 
-## API-RateLimit
-1. **[P0][API-RateLimit][ADD][CHECKLIST]** [CHECKLIST] /api/auth/change-password add shared-store rate limiting + lockouts where applicable. — `app/api/auth/change-password/route.ts`
-2. **[P0][API-RateLimit][ADD][CHECKLIST]** [CHECKLIST] /api/auth/disable-2fa add shared-store rate limiting + lockouts where applicable. — `app/api/auth/disable-2fa/route.ts`
-3. **[P0][API-RateLimit][ADD][CHECKLIST]** [CHECKLIST] /api/auth/forgot-password add shared-store rate limiting + lockouts where applicable. — `app/api/auth/forgot-password/route.ts`
-4. **[P0][API-RateLimit][ADD][CHECKLIST]** [CHECKLIST] /api/auth/login add shared-store rate limiting + lockouts where applicable. — `app/api/auth/login/route.ts`
-5. **[P0][API-RateLimit][ADD][CHECKLIST]** [CHECKLIST] /api/auth/logout add shared-store rate limiting + lockouts where applicable. — `app/api/auth/logout/route.ts`
-6. **[P0][API-RateLimit][ADD][CHECKLIST]** [CHECKLIST] /api/auth/refresh-token add shared-store rate limiting + lockouts where applicable. — `app/api/auth/refresh-token/route.ts`
-7. **[P0][API-RateLimit][ADD][CHECKLIST]** [CHECKLIST] /api/auth/register add shared-store rate limiting + lockouts where applicable. — `app/api/auth/register/route.ts`
-8. **[P0][API-RateLimit][ADD][CHECKLIST]** [CHECKLIST] /api/auth/reset-password add shared-store rate limiting + lockouts where applicable. — `app/api/auth/reset-password/route.ts`
-9. **[P0][API-RateLimit][ADD][CHECKLIST]** [CHECKLIST] /api/auth/setup-2fa add shared-store rate limiting + lockouts where applicable. — `app/api/auth/setup-2fa/route.ts`
-10. **[P0][API-RateLimit][ADD][CHECKLIST]** [CHECKLIST] /api/auth/verify-2fa add shared-store rate limiting + lockouts where applicable. — `app/api/auth/verify-2fa/route.ts`
-
-## API-Security
-11. **[P0][API-Security][FIX][CHECKLIST]** [CHECKLIST] /api/admin/seed-users ensure auth + permission gates are correct for role/tenant. Methods=POST — `app/api/admin/seed-users/route.ts`
-12. **[P0][API-Security][FIX][CHECKLIST]** [CHECKLIST] /api/debug/session ensure auth + permission gates are correct for role/tenant. Methods=GET — `app/api/debug/session/route.ts`
-
-## DB
-13. **[P0][DB][FIX][CONFIRMED]** Select references unknown column 'jobs.user_id' per parsed schema. select('user_id') — `app/api/dispatch/[action]/route.ts`
-14. **[P0][DB][FIX][CONFIRMED]** Select references unknown column 'gps_locations.customer_id' per parsed schema. select('customer_id, estimated_revenue, actual_revenue') — `app/api/jobs/[id]/[action]/route.ts`
-15. **[P0][DB][FIX][CONFIRMED]** Select references unknown column 'gps_locations.estimated_revenue' per parsed schema. select('customer_id, estimated_revenue, actual_revenue') — `app/api/jobs/[id]/[action]/route.ts`
-16. **[P0][DB][FIX][CONFIRMED]** Select references unknown column 'gps_locations.actual_revenue' per parsed schema. select('customer_id, estimated_revenue, actual_revenue') — `app/api/jobs/[id]/[action]/route.ts`
-17. **[P0][DB][FIX][CONFIRMED]** Select references unknown column 'jobs.assigned_technician_id' per parsed schema. select('job_id, assigned_technician_id') — `app/api/jobs/[id]/photos/route.ts`
-18. **[P0][DB][FIX][CONFIRMED]** Select references unknown column 'companies.google_review_url' per parsed schema. select('google_review_url') — `app/api/ratings/submit/route.ts`
-19. **[P0][DB][FIX][CONFIRMED]** .from('customer_rating_tokens') references unknown table (not found in parsed schema). — `app/api/ratings/submit/route.ts`
-20. **[P0][DB][FIX][CONFIRMED]** Select references unknown column 'jobs.assigned_technician_id' per parsed schema. select('job_id, customer_id, assigned_technician_id, company_id') — `app/api/ratings/submit/route.ts`
-21. **[P0][DB][FIX][CONFIRMED]** .from('customer_rating_tokens') references unknown table (not found in parsed schema). — `app/api/ratings/submit/route.ts`
-22. **[P0][DB][FIX][CONFIRMED]** .from('customer_rating_tokens') references unknown table (not found in parsed schema). — `app/api/ratings/validate/route.ts`
-23. **[P0][DB][FIX][CONFIRMED]** Select references unknown column 'users.id_photo_url' per parsed schema. select('id_photo_url, profile_photo_url') — `app/api/settings/document/route.ts`
-24. **[P0][DB][FIX][CONFIRMED]** Select references unknown column 'users.profile_photo_url' per parsed schema. select('id_photo_url, profile_photo_url') — `app/api/settings/document/route.ts`
-25. **[P0][DB][FIX][CONFIRMED]** Select references unknown column 'users.password_hash' per parsed schema. select('user_id, password_hash') — `app/api/settings/password/route.ts`
-26. **[P0][DB][FIX][CONFIRMED]** Select references unknown column 'sms_messages.job' per parsed schema. select('job:jobs(customer_id)') — `app/api/sms/inbox/route.ts`
-27. **[P0][DB][FIX][CONFIRMED]** Select references unknown column 'job_assignments.job' per parsed schema. select('job:jobs(customer_id)') — `app/api/sms/inbox/route.ts`
-28. **[P0][DB][FIX][CONFIRMED]** Select references unknown column 'job_assignments.user' per parsed schema. select('user:users(full_name, phone, role)') — `app/api/sms/triggers/route.ts`
-29. **[P0][DB][FIX][CONFIRMED]** Select references unknown column 'auth_challenges.phone' per parsed schema. select('phone') — `lib/security.ts`
-
-## DB-RLS
-30. **[P0][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'companies' not detected with RLS enabled in migrations; verify and enable if needed. — `db/*`
-31. **[P0][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'technician_location_daily' not detected with RLS enabled in migrations; verify and enable if needed. — `db/*`
-32. **[P0][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'user_audit_log' not detected with RLS enabled in migrations; verify and enable if needed. — `db/*`
-33. **[P0][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'user_sessions' not detected with RLS enabled in migrations; verify and enable if needed. — `db/*`
-
-## DB-Tenancy
-34. **[P0][DB-Tenancy][FIX][CHECKLIST]** [CHECKLIST] Table 'auth_challenges' lacks company_id; verify tenant isolation via joins/policies. — `db/*`
-35. **[P0][DB-Tenancy][FIX][CHECKLIST]** [CHECKLIST] Table 'customer_communication' lacks company_id; verify tenant isolation via joins/policies. — `db/*`
-36. **[P0][DB-Tenancy][FIX][CHECKLIST]** [CHECKLIST] Table 'customer_ratings' lacks company_id; verify tenant isolation via joins/policies. — `db/*`
-37. **[P0][DB-Tenancy][FIX][CHECKLIST]** [CHECKLIST] Table 'customer_subscriptions' lacks company_id; verify tenant isolation via joins/policies. — `db/*`
-38. **[P0][DB-Tenancy][FIX][CHECKLIST]** [CHECKLIST] Table 'employee_availability' lacks company_id; verify tenant isolation via joins/policies. — `db/*`
-39. **[P0][DB-Tenancy][FIX][CHECKLIST]** [CHECKLIST] Table 'google_review_bonuses' lacks company_id; verify tenant isolation via joins/policies. — `db/*`
-40. **[P0][DB-Tenancy][FIX][CHECKLIST]** [CHECKLIST] Table 'job_assignments' lacks company_id; verify tenant isolation via joins/policies. — `db/*`
-41. **[P0][DB-Tenancy][FIX][CHECKLIST]** [CHECKLIST] Table 'job_history' lacks company_id; verify tenant isolation via joins/policies. — `db/*`
-42. **[P0][DB-Tenancy][FIX][CHECKLIST]** [CHECKLIST] Table 'job_photos' lacks company_id; verify tenant isolation via joins/policies. — `db/*`
-43. **[P0][DB-Tenancy][FIX][CHECKLIST]** [CHECKLIST] Table 'job_rework' lacks company_id; verify tenant isolation via joins/policies. — `db/*`
-44. **[P0][DB-Tenancy][FIX][CHECKLIST]** [CHECKLIST] Table 'job_upsells' lacks company_id; verify tenant isolation via joins/policies. — `db/*`
-45. **[P0][DB-Tenancy][FIX][CHECKLIST]** [CHECKLIST] Table 'loyalty_points' lacks company_id; verify tenant isolation via joins/policies. — `db/*`
-46. **[P0][DB-Tenancy][FIX][CHECKLIST]** [CHECKLIST] Table 'loyalty_transactions' lacks company_id; verify tenant isolation via joins/policies. — `db/*`
-47. **[P0][DB-Tenancy][FIX][CHECKLIST]** [CHECKLIST] Table 'onboarding_progress' lacks company_id; verify tenant isolation via joins/policies. — `db/*`
-48. **[P0][DB-Tenancy][FIX][CHECKLIST]** [CHECKLIST] Table 'referrals' lacks company_id; verify tenant isolation via joins/policies. — `db/*`
-49. **[P0][DB-Tenancy][FIX][CHECKLIST]** [CHECKLIST] Table 'termination_records' lacks company_id; verify tenant isolation via joins/policies. — `db/*`
-50. **[P0][DB-Tenancy][FIX][CHECKLIST]** [CHECKLIST] Table 'user_audit_log' lacks company_id; verify tenant isolation via joins/policies. — `db/*`
-51. **[P0][DB-Tenancy][FIX][CHECKLIST]** [CHECKLIST] Table 'user_sessions' lacks company_id; verify tenant isolation via joins/policies. — `db/*`
-
-## Security
-52. **[P0][Security][FIX][CONFIRMED]** API route lacks obvious auth/permission guard. — `app/api/admin/seed-users/route.ts`
-53. **[P0][Security][FIX][CONFIRMED]** API route lacks obvious auth/permission guard. — `app/api/debug/session/route.ts`
-54. **[P0][Security][FIX][CONFIRMED]** Route segment '/admin' exists under app/(app) but is not protected by middleware protectedPaths. — `middleware.ts`
-55. **[P0][Security][FIX][CONFIRMED]** Route segment '/inbox' exists under app/(app) but is not protected by middleware protectedPaths. — `middleware.ts`
-56. **[P0][Security][FIX][CONFIRMED]** Route segment '/profile' exists under app/(app) but is not protected by middleware protectedPaths. — `middleware.ts`
-57. **[P0][Security][FIX][CONFIRMED]** Route segment '/team' exists under app/(app) but is not protected by middleware protectedPaths. — `middleware.ts`
-58. **[P0][Security][REMOVE][CONFIRMED]** Seed-users endpoint exists; remove from production or strictly gate. — `app/api/admin/seed-users/route.ts`
-59. **[P0][Security][REMOVE][CONFIRMED]** Debug session endpoint exists; remove or dev-only guard. — `app/api/debug/session/route.ts`
-60. **[P0][Security][REMOVE][CONFIRMED]** Offensive/harassing text on homepage; remove before deployment. — `app/page.tsx:15`
-61. **[P0][Security][VERIFY][CONFIRMED]** Uses admin/service-role powers; verify strict company scoping + permission + audit logs. — `app/api/admin/reset-password/route.ts`
-62. **[P0][Security][VERIFY][CONFIRMED]** Uses admin/service-role powers; verify strict company scoping + permission + audit logs. — `app/api/admin/seed-users/route.ts`
-63. **[P0][Security][VERIFY][CONFIRMED]** Uses admin/service-role powers; verify strict company scoping + permission + audit logs. — `app/api/admin/seed/route.ts`
-64. **[P0][Security][VERIFY][CONFIRMED]** Uses admin/service-role powers; verify strict company scoping + permission + audit logs. — `app/api/admin/users/[user_id]/reset-password/route.ts`
-65. **[P0][Security][VERIFY][CONFIRMED]** Uses admin/service-role powers; verify strict company scoping + permission + audit logs. — `app/api/auth/disable-2fa/route.ts`
-66. **[P0][Security][VERIFY][CONFIRMED]** Uses admin/service-role powers; verify strict company scoping + permission + audit logs. — `app/api/auth/login/route.ts`
-67. **[P0][Security][VERIFY][CONFIRMED]** Uses admin/service-role powers; verify strict company scoping + permission + audit logs. — `app/api/auth/logout/route.ts`
-68. **[P0][Security][VERIFY][CONFIRMED]** Uses admin/service-role powers; verify strict company scoping + permission + audit logs. — `app/api/auth/register/route.ts`
-69. **[P0][Security][VERIFY][CONFIRMED]** Uses admin/service-role powers; verify strict company scoping + permission + audit logs. — `app/api/auth/setup-2fa/route.ts`
-70. **[P0][Security][VERIFY][CONFIRMED]** Uses admin/service-role powers; verify strict company scoping + permission + audit logs. — `app/api/auth/verify-2fa/route.ts`
-71. **[P0][Security][VERIFY][CONFIRMED]** Uses admin/service-role powers; verify strict company scoping + permission + audit logs. — `app/api/documents/route.ts`
-72. **[P0][Security][VERIFY][CONFIRMED]** Uses admin/service-role powers; verify strict company scoping + permission + audit logs. — `app/api/invoices/[id]/[action]/route.ts`
-73. **[P0][Security][VERIFY][CONFIRMED]** Uses admin/service-role powers; verify strict company scoping + permission + audit logs. — `app/api/jobs/[id]/[action]/route.ts`
-74. **[P0][Security][VERIFY][CONFIRMED]** Uses admin/service-role powers; verify strict company scoping + permission + audit logs. — `app/api/payments/[action]/route.ts`
-75. **[P0][Security][VERIFY][CONFIRMED]** Uses admin/service-role powers; verify strict company scoping + permission + audit logs. — `app/api/sms/[action]/route.ts`
-76. **[P0][Security][VERIFY][CONFIRMED]** Uses admin/service-role powers; verify strict company scoping + permission + audit logs. — `app/api/uploads/route.ts`
-77. **[P0][Security][VERIFY][CONFIRMED]** Uses admin/service-role powers; verify strict company scoping + permission + audit logs. — `app/api/users/route.ts`
-
-## UI-Security
-78. **[P0][UI-Security][FIX][CHECKLIST]** [CHECKLIST] Page /admin/users should be protected by middleware; segment 'admin' not in protectedPaths. — `app/(app)/admin/users/page.tsx`
-79. **[P0][UI-Security][FIX][CHECKLIST]** [CHECKLIST] Page /inbox should be protected by middleware; segment 'inbox' not in protectedPaths. — `app/(app)/inbox/page.tsx`
-80. **[P0][UI-Security][FIX][CHECKLIST]** [CHECKLIST] Page /profile should be protected by middleware; segment 'profile' not in protectedPaths. — `app/(app)/profile/page.tsx`
-81. **[P0][UI-Security][FIX][CHECKLIST]** [CHECKLIST] Page /team/[id] should be protected by middleware; segment 'team' not in protectedPaths. — `app/(app)/team/[id]/page.tsx`
-
 # P1 Items
 
 ## API-Audit
-82. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/admin/reset-password mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/admin/reset-password/route.ts`
-83. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/admin/seed-users mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/admin/seed-users/route.ts`
-84. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/admin/seed mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/admin/seed/route.ts`
-85. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/admin/users/[user_id]/reset-password mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/admin/users/[user_id]/reset-password/route.ts`
-86. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/admin/users/[user_id] mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/admin/users/[user_id]/route.ts`
-87. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/admin/users mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/admin/users/route.ts`
-88. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/auth/change-password mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/auth/change-password/route.ts`
-89. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/auth/disable-2fa mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/auth/disable-2fa/route.ts`
-90. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/auth/forgot-password mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/auth/forgot-password/route.ts`
-91. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/auth/login mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/auth/login/route.ts`
-92. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/auth/logout mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/auth/logout/route.ts`
-93. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/auth/refresh-token mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/auth/refresh-token/route.ts`
-94. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/auth/register mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/auth/register/route.ts`
-95. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/auth/reset-password mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/auth/reset-password/route.ts`
-96. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/auth/setup-2fa mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/auth/setup-2fa/route.ts`
-97. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/auth/verify-2fa mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/auth/verify-2fa/route.ts`
-98. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/company mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/company/route.ts`
-99. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/customers/[id]/[action] mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/customers/[id]/[action]/route.ts`
-100. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/customers/[id] mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/customers/[id]/route.ts`
-101. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/customers mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/customers/route.ts`
-102. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/dispatch/[action] mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/dispatch/[action]/route.ts`
-103. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/email/[action] mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/email/[action]/route.ts`
-104. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/gps/[action] mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/gps/[action]/route.ts`
-105. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/invoices/[id]/[action] mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/invoices/[id]/[action]/route.ts`
-106. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/invoices/[id] mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/invoices/[id]/route.ts`
-107. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/invoices mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/invoices/route.ts`
-108. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/jobs/[id]/[action] mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/jobs/[id]/[action]/route.ts`
-109. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/jobs/[id]/photos mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/jobs/[id]/photos/route.ts`
-110. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/jobs/[id] mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/jobs/[id]/route.ts`
-111. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/jobs mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/jobs/route.ts`
-112. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/notifications/[id]/read mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/notifications/[id]/read/route.ts`
-113. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/notifications mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/notifications/route.ts`
-114. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/notifications/settings mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/notifications/settings/route.ts`
-115. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/payments/[action] mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/payments/[action]/route.ts`
-116. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/ratings/submit mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/ratings/submit/route.ts`
-117. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/reports/[type] mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/reports/[type]/route.ts`
-118. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/settings/document mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/settings/document/route.ts`
-119. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/settings/password mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/settings/password/route.ts`
-120. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/settings/profile mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/settings/profile/route.ts`
-121. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/settings/upload mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/settings/upload/route.ts`
-122. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/sms/[action] mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/sms/[action]/route.ts`
-123. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/sms/inbox/[threadId]/read mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/sms/inbox/[threadId]/read/route.ts`
-124. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/sms/triggers mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/sms/triggers/route.ts`
-125. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/uploads mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/uploads/route.ts`
-126. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/users/[id]/availability mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/users/[id]/availability/route.ts`
-127. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/users/[id] mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/users/[id]/route.ts`
-128. **[P1][API-Audit][ADD][CHECKLIST]** [CHECKLIST] /api/users mutation endpoint: add audit logging for who did what, when, and before/after states. — `app/api/users/route.ts`
 
 ## API-Idempotency
-129. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/admin/reset-password mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/admin/reset-password/route.ts`
-130. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/admin/seed-users mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/admin/seed-users/route.ts`
-131. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/admin/seed mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/admin/seed/route.ts`
-132. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/admin/users/[user_id]/reset-password mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/admin/users/[user_id]/reset-password/route.ts`
-133. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/admin/users/[user_id] mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/admin/users/[user_id]/route.ts`
-134. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/admin/users mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/admin/users/route.ts`
 135. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/auth/change-password mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/auth/change-password/route.ts`
 136. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/auth/disable-2fa mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/auth/disable-2fa/route.ts`
 137. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/auth/forgot-password mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/auth/forgot-password/route.ts`
@@ -182,41 +34,10 @@
 142. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/auth/reset-password mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/auth/reset-password/route.ts`
 143. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/auth/setup-2fa mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/auth/setup-2fa/route.ts`
 144. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/auth/verify-2fa mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/auth/verify-2fa/route.ts`
-145. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/company mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/company/route.ts`
-146. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/customers/[id]/[action] mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/customers/[id]/[action]/route.ts`
-147. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/customers/[id] mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/customers/[id]/route.ts`
-148. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/customers mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/customers/route.ts`
-149. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/dispatch/[action] mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/dispatch/[action]/route.ts`
-150. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/email/[action] mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/email/[action]/route.ts`
-151. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/gps/[action] mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/gps/[action]/route.ts`
-152. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/invoices/[id]/[action] mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/invoices/[id]/[action]/route.ts`
-153. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/invoices/[id] mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/invoices/[id]/route.ts`
-154. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/invoices mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/invoices/route.ts`
-155. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/jobs/[id]/[action] mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/jobs/[id]/[action]/route.ts`
-156. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/jobs/[id]/photos mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/jobs/[id]/photos/route.ts`
-157. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/jobs/[id] mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/jobs/[id]/route.ts`
-158. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/jobs mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/jobs/route.ts`
-159. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/notifications/[id]/read mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/notifications/[id]/read/route.ts`
-160. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/notifications mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/notifications/route.ts`
-161. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/notifications/settings mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/notifications/settings/route.ts`
-162. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/payments/[action] mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/payments/[action]/route.ts`
-163. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/ratings/submit mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/ratings/submit/route.ts`
 164. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/reports/[type] mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/reports/[type]/route.ts`
-165. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/settings/document mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/settings/document/route.ts`
-166. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/settings/password mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/settings/password/route.ts`
-167. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/settings/profile mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/settings/profile/route.ts`
-168. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/settings/upload mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/settings/upload/route.ts`
-169. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/sms/[action] mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/sms/[action]/route.ts`
-170. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/sms/inbox/[threadId]/read mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/sms/inbox/[threadId]/read/route.ts`
-171. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/sms/triggers mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/sms/triggers/route.ts`
 172. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/uploads mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/uploads/route.ts`
-173. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/users/[id]/availability mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/users/[id]/availability/route.ts`
-174. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/users/[id] mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/users/[id]/route.ts`
-175. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/users mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/users/route.ts`
 
 ## API-RateLimit
-176. **[P1][API-RateLimit][ADD][CHECKLIST]** [CHECKLIST] /api/ratings/submit add shared-store rate limiting + lockouts where applicable. — `app/api/ratings/submit/route.ts`
-177. **[P1][API-RateLimit][ADD][CHECKLIST]** [CHECKLIST] /api/ratings/validate add shared-store rate limiting + lockouts where applicable. — `app/api/ratings/validate/route.ts`
 
 ## API-Security
 178. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/access ensure auth + permission gates are correct for role/tenant. Methods=GET — `app/api/access/route.ts`
@@ -1530,7 +1351,5 @@
 1438. **[P3][Docs][VERIFY][CHECKLIST]** [CHECKLIST] Review README.md: remove contradictions, ensure it matches code & DB, and update deployment steps. — `README.md`
 1439. **[P3][Docs][VERIFY][CHECKLIST]** [CHECKLIST] Review READY_TO_DEPLOY.md: remove contradictions, ensure it matches code & DB, and update deployment steps. — `READY_TO_DEPLOY.md`
 1440. **[P3][Docs][VERIFY][CHECKLIST]** [CHECKLIST] Review TROUBLESHOOTING.md: remove contradictions, ensure it matches code & DB, and update deployment steps. — `TROUBLESHOOTING.md`
-1441. **[P3][Docs][VERIFY][CHECKLIST]** [CHECKLIST] Review db/CRITICAL_FIXES_README.md: remove contradictions, ensure it matches code & DB, and update deployment steps. — `db/CRITICAL_FIXES_README.md`
-
+ 
 ## Linting
-1442. **[P3][Linting][VERIFY][CONFIRMED]** eslint-disable used: // eslint-disable-next-line — `.claude/output-styles/production-ready.md:367`

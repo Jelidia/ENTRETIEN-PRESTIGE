@@ -326,7 +326,7 @@ export default function ProfilePage() {
 
           {/* ID Photo */}
           <div className="card" style={{ marginBottom: 16 }}>
-            <h3 style={{ fontWeight: 600, marginBottom: 8 }}>Pièce d'identité</h3>
+            <h3 style={{ fontWeight: 600, marginBottom: 8 }}>Pièce d&apos;identité</h3>
             {user.id_document_front_url ? (
               <div>
                 <img src={user.id_document_front_url} alt="ID" style={{ width: 100, height: 100, objectFit: "cover", borderRadius: 8, marginBottom: 8 }} />

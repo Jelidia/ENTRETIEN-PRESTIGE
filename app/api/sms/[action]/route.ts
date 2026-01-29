@@ -5,6 +5,9 @@ import { sendSms } from "@/lib/twilio";
 import { createAdminClient, createUserClient } from "@/lib/supabaseServer";
 import { requireRole } from "@/lib/auth";
 import { getAccessTokenFromRequest } from "@/lib/session";
+import { logAudit } from "@/lib/audit";
+import { getRequestIp } from "@/lib/rateLimit";
+import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 
 async function resolveThreadId(
   admin: ReturnType<typeof createAdminClient>,
@@ -32,6 +35,7 @@ export async function POST(
   request: Request,
   { params }: { params: { action: string } }
 ) {
+  const ip = getRequestIp(request);
   const action = params.action;
   if (action === "webhook") {
     const formData = await request.formData();
@@ -74,6 +78,20 @@ export async function POST(
   const threadId = parsed.data.threadId
     ? parsed.data.threadId
     : await resolveThreadId(admin, parsed.data.customerId ?? null, parsed.data.to);
+  const idempotency = await beginIdempotency(admin, request, profile.user_id, {
+    to: parsed.data.to,
+    message: parsed.data.message,
+    threadId,
+  });
+  if (idempotency.action === "replay") {
+    return NextResponse.json(idempotency.body, { status: idempotency.status });
+  }
+  if (idempotency.action === "conflict") {
+    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+  }
+  if (idempotency.action === "in_progress") {
+    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+  }
   await admin.from("sms_messages").insert({
     company_id: profile.company_id,
     customer_id: parsed.data.customerId ?? null,
@@ -83,7 +101,14 @@ export async function POST(
     thread_id: threadId,
     created_at: new Date().toISOString(),
   });
-  return NextResponse.json({ ok: true });
+  await logAudit(admin, profile.user_id, "sms_send", "sms_thread", threadId, "success", {
+    ipAddress: ip,
+    userAgent: request.headers.get("user-agent") ?? null,
+    newValues: { to: parsed.data.to },
+  });
+  const responseBody = { ok: true };
+  await completeIdempotency(admin, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+  return NextResponse.json(responseBody);
 }
 
 export async function GET(

@@ -5,6 +5,9 @@ import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { sendSms } from "@/lib/twilio";
 import { smsTemplates, formatPhoneNumber } from "@/lib/smsTemplates";
+import { logAudit } from "@/lib/audit";
+import { getRequestIp } from "@/lib/rateLimit";
+import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 
 async function resolveThreadId(
   client: ReturnType<typeof createUserClient>,
@@ -37,6 +40,8 @@ export async function POST(request: Request) {
 
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
+  const { profile } = auth;
+  const ip = getRequestIp(request);
 
   const body = await request.json();
   const { event, jobId, customData } = body;
@@ -184,6 +189,21 @@ export async function POST(request: Request) {
     const phoneNumber = formatPhoneNumber(customerRecord.phone);
 
     try {
+      const idempotency = await beginIdempotency(client, request, profile.user_id, {
+        event,
+        jobId,
+        phoneNumber,
+      });
+      if (idempotency.action === "replay") {
+        return NextResponse.json(idempotency.body, { status: idempotency.status });
+      }
+      if (idempotency.action === "conflict") {
+        return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+      }
+      if (idempotency.action === "in_progress") {
+        return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+      }
+
       await sendSms(phoneNumber, message);
 
       const threadId = await resolveThreadId(client, customerRecord.customer_id ?? null, phoneNumber);
@@ -200,10 +220,18 @@ export async function POST(request: Request) {
         thread_id: threadId,
       });
 
-      return NextResponse.json({
+      await logAudit(client, profile.user_id, "sms_trigger", "sms_thread", threadId, "success", {
+        ipAddress: ip,
+        userAgent: request.headers.get("user-agent") ?? null,
+        newValues: { event, job_id: jobId },
+      });
+
+      const responseBody = {
         success: true,
         message: "SMS sent successfully",
-      });
+      };
+      await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+      return NextResponse.json(responseBody);
     } catch (error: any) {
       console.error("Failed to send SMS:", error);
       return NextResponse.json(

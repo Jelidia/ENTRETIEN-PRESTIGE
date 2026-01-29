@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
-import { createAdminClient } from "@/lib/supabaseServer";
 import { logAudit } from "@/lib/audit";
+import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 import { getRequestIp } from "@/lib/rateLimit";
+import { getAccessTokenFromRequest } from "@/lib/session";
+import { createAdminClient, createUserClient } from "@/lib/supabaseServer";
 
 // WARNING: This endpoint creates users with proper authentication
 // Only use in development/initial setup
@@ -17,6 +19,20 @@ export async function POST(request: Request) {
     return auth.response;
   }
   const { profile } = auth;
+
+  const userClient = createUserClient(getAccessTokenFromRequest(request) ?? "");
+  const idempotency = await beginIdempotency(userClient, request, profile.user_id, {
+    action: "seed-users",
+  });
+  if (idempotency.action === "replay") {
+    return NextResponse.json(idempotency.body, { status: idempotency.status });
+  }
+  if (idempotency.action === "conflict") {
+    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+  }
+  if (idempotency.action === "in_progress") {
+    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+  }
 
   const admin = createAdminClient();
 
@@ -189,13 +205,22 @@ export async function POST(request: Request) {
       });
     }
 
-    return NextResponse.json({
+    const responseBody = {
       success: createdUsers.length > 0,
       message: `Successfully created ${createdUsers.length} users`,
       users: createdUsers,
       errors: errors.length > 0 ? errors : undefined,
       note: "All passwords are set to the email address. Users should change them after first login.",
-    });
+    };
+    await completeIdempotency(
+      userClient,
+      request,
+      idempotency.scope,
+      idempotency.requestHash,
+      responseBody,
+      200
+    );
+    return NextResponse.json(responseBody);
   } catch (error) {
     console.error("Seed users error:", error);
     return NextResponse.json(

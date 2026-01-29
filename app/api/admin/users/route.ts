@@ -5,6 +5,7 @@ import { getAccessTokenFromRequest } from "@/lib/session";
 import { userCreateSchema } from "@/lib/validators";
 import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
+import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 
 // GET /api/admin/users - List all users with pagination
 export async function GET(request: Request) {
@@ -78,6 +79,16 @@ export async function POST(request: Request) {
     const { fullName, email, phone, role, password, accessPermissions } = result.data;
 
     const client = createUserClient(getAccessTokenFromRequest(request) ?? "");
+    const idempotency = await beginIdempotency(client, request, profile.user_id, result.data);
+    if (idempotency.action === "replay") {
+      return NextResponse.json(idempotency.body, { status: idempotency.status });
+    }
+    if (idempotency.action === "conflict") {
+      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    }
+    if (idempotency.action === "in_progress") {
+      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    }
 
     // Check if email already exists
     const { data: existingUser } = await client
@@ -143,10 +154,12 @@ export async function POST(request: Request) {
       userAgent: request.headers.get("user-agent") ?? null,
     });
 
-    return NextResponse.json({
+    const responseBody = {
       success: true,
       data: newUser,
-    });
+    };
+    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+    return NextResponse.json(responseBody);
   } catch (err) {
     console.error("Error creating user:", err);
     return NextResponse.json(

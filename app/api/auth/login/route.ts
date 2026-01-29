@@ -6,6 +6,7 @@ import { createChallenge, sendTwoFactorCode } from "@/lib/security";
 import { isSmsConfigured } from "@/lib/twilio";
 import { getRequestIp, rateLimit } from "@/lib/rateLimit";
 import { hashCode } from "@/lib/crypto";
+import { logAudit } from "@/lib/audit";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -31,6 +32,12 @@ export async function POST(request: Request) {
     .maybeSingle();
 
   if (userRecord?.status === "suspended") {
+    await logAudit(admin, userRecord.user_id ?? null, "login", "user", userRecord.user_id ?? null, "denied", {
+      reason: "account_suspended",
+      ipAddress: ip,
+      userAgent: request.headers.get("user-agent") ?? null,
+      newValues: { email: parsed.data.email },
+    });
     return NextResponse.json({ error: "Account suspended" }, { status: 403 });
   }
 
@@ -39,6 +46,12 @@ export async function POST(request: Request) {
       ? new Date(userRecord.last_failed_login).getTime()
       : 0;
     if (Date.now() - lastFailed < 30 * 60 * 1000) {
+      await logAudit(admin, userRecord.user_id ?? null, "login", "user", userRecord.user_id ?? null, "denied", {
+        reason: "account_locked",
+        ipAddress: ip,
+        userAgent: request.headers.get("user-agent") ?? null,
+        newValues: { email: parsed.data.email },
+      });
       return NextResponse.json({ error: "Account locked" }, { status: 403 });
     }
   }
@@ -59,6 +72,12 @@ export async function POST(request: Request) {
         })
         .eq("user_id", userRecord.user_id);
     }
+    await logAudit(admin, userRecord?.user_id ?? null, "login", "user", userRecord?.user_id ?? null, "failed", {
+      reason: "invalid_credentials",
+      ipAddress: ip,
+      userAgent: request.headers.get("user-agent") ?? null,
+      newValues: { email: parsed.data.email },
+    });
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }
 
@@ -76,6 +95,11 @@ export async function POST(request: Request) {
       failed_login_attempts: 0,
     })
     .eq("user_id", data.user.id);
+
+  await logAudit(admin, data.user.id, "login", "user", data.user.id, "success", {
+    ipAddress: ip,
+    userAgent: request.headers.get("user-agent") ?? null,
+  });
 
   if (profile?.role === "admin" && profile?.two_factor_enabled) {
     if (profile.two_factor_method === "sms") {

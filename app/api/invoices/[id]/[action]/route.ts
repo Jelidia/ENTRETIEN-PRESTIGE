@@ -6,6 +6,9 @@ import { invoicePaymentSchema, invoiceSendSchema } from "@/lib/validators";
 import { sendInvoiceEmail } from "@/lib/resend";
 import { sendSms } from "@/lib/twilio";
 import { generateInvoicePdf } from "@/lib/pdf";
+import { logAudit } from "@/lib/audit";
+import { getRequestIp } from "@/lib/rateLimit";
+import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 
 export async function POST(
   request: Request,
@@ -15,15 +18,31 @@ export async function POST(
   if ("response" in auth) {
     return auth.response;
   }
+  const { user } = auth;
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
   const action = params.action;
   const body = await request.json().catch(() => null);
+  const ip = getRequestIp(request);
 
   if (action === "send") {
     const parsed = invoiceSendSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid send request" }, { status: 400 });
+    }
+
+    const idempotency = await beginIdempotency(client, request, user.id, {
+      action: "send",
+      payload: parsed.data,
+    });
+    if (idempotency.action === "replay") {
+      return NextResponse.json(idempotency.body, { status: idempotency.status });
+    }
+    if (idempotency.action === "conflict") {
+      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    }
+    if (idempotency.action === "in_progress") {
+      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
     }
 
     if (parsed.data.channel === "email") {
@@ -37,13 +56,35 @@ export async function POST(
       .update({ payment_status: "sent", email_sent_date: new Date().toISOString() })
       .eq("invoice_id", params.id);
 
-    return NextResponse.json({ ok: true });
+    await logAudit(client, user.id, "invoice_send", "invoice", params.id, "success", {
+      ipAddress: ip,
+      userAgent: request.headers.get("user-agent") ?? null,
+      newValues: { channel: parsed.data.channel },
+    });
+
+    const responseBody = { ok: true };
+    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+    return NextResponse.json(responseBody);
   }
 
   if (action === "payment") {
     const parsed = invoicePaymentSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid payment" }, { status: 400 });
+    }
+
+    const idempotency = await beginIdempotency(client, request, user.id, {
+      action: "payment",
+      payload: parsed.data,
+    });
+    if (idempotency.action === "replay") {
+      return NextResponse.json(idempotency.body, { status: idempotency.status });
+    }
+    if (idempotency.action === "conflict") {
+      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    }
+    if (idempotency.action === "in_progress") {
+      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
     }
 
     await client
@@ -55,7 +96,15 @@ export async function POST(
       })
       .eq("invoice_id", params.id);
 
-    return NextResponse.json({ ok: true });
+    await logAudit(client, user.id, "invoice_payment_update", "invoice", params.id, "success", {
+      ipAddress: ip,
+      userAgent: request.headers.get("user-agent") ?? null,
+      newValues: { status: parsed.data.status, paid_amount: parsed.data.paidAmount },
+    });
+
+    const responseBody = { ok: true };
+    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+    return NextResponse.json(responseBody);
   }
 
   if (action === "pdf") {

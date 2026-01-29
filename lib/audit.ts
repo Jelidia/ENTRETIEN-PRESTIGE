@@ -10,10 +10,10 @@ type AuditOptions = {
 
 export async function logAudit(
   client: { from: (table: string) => any },
-  userId: string,
+  userId: string | null,
   action: string,
   resourceType: string,
-  resourceId: string,
+  resourceId: string | null,
   status: AuditStatus,
   options?: AuditOptions
 ) {

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabaseServer";
+import { logAudit } from "@/lib/audit";
+import { getRequestIp } from "@/lib/rateLimit";
 
 const bucketName = "documents";
 const docTypeMap: Record<string, string> = {
@@ -15,6 +17,7 @@ export async function GET(request: Request) {
   if ("response" in auth) {
     return auth.response;
   }
+  const ip = getRequestIp(request);
 
   const { searchParams } = new URL(request.url);
   const userId = searchParams.get("userId") ?? "";
@@ -54,6 +57,12 @@ export async function GET(request: Request) {
   if (signError || !signed?.signedUrl) {
     return NextResponse.json({ error: "Unable to sign document" }, { status: 500 });
   }
+
+  await logAudit(admin, auth.profile.user_id, "document_access", "user", userId, "success", {
+    ipAddress: ip,
+    userAgent: request.headers.get("user-agent") ?? null,
+    newValues: { doc_type: docType },
+  });
 
   return NextResponse.json({ url: signed.signedUrl });
 }

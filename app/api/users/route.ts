@@ -4,6 +4,9 @@ import { createAdminClient, createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { userCreateSchema } from "@/lib/validators";
 import { isSmsConfigured } from "@/lib/twilio";
+import { logAudit } from "@/lib/audit";
+import { getRequestIp } from "@/lib/rateLimit";
+import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 
 export async function GET(request: Request) {
   const auth = await requireRole(request, ["admin", "manager"], "team");
@@ -32,10 +35,23 @@ export async function POST(request: Request) {
     return auth.response;
   }
   const { profile } = auth;
+  const ip = getRequestIp(request);
   const body = await request.json().catch(() => null);
   const parsed = userCreateSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid user" }, { status: 400 });
+  }
+
+  const client = createUserClient(getAccessTokenFromRequest(request) ?? "");
+  const idempotency = await beginIdempotency(client, request, profile.user_id, parsed.data);
+  if (idempotency.action === "replay") {
+    return NextResponse.json(idempotency.body, { status: idempotency.status });
+  }
+  if (idempotency.action === "conflict") {
+    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+  }
+  if (idempotency.action === "in_progress") {
+    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
   }
 
   const admin = createAdminClient();
@@ -88,5 +104,17 @@ export async function POST(request: Request) {
     );
   }
 
-  return NextResponse.json({ ok: true }, { status: 201 });
+  await logAudit(admin, profile.user_id, "admin_create_user", "user", userData.user.id, "success", {
+    ipAddress: ip,
+    userAgent: request.headers.get("user-agent") ?? null,
+    newValues: {
+      email: parsed.data.email,
+      full_name: parsed.data.fullName,
+      role: parsed.data.role,
+    },
+  });
+
+  const responseBody = { ok: true };
+  await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 201);
+  return NextResponse.json(responseBody, { status: 201 });
 }

@@ -3,6 +3,7 @@ import { clearSessionCookies, getAccessTokenFromRequest } from "@/lib/session";
 import { createAnonClient, createAdminClient } from "@/lib/supabaseServer";
 import { hashCode } from "@/lib/crypto";
 import { getRequestIp, rateLimit } from "@/lib/rateLimit";
+import { logAudit } from "@/lib/audit";
 
 export async function POST(request: Request) {
   const ip = getRequestIp(request);
@@ -15,15 +16,24 @@ export async function POST(request: Request) {
   }
 
   const token = getAccessTokenFromRequest(request);
+  const admin = createAdminClient();
+  const { data: userData } = token ? await admin.auth.getUser(token) : { data: null };
+  const userId = userData?.user?.id ?? null;
   const anon = createAnonClient(token ?? undefined);
   await anon.auth.signOut();
 
   if (token) {
-    const admin = createAdminClient();
     await admin
       .from("user_sessions")
       .update({ is_active: false })
       .eq("token_hash", hashCode(token));
+  }
+
+  if (userId) {
+    await logAudit(admin, userId, "logout", "user", userId, "success", {
+      ipAddress: ip,
+      userAgent: request.headers.get("user-agent") ?? null,
+    });
   }
 
   const response = NextResponse.json({ ok: true });

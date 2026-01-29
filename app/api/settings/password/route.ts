@@ -5,6 +5,7 @@ import { getAccessTokenFromRequest } from "@/lib/session";
 import { changePasswordSchema } from "@/lib/validators";
 import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
+import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 
 // PATCH /api/settings/password - Change user's own password
 export async function PATCH(request: Request) {
@@ -40,6 +41,18 @@ export async function PATCH(request: Request) {
     }
 
     const client = createUserClient(getAccessTokenFromRequest(request) ?? "");
+    const idempotency = await beginIdempotency(client, request, profile.user_id, {
+      action: "change_password",
+    });
+    if (idempotency.action === "replay") {
+      return NextResponse.json(idempotency.body, { status: idempotency.status });
+    }
+    if (idempotency.action === "conflict") {
+      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    }
+    if (idempotency.action === "in_progress") {
+      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    }
     const { error: updateError } = await client.auth.updateUser({
       password: newPassword,
     });
@@ -58,10 +71,12 @@ export async function PATCH(request: Request) {
       userAgent: request.headers.get("user-agent") ?? null,
     });
 
-    return NextResponse.json({
+    const responseBody = {
       success: true,
       message: "Password changed successfully",
-    });
+    };
+    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+    return NextResponse.json(responseBody);
   } catch (err) {
     console.error("Error changing password:", err);
     return NextResponse.json(

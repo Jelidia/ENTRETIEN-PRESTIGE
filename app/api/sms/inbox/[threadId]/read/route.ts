@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
+import { logAudit } from "@/lib/audit";
+import { getRequestIp } from "@/lib/rateLimit";
+import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 
 // Mark thread messages as read
 export async function POST(
@@ -16,6 +19,18 @@ export async function POST(
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
   const { threadId } = params;
+  const { profile } = auth;
+  const ip = getRequestIp(request);
+  const idempotency = await beginIdempotency(client, request, profile.user_id, { threadId });
+  if (idempotency.action === "replay") {
+    return NextResponse.json(idempotency.body, { status: idempotency.status });
+  }
+  if (idempotency.action === "conflict") {
+    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+  }
+  if (idempotency.action === "in_progress") {
+    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+  }
 
   const { error } = await client
     .from("sms_messages")
@@ -30,5 +45,12 @@ export async function POST(
     );
   }
 
-  return NextResponse.json({ success: true });
+  await logAudit(client, profile.user_id, "sms_mark_read", "sms_thread", threadId, "success", {
+    ipAddress: ip,
+    userAgent: request.headers.get("user-agent") ?? null,
+  });
+
+  const responseBody = { success: true };
+  await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+  return NextResponse.json(responseBody);
 }

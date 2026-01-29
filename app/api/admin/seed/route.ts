@@ -1,7 +1,9 @@
 import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
-import { createAdminClient } from "@/lib/supabaseServer";
+import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
+import { getAccessTokenFromRequest } from "@/lib/session";
+import { createAdminClient, createUserClient } from "@/lib/supabaseServer";
 import { seedAccountsSchema } from "@/lib/validators";
 import { isSmsConfigured } from "@/lib/twilio";
 import { logAudit } from "@/lib/audit";
@@ -24,6 +26,18 @@ export async function POST(request: Request) {
   }
 
   const { profile } = auth;
+  const client = createUserClient(getAccessTokenFromRequest(request) ?? "");
+  const idempotency = await beginIdempotency(client, request, profile.user_id, parsed.data);
+  if (idempotency.action === "replay") {
+    return NextResponse.json(idempotency.body, { status: idempotency.status });
+  }
+  if (idempotency.action === "conflict") {
+    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+  }
+  if (idempotency.action === "in_progress") {
+    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+  }
+
   const admin = createAdminClient();
   const smsConfigured = isSmsConfigured();
   const results: {
@@ -103,5 +117,14 @@ export async function POST(request: Request) {
     results.push({ role: account.role, email: account.email, status: "created", password });
   }
 
-  return NextResponse.json({ results });
+  const responseBody = { results };
+  await completeIdempotency(
+    client,
+    request,
+    idempotency.scope,
+    idempotency.requestHash,
+    responseBody,
+    200
+  );
+  return NextResponse.json(responseBody);
 }

@@ -100,6 +100,18 @@ create table user_audit_log (
   created_at timestamptz default now()
 );
 
+create table idempotency_keys (
+  id uuid primary key default gen_random_uuid(),
+  idempotency_key text not null,
+  scope text not null,
+  request_hash text not null,
+  response_status int,
+  response_body jsonb,
+  status text check (status in ('processing', 'completed')) default 'processing',
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
 create table customers (
   customer_id uuid primary key default gen_random_uuid(),
   company_id uuid references companies(company_id),
@@ -512,6 +524,7 @@ create index idx_users_role on users(role);
 create index idx_users_status on users(status);
 create index idx_sessions_user_id on user_sessions(user_id);
 create index idx_audit_user_id on user_audit_log(user_id);
+create index idx_idempotency_key_scope on idempotency_keys(idempotency_key, scope);
 create index idx_customers_company_id on customers(company_id);
 create index idx_jobs_company_id on jobs(company_id);
 create index idx_jobs_customer_id on jobs(customer_id);
@@ -525,6 +538,7 @@ create index idx_sms_thread on sms_messages(thread_id);
 create index idx_sms_assigned on sms_messages(assigned_to) where is_read = false;
 
 alter table users enable row level security;
+alter table idempotency_keys enable row level security;
 alter table companies enable row level security;
 alter table jobs enable row level security;
 alter table customers enable row level security;
@@ -594,6 +608,18 @@ create policy sessions_owner_write on user_sessions
 create policy sessions_owner_update on user_sessions
   for update
   using (user_id = auth.uid());
+
+create policy idempotency_owner_read on idempotency_keys
+  for select
+  using (scope = concat('user:', auth.uid()::text));
+
+create policy idempotency_owner_write on idempotency_keys
+  for insert
+  with check (scope = concat('user:', auth.uid()::text));
+
+create policy idempotency_owner_update on idempotency_keys
+  for update
+  using (scope = concat('user:', auth.uid()::text));
 
 create policy audit_owner_read on user_audit_log
   for select

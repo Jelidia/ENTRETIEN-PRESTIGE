@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { resetPasswordSchema } from "@/lib/validators";
-import { createAnonClient } from "@/lib/supabaseServer";
+import { createAdminClient, createAnonClient } from "@/lib/supabaseServer";
 import { setSessionCookies } from "@/lib/session";
 import { getRequestIp, rateLimit } from "@/lib/rateLimit";
+import { logAudit } from "@/lib/audit";
 
 export async function POST(request: Request) {
   const ip = getRequestIp(request);
@@ -47,6 +48,13 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
+
+  const admin = createAdminClient();
+  const userId = exchangeData.session.user.id;
+  await logAudit(admin, userId, "reset_password", "user", userId, "success", {
+    ipAddress: ip,
+    userAgent: request.headers.get("user-agent") ?? null,
+  });
 
   // 4. Return success with session cookies
   const response = NextResponse.json({ success: true });

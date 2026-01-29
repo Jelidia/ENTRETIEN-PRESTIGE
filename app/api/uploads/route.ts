@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabaseServer";
+import { logAudit } from "@/lib/audit";
+import { getRequestIp } from "@/lib/rateLimit";
 
 const bucketName = "documents";
 const docTypeMap: Record<string, string> = {
@@ -19,6 +21,7 @@ export async function POST(request: Request) {
   if ("response" in auth) {
     return auth.response;
   }
+  const ip = getRequestIp(request);
 
   const formData = await request.formData();
   const userId = String(formData.get("userId") ?? "");
@@ -67,6 +70,12 @@ export async function POST(request: Request) {
   if (updateError) {
     return NextResponse.json({ error: "Unable to update user" }, { status: 400 });
   }
+
+  await logAudit(admin, auth.profile.user_id, "document_upload", "user", userId, "success", {
+    ipAddress: ip,
+    userAgent: request.headers.get("user-agent") ?? null,
+    newValues: { doc_type: docType, path: storagePath },
+  });
 
   return NextResponse.json({ ok: true, path: storagePath, field: column });
 }

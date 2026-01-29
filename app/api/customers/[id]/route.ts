@@ -3,6 +3,9 @@ import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { customerUpdateSchema } from "@/lib/validators";
 import { requirePermission } from "@/lib/auth";
+import { logAudit } from "@/lib/audit";
+import { getRequestIp } from "@/lib/rateLimit";
+import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 
 export async function GET(
   request: Request,
@@ -30,6 +33,8 @@ export async function PATCH(
   if ("response" in auth) {
     return auth.response;
   }
+  const { profile } = auth;
+  const ip = getRequestIp(request);
   const body = await request.json().catch(() => null);
   const parsed = customerUpdateSchema.safeParse(body);
   if (!parsed.success) {
@@ -38,6 +43,16 @@ export async function PATCH(
 
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
+  const idempotency = await beginIdempotency(client, request, profile.user_id, parsed.data);
+  if (idempotency.action === "replay") {
+    return NextResponse.json(idempotency.body, { status: idempotency.status });
+  }
+  if (idempotency.action === "conflict") {
+    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+  }
+  if (idempotency.action === "in_progress") {
+    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+  }
   const { data, error } = await client
     .from("customers")
     .update(parsed.data)
@@ -49,5 +64,13 @@ export async function PATCH(
     return NextResponse.json({ error: "Unable to update customer" }, { status: 400 });
   }
 
-  return NextResponse.json({ data });
+  await logAudit(client, profile.user_id, "customer_update", "customer", params.id, "success", {
+    ipAddress: ip,
+    userAgent: request.headers.get("user-agent") ?? null,
+    newValues: parsed.data,
+  });
+
+  const responseBody = { data };
+  await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+  return NextResponse.json(responseBody);
 }

@@ -64,7 +64,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unable to store profile" }, { status: 400 });
   }
 
-  await logAudit(admin, authData.user.id, "register", "company", company.company_id, "success");
+  await logAudit(admin, authData.user.id, "register", "company", company.company_id, "success", {
+    ipAddress: ip,
+    userAgent: request.headers.get("user-agent") ?? null,
+    newValues: {
+      company_name: companyName,
+      email,
+    },
+  });
 
   return NextResponse.json({ ok: true });
 }

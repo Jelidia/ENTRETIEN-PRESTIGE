@@ -3,6 +3,9 @@ import { requireRole } from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { photoUploadSchema } from "@/lib/validators";
+import { logAudit } from "@/lib/audit";
+import { getRequestIp } from "@/lib/rateLimit";
+import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 
 // GET /api/jobs/[id]/photos - List all photos for a job
 export async function GET(
@@ -15,6 +18,7 @@ export async function GET(
   const { profile } = auth;
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
+  const ip = getRequestIp(request);
 
   const { data: photos, error } = await client
     .from("job_photos")
@@ -71,6 +75,7 @@ export async function POST(
   const { profile, user } = auth;
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
+  const ip = getRequestIp(request);
 
   // Verify job exists and user has access
   const { data: job, error: jobError } = await client
@@ -107,6 +112,21 @@ export async function POST(
 
   const { photo_type, side, photo_url } = validation.data;
 
+  const idempotency = await beginIdempotency(client, request, user.id, {
+    photo_type,
+    side,
+    photo_url,
+  });
+  if (idempotency.action === "replay") {
+    return NextResponse.json(idempotency.body, { status: idempotency.status });
+  }
+  if (idempotency.action === "conflict") {
+    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+  }
+  if (idempotency.action === "in_progress") {
+    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+  }
+
   // Check if this photo already exists (prevent duplicates)
   const { data: existing } = await client
     .from("job_photos")
@@ -136,7 +156,15 @@ export async function POST(
       );
     }
 
-    return NextResponse.json({ photo: updated, updated: true });
+    await logAudit(client, user.id, "job_photo_update", "job", params.id, "success", {
+      ipAddress: ip,
+      userAgent: request.headers.get("user-agent") ?? null,
+      newValues: { photo_type, side },
+    });
+
+    const responseBody = { photo: updated, updated: true };
+    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+    return NextResponse.json(responseBody);
   }
 
   // Insert new photo
@@ -163,7 +191,15 @@ export async function POST(
     );
   }
 
-  return NextResponse.json({ photo, updated: false }, { status: 201 });
+  await logAudit(client, user.id, "job_photo_create", "job", params.id, "success", {
+    ipAddress: ip,
+    userAgent: request.headers.get("user-agent") ?? null,
+    newValues: { photo_type, side },
+  });
+
+  const responseBody = { photo, updated: false };
+  await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 201);
+  return NextResponse.json(responseBody, { status: 201 });
 }
 
 // DELETE /api/jobs/[id]/photos?photo_id=xxx - Delete a photo
@@ -177,6 +213,7 @@ export async function DELETE(
   const { profile } = auth;
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
+  const ip = getRequestIp(request);
 
   const { searchParams } = new URL(request.url);
   const photoId = searchParams.get("photo_id");
@@ -186,6 +223,20 @@ export async function DELETE(
       { error: "Missing photo_id parameter" },
       { status: 400 }
     );
+  }
+
+  const idempotency = await beginIdempotency(client, request, profile.user_id, {
+    action: "delete",
+    photo_id: photoId,
+  });
+  if (idempotency.action === "replay") {
+    return NextResponse.json(idempotency.body, { status: idempotency.status });
+  }
+  if (idempotency.action === "conflict") {
+    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+  }
+  if (idempotency.action === "in_progress") {
+    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
   }
 
   const { error } = await client
@@ -202,5 +253,13 @@ export async function DELETE(
     );
   }
 
-  return NextResponse.json({ success: true });
+  await logAudit(client, profile.user_id, "job_photo_delete", "job", params.id, "success", {
+    ipAddress: ip,
+    userAgent: request.headers.get("user-agent") ?? null,
+    newValues: { photo_id: photoId },
+  });
+
+  const responseBody = { success: true };
+  await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+  return NextResponse.json(responseBody);
 }

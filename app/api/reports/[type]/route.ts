@@ -11,6 +11,8 @@ import {
   qualityIssueCreateSchema,
   territoryCreateSchema,
 } from "@/lib/validators";
+import { logAudit } from "@/lib/audit";
+import { getRequestIp } from "@/lib/rateLimit";
 
 function toCsvValue(value: unknown) {
   if (value === null || value === undefined) {
@@ -205,6 +207,7 @@ export async function POST(
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
   const body = await request.json().catch(() => null);
+  const ip = getRequestIp(request);
 
   if (type === "leads") {
     const parsed = leadCreateSchema.safeParse(body);
@@ -229,6 +232,11 @@ export async function POST(
     if (error) {
       return NextResponse.json({ error: "Unable to create lead" }, { status: 400 });
     }
+    await logAudit(client, profile.user_id, "report_lead_create", "lead", null, "success", {
+      ipAddress: ip,
+      userAgent: request.headers.get("user-agent") ?? null,
+      newValues: { status: parsed.data.status ?? "new" },
+    });
     return NextResponse.json({ ok: true }, { status: 201 });
   }
 
@@ -247,6 +255,11 @@ export async function POST(
     if (error) {
       return NextResponse.json({ error: "Unable to create territory" }, { status: 400 });
     }
+    await logAudit(client, profile.user_id, "report_territory_create", "territory", null, "success", {
+      ipAddress: ip,
+      userAgent: request.headers.get("user-agent") ?? null,
+      newValues: { sales_rep_id: parsed.data.salesRepId },
+    });
     return NextResponse.json({ ok: true }, { status: 201 });
   }
 
@@ -270,6 +283,11 @@ export async function POST(
     if (error) {
       return NextResponse.json({ error: "Unable to create commission" }, { status: 400 });
     }
+    await logAudit(client, profile.user_id, "report_commission_create", "commission", null, "success", {
+      ipAddress: ip,
+      userAgent: request.headers.get("user-agent") ?? null,
+      newValues: { employee_id: parsed.data.employeeId, job_id: parsed.data.jobId },
+    });
     return NextResponse.json({ ok: true }, { status: 201 });
   }
 
@@ -293,6 +311,11 @@ export async function POST(
     if (error) {
       return NextResponse.json({ error: "Unable to create payroll" }, { status: 400 });
     }
+    await logAudit(client, profile.user_id, "report_payroll_create", "payroll", null, "success", {
+      ipAddress: ip,
+      userAgent: request.headers.get("user-agent") ?? null,
+      newValues: { employee_id: parsed.data.employeeId, year: parsed.data.year, month: parsed.data.month },
+    });
     return NextResponse.json({ ok: true }, { status: 201 });
   }
 
@@ -316,6 +339,11 @@ export async function POST(
     if (error) {
       return NextResponse.json({ error: "Unable to create checklist" }, { status: 400 });
     }
+    await logAudit(client, profile.user_id, "report_checklist_create", "checklist", null, "success", {
+      ipAddress: ip,
+      userAgent: request.headers.get("user-agent") ?? null,
+      newValues: { technician_id: parsed.data.technicianId, work_date: parsed.data.workDate },
+    });
     return NextResponse.json({ ok: true }, { status: 201 });
   }
 
@@ -337,6 +365,11 @@ export async function POST(
     if (error) {
       return NextResponse.json({ error: "Unable to create incident" }, { status: 400 });
     }
+    await logAudit(client, profile.user_id, "report_incident_create", "incident", null, "success", {
+      ipAddress: ip,
+      userAgent: request.headers.get("user-agent") ?? null,
+      newValues: { job_id: parsed.data.jobId, incident_type: parsed.data.incidentType },
+    });
     return NextResponse.json({ ok: true }, { status: 201 });
   }
 
@@ -358,6 +391,11 @@ export async function POST(
     if (error) {
       return NextResponse.json({ error: "Unable to create quality issue" }, { status: 400 });
     }
+    await logAudit(client, profile.user_id, "report_quality_issue_create", "quality_issue", null, "success", {
+      ipAddress: ip,
+      userAgent: request.headers.get("user-agent") ?? null,
+      newValues: { job_id: parsed.data.jobId, complaint_type: parsed.data.complaintType },
+    });
     return NextResponse.json({ ok: true }, { status: 201 });
   }
 

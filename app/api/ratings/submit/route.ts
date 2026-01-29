@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabaseServer";
 import { ratingSubmitSchema } from "@/lib/validators";
 import { getRequestIp, rateLimit } from "@/lib/rateLimit";
+import { logAudit } from "@/lib/audit";
+import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 
 // Get Google review URL from company settings
 async function getGoogleReviewUrl(companyId: string): Promise<string | null> {
@@ -43,6 +45,16 @@ export async function POST(request: Request) {
   const { token, rating_score, feedback, technician_mentioned } = validation.data;
 
   const admin = createAdminClient();
+  const idempotency = await beginIdempotency(admin, request, null, validation.data);
+  if (idempotency.action === "replay") {
+    return NextResponse.json(idempotency.body, { status: idempotency.status });
+  }
+  if (idempotency.action === "conflict") {
+    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+  }
+  if (idempotency.action === "in_progress") {
+    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+  }
 
   // Validate token
   const { data: ratingToken, error: tokenError } = await admin
@@ -129,15 +141,23 @@ export async function POST(request: Request) {
       });
   }
 
+  await logAudit(admin, null, "rating_submit", "job", job.job_id, "success", {
+    ipAddress: ip,
+    userAgent: request.headers.get("user-agent") ?? null,
+    newValues: { rating: rating_score, technician_mentioned: Boolean(technician_mentioned) },
+  });
+
   // Get Google review URL if 4-5 stars
   let googleReviewUrl: string | null = null;
   if (rating_score >= 4) {
     googleReviewUrl = await getGoogleReviewUrl(job.company_id);
   }
 
-  return NextResponse.json({
+  const responseBody = {
     success: true,
     rating_id: rating.rating_id,
     google_review_url: googleReviewUrl,
-  });
+  };
+  await completeIdempotency(admin, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+  return NextResponse.json(responseBody);
 }

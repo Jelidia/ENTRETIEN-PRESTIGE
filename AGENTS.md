@@ -22,16 +22,21 @@ npm run lint
 
 Tests:
 ```
-npm test
-npm run test:watch
+npm test            # vitest run --coverage
+npm run test:watch  # vitest
 ```
 
 Run a single test (Vitest):
 ```
 npx vitest run auth
 npx vitest run --grep "login"
-npx vitest run lib/pricing.test.ts
+npx vitest run tests/technicianDashboard.test.tsx
 ```
+
+Coverage config:
+- 100% required (statements, branches, functions, lines)
+- Includes `app/`, `components/`, `lib/`, `middleware.ts`
+- Excludes `.next/`, `tests/`, `vitest.*`
 
 Type check only:
 ```
@@ -76,6 +81,7 @@ Formatting and comments:
 - Avoid TODO/FIXME placeholders; code must be production-ready
 - Add comments only for non-obvious logic; keep comments in English
 - Keep user-facing strings in French
+- Check `lib/` for existing helpers before adding new ones
 
 Validation:
 - Validate all external input with Zod `safeParse`

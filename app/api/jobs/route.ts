@@ -4,6 +4,8 @@ import { getAccessTokenFromRequest } from "@/lib/session";
 import { jobCreateSchema } from "@/lib/validators";
 import { requirePermission } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
+import { getRequestIp } from "@/lib/rateLimit";
+import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 
 export async function GET(request: Request) {
   const auth = await requirePermission(request, "jobs");
@@ -42,6 +44,7 @@ export async function POST(request: Request) {
     return auth.response;
   }
   const { profile, user } = auth;
+  const ip = getRequestIp(request);
   const body = await request.json().catch(() => null);
   const parsed = jobCreateSchema.safeParse(body);
 
@@ -51,6 +54,16 @@ export async function POST(request: Request) {
 
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
+  const idempotency = await beginIdempotency(client, request, user.id, parsed.data);
+  if (idempotency.action === "replay") {
+    return NextResponse.json(idempotency.body, { status: idempotency.status });
+  }
+  if (idempotency.action === "conflict") {
+    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+  }
+  if (idempotency.action === "in_progress") {
+    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+  }
   const { data, error } = await client
     .from("jobs")
     .insert({
@@ -79,6 +92,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unable to create job" }, { status: 400 });
   }
 
-  await logAudit(client, user.id, "create_job", "job", data.job_id, "success");
-  return NextResponse.json({ data }, { status: 201 });
+  await logAudit(client, user.id, "create_job", "job", data.job_id, "success", {
+    ipAddress: ip,
+    userAgent: request.headers.get("user-agent") ?? null,
+    newValues: { customer_id: data.customer_id, service_type: data.service_type },
+  });
+
+  const responseBody = { data };
+  await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 201);
+  return NextResponse.json(responseBody, { status: 201 });
 }

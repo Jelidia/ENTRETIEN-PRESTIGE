@@ -19,7 +19,7 @@ export default function NoShowDialog({
   customerPhone,
 }: NoShowDialogProps) {
   const [step, setStep] = useState<"initial" | "calling" | "skipped">("initial");
-  const [contactMethod, setContactMethod] = useState<"call" | "sms" | null>(null);
+  const [contactMethod, setContactMethod] = useState<"call" | "sms" | "none">("none");
   const [loading, setLoading] = useState(false);
 
   async function handleCall() {
@@ -70,7 +70,6 @@ export default function NoShowDialog({
   }
 
   async function handleSkip() {
-    setStep("skipped");
     setLoading(true);
 
     // Mark as no-show and notify manager/sales rep
@@ -79,7 +78,7 @@ export default function NoShowDialog({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         skip: true,
-        contactMethod: contactMethod || "none",
+        contactMethod,
       }),
     });
 
@@ -95,6 +94,7 @@ export default function NoShowDialog({
       });
 
       setLoading(false);
+      setStep("skipped");
       alert("Job marked as no-show. Customer and manager notified.");
       onClose();
     } else {
@@ -140,7 +140,7 @@ export default function NoShowDialog({
             <div className="card" style={{ padding: "24px", textAlign: "center" }}>
               <div style={{ fontSize: "48px", marginBottom: "16px" }}>⏱️</div>
               <h3>Waiting for Response...</h3>
-              <p className="card-meta">If customer doesn't answer within 10 minutes, you can skip to the next job.</p>
+              <p className="card-meta">If customer doesn&apos;t answer within 10 minutes, you can skip to the next job.</p>
             </div>
 
             <div style={{ marginTop: "24px", padding: "16px", border: "1px dashed var(--line)", borderRadius: "var(--radius-md)", textAlign: "center" }}>

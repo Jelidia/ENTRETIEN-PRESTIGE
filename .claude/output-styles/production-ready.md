@@ -363,8 +363,7 @@ const MOCK_DATA = [{ id: 1, name: "Test" }];
 // ❌ TODO without implementation
 // TODO: Implement this later
 
-// ❌ Disabled linting
-// eslint-disable-next-line
+// ❌ Disabled linting (do not suppress lint rules)
 
 // ❌ Any types
 const getData = (): any => {};

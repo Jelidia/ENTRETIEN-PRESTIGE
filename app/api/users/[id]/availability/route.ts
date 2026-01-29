@@ -3,6 +3,9 @@ import { requireRole } from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { availabilityUpdateSchema } from "@/lib/validators";
+import { logAudit } from "@/lib/audit";
+import { getRequestIp } from "@/lib/rateLimit";
+import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 
 // GET /api/users/[id]/availability - Get user's availability
 export async function GET(
@@ -78,6 +81,7 @@ export async function POST(
   const { profile, user } = auth;
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
+  const ip = getRequestIp(request);
 
   // Technicians can only update their own availability
   if (profile.role === "technician" && params.id !== user.id) {
@@ -120,6 +124,16 @@ export async function POST(
   }
 
   const { availability } = validation.data;
+  const idempotency = await beginIdempotency(client, request, user.id, validation.data);
+  if (idempotency.action === "replay") {
+    return NextResponse.json(idempotency.body, { status: idempotency.status });
+  }
+  if (idempotency.action === "conflict") {
+    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+  }
+  if (idempotency.action === "in_progress") {
+    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+  }
 
   // Delete existing availability
   await client
@@ -153,8 +167,16 @@ export async function POST(
     }
   }
 
-  return NextResponse.json({
+  await logAudit(client, user.id, "availability_update", "user", params.id, "success", {
+    ipAddress: ip,
+    userAgent: request.headers.get("user-agent") ?? null,
+    newValues: { slots: availableSlots.length },
+  });
+
+  const responseBody = {
     success: true,
     count: availableSlots.length,
-  });
+  };
+  await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+  return NextResponse.json(responseBody);
 }

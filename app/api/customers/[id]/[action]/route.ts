@@ -3,6 +3,9 @@ import { requirePermission } from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { blacklistSchema, complaintSchema } from "@/lib/validators";
+import { logAudit } from "@/lib/audit";
+import { getRequestIp } from "@/lib/rateLimit";
+import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 
 export async function POST(
   request: Request,
@@ -17,11 +20,26 @@ export async function POST(
   const client = createUserClient(token ?? "");
   const action = params.action;
   const body = await request.json().catch(() => null);
+  const ip = getRequestIp(request);
 
   if (action === "blacklist") {
     const parsed = blacklistSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    }
+
+    const idempotency = await beginIdempotency(client, request, profile.user_id, {
+      action: "blacklist",
+      payload: parsed.data,
+    });
+    if (idempotency.action === "replay") {
+      return NextResponse.json(idempotency.body, { status: idempotency.status });
+    }
+    if (idempotency.action === "conflict") {
+      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    }
+    if (idempotency.action === "in_progress") {
+      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
     }
 
     const { error } = await client.from("customer_blacklist").insert({
@@ -39,13 +57,35 @@ export async function POST(
       return NextResponse.json({ error: "Unable to blacklist" }, { status: 400 });
     }
 
-    return NextResponse.json({ ok: true });
+    await logAudit(client, user.id, "customer_blacklist", "customer", params.id, "success", {
+      ipAddress: ip,
+      userAgent: request.headers.get("user-agent") ?? null,
+      newValues: { risk_level: parsed.data.riskLevel },
+    });
+
+    const responseBody = { ok: true };
+    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+    return NextResponse.json(responseBody);
   }
 
   if (action === "complaint") {
     const parsed = complaintSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid complaint" }, { status: 400 });
+    }
+
+    const idempotency = await beginIdempotency(client, request, profile.user_id, {
+      action: "complaint",
+      payload: parsed.data,
+    });
+    if (idempotency.action === "replay") {
+      return NextResponse.json(idempotency.body, { status: idempotency.status });
+    }
+    if (idempotency.action === "conflict") {
+      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    }
+    if (idempotency.action === "in_progress") {
+      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
     }
 
     const { error } = await client.from("job_quality_issues").insert({
@@ -63,7 +103,15 @@ export async function POST(
       return NextResponse.json({ error: "Unable to file complaint" }, { status: 400 });
     }
 
-    return NextResponse.json({ ok: true });
+    await logAudit(client, user.id, "customer_complaint", "customer", params.id, "success", {
+      ipAddress: ip,
+      userAgent: request.headers.get("user-agent") ?? null,
+      newValues: { job_id: parsed.data.jobId, complaint_type: parsed.data.complaintType },
+    });
+
+    const responseBody = { ok: true };
+    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+    return NextResponse.json(responseBody);
   }
 
   return NextResponse.json({ error: "Unsupported action" }, { status: 400 });

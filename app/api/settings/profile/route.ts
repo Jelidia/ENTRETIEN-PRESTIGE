@@ -3,6 +3,9 @@ import { requireUser } from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { profileUpdateSchema } from "@/lib/validators";
+import { logAudit } from "@/lib/audit";
+import { getRequestIp } from "@/lib/rateLimit";
+import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 
 // PATCH /api/settings/profile - Update user's own profile
 export async function PATCH(request: Request) {
@@ -10,6 +13,7 @@ export async function PATCH(request: Request) {
   if ("response" in auth) return auth.response;
 
   const { profile } = auth;
+  const ip = getRequestIp(request);
 
   try {
     const body = await request.json();
@@ -25,6 +29,16 @@ export async function PATCH(request: Request) {
     const { fullName } = result.data;
 
     const client = createUserClient(getAccessTokenFromRequest(request) ?? "");
+    const idempotency = await beginIdempotency(client, request, profile.user_id, { fullName });
+    if (idempotency.action === "replay") {
+      return NextResponse.json(idempotency.body, { status: idempotency.status });
+    }
+    if (idempotency.action === "conflict") {
+      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    }
+    if (idempotency.action === "in_progress") {
+      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    }
 
     // Update full name
     const { data: updatedUser, error } = await client
@@ -42,10 +56,18 @@ export async function PATCH(request: Request) {
       );
     }
 
-    return NextResponse.json({
+    await logAudit(client, profile.user_id, "profile_update", "user", profile.user_id, "success", {
+      ipAddress: ip,
+      userAgent: request.headers.get("user-agent") ?? null,
+      newValues: { full_name: fullName },
+    });
+
+    const responseBody = {
       success: true,
       data: updatedUser,
-    });
+    };
+    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+    return NextResponse.json(responseBody);
   } catch (err) {
     console.error("Error updating profile:", err);
     return NextResponse.json(

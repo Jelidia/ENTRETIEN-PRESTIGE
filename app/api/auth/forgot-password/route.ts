@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { forgotPasswordSchema } from "@/lib/validators";
-import { createAnonClient } from "@/lib/supabaseServer";
+import { createAdminClient, createAnonClient } from "@/lib/supabaseServer";
 import { getBaseUrl } from "@/lib/env";
 import { getRequestIp, rateLimit } from "@/lib/rateLimit";
+import { logAudit } from "@/lib/audit";
 
 export async function POST(request: Request) {
   const ip = getRequestIp(request);
@@ -27,8 +28,22 @@ export async function POST(request: Request) {
   });
 
   if (error) {
+    const admin = createAdminClient();
+    await logAudit(admin, null, "forgot_password", "user", null, "failed", {
+      reason: "reset_email_failed",
+      ipAddress: ip,
+      userAgent: request.headers.get("user-agent") ?? null,
+      newValues: { email: parsed.data.email },
+    });
     return NextResponse.json({ error: "Unable to send reset link" }, { status: 400 });
   }
+
+  const admin = createAdminClient();
+  await logAudit(admin, null, "forgot_password", "user", null, "success", {
+    ipAddress: ip,
+    userAgent: request.headers.get("user-agent") ?? null,
+    newValues: { email: parsed.data.email },
+  });
 
   return NextResponse.json({ ok: true });
 }

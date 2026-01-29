@@ -2,7 +2,9 @@
 
 ## Overview
 
-This document explains the **three critical bugs** that were found in your database schema and how they've been fixed.
+This document explains **four critical database issues** found in the schema and how to fix and verify them.
+
+Note: This repo does not currently include a dedicated migration file for these fixes. Apply the SQL snippets in the Fix sections via the Supabase SQL Editor, or add a migration under `db/migrations/YYYYMMDD_description.sql` if you track migrations in-repo.
 
 ---
 
@@ -93,7 +95,7 @@ user_id uuid primary key default gen_random_uuid(),  -- ❌ No FK to auth.users
 **Solution:** Create a `SECURITY DEFINER` function that bypasses RLS when checking roles.
 
 ```sql
--- NEW CODE (in 20260126_fix_critical_security_bugs.sql)
+-- NEW CODE (apply in a migration or SQL editor)
 create or replace function public.is_admin()
 returns boolean
 language plpgsql
@@ -187,7 +189,7 @@ on delete cascade;  -- If auth user deleted, cascade to public.users
 
 ---
 
-### Bonus Fix #4: Phone Validation (Prevents SMS Failures)
+### Fix #4: Phone Validation (Prevents SMS Failures)
 
 **Solution:** Add CHECK constraint for E.164 phone format.
 
@@ -209,11 +211,11 @@ check (
 
 ## 📋 How to Apply the Fixes
 
-### Step 1: Apply the Critical Fixes Migration
+### Step 1: Apply the Critical Fixes SQL
 
 ```bash
-# Run this file on your Supabase database:
-db/migrations/20260126_fix_critical_security_bugs.sql
+# Apply the SQL from the Fix sections using Supabase SQL Editor
+# (or store it in a migration under db/migrations/YYYYMMDD_description.sql)
 ```
 
 **What This Does:**
@@ -226,24 +228,9 @@ db/migrations/20260126_fix_critical_security_bugs.sql
 
 ### Step 2: (Optional) Seed Initial Users
 
-**⚠️ WARNING:** This will DELETE all existing users!
+**⚠️ WARNING:** Seeding can delete or overwrite existing users. This repo does not include a seed migration; create one if needed and keep credentials private.
 
-```bash
-# Edit the file first and uncomment the safety line:
-# set local force_seed = 'yes';
-
-# Then run:
-db/migrations/20260126_seed_initial_users.sql
-```
-
-**What This Creates:**
-- Admin: jelidadam12@gmail.com (password: jelidadam12@gmail.com)
-- Manager: youssef.takhi@hotmail.com
-- Technician: amine.bouchard@entretienprestige.ca
-- Sales Rep: nadia.tremblay@entretienprestige.ca
-- Dispatcher: olivier.roy@entretienprestige.ca
-
-All users should change their passwords on first login.
+If you add a seed script, use a safety flag (for example `force_seed = 'yes'`) and document the exact accounts it creates in your internal deployment notes.
 
 ---
 
@@ -318,7 +305,7 @@ VALUES (
 
 1. Go to your project in the Supabase Dashboard
 2. Navigate to SQL Editor
-3. Copy and paste the contents of `db/migrations/20260126_fix_critical_security_bugs.sql`
+3. Copy and paste the SQL from the Fix sections (or from your migration file if you created one)
 4. Click "Run"
 5. Verify no errors in the output panel
 
@@ -329,7 +316,7 @@ VALUES (
 supabase db push
 
 # Or connect directly with psql
-psql -h your-db-host -U postgres -d postgres -f db/migrations/20260126_fix_critical_security_bugs.sql
+psql -h your-db-host -U postgres -d postgres -f path/to/your_migration.sql
 ```
 
 ---
@@ -348,7 +335,7 @@ psql -h your-db-host -U postgres -d postgres -f db/migrations/20260126_fix_criti
 
 ## 🔍 Additional Security Improvements
 
-The migration also includes helper functions for cleaner code:
+Optional helper functions you may want to add for cleaner RLS policies:
 
 ```sql
 -- Check if current user is admin
@@ -374,7 +361,7 @@ Use these in your RLS policies and application code for consistency.
 - Includes rollback-safe changes
 
 ### Q: What if I have invalid phone numbers already in the database?
-**A:** The migration includes an auto-fix script that standardizes existing phone numbers to E.164 format (if they're 10-digit North American numbers).
+**A:** Normalize existing phone numbers to E.164 before applying the constraint, or run a one-time cleanup SQL update first.
 
 ### Q: Can I undo these changes?
 **A:** Technically yes, but **you shouldn't**. These fixes address critical security and data integrity issues. If you need to rollback:
@@ -386,7 +373,7 @@ DROP POLICY users_self_or_admin ON users;
 ```
 
 ### Q: Do I need to update my application code?
-**A:** For the TypeScript fix in `app/api/documents/route.ts` - **yes**, that's already been fixed. For the database changes - **no**, your existing queries will work as-is.
+**A:** The database changes do not require app changes, but make sure any UI validation or input formatting uses E.164 for phone numbers.
 
 ---
 
@@ -401,15 +388,6 @@ If you encounter issues applying these fixes:
 
 ---
 
-## 📝 Files Changed
-
-- ✅ `app/api/documents/route.ts` - Fixed TypeScript type error
-- ✅ `db/migrations/20260126_fix_critical_security_bugs.sql` - Database fixes
-- ✅ `db/migrations/20260126_seed_initial_users.sql` - Improved seed script
-- ✅ `db/CRITICAL_FIXES_README.md` - This documentation
-
----
-
-**Status:** ✅ All fixes implemented and tested
+**Status:** ⚠️ Pending application in your database
 **Priority:** 🚨 CRITICAL - Apply immediately to prevent production issues
 **Estimated Downtime:** ~30 seconds (for migration execution)
