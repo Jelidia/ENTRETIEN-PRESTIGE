@@ -175,6 +175,7 @@ create table customer_communication (
   created_at timestamptz default now()
 );
 
+
 create table jobs (
   job_id uuid primary key default gen_random_uuid(),
   company_id uuid references companies(company_id),
@@ -214,6 +215,15 @@ create table jobs (
   created_by uuid references users(user_id),
   updated_by uuid references users(user_id),
   deleted_at timestamptz
+);
+
+create table customer_rating_tokens (
+  token_id uuid primary key default gen_random_uuid(),
+  job_id uuid references jobs(job_id) on delete cascade,
+  token text not null unique,
+  expires_at timestamptz not null,
+  used_at timestamptz,
+  created_at timestamptz default now()
 );
 
 create table job_assignments (
@@ -489,6 +499,9 @@ create table sms_messages (
   status text check (status in ('queued', 'sending', 'sent', 'delivered', 'failed')) default 'queued',
   related_job_id uuid references jobs(job_id),
   message_thread_id uuid,
+  thread_id uuid,
+  is_read boolean default false,
+  assigned_to uuid references users(user_id),
   created_at timestamptz default now(),
   delivered_at timestamptz
 );
@@ -503,11 +516,16 @@ create index idx_customers_company_id on customers(company_id);
 create index idx_jobs_company_id on jobs(company_id);
 create index idx_jobs_customer_id on jobs(customer_id);
 create index idx_jobs_technician_id on jobs(technician_id);
+create index idx_rating_tokens_job on customer_rating_tokens(job_id);
+create index idx_rating_tokens_token on customer_rating_tokens(token);
 create index idx_invoices_company_id on invoices(company_id);
 create index idx_invoices_customer_id on invoices(customer_id);
 create index idx_notifications_user_id on notifications(user_id);
+create index idx_sms_thread on sms_messages(thread_id);
+create index idx_sms_assigned on sms_messages(assigned_to) where is_read = false;
 
 alter table users enable row level security;
+alter table companies enable row level security;
 alter table jobs enable row level security;
 alter table customers enable row level security;
 alter table invoices enable row level security;
@@ -524,6 +542,10 @@ alter table sms_messages enable row level security;
 alter table gps_locations enable row level security;
 alter table geofences enable row level security;
 alter table auth_challenges enable row level security;
+alter table user_sessions enable row level security;
+alter table user_audit_log enable row level security;
+alter table technician_location_daily enable row level security;
+alter table customer_rating_tokens enable row level security;
 alter table customer_blacklist enable row level security;
 alter table customer_communication enable row level security;
 alter table job_assignments enable row level security;
@@ -551,6 +573,51 @@ create policy users_admin_manage on users
         and admin_user.company_id = users.company_id
     )
   );
+
+create policy companies_company_read on companies
+  for select
+  using (company_id = (select company_id from users where user_id = auth.uid()));
+
+create policy companies_company_write on companies
+  for update
+  using (company_id = (select company_id from users where user_id = auth.uid()))
+  with check (company_id = (select company_id from users where user_id = auth.uid()));
+
+create policy sessions_owner_read on user_sessions
+  for select
+  using (user_id = auth.uid());
+
+create policy sessions_owner_write on user_sessions
+  for insert
+  with check (user_id = auth.uid());
+
+create policy sessions_owner_update on user_sessions
+  for update
+  using (user_id = auth.uid());
+
+create policy audit_owner_read on user_audit_log
+  for select
+  using (
+    user_id = auth.uid()
+    or exists (
+      select 1 from users as admin_user
+      where admin_user.user_id = auth.uid()
+        and admin_user.role = 'admin'
+        and admin_user.company_id = (select company_id from users where user_id = user_audit_log.user_id)
+    )
+  );
+
+create policy audit_owner_write on user_audit_log
+  for insert
+  with check (user_id = auth.uid());
+
+create policy tech_daily_company_read on technician_location_daily
+  for select
+  using (company_id = (select company_id from users where user_id = auth.uid()));
+
+create policy tech_daily_company_write on technician_location_daily
+  for insert
+  with check (company_id = (select company_id from users where user_id = auth.uid()));
 
 create policy jobs_company_read on jobs
   for select
@@ -644,6 +711,14 @@ create policy sms_company_read on sms_messages
   for select
   using (company_id = (select company_id from users where user_id = auth.uid()));
 
+create policy sms_company_write on sms_messages
+  for insert
+  with check (company_id = (select company_id from users where user_id = auth.uid()));
+
+create policy sms_company_update on sms_messages
+  for update
+  using (company_id = (select company_id from users where user_id = auth.uid()));
+
 create policy gps_company_read on gps_locations
   for select
   using (company_id = (select company_id from users where user_id = auth.uid()));
@@ -688,6 +763,16 @@ create policy assignments_company_read on job_assignments
     )
   );
 
+create policy assignments_company_write on job_assignments
+  for insert
+  with check (
+    exists (
+      select 1 from jobs
+      where jobs.job_id = job_assignments.job_id
+        and jobs.company_id = (select company_id from users where user_id = auth.uid())
+    )
+  );
+
 create policy history_company_read on job_history
   for select
   using (
@@ -697,3 +782,11 @@ create policy history_company_read on job_history
         and jobs.company_id = (select company_id from users where user_id = auth.uid())
     )
   );
+
+create policy rating_tokens_public_read on customer_rating_tokens
+  for select
+  using (true);
+
+create policy rating_tokens_public_update on customer_rating_tokens
+  for update
+  using (used_at is null);

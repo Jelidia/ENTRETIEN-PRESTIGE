@@ -25,7 +25,7 @@ export async function DELETE(request: Request) {
     // Get current file URL
     const { data: user } = await client
       .from("users")
-      .select("id_photo_url, profile_photo_url")
+      .select("id_document_front_url, avatar_url")
       .eq("user_id", profile.user_id)
       .single();
 
@@ -34,7 +34,7 @@ export async function DELETE(request: Request) {
     }
 
     const fileUrl =
-      type === "id_photo" ? user.id_photo_url : user.profile_photo_url;
+      type === "id_photo" ? user.id_document_front_url : user.avatar_url;
 
     if (fileUrl) {
       // Extract filename from URL
@@ -48,9 +48,9 @@ export async function DELETE(request: Request) {
     // Update user record to remove URL
     const updateData: Record<string, null> = {};
     if (type === "id_photo") {
-      updateData.id_photo_url = null;
+      updateData.id_document_front_url = null;
     } else {
-      updateData.profile_photo_url = null;
+      updateData.avatar_url = null;
     }
 
     const { error: updateError } = await client

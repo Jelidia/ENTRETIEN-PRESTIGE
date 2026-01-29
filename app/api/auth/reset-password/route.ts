@@ -2,8 +2,18 @@ import { NextResponse } from "next/server";
 import { resetPasswordSchema } from "@/lib/validators";
 import { createAnonClient } from "@/lib/supabaseServer";
 import { setSessionCookies } from "@/lib/session";
+import { getRequestIp, rateLimit } from "@/lib/rateLimit";
 
 export async function POST(request: Request) {
+  const ip = getRequestIp(request);
+  const limit = rateLimit(`auth:reset-password:${ip}`, 5, 15 * 60 * 1000);
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Trop de tentatives. Réessayez plus tard." },
+      { status: 429 }
+    );
+  }
+
   // 1. Validate input
   const body = await request.json().catch(() => null);
   const result = resetPasswordSchema.safeParse(body);

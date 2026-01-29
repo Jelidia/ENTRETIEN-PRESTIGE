@@ -3,8 +3,18 @@ import { registerSchema } from "@/lib/validators";
 import { createAdminClient } from "@/lib/supabaseServer";
 import { logAudit } from "@/lib/audit";
 import { isSmsConfigured } from "@/lib/twilio";
+import { getRequestIp, rateLimit } from "@/lib/rateLimit";
 
 export async function POST(request: Request) {
+  const ip = getRequestIp(request);
+  const limit = rateLimit(`auth:register:${ip}`, 5, 15 * 60 * 1000);
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Trop de tentatives. Réessayez plus tard." },
+      { status: 429 }
+    );
+  }
+
   const body = await request.json().catch(() => null);
   const parsed = registerSchema.safeParse(body);
 

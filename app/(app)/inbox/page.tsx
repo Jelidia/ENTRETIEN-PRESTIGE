@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import TopBar from "@/components/TopBar";
-import { formatPhoneNumber } from "@/lib/smsTemplates";
 
 type SMSThread = {
   thread_id: string;
@@ -16,10 +15,10 @@ type SMSThread = {
 };
 
 type SMSMessage = {
-  message_id: string;
+  sms_id: string;
   direction: "inbound" | "outbound";
-  message_body: string;
-  sent_at: string;
+  content: string;
+  created_at: string;
   is_read: boolean;
 };
 
@@ -167,7 +166,7 @@ export default function InboxPage() {
               <div style={{ flex: 1, overflow: "auto", padding: "20px", display: "flex", flexDirection: "column", gap: "12px" }}>
                 {selectedThread.messages.map((msg) => (
                   <div
-                    key={msg.message_id}
+                    key={msg.sms_id}
                     style={{
                       alignSelf: msg.direction === "outbound" ? "flex-end" : "flex-start",
                       maxWidth: "70%",
@@ -181,7 +180,7 @@ export default function InboxPage() {
                         color: msg.direction === "outbound" ? "#fff" : "var(--ink-900)",
                       }}
                     >
-                      {msg.message_body}
+                      {msg.content}
                     </div>
                     <div
                       className="card-meta"
@@ -191,7 +190,7 @@ export default function InboxPage() {
                         textAlign: msg.direction === "outbound" ? "right" : "left",
                       }}
                     >
-                      {new Date(msg.sent_at).toLocaleTimeString("fr-CA", {
+                      {new Date(msg.created_at).toLocaleTimeString("fr-CA", {
                         hour: "2-digit",
                         minute: "2-digit",
                       })}

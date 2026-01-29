@@ -1,9 +1,32 @@
 import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { requireUser } from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { sendSms } from "@/lib/twilio";
 import { smsTemplates, formatPhoneNumber } from "@/lib/smsTemplates";
+
+async function resolveThreadId(
+  client: ReturnType<typeof createUserClient>,
+  customerId: string | null,
+  phoneNumber: string
+) {
+  let query = client
+    .from("sms_messages")
+    .select("thread_id")
+    .not("thread_id", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(1);
+
+  if (customerId) {
+    query = query.eq("customer_id", customerId);
+  } else {
+    query = query.eq("phone_number", phoneNumber);
+  }
+
+  const { data } = await query.maybeSingle();
+  return data?.thread_id ?? randomUUID();
+}
 
 // Trigger SMS based on job events
 export async function POST(request: Request) {
@@ -30,7 +53,7 @@ export async function POST(request: Request) {
     .from("jobs")
     .select(`
       *,
-      customer:customers(customer_id, full_name, phone, email, preferred_contact_method)
+      customer:customers(customer_id, first_name, last_name, phone, email)
     `)
     .eq("job_id", jobId)
     .single();
@@ -42,13 +65,22 @@ export async function POST(request: Request) {
     );
   }
 
-  const customer = job.customer;
-  if (!customer || !customer.phone) {
+  const customerRecord = Array.isArray(job.customer) ? job.customer[0] : job.customer;
+  if (!customerRecord || !customerRecord.phone) {
     return NextResponse.json(
       { error: "Customer has no phone number" },
       { status: 400 }
     );
   }
+
+  const customerName = `${customerRecord.first_name ?? ""} ${customerRecord.last_name ?? ""}`.trim() || "Client";
+  const scheduledStart = job.scheduled_date && job.scheduled_start_time
+    ? new Date(`${job.scheduled_date}T${job.scheduled_start_time}`)
+    : null;
+  const scheduledDateLabel = scheduledStart ? scheduledStart.toLocaleDateString("fr-CA") : "";
+  const scheduledTimeLabel = scheduledStart
+    ? scheduledStart.toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" })
+    : "";
 
   let message = "";
   let shouldSendSms = false;
@@ -57,12 +89,9 @@ export async function POST(request: Request) {
   switch (event) {
     case "job_scheduled":
       message = smsTemplates.jobScheduled({
-        customerName: customer.full_name || "Client",
-        date: new Date(job.scheduled_start).toLocaleDateString("fr-CA"),
-        time: new Date(job.scheduled_start).toLocaleTimeString("fr-CA", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
+        customerName,
+        date: scheduledDateLabel,
+        time: scheduledTimeLabel,
         address: job.address || "",
       });
       shouldSendSms = true;
@@ -70,21 +99,15 @@ export async function POST(request: Request) {
 
     case "reminder_24h":
       message = smsTemplates.reminder24h({
-        date: new Date(job.scheduled_start).toLocaleDateString("fr-CA"),
-        time: new Date(job.scheduled_start).toLocaleTimeString("fr-CA", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
+        date: scheduledDateLabel,
+        time: scheduledTimeLabel,
       });
       shouldSendSms = true;
       break;
 
     case "reminder_1h":
       message = smsTemplates.reminder1h({
-        time: new Date(job.scheduled_start).toLocaleTimeString("fr-CA", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
+        time: scheduledTimeLabel,
       });
       shouldSendSms = true;
       break;
@@ -98,7 +121,9 @@ export async function POST(request: Request) {
         .single();
 
       if (invoice) {
-        const amount = `$${invoice.total_amount.toFixed(2)}`;
+        const amount = invoice.total_amount
+          ? `$${Number(invoice.total_amount).toFixed(2)}`
+          : "$0.00";
 
         if (invoice.payment_method === "interac") {
           message = smsTemplates.jobCompletedInterac({
@@ -126,24 +151,26 @@ export async function POST(request: Request) {
       shouldSendSms = true;
 
       // Also notify manager and sales rep
-      const { data: assignments } = await client
-        .from("job_assignments")
-        .select("user:users(full_name, phone, role)")
-        .eq("job_id", jobId);
+        const notifyUserIds = [job.manager_id, job.sales_rep_id].filter(Boolean);
+        if (notifyUserIds.length > 0) {
+          const { data: notifyUsers } = await client
+            .from("users")
+            .select("full_name, phone, role")
+            .in("user_id", notifyUserIds);
 
-      if (assignments) {
-        for (const assignment of assignments) {
-          const user = Array.isArray(assignment.user) ? assignment.user[0] : assignment.user;
-          if (user && (user.role === "manager" || user.role === "sales_rep")) {
-            if (user.phone) {
-              await sendSms(
-                formatPhoneNumber(user.phone),
-                `No-show: ${customer.full_name} n'était pas disponible pour le rendez-vous (Job #${jobId.substring(0, 8)})`
-              );
+          if (notifyUsers) {
+            for (const user of notifyUsers) {
+              if (user && (user.role === "manager" || user.role === "sales_rep")) {
+                if (user.phone) {
+                  await sendSms(
+                    formatPhoneNumber(user.phone),
+                    `No-show: ${customerName} n'était pas disponible pour le rendez-vous (Job #${jobId.substring(0, 8)})`
+                  );
+                }
+              }
             }
           }
         }
-      }
       break;
 
     default:
@@ -154,18 +181,23 @@ export async function POST(request: Request) {
   }
 
   if (shouldSendSms && message) {
-    const phoneNumber = formatPhoneNumber(customer.phone);
+    const phoneNumber = formatPhoneNumber(customerRecord.phone);
 
     try {
       await sendSms(phoneNumber, message);
 
+      const threadId = await resolveThreadId(client, customerRecord.customer_id ?? null, phoneNumber);
+
       // Log SMS in database
       await client.from("sms_messages").insert({
-        recipient_phone: phoneNumber,
-        message_body: message,
+        company_id: job.company_id,
+        customer_id: customerRecord.customer_id ?? null,
+        phone_number: phoneNumber,
+        content: message,
         direction: "outbound",
         status: "sent",
         related_job_id: jobId,
+        thread_id: threadId,
       });
 
       return NextResponse.json({

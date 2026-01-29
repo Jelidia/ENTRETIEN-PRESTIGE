@@ -2,12 +2,15 @@ import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabaseServer";
 import { adminResetByEmailSchema } from "@/lib/validators";
+import { logAudit } from "@/lib/audit";
+import { getRequestIp } from "@/lib/rateLimit";
 
 // POST /api/admin/reset-password - Admin resets password by email
 export async function POST(request: Request) {
   // 1. Authenticate as admin
   const auth = await requireRole(request, ["admin"]);
   if ("response" in auth) return auth.response;
+  const { profile } = auth;
 
   // 2. Validate input
   const body = await request.json().catch(() => null);
@@ -22,21 +25,16 @@ export async function POST(request: Request) {
 
   const { email, newPassword } = result.data;
 
-  // 3. Find user by email
+  // 3. Find user by email within company
   const admin = createAdminClient();
-  const { data: users, error: listError } = await admin.auth.admin.listUsers();
+  const { data: targetUser, error: targetError } = await admin
+    .from("users")
+    .select("user_id, email")
+    .eq("email", email)
+    .eq("company_id", profile.company_id)
+    .maybeSingle();
 
-  if (listError) {
-    console.error("Failed to list users:", listError);
-    return NextResponse.json(
-      { error: "Impossible de lister les utilisateurs" },
-      { status: 500 }
-    );
-  }
-
-  const targetUser = users.users.find((u) => u.email === email);
-
-  if (!targetUser) {
+  if (targetError || !targetUser) {
     return NextResponse.json(
       { error: "Utilisateur introuvable" },
       { status: 404 }
@@ -44,7 +42,7 @@ export async function POST(request: Request) {
   }
 
   // 4. Update password
-  const { error: updateError } = await admin.auth.admin.updateUserById(targetUser.id, {
+  const { error: updateError } = await admin.auth.admin.updateUserById(targetUser.user_id, {
     password: newPassword,
   });
 
@@ -56,9 +54,15 @@ export async function POST(request: Request) {
     );
   }
 
+  await logAudit(admin, profile.user_id, "admin_reset_password", "user", targetUser.user_id, "success", {
+    newValues: { email: targetUser.email, reset: true },
+    ipAddress: getRequestIp(request),
+    userAgent: request.headers.get("user-agent") ?? null,
+  });
+
   return NextResponse.json({
     success: true,
     message: "Mot de passe réinitialisé avec succès",
-    userId: targetUser.id,
+    userId: targetUser.user_id,
   });
 }

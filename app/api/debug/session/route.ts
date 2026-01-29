@@ -1,8 +1,18 @@
 import { NextResponse } from "next/server";
+import { requireRole } from "@/lib/auth";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { createUserClient } from "@/lib/supabaseServer";
 
 export async function GET(request: Request) {
+  if (process.env.NODE_ENV !== "development") {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  const auth = await requireRole(request, ["admin"]);
+  if ("response" in auth) {
+    return auth.response;
+  }
+
   const token = getAccessTokenFromRequest(request);
 
   if (!token) {

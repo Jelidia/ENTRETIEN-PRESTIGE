@@ -4,6 +4,8 @@ import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabaseServer";
 import { seedAccountsSchema } from "@/lib/validators";
 import { isSmsConfigured } from "@/lib/twilio";
+import { logAudit } from "@/lib/audit";
+import { getRequestIp } from "@/lib/rateLimit";
 
 function generatePassword() {
   return crypto.randomBytes(24).toString("hex");
@@ -87,6 +89,16 @@ export async function POST(request: Request) {
       });
       continue;
     }
+
+    await logAudit(admin, profile.user_id, "admin_seed_user", "user", userData.user.id, "success", {
+      newValues: {
+        email: account.email,
+        full_name: account.fullName,
+        role: account.role,
+      },
+      ipAddress: getRequestIp(request),
+      userAgent: request.headers.get("user-agent") ?? null,
+    });
 
     results.push({ role: account.role, email: account.email, status: "created", password });
   }

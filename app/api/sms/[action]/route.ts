@@ -1,9 +1,32 @@
 import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { smsSendSchema } from "@/lib/validators";
 import { sendSms } from "@/lib/twilio";
 import { createAdminClient, createUserClient } from "@/lib/supabaseServer";
 import { requireRole } from "@/lib/auth";
 import { getAccessTokenFromRequest } from "@/lib/session";
+
+async function resolveThreadId(
+  admin: ReturnType<typeof createAdminClient>,
+  customerId: string | null,
+  phoneNumber: string
+) {
+  let query = admin
+    .from("sms_messages")
+    .select("thread_id")
+    .not("thread_id", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(1);
+
+  if (customerId) {
+    query = query.eq("customer_id", customerId);
+  } else {
+    query = query.eq("phone_number", phoneNumber);
+  }
+
+  const { data } = await query.maybeSingle();
+  return data?.thread_id ?? randomUUID();
+}
 
 export async function POST(
   request: Request,
@@ -20,12 +43,15 @@ export async function POST(
       .select("customer_id, company_id")
       .eq("phone", from)
       .maybeSingle();
+    const threadId = await resolveThreadId(admin, customer?.customer_id ?? null, from);
     await admin.from("sms_messages").insert({
       company_id: customer?.company_id ?? null,
       customer_id: customer?.customer_id ?? null,
       phone_number: from,
       content: body,
       direction: "inbound",
+      thread_id: threadId,
+      is_read: false,
       created_at: new Date().toISOString(),
     });
     return NextResponse.json({ ok: true });
@@ -45,11 +71,16 @@ export async function POST(
 
   await sendSms(parsed.data.to, parsed.data.message);
   const admin = createAdminClient();
+  const threadId = parsed.data.threadId
+    ? parsed.data.threadId
+    : await resolveThreadId(admin, parsed.data.customerId ?? null, parsed.data.to);
   await admin.from("sms_messages").insert({
     company_id: profile.company_id,
+    customer_id: parsed.data.customerId ?? null,
     phone_number: parsed.data.to,
     content: parsed.data.message,
     direction: "outbound",
+    thread_id: threadId,
     created_at: new Date().toISOString(),
   });
   return NextResponse.json({ ok: true });

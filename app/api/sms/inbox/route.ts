@@ -22,37 +22,58 @@ export async function GET(request: Request) {
   let query = client
     .from("sms_messages")
     .select(`
-      message_id,
       thread_id,
-      recipient_phone,
-      sender_phone,
-      message_body,
+      sms_id,
+      phone_number,
+      content,
       direction,
-      sent_at,
+      created_at,
       is_read,
-      related_customer_id,
-      customer:customers!related_customer_id(customer_id, full_name, phone)
+      customer_id,
+      customer:customers!customer_id(first_name, last_name, phone)
     `)
     .not("thread_id", "is", null)
-    .order("sent_at", { ascending: false });
+    .order("created_at", { ascending: false });
 
   // Apply role-based filtering
-  if (profile.role === "technician" || profile.role === "sales_rep") {
+  if (profile.role === "technician") {
     // Only see conversations for assigned customers
     const { data: assignments } = await client
       .from("job_assignments")
       .select("job:jobs(customer_id)")
-      .eq("user_id", profile.user_id);
+      .eq("technician_id", profile.user_id);
+
+    const customerIds = [
+      ...new Set(
+        (assignments ?? [])
+          .map((assignment: { job?: { customer_id?: string | null } | { customer_id?: string | null }[] | null }) => {
+            const job = Array.isArray(assignment.job) ? assignment.job[0] : assignment.job;
+            return job?.customer_id ?? null;
+          })
+          .filter((value): value is string => Boolean(value))
+      ),
+    ];
+
+    if (customerIds.length === 0) {
+      return NextResponse.json({ threads: [] });
+    }
+
+    query = query.in("customer_id", customerIds);
+  } else if (profile.role === "sales_rep") {
+    const { data: jobs } = await client
+      .from("jobs")
+      .select("customer_id")
+      .eq("sales_rep_id", profile.user_id);
 
     const customerIds = [...new Set(
-      assignments?.map((a: any) => a.job?.customer_id).filter(Boolean) || []
+      jobs?.map((job: { customer_id?: string | null }) => job.customer_id).filter(Boolean) || []
     )];
 
     if (customerIds.length === 0) {
       return NextResponse.json({ threads: [] });
     }
 
-    query = query.in("related_customer_id", customerIds);
+    query = query.in("customer_id", customerIds);
   }
   // Manager and admin see all (no filter)
 
@@ -74,16 +95,18 @@ export async function GET(request: Request) {
 
     if (!threadsMap.has(threadId)) {
       const customer = Array.isArray(msg.customer) ? msg.customer[0] : msg.customer;
-      const customerName = (customer as { full_name?: string } | null | undefined)?.full_name || "Unknown";
-      const customerPhone = (customer as { phone?: string } | null | undefined)?.phone || msg.recipient_phone || msg.sender_phone;
+      const firstName = (customer as { first_name?: string } | null | undefined)?.first_name ?? "";
+      const lastName = (customer as { last_name?: string } | null | undefined)?.last_name ?? "";
+      const customerName = `${firstName} ${lastName}`.trim() || "Unknown";
+      const customerPhone = (customer as { phone?: string } | null | undefined)?.phone || msg.phone_number;
 
       threadsMap.set(threadId, {
         thread_id: threadId,
-        customer_id: msg.related_customer_id,
+        customer_id: msg.customer_id,
         customer_name: customerName,
         customer_phone: customerPhone,
-        last_message: msg.message_body,
-        last_message_at: msg.sent_at,
+        last_message: msg.content,
+        last_message_at: msg.created_at,
         unread_count: 0,
         messages: [],
       });
@@ -97,9 +120,9 @@ export async function GET(request: Request) {
     }
 
     // Keep most recent message
-    if (new Date(msg.sent_at) > new Date(thread.last_message_at)) {
-      thread.last_message = msg.message_body;
-      thread.last_message_at = msg.sent_at;
+    if (new Date(msg.created_at) > new Date(thread.last_message_at)) {
+      thread.last_message = msg.content;
+      thread.last_message_at = msg.created_at;
     }
   }
 

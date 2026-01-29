@@ -942,7 +942,7 @@ SELECT role_permissions FROM companies WHERE company_id = 'xxx';
 ### SMS not sending
 
 **Check:**
-1. Twilio credentials in `.env.local` are correct
+1. Twilio credentials in `.` are correct
 2. Phone numbers are E.164 format (`+1XXXXXXXXXX`)
 3. Twilio account has sufficient balance
 4. Check Twilio console logs for delivery status

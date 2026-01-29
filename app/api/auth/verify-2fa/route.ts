@@ -4,8 +4,19 @@ import { createAdminClient } from "@/lib/supabaseServer";
 import { consumeChallenge } from "@/lib/security";
 import { setSessionCookies } from "@/lib/session";
 import { hashCode } from "@/lib/crypto";
+import { getRequestIp, rateLimit } from "@/lib/rateLimit";
+import { logAudit } from "@/lib/audit";
 
 export async function POST(request: Request) {
+  const ip = getRequestIp(request);
+  const limit = rateLimit(`auth:verify-2fa:${ip}`, 10, 10 * 60 * 1000);
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Trop de tentatives. Réessayez plus tard." },
+      { status: 429 }
+    );
+  }
+
   const body = await request.json().catch(() => null);
   const parsed = verify2faSchema.safeParse(body);
 
@@ -30,6 +41,11 @@ export async function POST(request: Request) {
       token_hash: session.access_token ? hashCode(session.access_token) : null,
       expires_at: session.expires_at ? new Date(session.expires_at * 1000).toISOString() : null,
       last_activity: new Date().toISOString(),
+    });
+
+    await logAudit(admin, userData.user.id, "verify_2fa", "user", userData.user.id, "success", {
+      ipAddress: ip,
+      userAgent: request.headers.get("user-agent") ?? null,
     });
   }
 

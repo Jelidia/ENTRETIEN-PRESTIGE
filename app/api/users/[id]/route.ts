@@ -49,7 +49,7 @@ export async function GET(
   const { data, error } = await client
     .from("users")
     .select(
-      "user_id, full_name, email, phone, role, status, address, city, province, postal_code, country, id_document_front_url, id_document_back_url, contract_document_url, contract_signature_url, contract_signed_at"
+      "user_id, full_name, email, phone, role, status, address, city, province, postal_code, country, id_document_front_url, id_document_back_url, contract_document_url, contract_signature_url, contract_signed_at, avatar_url"
     )
     .eq("user_id", params.id)
     .single();

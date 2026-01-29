@@ -10,10 +10,10 @@ type User = {
   role: string;
   company_id: string;
   created_at: string;
-  contract_url?: string | null;
-  contract_status?: string | null;
-  id_photo_url?: string | null;
-  profile_photo_url?: string | null;
+  contract_document_url?: string | null;
+  contract_signed_at?: string | null;
+  id_document_front_url?: string | null;
+  avatar_url?: string | null;
 };
 
 export default function ProfilePage() {
@@ -194,14 +194,20 @@ export default function ProfilePage() {
   };
 
   const contractStatusLabels = {
-    approved: { label: "Approuvé", color: "#dcfce7", textColor: "#166534" },
+    signed: { label: "Signé", color: "#dcfce7", textColor: "#166534" },
     pending: { label: "En attente", color: "#fef3c7", textColor: "#92400e" },
-    rejected: { label: "Rejeté", color: "#fee2e2", textColor: "#991b1b" },
   };
+
 
   if (!user) {
     return <div className="content"><p>Chargement...</p></div>;
   }
+
+  const contractStatus = user.contract_signed_at
+    ? "signed"
+    : user.contract_document_url
+    ? "pending"
+    : null;
 
   return (
     <div className="content">
@@ -265,7 +271,7 @@ export default function ProfilePage() {
           {/* Contract */}
           <div className="card" style={{ marginBottom: 16 }}>
             <h3 style={{ fontWeight: 600, marginBottom: 8 }}>Contrat signé</h3>
-            {user.contract_url && user.contract_status ? (
+            {user.contract_document_url && contractStatus ? (
               <div>
                 <span
                   style={{
@@ -274,21 +280,21 @@ export default function ProfilePage() {
                     borderRadius: 12,
                     fontSize: 14,
                     fontWeight: 500,
-                    backgroundColor: contractStatusLabels[user.contract_status as keyof typeof contractStatusLabels]?.color || "#e5e7eb",
-                    color: contractStatusLabels[user.contract_status as keyof typeof contractStatusLabels]?.textColor || "#000",
+                    backgroundColor: contractStatusLabels[contractStatus]?.color || "#e5e7eb",
+                    color: contractStatusLabels[contractStatus]?.textColor || "#000",
                     marginBottom: 12,
                   }}
                 >
-                  {contractStatusLabels[user.contract_status as keyof typeof contractStatusLabels]?.label || user.contract_status}
+                  {contractStatusLabels[contractStatus]?.label || contractStatus}
                 </span>
-                {user.contract_status === "approved" && (
+                {contractStatus === "signed" && (
                   <div>
-                    <a href={user.contract_url} target="_blank" rel="noopener noreferrer" className="button-secondary">
+                    <a href={user.contract_document_url} target="_blank" rel="noopener noreferrer" className="button-secondary">
                       Afficher le PDF
                     </a>
                   </div>
                 )}
-                {(user.contract_status === "rejected" || user.contract_status === "pending") && (
+                {contractStatus === "pending" && (
                   <div>
                     <input
                       type="file"
@@ -321,9 +327,9 @@ export default function ProfilePage() {
           {/* ID Photo */}
           <div className="card" style={{ marginBottom: 16 }}>
             <h3 style={{ fontWeight: 600, marginBottom: 8 }}>Pièce d'identité</h3>
-            {user.id_photo_url ? (
+            {user.id_document_front_url ? (
               <div>
-                <img src={user.id_photo_url} alt="ID" style={{ width: 100, height: 100, objectFit: "cover", borderRadius: 8, marginBottom: 8 }} />
+                <img src={user.id_document_front_url} alt="ID" style={{ width: 100, height: 100, objectFit: "cover", borderRadius: 8, marginBottom: 8 }} />
                 <div style={{ display: "flex", gap: 8 }}>
                   <label className="button-secondary" style={{ cursor: "pointer" }}>
                     Changer
@@ -359,10 +365,10 @@ export default function ProfilePage() {
           {/* Profile Photo */}
           <div className="card">
             <h3 style={{ fontWeight: 600, marginBottom: 8 }}>Photo de profil</h3>
-            {user.profile_photo_url ? (
+            {user.avatar_url ? (
               <div>
                 <img
-                  src={user.profile_photo_url}
+                  src={user.avatar_url}
                   alt="Profile"
                   style={{ width: 200, height: 200, objectFit: "cover", borderRadius: "50%", marginBottom: 12 }}
                 />

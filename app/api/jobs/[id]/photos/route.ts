@@ -20,7 +20,6 @@ export async function GET(
     .from("job_photos")
     .select("photo_id, job_id, photo_type, side, photo_url, uploaded_at")
     .eq("job_id", params.id)
-    .eq("company_id", profile.company_id)
     .order("uploaded_at", { ascending: true });
 
   if (error) {
@@ -76,7 +75,7 @@ export async function POST(
   // Verify job exists and user has access
   const { data: job, error: jobError } = await client
     .from("jobs")
-    .select("job_id, assigned_technician_id")
+    .select("job_id, technician_id")
     .eq("job_id", params.id)
     .eq("company_id", profile.company_id)
     .maybeSingle();
@@ -89,7 +88,7 @@ export async function POST(
   }
 
   // Technicians can only upload photos for their assigned jobs
-  if (profile.role === "technician" && job.assigned_technician_id !== user.id) {
+  if (profile.role === "technician" && job.technician_id !== user.id) {
     return NextResponse.json(
       { error: "You can only upload photos for your assigned jobs" },
       { status: 403 }
@@ -145,7 +144,6 @@ export async function POST(
     .from("job_photos")
     .insert({
       job_id: params.id,
-      company_id: profile.company_id,
       uploaded_by: user.id,
       photo_type,
       side,
@@ -194,8 +192,7 @@ export async function DELETE(
     .from("job_photos")
     .delete()
     .eq("photo_id", photoId)
-    .eq("job_id", params.id)
-    .eq("company_id", profile.company_id);
+    .eq("job_id", params.id);
 
   if (error) {
     console.error("Failed to delete photo:", error);

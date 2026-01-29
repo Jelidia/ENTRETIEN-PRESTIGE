@@ -73,11 +73,16 @@ Naming conventions:
 Formatting and comments:
 - Follow existing formatting; keep diffs minimal
 - Tailwind utilities are standard; avoid new global styles unless needed
+- Avoid TODO/FIXME placeholders; code must be production-ready
 - Add comments only for non-obvious logic; keep comments in English
 - Keep user-facing strings in French
 
-Error handling:
+Validation:
 - Validate all external input with Zod `safeParse`
+- Centralize ALL schemas in `lib/validators.ts` (no inline schemas)
+- Return friendly validation errors; do not leak internals
+
+Error handling:
 - Return user-friendly messages and appropriate HTTP status codes
 - Do not expose raw `error.message` to clients
 - Log server-side errors with context (e.g., jobId, userId, companyId)
@@ -145,3 +150,7 @@ Never commit secrets. Only `NEXT_PUBLIC_*` may be exposed to the client.
 - `lib/validators.ts` - Zod schemas
 - `components/BottomNavMobile.tsx` - 5-tab nav enforcement
 - `vitest.config.ts` - coverage thresholds and test config
+
+## Claude Code Skills/Agents (if applicable)
+- If using Claude Code, follow the mandatory skill/agent decision trees in `CLAUDE.md`
+- Prefer skills for single-scope tasks and agents for multi-step work

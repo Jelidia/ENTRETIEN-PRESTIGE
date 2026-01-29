@@ -1,7 +1,17 @@
 import { NextResponse } from "next/server";
-import { createAnonClient } from "@/lib/supabaseServer";
+import { createAdminClient } from "@/lib/supabaseServer";
+import { getRequestIp, rateLimit } from "@/lib/rateLimit";
 
 export async function GET(request: Request) {
+  const ip = getRequestIp(request);
+  const limit = rateLimit(`ratings:validate:${ip}`, 30, 15 * 60 * 1000);
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Trop de tentatives. Réessayez plus tard." },
+      { status: 429 }
+    );
+  }
+
   const { searchParams } = new URL(request.url);
   const token = searchParams.get("token");
 
@@ -12,10 +22,10 @@ export async function GET(request: Request) {
     );
   }
 
-  const client = createAnonClient();
+  const admin = createAdminClient();
 
   // Find the rating token
-  const { data: ratingToken, error: tokenError } = await client
+  const { data: ratingToken, error: tokenError } = await admin
     .from("customer_rating_tokens")
     .select("token_id, job_id, expires_at, used_at")
     .eq("token", token)
@@ -48,16 +58,16 @@ export async function GET(request: Request) {
   }
 
   // Get job details
-  const { data: job, error: jobError } = await client
+  const { data: job, error: jobError } = await admin
     .from("jobs")
     .select(`
       job_id,
       service_type,
       scheduled_date,
       customer_id,
-      assigned_technician_id,
+      technician_id,
       customers!inner(first_name, last_name),
-      technician:users!assigned_technician_id(full_name)
+      technician:users!jobs_technician_id_fkey(full_name)
     `)
     .eq("job_id", ratingToken.job_id)
     .single();

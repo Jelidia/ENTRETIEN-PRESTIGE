@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
-import { createUserClient } from "@/lib/supabaseServer";
+import { createAdminClient, createAnonClient, createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { changePasswordSchema } from "@/lib/validators";
-import bcrypt from "bcryptjs";
+import { logAudit } from "@/lib/audit";
+import { getRequestIp } from "@/lib/rateLimit";
 
 // PATCH /api/settings/password - Change user's own password
 export async function PATCH(request: Request) {
@@ -25,36 +26,23 @@ export async function PATCH(request: Request) {
 
     const { currentPassword, newPassword } = result.data;
 
-    const client = createUserClient(getAccessTokenFromRequest(request) ?? "");
+    const anon = createAnonClient();
+    const { error: signInError } = await anon.auth.signInWithPassword({
+      email: profile.email,
+      password: currentPassword,
+    });
 
-    // Get current user with password hash
-    const { data: user, error: fetchError } = await client
-      .from("users")
-      .select("user_id, password_hash")
-      .eq("user_id", profile.user_id)
-      .single();
-
-    if (fetchError || !user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    // Verify current password
-    const passwordMatch = await bcrypt.compare(currentPassword, user.password_hash);
-    if (!passwordMatch) {
+    if (signInError) {
       return NextResponse.json(
         { error: "Mot de passe actuel incorrect" },
         { status: 400 }
       );
     }
 
-    // Hash new password
-    const newPasswordHash = await bcrypt.hash(newPassword, 12);
-
-    // Update password
-    const { error: updateError } = await client
-      .from("users")
-      .update({ password_hash: newPasswordHash })
-      .eq("user_id", profile.user_id);
+    const client = createUserClient(getAccessTokenFromRequest(request) ?? "");
+    const { error: updateError } = await client.auth.updateUser({
+      password: newPassword,
+    });
 
     if (updateError) {
       console.error("Failed to update password:", updateError);
@@ -63,6 +51,12 @@ export async function PATCH(request: Request) {
         { status: 500 }
       );
     }
+
+    const admin = createAdminClient();
+    await logAudit(admin, profile.user_id, "change_password", "user", profile.user_id, "success", {
+      ipAddress: getRequestIp(request),
+      userAgent: request.headers.get("user-agent") ?? null,
+    });
 
     return NextResponse.json({
       success: true,

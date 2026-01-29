@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
-import { createUserClient } from "@/lib/supabaseServer";
+import { createAdminClient, createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { userCreateSchema } from "@/lib/validators";
-import bcrypt from "bcryptjs";
+import { logAudit } from "@/lib/audit";
+import { getRequestIp } from "@/lib/rateLimit";
 
 // GET /api/admin/users - List all users with pagination
 export async function GET(request: Request) {
@@ -92,19 +93,30 @@ export async function POST(request: Request) {
       );
     }
 
-    // Hash password
-    const passwordHash = await bcrypt.hash(password, 12);
+    const admin = createAdminClient();
+    const { data: authData, error: authError } = await admin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { full_name: fullName, phone: phone || undefined },
+    });
 
-    // Create user
-    const { data: newUser, error } = await client
+    if (authError || !authData.user) {
+      return NextResponse.json(
+        { error: authError?.message ?? "Unable to create auth user" },
+        { status: 400 }
+      );
+    }
+
+    const { data: newUser, error } = await admin
       .from("users")
       .insert({
+        user_id: authData.user.id,
         company_id: profile.company_id,
         email,
         full_name: fullName,
         phone: phone || null,
         role,
-        password_hash: passwordHash,
         status: body.status || "active",
         access_permissions: accessPermissions || null,
       })
@@ -112,12 +124,24 @@ export async function POST(request: Request) {
       .single();
 
     if (error) {
+      await admin.auth.admin.deleteUser(authData.user.id);
       console.error("Failed to create user:", error);
       return NextResponse.json(
         { error: "Failed to create user" },
         { status: 500 }
       );
     }
+
+    await logAudit(admin, profile.user_id, "admin_create_user", "user", newUser.user_id, "success", {
+      newValues: {
+        email: newUser.email,
+        full_name: newUser.full_name,
+        role: newUser.role,
+        status: newUser.status,
+      },
+      ipAddress: getRequestIp(request),
+      userAgent: request.headers.get("user-agent") ?? null,
+    });
 
     return NextResponse.json({
       success: true,

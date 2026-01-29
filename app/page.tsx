@@ -12,7 +12,7 @@ export default function HomePage() {
           Dispatch Entretien Prestige
         </h1>
         <p className="hero-subtitle">
-          youssef t gay
+          Plateforme mobile pour la gestion terrain
         </p>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 24 }}>
           <Link className="button-primary" href="/login">

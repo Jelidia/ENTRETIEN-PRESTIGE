@@ -1,10 +1,23 @@
 import { NextResponse } from "next/server";
+import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabaseServer";
+import { logAudit } from "@/lib/audit";
+import { getRequestIp } from "@/lib/rateLimit";
 
 // WARNING: This endpoint creates users with proper authentication
 // Only use in development/initial setup
 
 export async function POST(request: Request) {
+  if (process.env.NODE_ENV !== "development") {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  const auth = await requireRole(request, ["admin"]);
+  if ("response" in auth) {
+    return auth.response;
+  }
+  const { profile } = auth;
+
   const admin = createAdminClient();
 
   try {
@@ -97,7 +110,7 @@ export async function POST(request: Request) {
         password: "jelidiadam12+3@gmail.com",
         full_name: "Olivier Roy",
         phone: "+15145550194",
-        role: "dispatcher",
+        role: "manager",
         two_factor_enabled: false,
         two_factor_method: "authenticator",
       },
@@ -163,6 +176,16 @@ export async function POST(request: Request) {
         full_name: userData.full_name,
         role: userData.role,
         user_id: authUser.user.id,
+      });
+
+      await logAudit(admin, profile.user_id, "admin_seed_user", "user", authUser.user.id, "success", {
+        newValues: {
+          email: userData.email,
+          full_name: userData.full_name,
+          role: userData.role,
+        },
+        ipAddress: getRequestIp(request),
+        userAgent: request.headers.get("user-agent") ?? null,
       });
     }
 

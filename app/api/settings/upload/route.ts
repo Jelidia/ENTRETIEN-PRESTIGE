@@ -86,12 +86,11 @@ export async function POST(request: Request) {
     // Update user record with file URL
     const updateData: Record<string, unknown> = {};
     if (type === "contract") {
-      updateData.contract_url = fileUrl;
-      updateData.contract_status = "pending"; // Set to pending for admin review
+      updateData.contract_document_url = fileUrl;
     } else if (type === "id_photo") {
-      updateData.id_photo_url = fileUrl;
+      updateData.id_document_front_url = fileUrl;
     } else if (type === "profile_photo") {
-      updateData.profile_photo_url = fileUrl;
+      updateData.avatar_url = fileUrl;
     }
 
     const { error: updateError } = await client
@@ -111,7 +110,6 @@ export async function POST(request: Request) {
       success: true,
       data: {
         url: fileUrl,
-        status: type === "contract" ? "pending" : undefined,
       },
     });
   } catch (err) {

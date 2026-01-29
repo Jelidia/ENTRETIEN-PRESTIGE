@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requirePermission } from "@/lib/auth";
-import { createUserClient, createAdminClient } from "@/lib/supabaseServer";
+import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { invoicePaymentSchema, invoiceSendSchema } from "@/lib/validators";
 import { sendInvoiceEmail } from "@/lib/resend";
@@ -17,7 +17,6 @@ export async function POST(
   }
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
-  const admin = createAdminClient();
   const action = params.action;
   const body = await request.json().catch(() => null);
 
@@ -33,7 +32,7 @@ export async function POST(
       await sendSms(parsed.data.to, parsed.data.body);
     }
 
-    await admin
+    await client
       .from("invoices")
       .update({ payment_status: "sent", email_sent_date: new Date().toISOString() })
       .eq("invoice_id", params.id);

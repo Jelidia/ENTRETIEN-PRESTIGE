@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
-import { createAnonClient, createUserClient } from "@/lib/supabaseServer";
+import { createAdminClient, createAnonClient, createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { changePasswordSchema } from "@/lib/validators";
+import { getRequestIp, rateLimit } from "@/lib/rateLimit";
+import { logAudit } from "@/lib/audit";
 
 export async function POST(request: Request) {
   // 1. Authenticate
@@ -10,6 +12,15 @@ export async function POST(request: Request) {
   if ("response" in auth) return auth.response;
 
   const { user, profile } = auth;
+
+  const ip = getRequestIp(request);
+  const limit = rateLimit(`auth:change-password:${user.id}:${ip}`, 5, 15 * 60 * 1000);
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Trop de tentatives. Réessayez plus tard." },
+      { status: 429 }
+    );
+  }
 
   // 2. Validate input
   const body = await request.json().catch(() => null);
@@ -51,6 +62,12 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
+
+  const admin = createAdminClient();
+  await logAudit(admin, user.id, "change_password", "user", user.id, "success", {
+    ipAddress: ip,
+    userAgent: request.headers.get("user-agent") ?? null,
+  });
 
   return NextResponse.json({ success: true });
 }

@@ -3,6 +3,8 @@ import { requireRole } from "@/lib/auth";
 import { createAdminClient, createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { adminResetPasswordSchema } from "@/lib/validators";
+import { logAudit } from "@/lib/audit";
+import { getRequestIp } from "@/lib/rateLimit";
 
 // POST /api/admin/users/[user_id]/reset-password - Admin resets user password
 export async function POST(
@@ -64,6 +66,12 @@ export async function POST(
       { status: 500 }
     );
   }
+
+  await logAudit(admin, profile.user_id, "admin_reset_password", "user", userId, "success", {
+    newValues: { reset: true },
+    ipAddress: getRequestIp(request),
+    userAgent: request.headers.get("user-agent") ?? null,
+  });
 
   return NextResponse.json({
     success: true,

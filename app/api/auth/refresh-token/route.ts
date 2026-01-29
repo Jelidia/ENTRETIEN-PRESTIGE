@@ -1,8 +1,18 @@
 import { NextResponse } from "next/server";
 import { createAnonClient } from "@/lib/supabaseServer";
 import { getRefreshTokenFromRequest, setSessionCookies } from "@/lib/session";
+import { getRequestIp, rateLimit } from "@/lib/rateLimit";
 
 export async function POST(request: Request) {
+  const ip = getRequestIp(request);
+  const limit = rateLimit(`auth:refresh:${ip}`, 30, 5 * 60 * 1000);
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: "Trop de tentatives. Réessayez plus tard." },
+      { status: 429 }
+    );
+  }
+
   const refreshToken = getRefreshTokenFromRequest(request);
   if (!refreshToken) {
     return NextResponse.json({ error: "Missing refresh token" }, { status: 401 });

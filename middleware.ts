@@ -3,15 +3,19 @@ import type { NextRequest } from "next/server";
 import { getRequestIp, rateLimit } from "./lib/rateLimit";
 
 const protectedPaths = [
+  "/admin",
   "/dashboard",
   "/dispatch",
+  "/inbox",
   "/jobs",
   "/customers",
   "/invoices",
+  "/profile",
   "/sales",
   "/operations",
   "/reports",
   "/settings",
+  "/team",
   "/technician",
   "/notifications",
 ];
@@ -109,15 +113,19 @@ function normalizePath(pathname: string) {
 export const config = {
   matcher: [
     "/api/:path*",
+    "/admin/:path*",
     "/dashboard/:path*",
     "/dispatch/:path*",
+    "/inbox/:path*",
     "/jobs/:path*",
     "/customers/:path*",
     "/invoices/:path*",
+    "/profile/:path*",
     "/sales/:path*",
     "/operations/:path*",
     "/reports/:path*",
     "/settings/:path*",
+    "/team/:path*",
     "/technician/:path*",
     "/notifications/:path*",
   ],

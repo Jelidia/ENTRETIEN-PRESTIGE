@@ -205,6 +205,8 @@ export const paymentRefundSchema = z.object({
 export const smsSendSchema = z.object({
   to: z.string().min(7),
   message: z.string().min(1),
+  threadId: z.string().optional(),
+  customerId: z.string().optional(),
 });
 
 export const emailSendSchema = z.object({

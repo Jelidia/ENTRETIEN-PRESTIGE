@@ -21,7 +21,7 @@ export async function GET(
     .from("sms_messages")
     .select("*")
     .eq("thread_id", threadId)
-    .order("sent_at", { ascending: true });
+    .order("created_at", { ascending: true });
 
   if (error) {
     return NextResponse.json(
