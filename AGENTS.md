@@ -1,7 +1,6 @@
 # AGENTS.md
 
 Guidance for agentic coding assistants working in this repo.
-
 Read `CLAUDE.md` first. It is the authoritative spec for business rules and architecture.
 
 ## Repo Snapshot
@@ -33,28 +32,15 @@ npx vitest run --grep "login"
 npx vitest run tests/technicianDashboard.test.tsx
 ```
 
-Coverage config:
-- 100% required (statements, branches, functions, lines)
-- Includes `app/`, `components/`, `lib/`, `middleware.ts`
-- Excludes `.next/`, `tests/`, `vitest.*`
-
 Type check only:
 ```
 npx tsc --noEmit
 ```
 
-## Cursor/Copilot Rules
-- No `.cursor/rules/`, `.cursorrules`, or `.github/copilot-instructions.md` found.
-
-## Project Layout
-- `app/` - Next.js App Router pages and API routes
-  - `(app)/` - authenticated pages
-  - `(auth)/` - login/reset pages
-  - `api/` - API routes
-- `components/` - shared UI components
-- `lib/` - business logic and integrations
-- `db/` - schema and SQL migrations
-- `tests/` - Vitest tests
+Coverage:
+- 100% required (statements, branches, functions, lines)
+- Includes `app/`, `components/`, `lib/`, `middleware.ts`
+- Excludes `.next/`, `tests/`, `vitest.*`
 
 ## Code Style and Conventions
 TypeScript and types:
@@ -80,8 +66,11 @@ Formatting and comments:
 - Tailwind utilities are standard; avoid new global styles unless needed
 - Avoid TODO/FIXME placeholders; code must be production-ready
 - Add comments only for non-obvious logic; keep comments in English
-- Keep user-facing strings in French
 - Check `lib/` for existing helpers before adding new ones
+
+Localization:
+- French for UI text, SMS templates, and customer-facing messages
+- English is acceptable for technical comments and logs
 
 Validation:
 - Validate all external input with Zod `safeParse`
@@ -118,10 +107,6 @@ Response shape:
 - No sidebar; no horizontal scroll
 - Prefer pagination or bottom sheets over long scrolls
 
-## Localization
-- French for UI text, SMS templates, and customer-facing messages
-- English is acceptable for technical comments and logs
-
 ## Testing Guidelines
 - Vitest + Testing Library + jsdom
 - 100% coverage required (statements, branches, functions, lines)
@@ -146,6 +131,9 @@ Common optional keys:
 
 Never commit secrets. Only `NEXT_PUBLIC_*` may be exposed to the client.
 
+## Cursor/Copilot Rules
+- No `.cursor/rules/`, `.cursorrules`, or `.github/copilot-instructions.md` found.
+
 ## Useful Files
 - `CLAUDE.md` - full spec and business rules
 - `READY_TO_DEPLOY.md` - implementation status and checklist
@@ -157,6 +145,7 @@ Never commit secrets. Only `NEXT_PUBLIC_*` may be exposed to the client.
 - `components/BottomNavMobile.tsx` - 5-tab nav enforcement
 - `vitest.config.ts` - coverage thresholds and test config
 
-## Claude Code Skills/Agents (if applicable)
-- If using Claude Code, follow the mandatory skill/agent decision trees in `CLAUDE.md`
-- Prefer skills for single-scope tasks and agents for multi-step work
+## Skills and Agents (from CLAUDE.md)
+- If a task matches a listed skill, invoke the skill immediately
+- If work is multi-step or spans 2+ files, delegate to an agent
+- See `CLAUDE.md` for the decision trees and available skills/agents

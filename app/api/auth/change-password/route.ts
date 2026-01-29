@@ -5,6 +5,7 @@ import { getAccessTokenFromRequest } from "@/lib/session";
 import { changePasswordSchema } from "@/lib/validators";
 import { getRequestIp, rateLimit } from "@/lib/rateLimit";
 import { logAudit } from "@/lib/audit";
+import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 
 export async function POST(request: Request) {
   // 1. Authenticate
@@ -51,6 +52,18 @@ export async function POST(request: Request) {
 
   // 4. Update password
   const client = createUserClient(getAccessTokenFromRequest(request) ?? "");
+  const idempotency = await beginIdempotency(client, request, user.id, {
+    action: "change_password",
+  });
+  if (idempotency.action === "replay") {
+    return NextResponse.json(idempotency.body, { status: idempotency.status });
+  }
+  if (idempotency.action === "conflict") {
+    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+  }
+  if (idempotency.action === "in_progress") {
+    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+  }
   const { error: updateError } = await client.auth.updateUser({
     password: newPassword,
   });
@@ -69,5 +82,7 @@ export async function POST(request: Request) {
     userAgent: request.headers.get("user-agent") ?? null,
   });
 
-  return NextResponse.json({ success: true });
+  const responseBody = { success: true };
+  await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+  return NextResponse.json(responseBody);
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import StatusBadge from "@/components/StatusBadge";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type JobRow = {
   job_id: string;
@@ -20,18 +20,25 @@ export default function TechnicianPage() {
   const [status, setStatus] = useState("");
   const [location, setLocation] = useState<{ latitude: number; longitude: number; accuracy: number } | null>(null);
 
-  useEffect(() => {
-    void loadJobs();
-    void loadLocation();
-  }, []);
-
-  async function loadJobs() {
+  const loadJobs = useCallback(async () => {
     const response = await fetch("/api/jobs");
     const json = await response.json().catch(() => ({ data: [] }));
     setJobs(json.data ?? []);
-  }
+  }, []);
 
-  function loadLocation(): Promise<void> {
+  const sendGpsPing = useCallback(async (next: { latitude: number; longitude: number; accuracy: number }) => {
+    await fetch("/api/gps/hourly-ping", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        latitude: next.latitude,
+        longitude: next.longitude,
+        accuracyMeters: next.accuracy,
+      }),
+    });
+  }, []);
+
+  const loadLocation = useCallback((): Promise<void> => {
     return new Promise((resolve) => {
       if (!navigator.geolocation) {
         resolve();
@@ -51,19 +58,12 @@ export default function TechnicianPage() {
         () => resolve()
       );
     });
-  }
+  }, [sendGpsPing]);
 
-  async function sendGpsPing(next: { latitude: number; longitude: number; accuracy: number }) {
-    await fetch("/api/gps/hourly-ping", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        latitude: next.latitude,
-        longitude: next.longitude,
-        accuracyMeters: next.accuracy,
-      }),
-    });
-  }
+  useEffect(() => {
+    void loadJobs();
+    void loadLocation();
+  }, [loadJobs, loadLocation]);
 
   function formatRange(start?: string, end?: string) {
     if (!start && !end) return "";

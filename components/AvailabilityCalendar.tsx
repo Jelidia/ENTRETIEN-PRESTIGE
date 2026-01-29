@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type DayOfWeek = "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday";
 
@@ -35,11 +35,7 @@ export default function AvailabilityCalendar({ userId, readonly = false }: Avail
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  useEffect(() => {
-    loadAvailability();
-  }, [userId]);
-
-  async function loadAvailability() {
+  const loadAvailability = useCallback(async () => {
     setLoading(true);
     setError("");
 
@@ -61,7 +57,11 @@ export default function AvailabilityCalendar({ userId, readonly = false }: Avail
 
     setAvailability(availabilityMap);
     setLoading(false);
-  }
+  }, [userId]);
+
+  useEffect(() => {
+    void loadAvailability();
+  }, [loadAvailability]);
 
   async function handleSave() {
     setSaving(true);

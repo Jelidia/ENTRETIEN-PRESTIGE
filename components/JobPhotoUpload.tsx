@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type PhotoType = "before" | "after";
 type PhotoSide = "front" | "back" | "left" | "right";
@@ -41,11 +42,7 @@ export default function JobPhotoUpload({ jobId, onComplete }: JobPhotoUploadProp
   const [selectedSide, setSelectedSide] = useState<PhotoSide>("front");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    loadPhotos();
-  }, [jobId]);
-
-  async function loadPhotos() {
+  const loadPhotos = useCallback(async () => {
     setLoading(true);
     setError("");
 
@@ -66,7 +63,11 @@ export default function JobPhotoUpload({ jobId, onComplete }: JobPhotoUploadProp
     if (data.complete && onComplete) {
       onComplete();
     }
-  }
+  }, [jobId, onComplete]);
+
+  useEffect(() => {
+    void loadPhotos();
+  }, [loadPhotos]);
 
   async function handleFileSelect(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -306,9 +307,12 @@ export default function JobPhotoUpload({ jobId, onComplete }: JobPhotoUploadProp
                     </div>
                     {photoUrl ? (
                       <>
-                        <img
+                        <Image
                           src={photoUrl}
                           alt={`${type.labelFr} - ${side.labelFr}`}
+                          width={140}
+                          height={100}
+                          sizes="140px"
                           style={{
                             width: "100%",
                             height: "100px",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 type User = {
@@ -40,11 +40,7 @@ export default function AdminUsersPage() {
     status: "active",
   });
 
-  useEffect(() => {
-    loadUsers();
-  }, [page]);
-
-  async function loadUsers() {
+  const loadUsers = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch(`/api/admin/users?page=${page}&limit=4`);
@@ -64,7 +60,11 @@ export default function AdminUsersPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [page, router]);
+
+  useEffect(() => {
+    void loadUsers();
+  }, [loadUsers]);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type GpsRow = {
   location_id: string;
@@ -19,26 +19,7 @@ export default function TechnicianMapPage() {
   const polyline = useRef<any>(null);
   const mapsKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
 
-  useEffect(() => {
-    void loadPoints();
-    void shareLocation();
-  }, []);
-
-  useEffect(() => {
-    if (!mapsKey || !mapRef.current) {
-      return;
-    }
-    void loadGoogleMaps(mapsKey)
-      .then(() => initMap())
-      .catch(() => setStatus("Unable to load maps"));
-  }, [mapsKey]);
-
-  useEffect(() => {
-    if (!mapReady) return;
-    renderMarkers();
-  }, [mapReady, points]);
-
-  async function loadPoints() {
+  const loadPoints = useCallback(async () => {
     const response = await fetch("/api/gps/history");
     const json = await response.json().catch(() => ({ data: [] }));
     if (!response.ok) {
@@ -49,9 +30,9 @@ export default function TechnicianMapPage() {
       new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
     );
     setPoints(sorted);
-  }
+  }, []);
 
-  async function shareLocation() {
+  const shareLocation = useCallback(async () => {
     if (!navigator.geolocation) {
       return;
     }
@@ -70,13 +51,13 @@ export default function TechnicianMapPage() {
       },
       () => undefined
     );
-  }
+  }, [loadPoints]);
 
-  function getGoogle() {
+  const getGoogle = useCallback(() => {
     return (window as any).google;
-  }
+  }, []);
 
-  function loadGoogleMaps(key: string) {
+  const loadGoogleMaps = useCallback((key: string) => {
     return new Promise<void>((resolve, reject) => {
       if (getGoogle()?.maps) {
         resolve();
@@ -89,9 +70,9 @@ export default function TechnicianMapPage() {
       script.onerror = () => reject(new Error("Map script failed"));
       document.body.appendChild(script);
     });
-  }
+  }, [getGoogle]);
 
-  function initMap() {
+  const initMap = useCallback(() => {
     const google = getGoogle();
     if (!google?.maps) {
       return;
@@ -104,9 +85,9 @@ export default function TechnicianMapPage() {
       streetViewControl: false,
     });
     setMapReady(true);
-  }
+  }, [getGoogle]);
 
-  function renderMarkers() {
+  const renderMarkers = useCallback(() => {
     const google = getGoogle();
     if (!google?.maps || !mapInstance.current) {
       return;
@@ -140,7 +121,26 @@ export default function TechnicianMapPage() {
     });
 
     mapInstance.current.setCenter(path[path.length - 1]);
-  }
+  }, [getGoogle, points]);
+
+  useEffect(() => {
+    void loadPoints();
+    void shareLocation();
+  }, [loadPoints, shareLocation]);
+
+  useEffect(() => {
+    if (!mapsKey || !mapRef.current) {
+      return;
+    }
+    void loadGoogleMaps(mapsKey)
+      .then(() => initMap())
+      .catch(() => setStatus("Unable to load maps"));
+  }, [initMap, loadGoogleMaps, mapsKey]);
+
+  useEffect(() => {
+    if (!mapReady) return;
+    renderMarkers();
+  }, [mapReady, renderMarkers]);
 
   const mapMessage = useMemo(() => {
     if (!mapsKey) return "Map disabled. Add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY.";

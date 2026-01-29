@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 type User = {
@@ -329,7 +330,14 @@ export default function ProfilePage() {
             <h3 style={{ fontWeight: 600, marginBottom: 8 }}>Pièce d&apos;identité</h3>
             {user.id_document_front_url ? (
               <div>
-                <img src={user.id_document_front_url} alt="ID" style={{ width: 100, height: 100, objectFit: "cover", borderRadius: 8, marginBottom: 8 }} />
+                <Image
+                  src={user.id_document_front_url}
+                  alt="ID"
+                  width={100}
+                  height={100}
+                  sizes="100px"
+                  style={{ objectFit: "cover", borderRadius: 8, marginBottom: 8 }}
+                />
                 <div style={{ display: "flex", gap: 8 }}>
                   <label className="button-secondary" style={{ cursor: "pointer" }}>
                     Changer
@@ -367,10 +375,13 @@ export default function ProfilePage() {
             <h3 style={{ fontWeight: 600, marginBottom: 8 }}>Photo de profil</h3>
             {user.avatar_url ? (
               <div>
-                <img
+                <Image
                   src={user.avatar_url}
                   alt="Profile"
-                  style={{ width: 200, height: 200, objectFit: "cover", borderRadius: "50%", marginBottom: 12 }}
+                  width={200}
+                  height={200}
+                  sizes="200px"
+                  style={{ objectFit: "cover", borderRadius: "50%", marginBottom: 12 }}
                 />
                 <div>
                   <label className="button-secondary" style={{ cursor: "pointer" }}>

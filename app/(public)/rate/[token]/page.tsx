@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 type RatingData = {
@@ -22,11 +22,7 @@ export default function PublicRatingPage({ params }: { params: { token: string }
   const [technicianMentioned, setTechnicianMentioned] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  useEffect(() => {
-    loadRatingData();
-  }, [params.token]);
-
-  async function loadRatingData() {
+  const loadRatingData = useCallback(async () => {
     setLoading(true);
     setError("");
 
@@ -41,7 +37,11 @@ export default function PublicRatingPage({ params }: { params: { token: string }
 
     setRatingData(data);
     setLoading(false);
-  }
+  }, [params.token]);
+
+  useEffect(() => {
+    void loadRatingData();
+  }, [loadRatingData]);
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();

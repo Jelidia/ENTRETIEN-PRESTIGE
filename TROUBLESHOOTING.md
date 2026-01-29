@@ -40,6 +40,8 @@ This will check:
 rm -rf node_modules .next coverage
 npm install
 npm run build
+npm run lint
+npx tsc --noEmit
 
 # Reset database connection
 # Check Supabase dashboard for active connections
@@ -50,7 +52,6 @@ npm test
 
 # Fix permissions (Linux/Mac)
 chmod +x .claude/hooks/*.sh
-chmod +x scripts/*.sh
 ```
 
 ## Database Issues
@@ -62,7 +63,8 @@ chmod +x scripts/*.sh
 **Solution:**
 ```sql
 -- Run in Supabase SQL Editor
--- File: db/migrations/20260126_add_permissions.sql
+-- File: supabase/schema.sql (access_permissions + role_permissions already defined)
+-- Reapply schema and the latest supabase/migrations/* if missing
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS access_permissions JSONB DEFAULT NULL;
 ALTER TABLE companies ADD COLUMN IF NOT EXISTS role_permissions JSONB DEFAULT NULL;
@@ -143,9 +145,10 @@ SELECT * FROM jobs WHERE job_id = 'YOUR_JOB_ID';
 **Debug:**
 ```bash
 # Test migration syntax locally
-psql -U postgres -d your_db -f db/migrations/YYYYMMDD_migration.sql
+psql -U postgres -d your_db -f supabase/migrations/YYYYMMDD_migration.sql
 
 # Or use Supabase CLI
+# Requires Supabase CLI (not included in package.json)
 supabase db reset --local
 ```
 
@@ -254,13 +257,8 @@ WHERE company_id = 'COMPANY_ID';
 # Restart dev server (clears rate limit state)
 npm run dev
 
-# Temporarily disable rate limiting
-# In middleware.ts, set:
-const RATE_LIMIT_ENABLED = process.env.NODE_ENV === 'production';
-
-# Or increase limits for development
-// In middleware.ts
-const DEV_MULTIPLIER = process.env.NODE_ENV === 'development' ? 10 : 1;
+# Adjust limits for development
+# In middleware.ts, update apiRateRules or defaultApiLimit
 ```
 
 ## Build & TypeScript Errors
@@ -360,7 +358,8 @@ beforeEach(() => {
 // Use CI environment variables
 // In CI config:
 env:
-  NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+  NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
   NODE_ENV: test
 ```
 
@@ -375,7 +374,7 @@ npm test -- --coverage
 open coverage/index.html
 
 # Check specific file
-npx vitest run --coverage lib/pricing.ts
+npx vitest run --coverage tests/dashboardMetrics.test.ts
 ```
 
 **Common missed branches:**
@@ -402,7 +401,7 @@ describe('function with 100% coverage', () => {
 
 **Solution:**
 ```typescript
-// tests/setup.ts
+// vitest.setup.ts
 import { vi } from 'vitest';
 
 // Mock Supabase before any imports
@@ -518,7 +517,7 @@ claude --list-output-styles
 
 ### Issue: Environment Variables Not Loading
 
-**Symptoms:** Undefined values for `process.env.SUPABASE_URL`, etc.
+**Symptoms:** Undefined values for `process.env.NEXT_PUBLIC_SUPABASE_URL`, `process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY`, `process.env.SUPABASE_SERVICE_ROLE_KEY`, `process.env.APP_ENCRYPTION_KEY`, etc.
 
 **Check:**
 ```bash
@@ -546,6 +545,8 @@ npm run dev
 
 # For tests, create .env.test
 cp .env.local .env.test
+
+# Note: Vitest does not load .env.test by default; use .env.local or load explicitly.
 ```
 
 **Note:** `NEXT_PUBLIC_*` variables are available in browser, others are server-only.
@@ -562,7 +563,7 @@ cp .env.local .env.test
 **Solutions:**
 ```bash
 # Test connection with curl
-curl -H "apikey: YOUR_ANON_KEY" "YOUR_SUPABASE_URL/rest/v1/"
+curl -H "apikey: YOUR_ANON_KEY" "NEXT_PUBLIC_SUPABASE_URL/rest/v1/"
 
 # Should return: {"message":"..."}
 
@@ -663,7 +664,7 @@ curl -X POST "https://api.twilio.com/2010-04-01/Accounts/$TWILIO_ACCOUNT_SID/Mes
 # Stripe Dashboard > Developers > Webhooks > Select endpoint > Signing secret
 
 # Test webhook locally with Stripe CLI
-stripe listen --forward-to localhost:3000/api/payments/webhook
+stripe listen --forward-to localhost:3000/api/payments/callback
 
 # Send test event
 stripe trigger payment_intent.succeeded
@@ -676,13 +677,34 @@ stripe trigger payment_intent.succeeded
 
 **Solution:**
 ```typescript
-// app/api/payments/webhook/route.ts
-export const config = {
-  api: {
-    bodyParser: false  // Required for Stripe signature verification
-  }
-}
+// app/api/payments/[action]/route.ts
+const payload = await request.text();
+const signature = request.headers.get("stripe-signature") ?? "";
+const result = await handleStripeWebhook(payload, signature);
 ```
+
+## Deployment Checks
+
+**Before deploy:**
+```bash
+npm run build
+npm run lint
+npm test
+npx tsc --noEmit
+```
+
+**Database:**
+- Apply `supabase/schema.sql` and all files in `supabase/migrations/` in order.
+
+**Required env vars (deploy):**
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `APP_ENCRYPTION_KEY`
+- `NEXT_PUBLIC_BASE_URL`
+
+**Storage:**
+- Supabase bucket `user-documents` must exist for uploads.
 
 ## Windows-Specific Issues
 
@@ -696,7 +718,7 @@ export const config = {
 git config --global core.autocrlf input
 
 # Convert existing files
-dos2unix .claude/hooks/*.sh scripts/*.sh
+dos2unix .claude/hooks/*.sh
 
 # Or in VS Code
 # View > Command Palette > "Change End of Line Sequence" > LF
@@ -714,11 +736,11 @@ dos2unix .claude/hooks/*.sh scripts/*.sh
 // Use path.join() or path.resolve()
 import path from 'path';
 
-const filePath = path.join(process.cwd(), 'db', 'migrations', 'file.sql');
+const filePath = path.join(process.cwd(), 'supabase', 'migrations', 'file.sql');
 // Works on Windows and Unix
 
 // Or use forward slashes (Node.js accepts on Windows)
-const filePath = './db/migrations/file.sql';
+const filePath = './supabase/migrations/file.sql';
 ```
 
 ### Issue: Bash Scripts Don't Run
@@ -775,7 +797,7 @@ git clone https://github.com/... ~/projects/entretien-prestige
 
 ### Issue: Can't Access Windows Environment Variables
 
-**Symptoms:** `process.env.SUPABASE_URL` undefined in WSL
+**Symptoms:** `process.env.NEXT_PUBLIC_SUPABASE_URL` undefined in WSL
 
 **Solutions:**
 ```bash
@@ -819,7 +841,7 @@ const client = createClient(url, key, {
 .next/server/app-paths-manifest.json
 
 # Test logs
-coverage/lcov-report/index.html
+coverage/index.html
 
 # Claude Code logs
 .claude/logs/
