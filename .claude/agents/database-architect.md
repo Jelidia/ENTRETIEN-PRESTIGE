@@ -1,7 +1,7 @@
 ---
 name: database-architect
 description: Database schema design, migrations, and RLS policy management. Ensures multi-tenancy isolation with company_id filtering.
-model: sonnet  # Optimal: Schema design requires understanding data relationships and RLS reasoning (40-60% savings)
+model: sonnet
 permissionMode: auto
 tools:
   - Read
@@ -21,8 +21,8 @@ skills:
 hooks:
   - type: PreToolUse
     tool: Write
-    condition: path.includes('supabase/migrations/')
-    script: !`.claude/hooks/validate-migration.sh`
+    condition: "path.includes('supabase/migrations/')"
+    script: ".claude/hooks/validate-migration.sh"
 context:
   - supabase/schema.sql
   - supabase/migrations/*.sql

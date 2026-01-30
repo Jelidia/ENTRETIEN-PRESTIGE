@@ -2,163 +2,184 @@
   "hooks": {
     "PreToolUse": [
       {
-        "tool": "Bash",
-        "condition": "command.includes('rm -rf') || command.includes('DROP TABLE') || command.includes('DELETE FROM')",
-        "message": "⚠️ DESTRUCTIVE COMMAND DETECTED. Are you sure? This cannot be undone.",
-        "requireConfirmation": true
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if echo \"$CLAUDE_TOOL_INPUT\" | grep -qE \"rm -rf|DROP TABLE|DELETE FROM\"; then echo \"⚠️ DESTRUCTIVE COMMAND BLOCKED. Use manual confirmation if required.\"; exit 1; fi"
+          },
+          {
+            "type": "command",
+            "command": "if echo \"$CLAUDE_TOOL_INPUT\" | grep -q \"git push --force\"; then echo \"⚠️ FORCE PUSH BLOCKED. Use extreme caution.\"; exit 1; fi"
+          }
+        ]
       },
       {
-        "tool": "Bash",
-        "condition": "command.includes('git push --force')",
-        "message": "⚠️ Force push detected. Use with extreme caution.",
-        "requireConfirmation": true
-      },
-      {
-        "tool": "Write",
-        "condition": "path.includes('app/api/') && !content.includes('requireUser') && !content.includes('requireRole')",
-        "message": "⚠️ API route missing authentication. Add requireUser() or requireRole()."
-      },
-      {
-        "tool": "Edit",
-        "condition": "path.includes('db/schema.sql')",
-        "message": "⚠️ Editing base schema. Consider creating a migration instead in db/migrations/."
-      },
-      {
-        "tool": "Write",
-        "condition": "path.includes('.env') || path.includes('credentials')",
-        "message": "⚠️ Writing sensitive file. Ensure no secrets are committed to git.",
-        "requireConfirmation": true
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -c \"import sys, json; data=json.load(sys.stdin); path=data.get('tool_input', {}).get('file_path', ''); sys.exit(1) if any(s in path for s in ['.env', 'credentials']) else sys.exit(0)\" || (echo \"⚠️ BLOCKED: Attempting to write to sensitive file\" && exit 1)"
+          },
+          {
+            "type": "command",
+            "command": "python3 -c \"import sys, json; data=json.load(sys.stdin); path=data.get('tool_input', {}).get('file_path', ''); sys.exit(1) if 'db/schema.sql' in path else sys.exit(0)\" || (echo \"⚠️ BLOCKED: Editing base schema. Use migrations instead.\" && exit 1)"
+          }
+        ]
       }
     ],
     "PostToolUse": [
       {
-        "tool": "Write",
-        "condition": "path.endsWith('.ts') || path.endsWith('.tsx')",
-        "script": "npx prettier --write ${path}"
+        "matcher": "Write:*.ts|Write:*.tsx|Edit:*.ts|Edit:*.tsx",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx prettier --write \"$CLAUDE_FILE_PATHS\""
+          }
+        ]
       },
       {
-        "tool": "Write",
-        "condition": "path.endsWith('.md')",
-        "script": "npx prettier --write ${path}"
+        "matcher": "Write:*.md|Edit:*.md",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx prettier --write \"$CLAUDE_FILE_PATHS\""
+          }
+        ]
       },
       {
-        "tool": "Write",
-        "condition": "path.includes('app/api/')",
-        "script": "npm run lint -- --fix ${path}"
+        "matcher": "Write:app/api/*|Edit:app/api/*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npm run lint -- --fix \"$CLAUDE_FILE_PATHS\""
+          },
+          {
+            "type": "command",
+            "command": ".claude/hooks/check-rls-filter.sh \"$CLAUDE_FILE_PATHS\""
+          }
+        ]
       },
       {
-        "tool": "Write",
-        "condition": "path.includes('tests/') || path.endsWith('.test.ts')",
-        "script": "npm test -- --run ${path}"
+        "matcher": "Write:tests/*|Write:*.test.ts",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npm test -- --run \"$CLAUDE_FILE_PATHS\""
+          }
+        ]
       },
       {
-        "tool": "Edit",
-        "condition": "path.includes('lib/validators.ts')",
-        "notification": "✅ Validator updated. Remember to update tests."
+        "matcher": "Edit:lib/validators.ts",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"✅ Validator updated. Remember to update tests.\""
+          }
+        ]
       },
       {
-        "tool": "Write",
-        "condition": "path.includes('db/migrations/')",
-        "script": ".claude/hooks/validate-migration.sh ${path}"
-      },
-      {
-        "tool": "Write",
-        "condition": "path.includes('app/api/') && content.includes('from(')",
-        "script": ".claude/hooks/check-rls-filter.sh ${path}"
-      }
-    ],
-    "PermissionRequest": [
-      {
-        "action": "Bash",
-        "condition": "command.includes('npm install')",
-        "autoApprove": true,
-        "message": "Installing npm package..."
-      },
-      {
-        "action": "Bash",
-        "condition": "command.includes('npm run build')",
-        "autoApprove": true,
-        "message": "Building project..."
-      },
-      {
-        "action": "Bash",
-        "condition": "command.includes('npm test')",
-        "autoApprove": true,
-        "message": "Running tests..."
-      },
-      {
-        "action": "Bash",
-        "condition": "command.includes('git commit')",
-        "requireConfirmation": true,
-        "message": "Ready to commit changes. Review git diff first?"
+        "matcher": "Write:db/migrations/*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/validate-migration.sh \"$CLAUDE_FILE_PATHS\""
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [
       {
-        "condition": "prompt.toLowerCase().includes('deploy') || prompt.toLowerCase().includes('production')",
-        "message": "🚀 Deployment detected. Running pre-deploy checks...",
-        "script": ".claude/hooks/pre-deploy-check.sh"
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if echo \"$CLAUDE_HOOK_INPUT\" | grep -iqE \"deploy|production\"; then .claude/hooks/pre-deploy-check.sh; fi"
+          }
+        ]
       }
     ],
     "Notification": [
       {
-        "type": "desktop",
-        "condition": "message.includes('test') && message.includes('fail')",
-        "title": "Tests Failed",
-        "body": "Some tests are failing. Check the output."
-      },
-      {
-        "type": "desktop",
-        "condition": "message.includes('build') && message.includes('error')",
-        "title": "Build Failed",
-        "body": "Build encountered errors. Review the log."
-      },
-      {
-        "type": "desktop",
-        "condition": "message.includes('coverage') && !message.includes('100%')",
-        "title": "Coverage Below 100%",
-        "body": "Test coverage is not at 100%. Add more tests."
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if echo \"$CLAUDE_HOOK_INPUT\" | grep -iq \"fail\"; then echo \"Tests Failed. Check output.\"; fi"
+          }
+        ]
       }
     ],
     "Stop": [
       {
-        "script": ".claude/hooks/cleanup-session.sh",
-        "message": "Cleaning up session..."
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/cleanup-session.sh"
+          }
+        ]
       }
     ],
     "SubagentStop": [
       {
-        "script": ".claude/hooks/subagent-report.sh ${agentName}",
-        "message": "Generating subagent report..."
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/subagent-report.sh"
+          }
+        ]
       }
     ],
     "PreCompact": [
       {
-        "script": ".claude/hooks/save-context.sh",
-        "message": "Saving important context before compacting..."
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/save-context.sh"
+          }
+        ]
       }
     ],
     "Setup": [
       {
-        "script": ".claude/hooks/project-setup.sh",
-        "message": "Setting up Claude Code for Entretien Prestige..."
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/project-setup.sh"
+          }
+        ]
       }
     ],
     "SessionStart": [
       {
-        "script": ".claude/hooks/session-start.sh",
-        "message": "👋 Starting Claude Code session for Entretien Prestige"
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/session-start.sh"
+          }
+        ]
       }
     ],
     "SessionEnd": [
       {
-        "script": ".claude/hooks/session-end.sh",
-        "message": "📊 Generating session summary..."
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/session-end.sh"
+          }
+        ]
       }
     ]
   },
   "permissions": {
     "allow": [
+      "Bash(npm install *)",
       "Bash(npm run *)",
       "Bash(git *)",
       "Bash(npx *)",

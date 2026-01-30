@@ -1,7 +1,7 @@
 ---
 name: bug-hunter
 description: Bug investigation, root cause analysis, and minimal fixing. Creates regression tests to prevent recurrence.
-model: sonnet  # Optimal: Debugging requires good reasoning to trace execution paths and identify root causes (40-60% savings)
+model: sonnet
 permissionMode: auto
 tools:
   - Read
@@ -18,7 +18,7 @@ skills:
 hooks:
   - type: PreToolUse
     tool: Edit
-    condition: !`git diff --name-only | wc -l` > 5
+    condition: "git diff --name-only | wc -l > 5"
     message: "Bug fix should be minimal. You're changing too many files. Focus on root cause only."
 context:
   - CLAUDE.md

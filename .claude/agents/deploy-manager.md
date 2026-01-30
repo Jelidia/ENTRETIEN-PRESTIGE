@@ -1,7 +1,7 @@
 ---
 name: deploy-manager
 description: Deployment preparation, verification, and checklist management. Ensures production readiness before deploy.
-model: haiku  # Optimal: Checklist-based validation and structured verification tasks (60-80% token savings)
+model: haiku
 permissionMode: auto
 tools:
   - Read
@@ -17,12 +17,12 @@ skills:
 hooks:
   - type: PreToolUse
     tool: Bash
-    condition: command.includes('npm run build')
+    condition: "command.includes('npm run build')"
     message: "Running production build check..."
   - type: PostToolUse
     tool: Bash
-    condition: command.includes('npm test')
-    script: !`.claude/hooks/check-coverage.sh`
+    condition: "command.includes('npm test')"
+    script: ".claude/hooks/check-coverage.sh"
 context:
   - ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
   - .env.example
