@@ -32,10 +32,16 @@ export async function GET(request: Request) {
     profile.access_permissions ?? null
   );
 
-  return NextResponse.json({
+  const data = {
     permissions,
     rolePermissions: company?.role_permissions ?? {},
     userPermissions: profile.access_permissions ?? {},
     role: profile.role,
+  };
+
+  return NextResponse.json({
+    success: true,
+    data,
+    ...data,
   });
 }

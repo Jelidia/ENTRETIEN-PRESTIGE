@@ -90,6 +90,9 @@ export async function POST(
   const responseBody = {
     success: true,
     message: "Mot de passe réinitialisé. L'utilisateur peut se connecter avec le nouveau mot de passe.",
+    data: {
+      message: "Mot de passe réinitialisé. L'utilisateur peut se connecter avec le nouveau mot de passe.",
+    },
   };
   await completeIdempotency(
     client,

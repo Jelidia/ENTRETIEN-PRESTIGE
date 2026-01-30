@@ -59,7 +59,7 @@ export async function POST(request: Request) {
     newValues: { email: parsed.data.email },
   });
 
-  const responseBody = { ok: true };
+  const responseBody = { success: true, data: { ok: true }, ok: true };
   await completeIdempotency(anon, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
   return NextResponse.json(responseBody);
 }

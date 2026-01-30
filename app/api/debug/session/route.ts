@@ -58,8 +58,7 @@ export async function GET(request: Request) {
     });
   }
 
-  return NextResponse.json({
-    success: true,
+  const data = {
     hasToken: true,
     tokenValid: true,
     canReadProfile: true,
@@ -74,5 +73,11 @@ export async function GET(request: Request) {
       full_name: profile?.full_name,
       company_id: profile?.company_id,
     },
+  };
+
+  return NextResponse.json({
+    success: true,
+    data,
+    ...data,
   });
 }

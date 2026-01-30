@@ -26,7 +26,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unable to load users" }, { status: 400 });
   }
 
-  return NextResponse.json({ data });
+  return NextResponse.json({ success: true, data });
 }
 
 export async function POST(request: Request) {
@@ -114,7 +114,7 @@ export async function POST(request: Request) {
     },
   });
 
-  const responseBody = { ok: true };
+  const responseBody = { success: true, data: { ok: true }, ok: true };
   await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 201);
   return NextResponse.json(responseBody, { status: 201 });
 }

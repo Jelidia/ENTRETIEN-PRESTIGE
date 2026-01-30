@@ -173,6 +173,9 @@ export async function DELETE(
   const responseBody = {
     success: true,
     message: "User deleted",
+    data: {
+      message: "User deleted",
+    },
   };
   await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
   return NextResponse.json(responseBody);

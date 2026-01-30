@@ -48,7 +48,7 @@ export async function POST(
     userAgent: request.headers.get("user-agent") ?? null,
     newValues: { to: parsed.data.to, subject: parsed.data.subject },
   });
-  const responseBody = { ok: true };
+  const responseBody = { success: true, data: { ok: true }, ok: true };
   await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
   return NextResponse.json(responseBody);
 }
@@ -66,8 +66,10 @@ export async function GET(
     return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
   }
 
-  return NextResponse.json({
+  const data = {
     subject: "Your invoice from Entretien Prestige",
     body: "Hello, your invoice is ready. Thank you for your business.",
-  });
+  };
+
+  return NextResponse.json({ success: true, data, ...data });
 }

@@ -80,11 +80,13 @@ export async function GET(request: Request) {
     );
   }
 
-  return NextResponse.json({
+  const data = {
     job_id: job.job_id,
     customer_name: `${(job.customers as any)?.[0]?.first_name || (job.customers as any)?.first_name || ""} ${(job.customers as any)?.[0]?.last_name || (job.customers as any)?.last_name || ""}`.trim(),
     service_type: job.service_type ?? "Service",
     service_date: job.scheduled_date ?? "",
     technician_name: (job.technician as any)?.[0]?.full_name || (job.technician as any)?.full_name || "Technicien",
-  });
+  };
+
+  return NextResponse.json({ success: true, data, ...data });
 }

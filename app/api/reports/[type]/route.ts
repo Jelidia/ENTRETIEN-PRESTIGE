@@ -42,29 +42,29 @@ export async function GET(
   if (type === "dashboard") {
     const { data: jobs } = await client.from("jobs").select("estimated_revenue, status");
     const revenue = jobs?.reduce((sum, job) => sum + (job.estimated_revenue ?? 0), 0) ?? 0;
-    return NextResponse.json({ data: { revenue, jobCount: jobs?.length ?? 0 } });
+    return NextResponse.json({ success: true, data: { revenue, jobCount: jobs?.length ?? 0 } });
   }
 
   if (type === "revenue") {
     const { data } = await client.from("jobs").select("scheduled_date, estimated_revenue");
-    return NextResponse.json({ data });
+    return NextResponse.json({ success: true, data });
   }
 
   if (type === "technician") {
     const { data } = await client
       .from("jobs")
       .select("technician_id, estimated_revenue, status");
-    return NextResponse.json({ data });
+    return NextResponse.json({ success: true, data });
   }
 
   if (type === "commission") {
     const { data } = await client.from("employee_commissions").select("*");
-    return NextResponse.json({ data });
+    return NextResponse.json({ success: true, data });
   }
 
   if (type === "leads") {
     const { data } = await client.from("leads").select("*").order("created_at", { ascending: false });
-    return NextResponse.json({ data });
+    return NextResponse.json({ success: true, data });
   }
 
   if (type === "territories") {
@@ -72,12 +72,12 @@ export async function GET(
       .from("sales_territories")
       .select("*")
       .order("created_at", { ascending: false });
-    return NextResponse.json({ data });
+    return NextResponse.json({ success: true, data });
   }
 
   if (type === "leaderboard") {
     const { data } = await client.from("leaderboard").select("*").order("rank", { ascending: true });
-    return NextResponse.json({ data });
+    return NextResponse.json({ success: true, data });
   }
 
   if (type === "payroll") {
@@ -85,7 +85,7 @@ export async function GET(
       .from("payroll_statements")
       .select("*")
       .order("created_at", { ascending: false });
-    return NextResponse.json({ data });
+    return NextResponse.json({ success: true, data });
   }
 
   if (type === "checklists") {
@@ -93,12 +93,12 @@ export async function GET(
       .from("shift_checklists")
       .select("*")
       .order("work_date", { ascending: false });
-    return NextResponse.json({ data });
+    return NextResponse.json({ success: true, data });
   }
 
   if (type === "incidents") {
     const { data } = await client.from("incidents").select("*").order("created_at", { ascending: false });
-    return NextResponse.json({ data });
+    return NextResponse.json({ success: true, data });
   }
 
   if (type === "quality-issues") {
@@ -106,17 +106,17 @@ export async function GET(
       .from("job_quality_issues")
       .select("*")
       .order("created_at", { ascending: false });
-    return NextResponse.json({ data });
+    return NextResponse.json({ success: true, data });
   }
 
   if (type === "quality") {
     const { data } = await client.from("job_quality_issues").select("*");
-    return NextResponse.json({ data });
+    return NextResponse.json({ success: true, data });
   }
 
   if (type === "export") {
     const { data } = await client.from("jobs").select("job_id, status, estimated_revenue");
-    return NextResponse.json({ data });
+    return NextResponse.json({ success: true, data });
   }
 
   if (type === "audit-log") {
@@ -185,7 +185,7 @@ export async function GET(
       });
     }
 
-    return NextResponse.json({ data });
+    return NextResponse.json({ success: true, data });
   }
 
   return NextResponse.json({ error: "Unsupported report" }, { status: 400 });
@@ -223,7 +223,7 @@ export async function POST(
   }
 
   const respondCreated = async () => {
-    const responseBody = { ok: true };
+    const responseBody = { success: true, data: { ok: true }, ok: true };
     await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 201);
     return NextResponse.json(responseBody, { status: 201 });
   };

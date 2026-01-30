@@ -41,7 +41,7 @@ export async function POST(
       }
     }
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ success: true, data: { ok: true }, ok: true });
   }
 
   const auth = await requireRole(request, ["admin", "manager", "sales_rep"], "invoices");
@@ -83,7 +83,7 @@ export async function POST(
       userAgent: request.headers.get("user-agent") ?? null,
       newValues: { amount: parsed.data.amount, currency: parsed.data.currency },
     });
-    const responseBody = { data: intent };
+    const responseBody = { success: true, data: intent };
     await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
     return NextResponse.json(responseBody);
   }
@@ -112,7 +112,7 @@ export async function POST(
       userAgent: request.headers.get("user-agent") ?? null,
       newValues: { amount },
     });
-    const responseBody = { ok: true };
+    const responseBody = { success: true, data: { ok: true }, ok: true };
     await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
     return NextResponse.json(responseBody);
   }
@@ -143,7 +143,7 @@ export async function POST(
       userAgent: request.headers.get("user-agent") ?? null,
       newValues: { payment_intent_id: parsed.data.paymentIntentId, amount: parsed.data.amount },
     });
-    const responseBody = { data: result };
+    const responseBody = { success: true, data: result };
     await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
     return NextResponse.json(responseBody);
   }
@@ -174,5 +174,5 @@ export async function GET(
     return NextResponse.json({ error: "Unable to load payments" }, { status: 400 });
   }
 
-  return NextResponse.json({ data });
+  return NextResponse.json({ success: true, data });
 }

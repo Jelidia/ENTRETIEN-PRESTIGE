@@ -36,5 +36,5 @@ export async function GET(
     );
   }
 
-  return NextResponse.json({ messages: messages || [] });
+  return NextResponse.json({ success: true, data: { messages: messages || [] }, messages: messages || [] });
 }

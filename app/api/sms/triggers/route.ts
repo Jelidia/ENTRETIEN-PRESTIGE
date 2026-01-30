@@ -230,6 +230,7 @@ export async function POST(request: Request) {
       const responseBody = {
         success: true,
         message: "SMS sent successfully",
+        data: { message: "SMS sent successfully" },
       };
       await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
       return NextResponse.json(responseBody);
@@ -245,5 +246,6 @@ export async function POST(request: Request) {
   return NextResponse.json({
     success: false,
     message: "No SMS sent (conditions not met)",
+    data: { message: "No SMS sent (conditions not met)" },
   });
 }

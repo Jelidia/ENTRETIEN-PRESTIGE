@@ -24,7 +24,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unable to load invoices" }, { status: 400 });
   }
 
-  return NextResponse.json({ data });
+  return NextResponse.json({ success: true, data });
 }
 
 export async function POST(request: Request) {
@@ -77,7 +77,7 @@ export async function POST(request: Request) {
     newValues: { invoice_number: data.invoice_number, total_amount: data.total_amount },
   });
 
-  const responseBody = { data };
+  const responseBody = { success: true, data };
   await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 201);
   return NextResponse.json(responseBody, { status: 201 });
 }

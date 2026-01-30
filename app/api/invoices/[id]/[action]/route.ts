@@ -62,7 +62,7 @@ export async function POST(
       newValues: { channel: parsed.data.channel },
     });
 
-    const responseBody = { ok: true };
+    const responseBody = { success: true, data: { ok: true }, ok: true };
     await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
     return NextResponse.json(responseBody);
   }
@@ -102,7 +102,7 @@ export async function POST(
       newValues: { status: parsed.data.status, paid_amount: parsed.data.paidAmount },
     });
 
-    const responseBody = { ok: true };
+    const responseBody = { success: true, data: { ok: true }, ok: true };
     await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
     return NextResponse.json(responseBody);
   }

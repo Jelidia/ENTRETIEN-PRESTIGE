@@ -29,7 +29,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unable to load notifications" }, { status: 400 });
   }
 
-  return NextResponse.json({ data });
+  return NextResponse.json({ success: true, data });
 }
 
 export async function DELETE(request: Request) {
@@ -67,7 +67,7 @@ export async function DELETE(request: Request) {
     ipAddress: ip,
     userAgent: request.headers.get("user-agent") ?? null,
   });
-  const responseBody = { ok: true };
+  const responseBody = { success: true, data: { ok: true }, ok: true };
   await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
   return NextResponse.json(responseBody);
 }

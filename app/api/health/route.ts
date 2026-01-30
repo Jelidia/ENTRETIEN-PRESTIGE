@@ -6,5 +6,6 @@ export function GET(request: Request) {
   if (!queryResult.success) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
-  return NextResponse.json({ status: "ok", timestamp: new Date().toISOString() });
+  const data = { status: "ok", timestamp: new Date().toISOString() };
+  return NextResponse.json({ success: true, data, ...data });
 }

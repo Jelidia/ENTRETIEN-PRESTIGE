@@ -54,7 +54,7 @@ export async function PATCH(
     newValues: parsed.data,
   });
 
-  const responseBody = { data };
+  const responseBody = { success: true, data };
   await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
   return NextResponse.json(responseBody);
 }
@@ -84,5 +84,5 @@ export async function GET(
     return NextResponse.json({ error: "Unable to load user" }, { status: 400 });
   }
 
-  return NextResponse.json({ data });
+  return NextResponse.json({ success: true, data });
 }

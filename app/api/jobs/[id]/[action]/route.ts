@@ -79,7 +79,7 @@ export async function POST(
       newValues: { technician_id: parsed.data.technicianId },
     });
 
-    const responseBody = { ok: true };
+    const responseBody = { success: true, data: { ok: true }, ok: true };
     await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
     return NextResponse.json(responseBody);
   }
@@ -125,7 +125,7 @@ export async function POST(
       userAgent: request.headers.get("user-agent") ?? null,
     });
 
-    const responseBody = { ok: true };
+    const responseBody = { success: true, data: { ok: true }, ok: true };
     await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
     return NextResponse.json(responseBody);
   }
@@ -171,7 +171,7 @@ export async function POST(
       userAgent: request.headers.get("user-agent") ?? null,
     });
 
-    const responseBody = { ok: true };
+    const responseBody = { success: true, data: { ok: true }, ok: true };
     await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
     return NextResponse.json(responseBody);
   }
@@ -215,7 +215,7 @@ export async function POST(
       newValues: { invoice_number: invoiceNumber },
     });
 
-    const responseBody = { ok: true };
+    const responseBody = { success: true, data: { ok: true }, ok: true };
     await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
     return NextResponse.json(responseBody);
   }
@@ -249,7 +249,7 @@ export async function POST(
       userAgent: request.headers.get("user-agent") ?? null,
     });
 
-    const responseBody = { ok: true };
+    const responseBody = { success: true, data: { ok: true }, ok: true };
     await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
     return NextResponse.json(responseBody);
   }
@@ -285,7 +285,7 @@ export async function POST(
       newValues: { actual_revenue: parsed.data.actualRevenue },
     });
 
-    const responseBody = { ok: true };
+    const responseBody = { success: true, data: { ok: true }, ok: true };
     await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
     return NextResponse.json(responseBody);
   }

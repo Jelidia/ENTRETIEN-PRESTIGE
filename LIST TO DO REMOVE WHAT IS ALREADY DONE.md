@@ -1,7 +1,7 @@
 # ENTRETIEN PRESTIGE — Master Backlog (Auto-generated)
 - Generated: 2026-01-29 05:49:44
 - Repo: `/mnt/data/ENTRETIEN_PRESTIGE/ENTRETIEN-PRESTIGE-main`
-- Total items: **1301** (numbered list below)
+- Total items: **1071** (numbered list below)
 
 ## Legend
 - **CONFIRMED**: Found directly by static scan (pattern-based).
@@ -9,8 +9,8 @@
 
 ## Counts by priority
 - **P0**: 81
-- **P1**: 175
-- **P2**: 937
+- **P1**: 84
+- **P2**: 798
 - **P3**: 108
 
 ## Notes on coverage
@@ -30,252 +30,22 @@
 ## API-Security
 
 ## API-Tenancy
-255. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/access ensure strict company_id scoping (especially if admin/service-role used). — `app/api/access/route.ts`
-256. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/admin/users/[user_id] ensure strict company_id scoping (especially if admin/service-role used). — `app/api/admin/users/[user_id]/route.ts`
-257. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/admin/users ensure strict company_id scoping (especially if admin/service-role used). — `app/api/admin/users/route.ts`
-258. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/auth/change-password ensure strict company_id scoping (especially if admin/service-role used). — `app/api/auth/change-password/route.ts`
-259. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/auth/forgot-password ensure strict company_id scoping (especially if admin/service-role used). — `app/api/auth/forgot-password/route.ts`
-260. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/auth/refresh-token ensure strict company_id scoping (especially if admin/service-role used). — `app/api/auth/refresh-token/route.ts`
-261. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/auth/reset-password ensure strict company_id scoping (especially if admin/service-role used). — `app/api/auth/reset-password/route.ts`
-262. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/company ensure strict company_id scoping (especially if admin/service-role used). — `app/api/company/route.ts`
-263. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/customers/[id]/[action] ensure strict company_id scoping (especially if admin/service-role used). — `app/api/customers/[id]/[action]/route.ts`
-264. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/customers/[id] ensure strict company_id scoping (especially if admin/service-role used). — `app/api/customers/[id]/route.ts`
-265. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/customers ensure strict company_id scoping (especially if admin/service-role used). — `app/api/customers/route.ts`
-266. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/debug/session ensure strict company_id scoping (especially if admin/service-role used). — `app/api/debug/session/route.ts`
-267. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/dispatch/[action] ensure strict company_id scoping (especially if admin/service-role used). — `app/api/dispatch/[action]/route.ts`
-268. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/dispatch/calendar ensure strict company_id scoping (especially if admin/service-role used). — `app/api/dispatch/calendar/route.ts`
-269. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/dispatch/technician/[id] ensure strict company_id scoping (especially if admin/service-role used). — `app/api/dispatch/technician/[id]/route.ts`
-270. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/email/[action] ensure strict company_id scoping (especially if admin/service-role used). — `app/api/email/[action]/route.ts`
-271. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/gps/[action] ensure strict company_id scoping (especially if admin/service-role used). — `app/api/gps/[action]/route.ts`
-272. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/gps/geofence/[id] ensure strict company_id scoping (especially if admin/service-role used). — `app/api/gps/geofence/[id]/route.ts`
-273. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/gps/technician/[id] ensure strict company_id scoping (especially if admin/service-role used). — `app/api/gps/technician/[id]/route.ts`
-274. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/health ensure strict company_id scoping (especially if admin/service-role used). — `app/api/health/route.ts`
-275. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/invoices/[id] ensure strict company_id scoping (especially if admin/service-role used). — `app/api/invoices/[id]/route.ts`
-276. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/invoices ensure strict company_id scoping (especially if admin/service-role used). — `app/api/invoices/route.ts`
-277. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/jobs/[id]/photos ensure strict company_id scoping (especially if admin/service-role used). — `app/api/jobs/[id]/photos/route.ts`
-278. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/jobs/[id] ensure strict company_id scoping (especially if admin/service-role used). — `app/api/jobs/[id]/route.ts`
-279. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/jobs/export ensure strict company_id scoping (especially if admin/service-role used). — `app/api/jobs/export/route.ts`
-280. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/jobs ensure strict company_id scoping (especially if admin/service-role used). — `app/api/jobs/route.ts`
-281. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/maps/[action] ensure strict company_id scoping (especially if admin/service-role used). — `app/api/maps/[action]/route.ts`
-282. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/notifications/[id]/read ensure strict company_id scoping (especially if admin/service-role used). — `app/api/notifications/[id]/read/route.ts`
-283. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/notifications ensure strict company_id scoping (especially if admin/service-role used). — `app/api/notifications/route.ts`
-284. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/notifications/settings ensure strict company_id scoping (especially if admin/service-role used). — `app/api/notifications/settings/route.ts`
-285. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/ratings/submit ensure strict company_id scoping (especially if admin/service-role used). — `app/api/ratings/submit/route.ts`
-286. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/ratings/validate ensure strict company_id scoping (especially if admin/service-role used). — `app/api/ratings/validate/route.ts`
-287. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/reports/[type] ensure strict company_id scoping (especially if admin/service-role used). — `app/api/reports/[type]/route.ts`
-288. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/sales/dashboard ensure strict company_id scoping (especially if admin/service-role used). — `app/api/sales/dashboard/route.ts`
-289. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/settings/document ensure strict company_id scoping (especially if admin/service-role used). — `app/api/settings/document/route.ts`
-290. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/settings/password ensure strict company_id scoping (especially if admin/service-role used). — `app/api/settings/password/route.ts`
-291. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/settings/profile ensure strict company_id scoping (especially if admin/service-role used). — `app/api/settings/profile/route.ts`
-292. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/settings/upload ensure strict company_id scoping (especially if admin/service-role used). — `app/api/settings/upload/route.ts`
-293. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/sms/inbox/[threadId]/read ensure strict company_id scoping (especially if admin/service-role used). — `app/api/sms/inbox/[threadId]/read/route.ts`
-294. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/sms/inbox/[threadId] ensure strict company_id scoping (especially if admin/service-role used). — `app/api/sms/inbox/[threadId]/route.ts`
-295. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/sms/inbox ensure strict company_id scoping (especially if admin/service-role used). — `app/api/sms/inbox/route.ts`
-296. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/sms/triggers ensure strict company_id scoping (especially if admin/service-role used). — `app/api/sms/triggers/route.ts`
-297. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/users/[id]/availability ensure strict company_id scoping (especially if admin/service-role used). — `app/api/users/[id]/availability/route.ts`
-298. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/users/[id] ensure strict company_id scoping (especially if admin/service-role used). — `app/api/users/[id]/route.ts`
-299. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/users/me ensure strict company_id scoping (especially if admin/service-role used). — `app/api/users/me/route.ts`
 
 ## API-Validation
-300. **[P1][API-Validation][ADD][CHECKLIST]** [CHECKLIST] /api/access validate inputs (body/query/path) with zod; reject invalid UUIDs/phones/dates. — `app/api/access/route.ts`
-301. **[P1][API-Validation][ADD][CHECKLIST]** [CHECKLIST] /api/admin/seed-users validate inputs (body/query/path) with zod; reject invalid UUIDs/phones/dates. — `app/api/admin/seed-users/route.ts`
-302. **[P1][API-Validation][ADD][CHECKLIST]** [CHECKLIST] /api/auth/disable-2fa validate inputs (body/query/path) with zod; reject invalid UUIDs/phones/dates. — `app/api/auth/disable-2fa/route.ts`
-303. **[P1][API-Validation][ADD][CHECKLIST]** [CHECKLIST] /api/auth/logout validate inputs (body/query/path) with zod; reject invalid UUIDs/phones/dates. — `app/api/auth/logout/route.ts`
-304. **[P1][API-Validation][ADD][CHECKLIST]** [CHECKLIST] /api/auth/refresh-token validate inputs (body/query/path) with zod; reject invalid UUIDs/phones/dates. — `app/api/auth/refresh-token/route.ts`
-305. **[P1][API-Validation][ADD][CHECKLIST]** [CHECKLIST] /api/auth/setup-2fa validate inputs (body/query/path) with zod; reject invalid UUIDs/phones/dates. — `app/api/auth/setup-2fa/route.ts`
-306. **[P1][API-Validation][ADD][CHECKLIST]** [CHECKLIST] /api/debug/session validate inputs (body/query/path) with zod; reject invalid UUIDs/phones/dates. — `app/api/debug/session/route.ts`
-307. **[P1][API-Validation][ADD][CHECKLIST]** [CHECKLIST] /api/dispatch/calendar validate inputs (body/query/path) with zod; reject invalid UUIDs/phones/dates. — `app/api/dispatch/calendar/route.ts`
-308. **[P1][API-Validation][ADD][CHECKLIST]** [CHECKLIST] /api/dispatch/technician/[id] validate inputs (body/query/path) with zod; reject invalid UUIDs/phones/dates. — `app/api/dispatch/technician/[id]/route.ts`
-309. **[P1][API-Validation][ADD][CHECKLIST]** [CHECKLIST] /api/documents validate inputs (body/query/path) with zod; reject invalid UUIDs/phones/dates. — `app/api/documents/route.ts`
-310. **[P1][API-Validation][ADD][CHECKLIST]** [CHECKLIST] /api/gps/geofence/[id] validate inputs (body/query/path) with zod; reject invalid UUIDs/phones/dates. — `app/api/gps/geofence/[id]/route.ts`
-311. **[P1][API-Validation][ADD][CHECKLIST]** [CHECKLIST] /api/gps/technician/[id] validate inputs (body/query/path) with zod; reject invalid UUIDs/phones/dates. — `app/api/gps/technician/[id]/route.ts`
-312. **[P1][API-Validation][ADD][CHECKLIST]** [CHECKLIST] /api/health validate inputs (body/query/path) with zod; reject invalid UUIDs/phones/dates. — `app/api/health/route.ts`
-313. **[P1][API-Validation][ADD][CHECKLIST]** [CHECKLIST] /api/jobs/export validate inputs (body/query/path) with zod; reject invalid UUIDs/phones/dates. — `app/api/jobs/export/route.ts`
-314. **[P1][API-Validation][ADD][CHECKLIST]** [CHECKLIST] /api/maps/[action] validate inputs (body/query/path) with zod; reject invalid UUIDs/phones/dates. — `app/api/maps/[action]/route.ts`
-315. **[P1][API-Validation][ADD][CHECKLIST]** [CHECKLIST] /api/notifications/[id]/read validate inputs (body/query/path) with zod; reject invalid UUIDs/phones/dates. — `app/api/notifications/[id]/read/route.ts`
-316. **[P1][API-Validation][ADD][CHECKLIST]** [CHECKLIST] /api/notifications validate inputs (body/query/path) with zod; reject invalid UUIDs/phones/dates. — `app/api/notifications/route.ts`
-317. **[P1][API-Validation][ADD][CHECKLIST]** [CHECKLIST] /api/ratings/validate validate inputs (body/query/path) with zod; reject invalid UUIDs/phones/dates. — `app/api/ratings/validate/route.ts`
-318. **[P1][API-Validation][ADD][CHECKLIST]** [CHECKLIST] /api/sales/dashboard validate inputs (body/query/path) with zod; reject invalid UUIDs/phones/dates. — `app/api/sales/dashboard/route.ts`
-319. **[P1][API-Validation][ADD][CHECKLIST]** [CHECKLIST] /api/settings/document validate inputs (body/query/path) with zod; reject invalid UUIDs/phones/dates. — `app/api/settings/document/route.ts`
-320. **[P1][API-Validation][ADD][CHECKLIST]** [CHECKLIST] /api/settings/upload validate inputs (body/query/path) with zod; reject invalid UUIDs/phones/dates. — `app/api/settings/upload/route.ts`
-321. **[P1][API-Validation][ADD][CHECKLIST]** [CHECKLIST] /api/sms/inbox/[threadId]/read validate inputs (body/query/path) with zod; reject invalid UUIDs/phones/dates. — `app/api/sms/inbox/[threadId]/read/route.ts`
-322. **[P1][API-Validation][ADD][CHECKLIST]** [CHECKLIST] /api/sms/inbox/[threadId] validate inputs (body/query/path) with zod; reject invalid UUIDs/phones/dates. — `app/api/sms/inbox/[threadId]/route.ts`
-323. **[P1][API-Validation][ADD][CHECKLIST]** [CHECKLIST] /api/sms/inbox validate inputs (body/query/path) with zod; reject invalid UUIDs/phones/dates. — `app/api/sms/inbox/route.ts`
-324. **[P1][API-Validation][ADD][CHECKLIST]** [CHECKLIST] /api/sms/triggers validate inputs (body/query/path) with zod; reject invalid UUIDs/phones/dates. — `app/api/sms/triggers/route.ts`
-325. **[P1][API-Validation][ADD][CHECKLIST]** [CHECKLIST] /api/uploads validate inputs (body/query/path) with zod; reject invalid UUIDs/phones/dates. — `app/api/uploads/route.ts`
-326. **[P1][API-Validation][ADD][CHECKLIST]** [CHECKLIST] /api/users/me validate inputs (body/query/path) with zod; reject invalid UUIDs/phones/dates. — `app/api/users/me/route.ts`
 
 ## Config
-327. **[P1][Config][ADD][CONFIRMED]** Env var used but not validated in lib/env.ts: STRIPE_SECRET_KEY — `.claude/output-styles/production-ready.md:150`
-328. **[P1][Config][ADD][CONFIRMED]** Env var used but not validated in lib/env.ts: SUPABASE_URL — `TROUBLESHOOTING.md:521`
-329. **[P1][Config][ADD][CONFIRMED]** Env var used but not validated in lib/env.ts: SUPABASE_URL — `TROUBLESHOOTING.md:778`
-330. **[P1][Config][ADD][CONFIRMED]** Env var used but not validated in lib/env.ts: NEXT_PUBLIC_GOOGLE_MAPS_API_KEY — `app/(app)/technician/map/page.tsx:20`
-331. **[P1][Config][ADD][CONFIRMED]** Env var used but not validated in lib/env.ts: NEXT_PUBLIC_COMPANY_EMAIL — `app/api/sms/triggers/route.ts:107`
-332. **[P1][Config][ADD][CONFIRMED]** Env var used but not validated in lib/env.ts: NEXT_PUBLIC_GOOGLE_MAPS_API_KEY — `tests/technicianMap.test.tsx:69`
-333. **[P1][Config][ADD][CONFIRMED]** Env var used but not validated in lib/env.ts: NEXT_PUBLIC_GOOGLE_MAPS_API_KEY — `tests/technicianMap.test.tsx:78`
-334. **[P1][Config][ADD][CONFIRMED]** Env var used but not validated in lib/env.ts: NEXT_PUBLIC_GOOGLE_MAPS_API_KEY — `tests/technicianMap.test.tsx:113`
-335. **[P1][Config][ADD][CONFIRMED]** Env var used but not validated in lib/env.ts: NEXT_PUBLIC_GOOGLE_MAPS_API_KEY — `tests/technicianMap.test.tsx:123`
-336. **[P1][Config][ADD][CONFIRMED]** Env var used but not validated in lib/env.ts: NEXT_PUBLIC_GOOGLE_MAPS_API_KEY — `tests/technicianMap.test.tsx:135`
-337. **[P1][Config][ADD][CONFIRMED]** Env var used but not validated in lib/env.ts: NEXT_PUBLIC_GOOGLE_MAPS_API_KEY — `tests/technicianMap.test.tsx:145`
-338. **[P1][Config][ADD][CONFIRMED]** Env var used but not validated in lib/env.ts: NEXT_PUBLIC_GOOGLE_MAPS_API_KEY — `tests/technicianMap.test.tsx:155`
-339. **[P1][Config][ADD][CONFIRMED]** Env var used but not validated in lib/env.ts: NEXT_PUBLIC_GOOGLE_MAPS_API_KEY — `tests/technicianMap.test.tsx:179`
 
 ## DB-RLS
 
 ## UI-Security
-392. **[P1][UI-Security][VERIFY][CHECKLIST]** [CHECKLIST] Page /technician/equipment verify auth + permission gating (server and client). — `app/(app)/technician/equipment/page.tsx`
-393. **[P1][UI-Security][VERIFY][CHECKLIST]** [CHECKLIST] Page /technician/map verify auth + permission gating (server and client). — `app/(app)/technician/map/page.tsx`
-394. **[P1][UI-Security][VERIFY][CHECKLIST]** [CHECKLIST] Page /technician verify auth + permission gating (server and client). — `app/(app)/technician/page.tsx`
-395. **[P1][UI-Security][VERIFY][CHECKLIST]** [CHECKLIST] Page /technician/profile verify auth + permission gating (server and client). — `app/(app)/technician/profile/page.tsx`
-396. **[P1][UI-Security][VERIFY][CHECKLIST]** [CHECKLIST] Page /technician/schedule verify auth + permission gating (server and client). — `app/(app)/technician/schedule/page.tsx`
-397. **[P1][UI-Security][VERIFY][CHECKLIST]** [CHECKLIST] Public page /rate/[token] verify it does not leak tenant data and handles tokens safely. — `app/(public)/rate/[token]/page.tsx`
 
 # P2 Items
 
 ## API
-398. **[P2][API][ADD][CONFIRMED]** API route has no obvious zod-style validation. — `app/api/access/route.ts`
-399. **[P2][API][ADD][CONFIRMED]** API route has no obvious zod-style validation. — `app/api/admin/seed-users/route.ts`
-400. **[P2][API][ADD][CONFIRMED]** API route has no obvious zod-style validation. — `app/api/auth/disable-2fa/route.ts`
-401. **[P2][API][ADD][CONFIRMED]** API route has no obvious zod-style validation. — `app/api/auth/logout/route.ts`
-402. **[P2][API][ADD][CONFIRMED]** API route has no obvious zod-style validation. — `app/api/auth/refresh-token/route.ts`
-403. **[P2][API][ADD][CONFIRMED]** API route has no obvious zod-style validation. — `app/api/auth/setup-2fa/route.ts`
-404. **[P2][API][ADD][CONFIRMED]** API route has no obvious zod-style validation. — `app/api/debug/session/route.ts`
-405. **[P2][API][ADD][CONFIRMED]** API route has no obvious zod-style validation. — `app/api/dispatch/calendar/route.ts`
-406. **[P2][API][ADD][CONFIRMED]** API route has no obvious zod-style validation. — `app/api/dispatch/technician/[id]/route.ts`
-407. **[P2][API][ADD][CONFIRMED]** API route has no obvious zod-style validation. — `app/api/documents/route.ts`
-408. **[P2][API][ADD][CONFIRMED]** API route has no obvious zod-style validation. — `app/api/gps/geofence/[id]/route.ts`
-409. **[P2][API][ADD][CONFIRMED]** API route has no obvious zod-style validation. — `app/api/gps/technician/[id]/route.ts`
-410. **[P2][API][ADD][CONFIRMED]** API route has no obvious zod-style validation. — `app/api/health/route.ts`
-411. **[P2][API][ADD][CONFIRMED]** API route has no obvious zod-style validation. — `app/api/jobs/export/route.ts`
-412. **[P2][API][ADD][CONFIRMED]** API route has no obvious zod-style validation. — `app/api/maps/[action]/route.ts`
-413. **[P2][API][ADD][CONFIRMED]** API route has no obvious zod-style validation. — `app/api/notifications/[id]/read/route.ts`
-414. **[P2][API][ADD][CONFIRMED]** API route has no obvious zod-style validation. — `app/api/notifications/route.ts`
-415. **[P2][API][ADD][CONFIRMED]** API route has no obvious zod-style validation. — `app/api/ratings/validate/route.ts`
-416. **[P2][API][ADD][CONFIRMED]** API route has no obvious zod-style validation. — `app/api/sales/dashboard/route.ts`
-417. **[P2][API][ADD][CONFIRMED]** API route has no obvious zod-style validation. — `app/api/settings/document/route.ts`
-418. **[P2][API][ADD][CONFIRMED]** API route has no obvious zod-style validation. — `app/api/settings/upload/route.ts`
-419. **[P2][API][ADD][CONFIRMED]** API route has no obvious zod-style validation. — `app/api/sms/inbox/[threadId]/read/route.ts`
-420. **[P2][API][ADD][CONFIRMED]** API route has no obvious zod-style validation. — `app/api/sms/inbox/[threadId]/route.ts`
-421. **[P2][API][ADD][CONFIRMED]** API route has no obvious zod-style validation. — `app/api/sms/inbox/route.ts`
-422. **[P2][API][ADD][CONFIRMED]** API route has no obvious zod-style validation. — `app/api/sms/triggers/route.ts`
-423. **[P2][API][ADD][CONFIRMED]** API route has no obvious zod-style validation. — `app/api/uploads/route.ts`
-424. **[P2][API][ADD][CONFIRMED]** API route has no obvious zod-style validation. — `app/api/users/me/route.ts`
 
 ## API-Design
-425. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/access standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/access/route.ts`
-426. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/admin/reset-password standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/admin/reset-password/route.ts`
-427. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/admin/seed-users standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/admin/seed-users/route.ts`
-428. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/admin/seed standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/admin/seed/route.ts`
-429. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/admin/users/[user_id]/reset-password standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/admin/users/[user_id]/reset-password/route.ts`
-430. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/admin/users/[user_id] standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/admin/users/[user_id]/route.ts`
-431. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/admin/users standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/admin/users/route.ts`
-432. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/auth/change-password standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/auth/change-password/route.ts`
-433. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/auth/disable-2fa standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/auth/disable-2fa/route.ts`
-434. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/auth/forgot-password standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/auth/forgot-password/route.ts`
-435. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/auth/login standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/auth/login/route.ts`
-436. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/auth/logout standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/auth/logout/route.ts`
-437. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/auth/refresh-token standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/auth/refresh-token/route.ts`
-438. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/auth/register standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/auth/register/route.ts`
-439. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/auth/reset-password standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/auth/reset-password/route.ts`
-440. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/auth/setup-2fa standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/auth/setup-2fa/route.ts`
-441. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/auth/verify-2fa standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/auth/verify-2fa/route.ts`
-442. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/company standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/company/route.ts`
-443. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/customers/[id]/[action] standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/customers/[id]/[action]/route.ts`
-444. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/customers/[id] standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/customers/[id]/route.ts`
-445. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/customers standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/customers/route.ts`
-446. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/debug/session standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/debug/session/route.ts`
-447. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/dispatch/[action] standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/dispatch/[action]/route.ts`
-448. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/dispatch/calendar standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/dispatch/calendar/route.ts`
-449. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/dispatch/technician/[id] standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/dispatch/technician/[id]/route.ts`
-450. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/documents standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/documents/route.ts`
-451. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/email/[action] standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/email/[action]/route.ts`
-452. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/gps/[action] standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/gps/[action]/route.ts`
-453. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/gps/geofence/[id] standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/gps/geofence/[id]/route.ts`
-454. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/gps/technician/[id] standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/gps/technician/[id]/route.ts`
-455. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/health standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/health/route.ts`
-456. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/invoices/[id]/[action] standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/invoices/[id]/[action]/route.ts`
-457. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/invoices/[id] standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/invoices/[id]/route.ts`
-458. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/invoices standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/invoices/route.ts`
-459. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/jobs/[id]/[action] standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/jobs/[id]/[action]/route.ts`
-460. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/jobs/[id]/photos standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/jobs/[id]/photos/route.ts`
-461. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/jobs/[id] standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/jobs/[id]/route.ts`
-462. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/jobs/export standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/jobs/export/route.ts`
-463. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/jobs standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/jobs/route.ts`
-464. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/maps/[action] standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/maps/[action]/route.ts`
-465. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/notifications/[id]/read standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/notifications/[id]/read/route.ts`
-466. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/notifications standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/notifications/route.ts`
-467. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/notifications/settings standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/notifications/settings/route.ts`
-468. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/payments/[action] standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/payments/[action]/route.ts`
-469. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/ratings/submit standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/ratings/submit/route.ts`
-470. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/ratings/validate standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/ratings/validate/route.ts`
-471. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/reports/[type] standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/reports/[type]/route.ts`
-472. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/sales/dashboard standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/sales/dashboard/route.ts`
-473. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/settings/document standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/settings/document/route.ts`
-474. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/settings/password standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/settings/password/route.ts`
-475. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/settings/profile standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/settings/profile/route.ts`
-476. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/settings/upload standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/settings/upload/route.ts`
-477. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/sms/[action] standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/sms/[action]/route.ts`
-478. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/sms/inbox/[threadId]/read standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/sms/inbox/[threadId]/read/route.ts`
-479. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/sms/inbox/[threadId] standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/sms/inbox/[threadId]/route.ts`
-480. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/sms/inbox standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/sms/inbox/route.ts`
-481. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/sms/triggers standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/sms/triggers/route.ts`
-482. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/uploads standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/uploads/route.ts`
-483. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/users/[id]/availability standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/users/[id]/availability/route.ts`
-484. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/users/[id] standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/users/[id]/route.ts`
-485. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/users/me standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/users/me/route.ts`
-486. **[P2][API-Design][ADD][CHECKLIST]** [CHECKLIST] /api/users standardize response shape (data/error/code) and document fields; avoid breaking clients. — `app/api/users/route.ts`
 
 ## API-RateLimit
-487. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/access consider rate limiting for brute-force / scraping protection. — `app/api/access/route.ts`
-488. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/admin/reset-password consider rate limiting for brute-force / scraping protection. — `app/api/admin/reset-password/route.ts`
-489. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/admin/seed-users consider rate limiting for brute-force / scraping protection. — `app/api/admin/seed-users/route.ts`
-490. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/admin/seed consider rate limiting for brute-force / scraping protection. — `app/api/admin/seed/route.ts`
-491. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/admin/users/[user_id]/reset-password consider rate limiting for brute-force / scraping protection. — `app/api/admin/users/[user_id]/reset-password/route.ts`
-492. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/admin/users/[user_id] consider rate limiting for brute-force / scraping protection. — `app/api/admin/users/[user_id]/route.ts`
-493. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/admin/users consider rate limiting for brute-force / scraping protection. — `app/api/admin/users/route.ts`
-494. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/company consider rate limiting for brute-force / scraping protection. — `app/api/company/route.ts`
-495. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/customers/[id]/[action] consider rate limiting for brute-force / scraping protection. — `app/api/customers/[id]/[action]/route.ts`
-496. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/customers/[id] consider rate limiting for brute-force / scraping protection. — `app/api/customers/[id]/route.ts`
-497. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/customers consider rate limiting for brute-force / scraping protection. — `app/api/customers/route.ts`
-498. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/debug/session consider rate limiting for brute-force / scraping protection. — `app/api/debug/session/route.ts`
-499. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/dispatch/[action] consider rate limiting for brute-force / scraping protection. — `app/api/dispatch/[action]/route.ts`
-500. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/dispatch/calendar consider rate limiting for brute-force / scraping protection. — `app/api/dispatch/calendar/route.ts`
-501. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/dispatch/technician/[id] consider rate limiting for brute-force / scraping protection. — `app/api/dispatch/technician/[id]/route.ts`
-502. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/documents consider rate limiting for brute-force / scraping protection. — `app/api/documents/route.ts`
-503. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/email/[action] consider rate limiting for brute-force / scraping protection. — `app/api/email/[action]/route.ts`
-504. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/gps/[action] consider rate limiting for brute-force / scraping protection. — `app/api/gps/[action]/route.ts`
-505. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/gps/geofence/[id] consider rate limiting for brute-force / scraping protection. — `app/api/gps/geofence/[id]/route.ts`
-506. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/gps/technician/[id] consider rate limiting for brute-force / scraping protection. — `app/api/gps/technician/[id]/route.ts`
-507. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/health consider rate limiting for brute-force / scraping protection. — `app/api/health/route.ts`
-508. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/invoices/[id]/[action] consider rate limiting for brute-force / scraping protection. — `app/api/invoices/[id]/[action]/route.ts`
-509. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/invoices/[id] consider rate limiting for brute-force / scraping protection. — `app/api/invoices/[id]/route.ts`
-510. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/invoices consider rate limiting for brute-force / scraping protection. — `app/api/invoices/route.ts`
-511. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/jobs/[id]/[action] consider rate limiting for brute-force / scraping protection. — `app/api/jobs/[id]/[action]/route.ts`
-512. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/jobs/[id]/photos consider rate limiting for brute-force / scraping protection. — `app/api/jobs/[id]/photos/route.ts`
-513. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/jobs/[id] consider rate limiting for brute-force / scraping protection. — `app/api/jobs/[id]/route.ts`
-514. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/jobs/export consider rate limiting for brute-force / scraping protection. — `app/api/jobs/export/route.ts`
-515. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/jobs consider rate limiting for brute-force / scraping protection. — `app/api/jobs/route.ts`
-516. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/maps/[action] consider rate limiting for brute-force / scraping protection. — `app/api/maps/[action]/route.ts`
-517. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/notifications/[id]/read consider rate limiting for brute-force / scraping protection. — `app/api/notifications/[id]/read/route.ts`
-518. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/notifications consider rate limiting for brute-force / scraping protection. — `app/api/notifications/route.ts`
-519. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/notifications/settings consider rate limiting for brute-force / scraping protection. — `app/api/notifications/settings/route.ts`
-520. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/payments/[action] consider rate limiting for brute-force / scraping protection. — `app/api/payments/[action]/route.ts`
-521. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/reports/[type] consider rate limiting for brute-force / scraping protection. — `app/api/reports/[type]/route.ts`
-522. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/sales/dashboard consider rate limiting for brute-force / scraping protection. — `app/api/sales/dashboard/route.ts`
-523. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/settings/document consider rate limiting for brute-force / scraping protection. — `app/api/settings/document/route.ts`
-524. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/settings/password consider rate limiting for brute-force / scraping protection. — `app/api/settings/password/route.ts`
-525. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/settings/profile consider rate limiting for brute-force / scraping protection. — `app/api/settings/profile/route.ts`
-526. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/settings/upload consider rate limiting for brute-force / scraping protection. — `app/api/settings/upload/route.ts`
-527. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/sms/[action] consider rate limiting for brute-force / scraping protection. — `app/api/sms/[action]/route.ts`
-528. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/sms/inbox/[threadId]/read consider rate limiting for brute-force / scraping protection. — `app/api/sms/inbox/[threadId]/read/route.ts`
-529. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/sms/inbox/[threadId] consider rate limiting for brute-force / scraping protection. — `app/api/sms/inbox/[threadId]/route.ts`
-530. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/sms/inbox consider rate limiting for brute-force / scraping protection. — `app/api/sms/inbox/route.ts`
-531. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/sms/triggers consider rate limiting for brute-force / scraping protection. — `app/api/sms/triggers/route.ts`
-532. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/uploads consider rate limiting for brute-force / scraping protection. — `app/api/uploads/route.ts`
-533. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/users/[id]/availability consider rate limiting for brute-force / scraping protection. — `app/api/users/[id]/availability/route.ts`
-534. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/users/[id] consider rate limiting for brute-force / scraping protection. — `app/api/users/[id]/route.ts`
-535. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/users/me consider rate limiting for brute-force / scraping protection. — `app/api/users/me/route.ts`
-536. **[P2][API-RateLimit][VERIFY][CHECKLIST]** [CHECKLIST] /api/users consider rate limiting for brute-force / scraping protection. — `app/api/users/route.ts`
 
 ## API-Reliability
 537. **[P2][API-Reliability][ADD][CHECKLIST]** [CHECKLIST] /api/access ensure consistent error mapping (400/401/403/404/409/429/500) and no raw error leaks. — `app/api/access/route.ts`

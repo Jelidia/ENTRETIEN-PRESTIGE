@@ -74,6 +74,7 @@ export async function PATCH(request: Request) {
     const responseBody = {
       success: true,
       message: "Password changed successfully",
+      data: { message: "Password changed successfully" },
     };
     await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
     return NextResponse.json(responseBody);

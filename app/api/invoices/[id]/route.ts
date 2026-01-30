@@ -21,7 +21,7 @@ export async function GET(
   if (error || !data) {
     return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
   }
-  return NextResponse.json({ data });
+  return NextResponse.json({ success: true, data });
 }
 
 export async function PATCH(
@@ -69,7 +69,7 @@ export async function PATCH(
     newValues: parsed.data,
   });
 
-  const responseBody = { data };
+  const responseBody = { success: true, data };
   await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
   return NextResponse.json(responseBody);
 }

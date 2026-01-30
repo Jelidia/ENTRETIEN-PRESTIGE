@@ -92,7 +92,13 @@ export async function POST(request: Request) {
     newValues: { doc_type: safeDocType, path: storagePath },
   });
 
-  const responseBody = { ok: true, path: storagePath, field: column };
+  const responseBody = {
+    success: true,
+    data: { ok: true, path: storagePath, field: column },
+    ok: true,
+    path: storagePath,
+    field: column,
+  };
   await completeIdempotency(
     admin,
     request,

@@ -223,6 +223,11 @@ export async function POST(request: Request) {
       users: createdUsers,
       errors: errors.length > 0 ? errors : undefined,
       note: "All passwords are set to the email address. Users should change them after first login.",
+      data: {
+        users: createdUsers,
+        errors: errors.length > 0 ? errors : undefined,
+        message: `Successfully created ${createdUsers.length} users`,
+      },
     };
     await completeIdempotency(
       userClient,

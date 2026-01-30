@@ -58,7 +58,7 @@ export async function POST(
       is_read: false,
       created_at: new Date().toISOString(),
     });
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ success: true, data: { ok: true }, ok: true });
   }
 
   const auth = await requireRole(request, ["admin", "manager", "dispatcher"], "customers");
@@ -106,7 +106,7 @@ export async function POST(
     userAgent: request.headers.get("user-agent") ?? null,
     newValues: { to: parsed.data.to },
   });
-  const responseBody = { ok: true };
+  const responseBody = { success: true, data: { ok: true }, ok: true };
   await completeIdempotency(admin, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
   return NextResponse.json(responseBody);
 }
@@ -136,5 +136,5 @@ export async function GET(
     return NextResponse.json({ error: "Unable to load SMS" }, { status: 400 });
   }
 
-  return NextResponse.json({ data });
+  return NextResponse.json({ success: true, data });
 }

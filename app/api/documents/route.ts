@@ -60,5 +60,9 @@ export async function GET(request: Request) {
     newValues: { doc_type: docType },
   });
 
-  return NextResponse.json({ url: signed.signedUrl });
+  return NextResponse.json({
+    success: true,
+    data: { url: signed.signedUrl },
+    url: signed.signedUrl,
+  });
 }

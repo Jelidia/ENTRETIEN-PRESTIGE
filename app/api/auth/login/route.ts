@@ -132,7 +132,12 @@ export async function POST(request: Request) {
         session: data.session,
       });
       await sendTwoFactorCode(admin, data.user.id, challenge);
-      const responseBody = { mfaRequired: true, challengeId: challenge.challenge_id };
+      const responseBody = {
+        success: true,
+        data: { mfaRequired: true, challengeId: challenge.challenge_id },
+        mfaRequired: true,
+        challengeId: challenge.challenge_id,
+      };
       await completeIdempotency(anon, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
       return NextResponse.json(responseBody);
     } catch (error) {
@@ -150,7 +155,7 @@ export async function POST(request: Request) {
     last_activity: new Date().toISOString(),
   });
 
-  const responseBody = { ok: true };
+  const responseBody = { success: true, data: { ok: true }, ok: true };
   const response = NextResponse.json(responseBody);
   setSessionCookies(response, data.session);
   await completeIdempotency(anon, request, idempotency.scope, idempotency.requestHash, responseBody, 200);

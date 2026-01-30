@@ -57,7 +57,7 @@ export async function POST(
       newValues: { technician_id: parsed.data.technicianId },
     });
 
-    const responseBody = { ok: true };
+    const responseBody = { success: true, data: { ok: true }, ok: true };
     await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
     return NextResponse.json(responseBody);
   }
@@ -107,7 +107,7 @@ export async function POST(
       newValues: updates,
     });
 
-    const responseBody = { ok: true };
+    const responseBody = { success: true, data: { ok: true }, ok: true };
     await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
     return NextResponse.json(responseBody);
   }
@@ -136,7 +136,7 @@ export async function POST(
       .limit(10);
 
     if (!technicians || !jobs) {
-      return NextResponse.json({ ok: true });
+      return NextResponse.json({ success: true, data: { ok: true }, ok: true });
     }
 
     for (let i = 0; i < jobs.length; i += 1) {
@@ -153,7 +153,12 @@ export async function POST(
       newValues: { assigned: jobs.length },
     });
 
-    const responseBody = { ok: true, assigned: jobs.length };
+    const responseBody = {
+      success: true,
+      data: { ok: true, assigned: jobs.length },
+      ok: true,
+      assigned: jobs.length,
+    };
     await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
     return NextResponse.json(responseBody);
   }
@@ -194,7 +199,7 @@ export async function POST(
       newValues: { start_date: parsed.data.startDate, end_date: parsed.data.endDate },
     });
 
-    const responseBody = { ok: true };
+    const responseBody = { success: true, data: { ok: true }, ok: true };
     await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
     return NextResponse.json(responseBody);
   }
@@ -225,7 +230,7 @@ export async function GET(
       return NextResponse.json({ error: "Unable to load conflicts" }, { status: 400 });
     }
 
-    return NextResponse.json({ data });
+    return NextResponse.json({ success: true, data });
   }
 
   return NextResponse.json({ error: "Unsupported action" }, { status: 400 });

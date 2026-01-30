@@ -58,7 +58,7 @@ export async function POST(
       userAgent: request.headers.get("user-agent") ?? null,
     });
 
-    const responseBody = { ok: true };
+    const responseBody = { success: true, data: { ok: true }, ok: true };
     await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
     return NextResponse.json(responseBody);
   }
@@ -98,7 +98,7 @@ export async function POST(
       userAgent: request.headers.get("user-agent") ?? null,
     });
 
-    const responseBody = { ok: true };
+    const responseBody = { success: true, data: { ok: true }, ok: true };
     await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
     return NextResponse.json(responseBody);
   }
@@ -116,7 +116,7 @@ export async function POST(
     if (error) {
       return NextResponse.json({ error: "Unable to load history" }, { status: 400 });
     }
-    return NextResponse.json({ data });
+    return NextResponse.json({ success: true, data });
   }
 
   if (action === "geofence") {
@@ -151,7 +151,7 @@ export async function POST(
       userAgent: request.headers.get("user-agent") ?? null,
       newValues: { customer_id: parsed.data.customerId },
     });
-    const responseBody = { ok: true };
+    const responseBody = { success: true, data: { ok: true }, ok: true };
     await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
     return NextResponse.json(responseBody);
   }
@@ -186,5 +186,5 @@ export async function GET(
     return NextResponse.json({ error: "Unable to load history" }, { status: 400 });
   }
 
-  return NextResponse.json({ data });
+  return NextResponse.json({ success: true, data });
 }

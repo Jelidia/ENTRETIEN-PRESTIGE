@@ -63,7 +63,7 @@ export async function POST(
       newValues: { risk_level: parsed.data.riskLevel },
     });
 
-    const responseBody = { ok: true };
+    const responseBody = { success: true, data: { ok: true }, ok: true };
     await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
     return NextResponse.json(responseBody);
   }
@@ -109,7 +109,7 @@ export async function POST(
       newValues: { job_id: parsed.data.jobId, complaint_type: parsed.data.complaintType },
     });
 
-    const responseBody = { ok: true };
+    const responseBody = { success: true, data: { ok: true }, ok: true };
     await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
     return NextResponse.json(responseBody);
   }
@@ -137,7 +137,7 @@ export async function GET(
     if (error) {
       return NextResponse.json({ error: "Unable to load jobs" }, { status: 400 });
     }
-    return NextResponse.json({ data });
+    return NextResponse.json({ success: true, data });
   }
 
   if (action === "invoices") {
@@ -148,7 +148,7 @@ export async function GET(
     if (error) {
       return NextResponse.json({ error: "Unable to load invoices" }, { status: 400 });
     }
-    return NextResponse.json({ data });
+    return NextResponse.json({ success: true, data });
   }
 
   return NextResponse.json({ error: "Unsupported action" }, { status: 400 });

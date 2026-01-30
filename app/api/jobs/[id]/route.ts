@@ -23,7 +23,7 @@ export async function GET(
     return NextResponse.json({ error: "Job not found" }, { status: 404 });
   }
 
-  return NextResponse.json({ data });
+  return NextResponse.json({ success: true, data });
 }
 
 export async function PATCH(
@@ -71,7 +71,7 @@ export async function PATCH(
     newValues: parsed.data,
   });
 
-  const responseBody = { data };
+  const responseBody = { success: true, data };
   await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
   return NextResponse.json(responseBody);
 }
@@ -109,7 +109,7 @@ export async function DELETE(
     userAgent: request.headers.get("user-agent") ?? null,
   });
 
-  const responseBody = { ok: true };
+  const responseBody = { success: true, data: { ok: true }, ok: true };
   await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
   return NextResponse.json(responseBody);
 }

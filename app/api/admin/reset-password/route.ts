@@ -79,6 +79,10 @@ export async function POST(request: Request) {
     success: true,
     message: "Mot de passe réinitialisé avec succès",
     userId: targetUser.user_id,
+    data: {
+      message: "Mot de passe réinitialisé avec succès",
+      userId: targetUser.user_id,
+    },
   };
   await completeIdempotency(userClient, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
   return NextResponse.json(responseBody);

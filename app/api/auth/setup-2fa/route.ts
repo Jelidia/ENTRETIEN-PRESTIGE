@@ -67,7 +67,12 @@ export async function POST(request: Request) {
     userAgent: request.headers.get("user-agent") ?? null,
   });
 
-  const responseBody = { ok: true, otpauth: secret.otpauth };
+  const responseBody = {
+    success: true,
+    data: { ok: true, otpauth: secret.otpauth },
+    ok: true,
+    otpauth: secret.otpauth,
+  };
   await completeIdempotency(admin, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
   return NextResponse.json(responseBody);
 }

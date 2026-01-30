@@ -13,5 +13,5 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
-  return NextResponse.json(auth.profile);
+  return NextResponse.json({ success: true, data: auth.profile, ...auth.profile });
 }

@@ -22,6 +22,12 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unable to export" }, { status: 400 });
   }
 
+  const { searchParams } = new URL(request.url);
+  const format = searchParams.get("format")?.toLowerCase();
+  if (format === "json") {
+    return NextResponse.json({ success: true, data });
+  }
+
   const header = "job_id,service_type,status,scheduled_date,estimated_revenue";
   const rows = data.map((row) =>
     [row.job_id, row.service_type, row.status, row.scheduled_date, row.estimated_revenue].join(",")

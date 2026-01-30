@@ -56,7 +56,7 @@ export async function GET(request: Request) {
       })),
   }));
 
-  return NextResponse.json({ data });
+  return NextResponse.json({ success: true, data });
 }
 
 function formatScheduleRange(start?: string | null, end?: string | null) {

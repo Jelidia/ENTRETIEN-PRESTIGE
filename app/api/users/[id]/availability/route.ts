@@ -66,6 +66,8 @@ export async function GET(
   }
 
   return NextResponse.json({
+    success: true,
+    data: { availability: availability ?? [] },
     availability: availability ?? [],
   });
 }
@@ -176,6 +178,7 @@ export async function POST(
   const responseBody = {
     success: true,
     count: availableSlots.length,
+    data: { count: availableSlots.length },
   };
   await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
   return NextResponse.json(responseBody);

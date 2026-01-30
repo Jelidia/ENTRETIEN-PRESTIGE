@@ -63,7 +63,7 @@ export async function POST(request: Request) {
     });
   }
 
-  const responseBody = { ok: true };
+  const responseBody = { success: true, data: { ok: true }, ok: true };
   const response = NextResponse.json(responseBody);
   clearSessionCookies(response);
   await completeIdempotency(anon, request, idempotency.scope, idempotency.requestHash, responseBody, 200);

@@ -29,5 +29,5 @@ export async function GET(
     return NextResponse.json({ error: "Geofence not found" }, { status: 404 });
   }
 
-  return NextResponse.json({ data });
+  return NextResponse.json({ success: true, data });
 }

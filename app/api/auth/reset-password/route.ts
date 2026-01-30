@@ -70,7 +70,7 @@ export async function POST(request: Request) {
   });
 
   // 4. Return success with session cookies
-  const responseBody = { success: true };
+  const responseBody = { success: true, data: { success: true } };
   const response = NextResponse.json(responseBody);
   setSessionCookies(response, exchangeData.session);
   await completeIdempotency(anon, request, idempotency.scope, idempotency.requestHash, responseBody, 200);

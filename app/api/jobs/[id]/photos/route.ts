@@ -57,11 +57,13 @@ export async function GET(
     .filter((req) => !photoSet.has(`${req.type}-${req.side}`))
     .map((req) => ({ photo_type: req.type, side: req.side }));
 
-  return NextResponse.json({
+  const data = {
     photos: photos ?? [],
     complete: missing.length === 0,
     missing,
-  });
+  };
+
+  return NextResponse.json({ success: true, data, ...data });
 }
 
 // POST /api/jobs/[id]/photos - Upload a new photo
@@ -162,7 +164,7 @@ export async function POST(
       newValues: { photo_type, side },
     });
 
-    const responseBody = { photo: updated, updated: true };
+    const responseBody = { success: true, data: { photo: updated, updated: true }, photo: updated, updated: true };
     await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
     return NextResponse.json(responseBody);
   }
@@ -197,7 +199,7 @@ export async function POST(
     newValues: { photo_type, side },
   });
 
-  const responseBody = { photo, updated: false };
+  const responseBody = { success: true, data: { photo, updated: false }, photo, updated: false };
   await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 201);
   return NextResponse.json(responseBody, { status: 201 });
 }
@@ -259,7 +261,7 @@ export async function DELETE(
     newValues: { photo_id: photoId },
   });
 
-  const responseBody = { success: true };
+  const responseBody = { success: true, data: { success: true } };
   await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
   return NextResponse.json(responseBody);
 }

@@ -26,7 +26,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Company not found" }, { status: 404 });
   }
 
-  return NextResponse.json({ data });
+  return NextResponse.json({ success: true, data });
 }
 
 export async function PATCH(request: Request) {
@@ -77,7 +77,7 @@ export async function PATCH(request: Request) {
     newValues: update,
   });
 
-  const responseBody = { data };
+  const responseBody = { success: true, data };
   await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
   return NextResponse.json(responseBody);
 }

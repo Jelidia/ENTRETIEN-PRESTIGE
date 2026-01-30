@@ -55,5 +55,5 @@ export async function GET(request: Request) {
     now,
   });
 
-  return NextResponse.json(stats);
+  return NextResponse.json({ success: true, data: stats, ...stats });
 }

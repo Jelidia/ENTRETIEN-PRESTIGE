@@ -24,7 +24,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unable to load customers" }, { status: 400 });
   }
 
-  return NextResponse.json({ data });
+  return NextResponse.json({ success: true, data });
 }
 
 export async function POST(request: Request) {
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
     newValues: { first_name: data.first_name, last_name: data.last_name },
   });
 
-  const responseBody = { data };
+  const responseBody = { success: true, data };
   await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 201);
   return NextResponse.json(responseBody, { status: 201 });
 }

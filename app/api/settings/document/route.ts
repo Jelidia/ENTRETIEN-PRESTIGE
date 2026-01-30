@@ -93,6 +93,7 @@ export async function DELETE(request: Request) {
     const responseBody = {
       success: true,
       message: "Document deleted",
+      data: { message: "Document deleted" },
     };
     await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
     return NextResponse.json(responseBody);

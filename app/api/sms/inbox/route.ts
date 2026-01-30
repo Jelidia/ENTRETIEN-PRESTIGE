@@ -61,7 +61,7 @@ export async function GET(request: Request) {
     ];
 
     if (customerIds.length === 0) {
-      return NextResponse.json({ threads: [] });
+      return NextResponse.json({ success: true, data: { threads: [] }, threads: [] });
     }
 
     query = query.in("customer_id", customerIds);
@@ -76,7 +76,7 @@ export async function GET(request: Request) {
     )];
 
     if (customerIds.length === 0) {
-      return NextResponse.json({ threads: [] });
+      return NextResponse.json({ success: true, data: { threads: [] }, threads: [] });
     }
 
     query = query.in("customer_id", customerIds);
@@ -136,5 +136,5 @@ export async function GET(request: Request) {
     (a, b) => new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime()
   );
 
-  return NextResponse.json({ threads });
+  return NextResponse.json({ success: true, data: { threads }, threads });
 }

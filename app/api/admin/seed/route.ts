@@ -117,7 +117,7 @@ export async function POST(request: Request) {
     results.push({ role: account.role, email: account.email, status: "created", password });
   }
 
-  const responseBody = { results };
+  const responseBody = { success: true, data: { results }, results };
   await completeIdempotency(
     client,
     request,

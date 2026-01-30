@@ -157,6 +157,10 @@ export async function POST(request: Request) {
     success: true,
     rating_id: rating.rating_id,
     google_review_url: googleReviewUrl,
+    data: {
+      rating_id: rating.rating_id,
+      google_review_url: googleReviewUrl,
+    },
   };
   await completeIdempotency(admin, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
   return NextResponse.json(responseBody);

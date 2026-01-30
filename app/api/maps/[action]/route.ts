@@ -32,7 +32,7 @@ export async function GET(
     }
     const { address } = queryResult.data;
     const data = await geocodeAddress(address);
-    return NextResponse.json({ data });
+    return NextResponse.json({ success: true, data });
   }
 
   if (action === "distance") {
@@ -42,7 +42,7 @@ export async function GET(
     }
     const { origins, destinations } = queryResult.data;
     const data = await getDistanceMatrix(origins, destinations);
-    return NextResponse.json({ data });
+    return NextResponse.json({ success: true, data });
   }
 
   if (action === "territory") {
@@ -51,7 +51,7 @@ export async function GET(
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
     const { polygon } = queryResult.data;
-    return NextResponse.json({ data: { polygon } });
+    return NextResponse.json({ success: true, data: { polygon }, polygon });
   }
 
   return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
