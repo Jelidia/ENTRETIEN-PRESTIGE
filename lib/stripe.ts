@@ -71,7 +71,7 @@ export async function refundPayment(
   return { id: refund.id };
 }
 
-export async function handleStripeWebhook(payload: string, signature: string) {
+export async function handleStripeWebhook(payload: string, signature: string): Promise<{ ok: true; event: Stripe.Event }> {
   assertStripeReady();
   const client = getStripeClient();
   const event = client.webhooks.constructEvent(payload, signature, stripeWebhookSecret);
