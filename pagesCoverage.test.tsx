@@ -13,6 +13,10 @@ vi.mock("next/link", () => ({
   ),
 }));
 
+vi.mock("next/headers", () => ({
+  headers: () => new Headers(),
+}));
+
 vi.mock("@/lib/queries", () => ({
   getDashboardData: vi.fn(),
 }));

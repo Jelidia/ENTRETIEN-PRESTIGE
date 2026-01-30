@@ -2,41 +2,56 @@ import { getAccessTokenFromCookies } from "./session";
 import { createUserClient } from "./supabaseServer";
 import { buildDashboardData, formatDateKey } from "./dashboardMetrics";
 import { logger } from "@/lib/logger";
-import {
-  customers as fallbackCustomers,
-  dashboardKpis,
-  dispatchBoard,
-  incidents as fallbackIncidents,
-  invoices as fallbackInvoices,
-  jobs as fallbackJobs,
-  leaderboard as fallbackLeaderboard,
-  notifications as fallbackNotifications,
-  qualityIssues as fallbackQuality,
-  reportSummary,
-  revenueBars,
-  scheduleToday,
-  technicianJobs,
-} from "./data";
+type DashboardError = "session_expired" | "missing_profile" | "load_failed";
 
-export async function getDashboardData() {
+export type DashboardData = ReturnType<typeof buildDashboardData> & {
+  error?: DashboardError;
+};
+
+type DashboardQueryOptions = {
+  requestId?: string;
+};
+
+const emptyDashboardData: DashboardData = {
+  kpis: [],
+  revenueBars: [],
+  scheduleToday: [],
+};
+
+const emptyReportSummary = { kpis: [], revenueBars: [] };
+
+export async function getDashboardData(
+  options: DashboardQueryOptions = {}
+): Promise<DashboardData> {
   const token = getAccessTokenFromCookies();
   if (!token) {
-    return { kpis: dashboardKpis, revenueBars, scheduleToday };
+    return { ...emptyDashboardData, error: "session_expired" };
   }
 
   const client = createUserClient(token);
-  const { data: userData } = await client.auth.getUser();
-  if (!userData?.user) {
-    return { kpis: dashboardKpis, revenueBars, scheduleToday };
+  const { data: userData, error: userError } = await client.auth.getUser();
+  if (userError || !userData?.user) {
+    if (userError) {
+      logger.warn("Dashboard session check failed", {
+        request_id: options.requestId,
+        error: userError,
+      });
+    }
+    return { ...emptyDashboardData, error: "session_expired" };
   }
 
-  const { data: profile } = await client
+  const { data: profile, error: profileError } = await client
     .from("users")
     .select("company_id")
     .eq("user_id", userData.user.id)
     .maybeSingle();
   if (!profile?.company_id) {
-    return { kpis: dashboardKpis, revenueBars, scheduleToday };
+    logger.error("Dashboard profile missing", {
+      request_id: options.requestId,
+      user_id: userData.user.id,
+      error: profileError,
+    });
+    return { ...emptyDashboardData, error: "missing_profile" };
   }
 
   const now = new Date();
@@ -58,11 +73,12 @@ export async function getDashboardData() {
 
   if (jobsError || customersError || !jobs || !customers) {
     logger.error("Failed to load dashboard data", {
-      jobsError,
-      customersError,
+      request_id: options.requestId,
+      jobs_error: jobsError,
+      customers_error: customersError,
       company_id: profile.company_id,
     });
-    return { kpis: dashboardKpis, revenueBars, scheduleToday };
+    return { ...emptyDashboardData, error: "load_failed" };
   }
 
   return buildDashboardData({ jobs, customers, now });
@@ -71,24 +87,28 @@ export async function getDashboardData() {
 export async function getDispatchBoard() {
   const token = getAccessTokenFromCookies();
   if (!token) {
-    return dispatchBoard;
+    return [];
   }
 
   const client = createUserClient(token);
-  const { data: technicians } = await client
+  const { data: technicians, error: techniciansError } = await client
     .from("users")
     .select("user_id, full_name")
     .eq("role", "technician")
     .limit(10);
 
-  const { data: jobs } = await client
+  const { data: jobs, error: jobsError } = await client
     .from("jobs")
     .select("job_id, technician_id, address, service_type, estimated_revenue, scheduled_start_time, status")
     .order("scheduled_date", { ascending: true })
     .limit(50);
 
-  if (!technicians || !jobs) {
-    return dispatchBoard;
+  if (techniciansError || jobsError || !technicians || !jobs) {
+    logger.error("Failed to load dispatch board", {
+      technicians_error: techniciansError,
+      jobs_error: jobsError,
+    });
+    return [];
   }
 
   return technicians.map((tech) => ({
@@ -109,17 +129,18 @@ export async function getDispatchBoard() {
 export async function getJobs() {
   const token = getAccessTokenFromCookies();
   if (!token) {
-    return fallbackJobs;
+    return [];
   }
 
   const client = createUserClient(token);
-  const { data } = await client
+  const { data, error } = await client
     .from("jobs")
     .select("job_id, service_type, status, scheduled_date, estimated_revenue")
     .order("scheduled_date", { ascending: true });
 
-  if (!data) {
-    return fallbackJobs;
+  if (error || !data) {
+    logger.error("Failed to load jobs list", { error });
+    return [];
   }
 
   return data.map((job) => ({
@@ -135,17 +156,18 @@ export async function getJobs() {
 export async function getCustomers() {
   const token = getAccessTokenFromCookies();
   if (!token) {
-    return fallbackCustomers;
+    return [];
   }
 
   const client = createUserClient(token);
-  const { data } = await client
+  const { data, error } = await client
     .from("customers")
     .select("customer_id, first_name, last_name, status, customer_type, last_service_date, account_balance")
     .limit(100);
 
-  if (!data) {
-    return fallbackCustomers;
+  if (error || !data) {
+    logger.error("Failed to load customers", { error });
+    return [];
   }
 
   return data.map((customer) => ({
@@ -161,17 +183,18 @@ export async function getCustomers() {
 export async function getInvoices() {
   const token = getAccessTokenFromCookies();
   if (!token) {
-    return fallbackInvoices;
+    return [];
   }
 
   const client = createUserClient(token);
-  const { data } = await client
+  const { data, error } = await client
     .from("invoices")
     .select("invoice_number, payment_status, total_amount, due_date")
     .limit(100);
 
-  if (!data) {
-    return fallbackInvoices;
+  if (error || !data) {
+    logger.error("Failed to load invoices", { error });
+    return [];
   }
 
   return data.map((invoice) => ({
@@ -186,17 +209,18 @@ export async function getInvoices() {
 export async function getLeaderboard() {
   const token = getAccessTokenFromCookies();
   if (!token) {
-    return fallbackLeaderboard;
+    return [];
   }
   const client = createUserClient(token);
-  const { data } = await client
+  const { data, error } = await client
     .from("leaderboard")
     .select("rank, total_revenue, leads_generated, conversion_rate")
     .order("rank", { ascending: true })
     .limit(10);
 
-  if (!data) {
-    return fallbackLeaderboard;
+  if (error || !data) {
+    logger.error("Failed to load leaderboard", { error });
+    return [];
   }
 
   return data.map((item, index) => ({
@@ -211,16 +235,17 @@ export async function getLeaderboard() {
 export async function getIncidents() {
   const token = getAccessTokenFromCookies();
   if (!token) {
-    return fallbackIncidents;
+    return [];
   }
   const client = createUserClient(token);
-  const { data } = await client
+  const { data, error } = await client
     .from("incidents")
     .select("incident_id, description, severity, status")
     .order("created_at", { ascending: false })
     .limit(20);
-  if (!data) {
-    return fallbackIncidents;
+  if (error || !data) {
+    logger.error("Failed to load incidents", { error });
+    return [];
   }
   return data.map((incident) => ({
     id: incident.incident_id,
@@ -233,16 +258,17 @@ export async function getIncidents() {
 export async function getQualityIssues() {
   const token = getAccessTokenFromCookies();
   if (!token) {
-    return fallbackQuality;
+    return [];
   }
   const client = createUserClient(token);
-  const { data } = await client
+  const { data, error } = await client
     .from("job_quality_issues")
     .select("issue_id, description, severity, status")
     .order("created_at", { ascending: false })
     .limit(20);
-  if (!data) {
-    return fallbackQuality;
+  if (error || !data) {
+    logger.error("Failed to load quality issues", { error });
+    return [];
   }
   return data.map((issue) => ({
     id: issue.issue_id,
@@ -253,28 +279,32 @@ export async function getQualityIssues() {
 }
 
 export async function getReportSummary() {
-  return reportSummary;
+  return emptyReportSummary;
 }
 
 export async function getTechnicianSchedule() {
   const token = getAccessTokenFromCookies();
   if (!token) {
-    return technicianJobs;
+    return [];
   }
   const client = createUserClient(token);
-  const { data: userData } = await client.auth.getUser();
+  const { data: userData, error: userError } = await client.auth.getUser();
   if (!userData?.user) {
-    return technicianJobs;
+    if (userError) {
+      logger.warn("Technician schedule session check failed", { error: userError });
+    }
+    return [];
   }
-  const { data } = await client
+  const { data, error } = await client
     .from("jobs")
     .select("job_id, service_type, status, scheduled_start_time, address")
     .eq("technician_id", userData.user.id)
     .order("scheduled_date", { ascending: true })
     .limit(20);
 
-  if (!data) {
-    return technicianJobs;
+  if (error || !data) {
+    logger.error("Failed to load technician schedule", { error });
+    return [];
   }
 
   return data.map((job) => ({
@@ -291,21 +321,25 @@ export async function getTechnicianSchedule() {
 export async function getNotifications() {
   const token = getAccessTokenFromCookies();
   if (!token) {
-    return fallbackNotifications;
+    return [];
   }
   const client = createUserClient(token);
-  const { data: userData } = await client.auth.getUser();
+  const { data: userData, error: userError } = await client.auth.getUser();
   if (!userData?.user) {
-    return fallbackNotifications;
+    if (userError) {
+      logger.warn("Notifications session check failed", { error: userError });
+    }
+    return [];
   }
-  const { data } = await client
+  const { data, error } = await client
     .from("notifications")
     .select("notif_id, title, body, status")
     .eq("user_id", userData.user.id)
     .order("created_at", { ascending: false })
     .limit(20);
-  if (!data) {
-    return fallbackNotifications;
+  if (error || !data) {
+    logger.error("Failed to load notifications", { error });
+    return [];
   }
   return data.map((note) => ({
     id: note.notif_id,

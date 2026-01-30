@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { sanitizeRedirect } from "@/lib/types";
 
 export default function VerifyTwoFactorForm({
   challengeId,
@@ -11,6 +12,7 @@ export default function VerifyTwoFactorForm({
   redirect?: string;
 }) {
   const router = useRouter();
+  const safeRedirect = sanitizeRedirect(redirect);
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -37,7 +39,7 @@ export default function VerifyTwoFactorForm({
       return;
     }
 
-    router.push(redirect ?? "/dashboard");
+    router.push(safeRedirect);
   }
 
   return (

@@ -113,12 +113,10 @@ export async function POST(
       .select(`
         invoice_id,
         invoice_number,
-        invoice_date,
+        issued_date,
         due_date,
         total_amount,
         subtotal,
-        gst_amount,
-        qst_amount,
         notes,
         customers (
           first_name,
@@ -152,12 +150,12 @@ export async function POST(
 
     const pdfBytes = await generateInvoicePdf({
       invoiceNumber: data.invoice_number,
-      invoiceDate: data.invoice_date || new Date().toISOString().split("T")[0],
+      invoiceDate: data.issued_date
+        ? data.issued_date.split("T")[0]
+        : new Date().toISOString().split("T")[0],
       dueDate: data.due_date,
       totalAmount: data.total_amount ?? 0,
       subtotal: data.subtotal ?? 0,
-      gst_amount: data.gst_amount,
-      qst_amount: data.qst_amount,
       notes: data.notes,
       company: {
         name: (data.companies as any)?.[0]?.name || (data.companies as any)?.name || "Entretien Prestige",
@@ -213,12 +211,10 @@ export async function GET(
     .select(`
       invoice_id,
       invoice_number,
-      invoice_date,
+      issued_date,
       due_date,
       total_amount,
       subtotal,
-      gst_amount,
-      qst_amount,
       notes,
       customers (
         first_name,
@@ -251,12 +247,12 @@ export async function GET(
 
   const pdfBytes = await generateInvoicePdf({
     invoiceNumber: data.invoice_number,
-    invoiceDate: data.invoice_date || new Date().toISOString().split("T")[0],
+    invoiceDate: data.issued_date
+      ? data.issued_date.split("T")[0]
+      : new Date().toISOString().split("T")[0],
     dueDate: data.due_date,
     totalAmount: data.total_amount ?? 0,
     subtotal: data.subtotal ?? 0,
-    gst_amount: data.gst_amount,
-    qst_amount: data.qst_amount,
     notes: data.notes,
     company: {
       name: (data.companies as any)?.[0]?.name || (data.companies as any)?.name || "Entretien Prestige",

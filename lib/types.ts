@@ -125,3 +125,18 @@ export type Checklist = {
   work_date: string;
   shift_status: string;
 };
+
+export function sanitizeRedirect(
+  target: string | null | undefined,
+  fallback = "/dashboard"
+): string {
+  if (!target) {
+    return fallback;
+  }
+
+  if (!target.startsWith("/") || target.startsWith("//") || target.includes("://")) {
+    return fallback;
+  }
+
+  return target;
+}

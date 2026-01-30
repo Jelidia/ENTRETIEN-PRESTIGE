@@ -4,9 +4,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { sanitizeRedirect } from "@/lib/types";
 
 export default function LoginForm({ redirect }: { redirect?: string }) {
   const router = useRouter();
+  const safeRedirect = sanitizeRedirect(redirect);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -27,7 +29,7 @@ export default function LoginForm({ redirect }: { redirect?: string }) {
         .then((res) => {
           if (res.ok) {
             // Valid session - auto-redirect to dashboard
-            router.push(redirect ?? "/dashboard");
+            router.push(safeRedirect);
           } else {
             // Session expired - pre-fill email/phone
             setEmail(lastPhone);
@@ -41,7 +43,7 @@ export default function LoginForm({ redirect }: { redirect?: string }) {
       // No session but has remembered phone - pre-fill
       setEmail(lastPhone);
     }
-  }, [redirect, router]);
+  }, [safeRedirect, router]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -69,11 +71,13 @@ export default function LoginForm({ redirect }: { redirect?: string }) {
     }
 
     if (data.mfaRequired) {
-      router.push(`/verify-2fa?challenge=${data.challengeId}&redirect=${redirect ?? "/dashboard"}`);
+      router.push(
+        `/verify-2fa?challenge=${data.challengeId}&redirect=${encodeURIComponent(safeRedirect)}`
+      );
       return;
     }
 
-    router.push(redirect ?? "/dashboard");
+    router.push(safeRedirect);
   }
 
   return (

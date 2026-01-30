@@ -10,6 +10,7 @@ import LoginPage from "@/app/(auth)/login/page";
 import ResetPasswordPage from "@/app/(auth)/reset-password/page";
 import VerifyTwoFactorPage from "@/app/(auth)/verify-2fa/page";
 import ForgotPasswordPage from "@/app/(auth)/forgot-password/page";
+import { sanitizeRedirect } from "@/lib/types";
 
 vi.mock("next/link", () => ({
   default: ({ href, children, ...rest }: { href: string; children: ReactNode }) => (
@@ -299,5 +300,20 @@ describe("NoShowDialog", () => {
     resolveSkip({ ok: false, json: async () => ({}) });
     await waitFor(() => expect(window.alert).toHaveBeenCalledWith("Failed to mark as no-show"));
     expect(onClose).not.toHaveBeenCalled();
+  });
+});
+
+describe("sanitizeRedirect", () => {
+  it("returns fallback for missing or invalid values", () => {
+    expect(sanitizeRedirect(undefined)).toBe("/dashboard");
+    expect(sanitizeRedirect("")).toBe("/dashboard");
+    expect(sanitizeRedirect("https://evil.com")).toBe("/dashboard");
+    expect(sanitizeRedirect("//evil.com")).toBe("/dashboard");
+    expect(sanitizeRedirect("http://evil.com")).toBe("/dashboard");
+  });
+
+  it("accepts safe relative paths", () => {
+    expect(sanitizeRedirect("/dashboard")).toBe("/dashboard");
+    expect(sanitizeRedirect("/dispatch?tab=jobs")).toBe("/dispatch?tab=jobs");
   });
 });
