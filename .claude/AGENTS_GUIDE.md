@@ -59,17 +59,17 @@ Or be more direct:
 **Purpose:** Complete feature implementation from spec to tests
 
 **When to use:**
-- Implementing features from ENTRETIEN_PRESTIGE_FINAL_SPEC-1.md
+- Implementing features from ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md
 - Building complete workflows (backend + frontend + tests)
 - Multi-component features requiring coordination
 
 **What it does:**
-1. ✅ Reads spec and analyzes requirements
+1. ✅ Reads spec and repo constraints (RLS, validators, French UI, 5 tabs)
 2. ✅ Plans implementation approach
-3. ✅ Generates API routes with Zod validation
-4. ✅ Creates UI components with French labels
-5. ✅ Writes database migrations if needed
-6. ✅ Generates tests with 100% coverage
+3. ✅ Builds API routes (Auth → Validate in lib/validators.ts → RLS → Respond)
+4. ✅ Creates UI (French, 640px max, BottomNavMobile, 5 tabs per role)
+5. ✅ Writes migrations + RLS policies if needed
+6. ✅ Adds targeted tests only when new logic or bug fixes require them
 7. ✅ Updates documentation
 8. ✅ Verifies against spec
 
@@ -82,8 +82,8 @@ Or be more direct:
 - API routes (POST, GET, PATCH, DELETE)
 - React components with forms
 - Database migration (if needed)
-- Test files with 100% coverage
-- Updated CLAUDE.md and READY_TO_DEPLOY.md
+- Targeted tests for changed logic
+- Updated CLAUDE.md and ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
 
 **Typical Duration:** 15-30 minutes
 
@@ -115,7 +115,7 @@ Or be more direct:
 ```
 
 **Expected Output:**
-- SQL migration file: `db/migrations/YYYYMMDD_description.sql`
+- SQL migration file: `supabase/migrations/YYYYMMDD_description.sql`
 - RLS policies for multi-tenancy
 - Sample Supabase queries
 - Rollback statements
@@ -131,7 +131,7 @@ Or be more direct:
 
 **When to use:**
 - Generating tests for new code
-- Achieving 100% test coverage
+- Ensuring required coverage for changed code
 - Finding untested edge cases
 - Running test suites
 - Verifying test quality
@@ -142,8 +142,8 @@ Or be more direct:
 3. ✅ Writes unit tests (lib/ functions)
 4. ✅ Creates integration tests (API routes)
 5. ✅ Writes component tests (React)
-6. ✅ Runs tests and reports coverage
-7. ✅ Identifies edge cases
+6. ✅ Runs targeted tests and reports relevant coverage
+7. ✅ Identifies edge cases only where logic changed
 
 **Example:**
 ```
@@ -152,7 +152,6 @@ Or be more direct:
 
 **Expected Output:**
 - Test files in tests/ directory
-- 100% coverage report
 - Test execution results
 - Suggestions for additional tests
 
@@ -177,7 +176,7 @@ Or be more direct:
 3. ✅ Identifies the minimal fix
 4. ✅ Applies the fix
 5. ✅ Verifies fix works
-6. ✅ Generates regression tests
+6. ✅ Adds a regression test when behavior changes and it adds value
 7. ✅ Updates documentation
 
 **Example:**
@@ -189,7 +188,7 @@ Or be more direct:
 - Root cause analysis
 - Code fix (minimal changes)
 - Verification results
-- Regression test
+- Regression test (when appropriate)
 - Explanation of what was wrong
 
 **Typical Duration:** 5-15 minutes
@@ -214,7 +213,7 @@ Or be more direct:
 4. ✅ Reviews RLS policies
 5. ✅ Validates rate limiting config
 6. ✅ Generates deployment checklist
-7. ✅ Updates READY_TO_DEPLOY.md
+7. ✅ Updates ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
 
 **Example:**
 ```
@@ -224,7 +223,7 @@ Or be more direct:
 **Expected Output:**
 - Deployment readiness report
 - List of blockers (if any)
-- Updated READY_TO_DEPLOY.md
+- Updated ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
 - Deployment checklist
 - Migration execution order
 - Environment variable checklist
@@ -245,14 +244,15 @@ Or be more direct:
 - Pattern consistency check
 
 **What it does:**
-1. ✅ Reads ENTRETIEN_PRESTIGE_FINAL_SPEC-1.md
+1. ✅ Reads ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md
 2. ✅ Reviews code against spec (48+ requirements)
 3. ✅ Checks pattern consistency
 4. ✅ Verifies security (RLS, auth, validation)
-5. ✅ Checks French UI labels
-6. ✅ Reviews mobile-first design (640px)
-7. ✅ Validates error handling
-8. ✅ Generates review report
+5. ✅ Ensures validation schemas are centralized in lib/validators.ts
+6. ✅ Checks French UI labels
+7. ✅ Reviews mobile-first design (640px)
+8. ✅ Validates error handling
+9. ✅ Generates review report
 
 **Example:**
 ```
@@ -276,9 +276,9 @@ Or be more direct:
 
 1. **Plan & Implement:**
    ```
-   "Use feature-builder to create a customer referral tracking system"
-   ```
-   → Agent creates API, UI, migrations, tests
+    "Use feature-builder to create a customer referral tracking system"
+    ```
+    → Agent creates API, UI, migrations, targeted tests
 
 2. **Review:**
    ```
@@ -304,7 +304,7 @@ Or be more direct:
    ```
    "Use qa-engineer to generate regression tests for the SMS fix"
    ```
-   → Agent creates tests to prevent recurrence
+   → Agent creates tests to prevent recurrence when needed
 
 ### Adding Database Tables:
 
@@ -342,7 +342,7 @@ Or be more direct:
 ### 4. Always Review Agent Output
 - Agents are powerful but should be reviewed
 - Check that changes match your intent
-- Run tests manually after major changes
+- Run targeted tests after major changes; full suite before deploy
 
 ### 5. Use Agents for Multi-Step Tasks
 - Single-file changes → Use skills or direct editing
@@ -356,11 +356,11 @@ Or be more direct:
 | Task Type | Use | Example |
 |-----------|-----|---------|
 | Generate single API route | **Skill** (`/api-builder`) | Create one endpoint |
-| Generate API + UI + tests | **Agent** (`feature-builder`) | Complete feature |
+| Generate API + UI + tests (if needed) | **Agent** (`feature-builder`) | Complete feature |
 | Create one SQL migration | **Skill** (`/migration-builder`) | Add columns |
 | Design schema + RLS + queries | **Agent** (`database-architect`) | New table with policies |
 | Generate tests for one file | **Skill** (`/test-generator`) | Single test file |
-| Achieve 100% coverage project-wide | **Agent** (`qa-engineer`) | Find all gaps |
+| Improve coverage for changed areas | **Agent** (`qa-engineer`) | Find relevant gaps |
 | Fix one bug | **Skill** (`/bug-fixer`) | Quick fix |
 | Investigate complex bug | **Agent** (`bug-hunter`) | Root cause analysis |
 | Translate UI text | **Skill** (`/french-ui-helper`) | Quick translations |
@@ -439,5 +439,5 @@ Consider creating a new agent when:
 
 - **SKILLS_GUIDE.md** - Quick code generation tools
 - **CLAUDE.md** - Project architecture and patterns
-- **READY_TO_DEPLOY.md** - Current deployment status
-- **ENTRETIEN_PRESTIGE_FINAL_SPEC-1.md** - Complete requirements
+- **ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md** - Current deployment status
+- **ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md** - Complete requirements

@@ -16,7 +16,7 @@ hooks:
   - type: PreToolUse
     tool: Write
     condition: path.includes('components/') || path.includes('/page.tsx')
-    message: "Remember: 640px max-width, French labels, mobile-first"
+    message: "Remember: 640px max-width, French labels, BottomNavMobile, 5 tabs per role"
   - type: PostToolUse
     tool: Write
     condition: path.includes('components/') || path.includes('/page.tsx')
@@ -37,10 +37,11 @@ Creating pages (app/*/page.tsx) or components
 
 ## What it does
 1. Reads system-prompt (640px mobile-first rule)
-2. Checks AGENTS.md (French labels)
-3. Generates complete component
-4. Tailwind CSS only
-5. Returns ONLY code
+2. Checks AGENTS.md (French labels, BottomNavMobile)
+3. Preserves BottomNavMobile and 5-tab constraint when touching navigation
+4. Generates complete component
+5. Tailwind CSS only
+6. Returns ONLY code
 
 ## Quality checks
 - 640px max width default
@@ -48,3 +49,5 @@ Creating pages (app/*/page.tsx) or components
 - French labels (dict.locale)
 - Zod form validation
 - Accessibility (ARIA, keyboard)
+- BottomNavMobile present on pages
+- Navigation stays at exactly 5 tabs per role

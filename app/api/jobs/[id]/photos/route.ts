@@ -6,6 +6,8 @@ import { photoUploadSchema } from "@/lib/validators";
 import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
+import { captureError } from "@/lib/errorTracking";
+import { getRequestContext } from "@/lib/requestId";
 
 // GET /api/jobs/[id]/photos - List all photos for a job
 export async function GET(
@@ -19,6 +21,10 @@ export async function GET(
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
   const ip = getRequestIp(request);
+  const requestContext = getRequestContext(request, {
+    company_id: profile.company_id,
+    job_id: params.id,
+  });
 
   const { data: photos, error } = await client
     .from("job_photos")
@@ -27,9 +33,9 @@ export async function GET(
     .order("uploaded_at", { ascending: true });
 
   if (error) {
-    console.error("Failed to fetch job photos:", error, {
-      jobId: params.id,
-      companyId: profile.company_id,
+    await captureError(error, {
+      ...requestContext,
+      action: "fetch_job_photos",
     });
     return NextResponse.json(
       { error: "Unable to fetch photos" },
@@ -78,6 +84,11 @@ export async function POST(
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
   const ip = getRequestIp(request);
+  const requestContext = getRequestContext(request, {
+    user_id: user.id,
+    company_id: profile.company_id,
+    job_id: params.id,
+  });
 
   // Verify job exists and user has access
   const { data: job, error: jobError } = await client
@@ -151,7 +162,12 @@ export async function POST(
       .single();
 
     if (updateError) {
-      console.error("Failed to update photo:", updateError);
+      await captureError(updateError, {
+        ...requestContext,
+        action: "update_photo",
+        photo_type,
+        side,
+      });
       return NextResponse.json(
         { error: "Failed to update photo" },
         { status: 500 }
@@ -183,9 +199,11 @@ export async function POST(
     .single();
 
   if (error) {
-    console.error("Failed to upload photo:", error, {
-      jobId: params.id,
-      userId: user.id,
+    await captureError(error, {
+      ...requestContext,
+      action: "upload_photo",
+      photo_type,
+      side,
     });
     return NextResponse.json(
       { error: "Failed to upload photo" },
@@ -216,6 +234,11 @@ export async function DELETE(
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
   const ip = getRequestIp(request);
+  const requestContext = getRequestContext(request, {
+    user_id: profile.user_id,
+    company_id: profile.company_id,
+    job_id: params.id,
+  });
 
   const { searchParams } = new URL(request.url);
   const photoId = searchParams.get("photo_id");
@@ -248,7 +271,11 @@ export async function DELETE(
     .eq("job_id", params.id);
 
   if (error) {
-    console.error("Failed to delete photo:", error);
+    await captureError(error, {
+      ...requestContext,
+      action: "delete_photo",
+      photo_id: photoId,
+    });
     return NextResponse.json(
       { error: "Failed to delete photo" },
       { status: 500 }

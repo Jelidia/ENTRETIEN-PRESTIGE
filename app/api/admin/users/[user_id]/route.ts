@@ -8,6 +8,8 @@ import { z } from "zod";
 import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
+import { captureError } from "@/lib/errorTracking";
+import { getRequestContext } from "@/lib/requestId";
 
 // PATCH /api/admin/users/[user_id] - Update user
 export async function PATCH(
@@ -20,6 +22,11 @@ export async function PATCH(
   const { profile } = auth;
   const userId = params.user_id;
   const ip = getRequestIp(request);
+  const requestContext = getRequestContext(request, {
+    user_id: profile.user_id,
+    company_id: profile.company_id,
+    target_user_id: userId,
+  });
 
   try {
     const body = await request.json();
@@ -73,7 +80,10 @@ export async function PATCH(
       .single();
 
     if (error) {
-      console.error("Failed to update user:", error);
+      await captureError(error, {
+        ...requestContext,
+        action: "update_user",
+      });
       return NextResponse.json(
         { error: "Failed to update user" },
         { status: 500 }
@@ -93,7 +103,10 @@ export async function PATCH(
     await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
     return NextResponse.json(responseBody);
   } catch (err) {
-    console.error("Error updating user:", err);
+    await captureError(err, {
+      ...requestContext,
+      action: "update_user",
+    });
     return NextResponse.json(
       { error: "An error occurred" },
       { status: 500 }
@@ -112,6 +125,11 @@ export async function DELETE(
   const { profile } = auth;
   const userId = params.user_id;
   const ip = getRequestIp(request);
+  const requestContext = getRequestContext(request, {
+    user_id: profile.user_id,
+    company_id: profile.company_id,
+    target_user_id: userId,
+  });
 
   const client = createUserClient(getAccessTokenFromRequest(request) ?? "");
   const idempotency = await beginIdempotency(client, request, profile.user_id, {
@@ -158,7 +176,10 @@ export async function DELETE(
     .eq("user_id", userId);
 
   if (error) {
-    console.error("Failed to delete user:", error);
+    await captureError(error, {
+      ...requestContext,
+      action: "delete_user",
+    });
     return NextResponse.json(
       { error: "Failed to delete user" },
       { status: 500 }

@@ -6,6 +6,8 @@ import { changePasswordSchema } from "@/lib/validators";
 import { getRequestIp, rateLimit } from "@/lib/rateLimit";
 import { logAudit } from "@/lib/audit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
+import { captureError } from "@/lib/errorTracking";
+import { getRequestContext } from "@/lib/requestId";
 
 export async function POST(request: Request) {
   // 1. Authenticate
@@ -13,6 +15,10 @@ export async function POST(request: Request) {
   if ("response" in auth) return auth.response;
 
   const { user, profile } = auth;
+  const requestContext = getRequestContext(request, {
+    user_id: user.id,
+    company_id: profile.company_id,
+  });
 
   const ip = getRequestIp(request);
   const limit = rateLimit(`auth:change-password:${user.id}:${ip}`, 5, 15 * 60 * 1000);
@@ -69,7 +75,10 @@ export async function POST(request: Request) {
   });
 
   if (updateError) {
-    console.error("Password update failed:", updateError);
+    await captureError(updateError, {
+      ...requestContext,
+      action: "change_password",
+    });
     return NextResponse.json(
       { error: "Impossible de mettre à jour le mot de passe" },
       { status: 500 }

@@ -20,16 +20,10 @@ skills:
   - docs-updater
   - spec-enforcer
 hooks:
-  - type: PreToolUse
-    tool: Write
-    script: !`.claude/hooks/validate-write.sh`
-  - type: PostToolUse
-    tool: Write
-    script: !`.claude/hooks/auto-format.sh`
 context:
-  - ENTRETIEN_PRESTIGE_FINAL_SPEC-1.md
+  - ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md
   - CLAUDE.md
-  - READY_TO_DEPLOY.md
+  - ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
 ---
 
 # Feature Builder Agent
@@ -39,17 +33,17 @@ context:
 **Agent Type:** general-purpose
 
 **When to use:**
-- Implementing new features from ENTRETIEN_PRESTIGE_FINAL_SPEC-1.md
+- Implementing new features from ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md
 - Creating complete workflows (API + UI + tests)
 - Multi-step implementations requiring coordination
 
 **What it does:**
-1. Reads spec and analyzes requirements
+1. Reads spec and repo constraints (RLS, validators, French UI, 5 tabs)
 2. Plans implementation approach
-3. Generates API routes with validation
-4. Creates UI components with French labels
-5. Writes database migrations if needed
-6. Generates tests with 100% coverage
+3. Builds API routes (Auth → Validate in lib/validators.ts → RLS → Respond)
+4. Creates UI (French, 640px max, BottomNavMobile, 5 tabs per role)
+5. Writes database migrations + RLS policies if needed
+6. Adds targeted tests when new logic or bug fixes require them
 7. Updates documentation
 8. Verifies against spec
 
@@ -82,5 +76,5 @@ context:
 - ✅ RLS policies applied
 - ✅ French UI labels
 - ✅ 640px mobile-first design
-- ✅ Tests at 100% coverage
+- ✅ Targeted tests added where required
 - ✅ Documentation updated

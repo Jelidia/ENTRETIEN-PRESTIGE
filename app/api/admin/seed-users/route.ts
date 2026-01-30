@@ -6,6 +6,8 @@ import { getRequestIp } from "@/lib/rateLimit";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { createAdminClient, createUserClient } from "@/lib/supabaseServer";
 import { emptyBodySchema, emptyQuerySchema } from "@/lib/validators";
+import { captureError } from "@/lib/errorTracking";
+import { getRequestContext } from "@/lib/requestId";
 
 // WARNING: This endpoint creates users with proper authentication
 // Only use in development/initial setup
@@ -20,7 +22,10 @@ export async function POST(request: Request) {
     return auth.response;
   }
   const { profile } = auth;
-
+  const requestContext = getRequestContext(request, {
+    user_id: profile.user_id,
+    company_id: profile.company_id,
+  });
   const queryResult = emptyQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
   if (!queryResult.success) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
@@ -239,7 +244,10 @@ export async function POST(request: Request) {
     );
     return NextResponse.json(responseBody);
   } catch (error) {
-    console.error("Seed users error:", error);
+    await captureError(error, {
+      ...requestContext,
+      action: "seed_users",
+    });
     return NextResponse.json(
       { error: "Failed to seed users", details: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }

@@ -4,7 +4,7 @@
 
 Full-stack operations platform for Quebec cleaning company with dispatch, CRM, billing, SMS automation, sales pipeline, and commission tracking.
 
-**Status:** ~70-75% complete, foundation solid, APIs working, UI has critical gaps (see READY_TO_DEPLOY.md)
+**Status:** ~70-75% complete, foundation solid, APIs working, UI has critical gaps (see `ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md`)
 
 **Claude Code Integration:** Full development environment with 6 agents, 10 skills, comprehensive hooks, and MCP integration
 
@@ -93,11 +93,21 @@ NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=
 
 ### 3. Database Setup
 
+**Source of truth:** `supabase/migrations/*.sql` (apply in timestamp order)
+
 Run migrations in **Supabase SQL Editor** in this exact order:
 
-1. **Base schema:** Copy from `db/schema.sql` and execute
-2. **Permissions:** Copy from `db/migrations/20260126_add_permissions.sql` and execute
-3. **Complete tables:** Copy from `db/migrations/20260127_complete_spec_implementation.sql` and execute
+1. `supabase/migrations/20260129080548_remote_schema.sql`
+2. `supabase/migrations/20260129100000_add_missing_tables.sql`
+3. `supabase/migrations/20260129120000_add_customer_rating_tokens.sql`
+4. `supabase/migrations/20260129120001_enable_rls_core_tables.sql`
+5. `supabase/migrations/20260129120002_fix_sms_job_assignment_rls.sql`
+6. `supabase/migrations/20260129120003_fix_tenancy_policies.sql`
+7. `supabase/migrations/20260129120004_add_idempotency_keys.sql`
+
+`supabase/schema.sql` is a generated snapshot of the final schema.
+
+**CLI (local Supabase):** `supabase db reset` should apply the same migration order.
 
 **Verify setup:**
 
@@ -109,7 +119,7 @@ SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';
 SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public';
 ```
 
-**Troubleshooting:** See `SQL_MIGRATION_GUIDE.md` if errors occur.
+**Troubleshooting:** See `TROUBLESHOOTING.md` if errors occur.
 
 ### 4. Start Development Server
 
@@ -141,12 +151,14 @@ npm test             # Run all tests with coverage
 npm run test:watch   # Watch mode for development
 ```
 
+Prefer targeted tests first (e.g., `npx vitest run <file>`); run the full suite only when changes are broad or explicitly requested.
+
 **Run specific tests:**
 
 ```bash
 npx vitest run auth                      # Tests matching "auth"
 npx vitest run --grep "pricing"          # Pattern matching
-npx vitest run tests/lib/pricing.test.ts # Specific file
+npx vitest run tests/dashboardMetrics.test.ts # Specific file
 npx vitest run --coverage               # Coverage report
 ```
 
@@ -155,7 +167,7 @@ npx vitest run --coverage               # Coverage report
 ### Type Checking
 
 ```bash
-npx tsc --noEmit     # Type check without building
+npm run typecheck    # Type check without building
 ```
 
 ---
@@ -195,90 +207,24 @@ npx tsc --noEmit     # Type check without building
 ```
 entretien-prestige/
 ├── app/
-│   ├── (app)/                   # Authenticated pages (requires login)
-│   │   ├── dashboard/           # Admin/Manager home
-│   │   ├── sales/               # Sales rep section
-│   │   │   ├── dashboard/       # Sales dashboard with KPIs
-│   │   │   ├── leads/           # Lead management
-│   │   │   ├── schedule/        # Appointments (planned)
-│   │   │   ├── earnings/        # Commission tracking (planned)
-│   │   │   └── settings/        # Personal settings
-│   │   ├── technician/          # Technician section
-│   │   │   ├── page.tsx         # Today's jobs
-│   │   │   ├── schedule/        # Calendar view
-│   │   │   ├── equipment/       # Checklist (planned)
-│   │   │   ├── earnings/        # Commission view (planned)
-│   │   │   └── profile/         # Personal settings
-│   │   ├── customers/           # Customer management
-│   │   ├── team/                # Employee management
-│   │   ├── dispatch/            # Schedule/dispatch view
-│   │   ├── inbox/               # Two-way SMS inbox
-│   │   ├── jobs/                # Job CRUD
-│   │   └── settings/            # Company settings
-│   ├── (auth)/                  # Public auth pages
-│   │   └── login/               # Login page
-│   ├── api/                     # API routes
-│   │   ├── auth/                # Authentication endpoints
-│   │   ├── jobs/                # Job CRUD operations
-│   │   ├── customers/           # Customer operations
-│   │   ├── sms/                 # SMS automation + inbox
-│   │   ├── users/               # User management
-│   │   ├── leads/               # Sales pipeline
-│   │   ├── payments/            # Stripe integration
-│   │   └── admin/               # Admin-only operations
-│   ├── layout.tsx               # Root layout with metadata
+│   ├── (app)/                   # Authenticated app routes
+│   ├── (auth)/                  # Auth routes
+│   ├── (public)/                # Public pages (e.g., ratings)
+│   ├── api/                     # Route handlers
+│   ├── layout.tsx               # Root layout
 │   ├── page.tsx                 # Landing page
-│   └── globals.css              # Tailwind + custom styles
-│
-├── components/
-│   ├── BottomNavMobile.tsx      # Main navigation (5 tabs, role-based)
-│   ├── Pagination.tsx           # No-scroll pagination
-│   ├── BottomSheet.tsx          # Modal from bottom (mobile UX)
-│   ├── Accordion.tsx            # Collapsible sections
-│   ├── NoShowDialog.tsx         # Call → SMS → Skip workflow
-│   └── StatusBadge.tsx          # Consistent status chips
-│
-├── lib/
-│   ├── auth.ts                  # requireUser, requireRole, requirePermission
-│   ├── permissions.ts           # Permission resolution logic
-│   ├── supabaseServer.ts        # createAnonClient, createUserClient, createAdminClient
-│   ├── session.ts               # Session/cookie management
-│   ├── pricing.ts               # Dynamic pricing calculator
-│   ├── smsTemplates.ts          # French SMS templates (10+)
-│   ├── validators.ts            # 33+ Zod validation schemas
-│   ├── twilio.ts                # SMS integration
-│   ├── stripe.ts                # Payment processing
-│   ├── resend.ts                # Email service
-│   ├── rateLimit.ts             # In-memory rate limiting
-│   ├── crypto.ts                # Encryption helpers
-│   ├── types.ts                 # TypeScript types
-│   └── queries.ts               # Common database queries
-│
-├── db/
-│   ├── schema.sql               # Base database schema
+│   └── globals.css              # Global styles
+├── components/                  # Shared UI components
+├── lib/                         # Business logic & utilities
+├── supabase/
+│   ├── schema.sql               # Base schema snapshot
 │   └── migrations/              # Incremental SQL migrations
-│       ├── 20260126_add_permissions.sql
-│       └── 20260127_complete_spec_implementation.sql
-│
 ├── tests/                       # Vitest test files
-│   ├── lib/                     # Unit tests for business logic
-│   ├── api/                     # API route tests
-│   └── components/              # Component tests
-│
 ├── public/                      # Static assets
-├── .env.example                 # Environment variables template
-├── .env.local                   # Local environment (gitignored)
-├── vitest.config.ts             # Test configuration
-├── tsconfig.json                # TypeScript configuration
-├── tailwind.config.ts           # Tailwind CSS configuration
-├── next.config.js               # Next.js configuration
 ├── middleware.ts                # Auth + rate limiting middleware
-│
-├── CLAUDE.md                    # Complete architecture guide (AI assistants)
-├── AGENTS.md                    # Quick reference (ChatGPT/Codex/Copilot)
-├── README.md                    # This file
-├── READY_TO_DEPLOY.md           # Deployment status (70% complete)
-└── SQL_MIGRATION_GUIDE.md       # Database troubleshooting
+├── .env.example                 # Environment variables template
+├── vitest.config.ts             # Test configuration
+└── tsconfig.json                # TypeScript configuration
 ```
 
 ---
@@ -488,6 +434,8 @@ npm run test:watch       # Watch mode
 npx vitest run pricing   # Specific pattern
 ```
 
+Prefer targeted runs while iterating; reserve full-suite runs for broad changes or pre-deploy verification.
+
 ### Coverage Requirements
 
 **100% required** for statements, branches, functions, and lines.
@@ -509,15 +457,14 @@ coverage: {
 
 ```
 tests/
-├── lib/
-│   ├── pricing.test.ts          # Pricing calculator
-│   ├── permissions.test.ts      # Permission resolution
-│   └── crypto.test.ts           # Encryption helpers
-├── api/
-│   ├── auth/login.test.ts       # Login endpoint
-│   └── jobs/create.test.ts      # Job creation
-└── components/
-    └── BottomNavMobile.test.tsx # Navigation
+├── authLoginRoute.test.ts       # Auth route tests
+├── dashboardMetrics.test.ts     # Metrics logic
+├── rateLimit.test.ts            # Rate limiting
+├── technicianDashboard.test.tsx # UI coverage
+└── e2e/
+    └── smoke.spec.ts            # Playwright smoke
+coverage.test.tsx                # Coverage guard
+pagesCoverage.test.tsx           # App route coverage
 ```
 
 ### Example Test
@@ -580,7 +527,7 @@ NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=
 - [ ] Set all environment variables in Vercel
 - [ ] Verify build succeeds: `npm run build`
 - [ ] Run tests: `npm test`
-- [ ] Type check: `npx tsc --noEmit`
+- [ ] Type check: `npm run typecheck`
 - [ ] Lint: `npm run lint`
 
 ### Post-Deploy Verification
@@ -592,7 +539,7 @@ NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=
 - [ ] Verify mobile layout (640px max width)
 - [ ] Check browser console for errors
 
-See `READY_TO_DEPLOY.md` for detailed deployment status and checklist.
+See `ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` for detailed deployment status and checklist.
 
 ---
 
@@ -606,8 +553,8 @@ See `READY_TO_DEPLOY.md` for detailed deployment status and checklist.
 
 ### For Deployment
 
-- **READY_TO_DEPLOY.md** - Implementation status (~70% complete), deployment checklist
-- **SQL_MIGRATION_GUIDE.md** - Database migration troubleshooting
+- **ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md** - Implementation status and deployment checklist
+- **TROUBLESHOOTING.md** - Database migration troubleshooting
 
 ### For Business
 
@@ -630,7 +577,7 @@ See `READY_TO_DEPLOY.md` for detailed deployment status and checklist.
 - `POST /api/sms/send` - Send SMS manually
 - `POST /api/sms/triggers` - Trigger auto-SMS (job_scheduled, reminder_24h, etc.)
 - `GET /api/sms/inbox` - Fetch inbox threads
-- `POST /api/sms/mark-read` - Mark conversation as read
+- `POST /api/sms/inbox/[threadId]/read` - Mark conversation as read
 
 **See `CLAUDE.md` for complete API patterns and examples.**
 
@@ -728,8 +675,8 @@ SELECT company_id FROM jobs WHERE job_id = 'yyy';
 ```
 
 **"Column access_permissions does not exist"**
-- Run `db/migrations/20260126_add_permissions.sql`
-- See `SQL_MIGRATION_GUIDE.md` for details
+- Apply `supabase/migrations/*.sql` in order (starting with `20260129080548_remote_schema.sql`).
+- See `TROUBLESHOOTING.md` for details.
 
 ### Rate Limit Errors in Development
 
@@ -752,18 +699,18 @@ SELECT company_id FROM jobs WHERE job_id = 'yyy';
 **Location:** Grand Montréal, Quebec, Canada
 **Version:** 1.0 (In Development - 70-75% Complete)
 **Specification:** Version 2.0 - Final (January 27, 2026)
-**Status:** NOT READY FOR PRODUCTION (critical bugs found - see READY_TO_DEPLOY.md)
+**Status:** NOT READY FOR PRODUCTION (critical bugs found - see `ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md`)
 
 **For technical questions:**
 - See `CLAUDE.md` - Complete architecture
 - See `AGENTS.md` - Quick reference
-- See `SQL_MIGRATION_GUIDE.md` - Database issues
+- See `TROUBLESHOOTING.md` - Database issues
 
 **For business requirements:**
 - See `ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md` - Full specification
 
 **For deployment:**
-- See `READY_TO_DEPLOY.md` - Status and checklist
+- See `ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` - Status and checklist
 
 ---
 

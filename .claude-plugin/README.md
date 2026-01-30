@@ -93,7 +93,7 @@ Use the bug-hunter agent to investigate why the sales dashboard shows 0 for reve
 - Verifies environment variables
 - Checks database migrations
 - Reviews RLS policies
-- Updates READY_TO_DEPLOY.md
+- Updates ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
 
 **Example:**
 ```
@@ -286,20 +286,22 @@ npx vitest run auth      # Run specific tests
 
 # Filtering
 npx vitest run --grep "login"           # Pattern matching
-npx vitest run lib/pricing.test.ts      # Specific file
+npx vitest run tests/dashboardMetrics.test.ts      # Specific file
 ```
+
+Prefer targeted runs while iterating; reserve full-suite runs for broad changes or pre-deploy verification.
 
 ## 📖 Documentation
 
 ### Core Documentation
 - **CLAUDE.md** - Complete architecture and patterns guide
-- **ENTRETIEN_PRESTIGE_FINAL_SPEC-1.md** - Full project specification
-- **READY_TO_DEPLOY.md** - Deployment readiness status
+- **ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md** - Full project specification
+- **ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md** - Deployment readiness status
 
 ### Guides
 - **AGENTS_GUIDE.md** - Detailed agent documentation
 - **SKILLS_GUIDE.md** - Complete skills reference
-- **SQL_MIGRATION_GUIDE.md** - Database migration troubleshooting
+- **TROUBLESHOOTING.md** - Database migration troubleshooting
 
 ### Quick References
 - **README.md** - Quick start for developers
@@ -365,7 +367,7 @@ npm test -- --run --coverage  # Check coverage
 ### Build errors
 ```bash
 npm run build                 # See detailed errors
-npx tsc --noEmit             # Type-check only
+npm run typecheck            # Type-check only
 ```
 
 ## 📞 Support

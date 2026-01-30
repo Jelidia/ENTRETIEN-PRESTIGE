@@ -6,6 +6,8 @@ import { userCreateSchema } from "@/lib/validators";
 import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
+import { captureError } from "@/lib/errorTracking";
+import { getRequestContext } from "@/lib/requestId";
 
 // GET /api/admin/users - List all users with pagination
 export async function GET(request: Request) {
@@ -13,6 +15,10 @@ export async function GET(request: Request) {
   if ("response" in auth) return auth.response;
 
   const { profile } = auth;
+  const requestContext = getRequestContext(request, {
+    user_id: profile.user_id,
+    company_id: profile.company_id,
+  });
   const { searchParams } = new URL(request.url);
   const page = parseInt(searchParams.get("page") || "1", 10);
   const limit = parseInt(searchParams.get("limit") || "4", 10);
@@ -27,7 +33,10 @@ export async function GET(request: Request) {
     .eq("company_id", profile.company_id);
 
   if (countError) {
-    console.error("Failed to count users:", countError);
+    await captureError(countError, {
+      ...requestContext,
+      action: "count_users",
+    });
     return NextResponse.json({ error: "Failed to load users" }, { status: 500 });
   }
 
@@ -40,7 +49,10 @@ export async function GET(request: Request) {
     .range(offset, offset + limit - 1);
 
   if (error) {
-    console.error("Failed to fetch users:", error);
+    await captureError(error, {
+      ...requestContext,
+      action: "fetch_users",
+    });
     return NextResponse.json({ error: "Failed to load users" }, { status: 500 });
   }
 
@@ -64,6 +76,10 @@ export async function POST(request: Request) {
   if ("response" in auth) return auth.response;
 
   const { profile } = auth;
+  const requestContext = getRequestContext(request, {
+    user_id: profile.user_id,
+    company_id: profile.company_id,
+  });
 
   try {
     const body = await request.json();
@@ -136,7 +152,11 @@ export async function POST(request: Request) {
 
     if (error) {
       await admin.auth.admin.deleteUser(authData.user.id);
-      console.error("Failed to create user:", error);
+      await captureError(error, {
+        ...requestContext,
+        action: "create_user",
+        created_user_id: authData.user.id,
+      });
       return NextResponse.json(
         { error: "Failed to create user" },
         { status: 500 }
@@ -161,7 +181,10 @@ export async function POST(request: Request) {
     await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
     return NextResponse.json(responseBody);
   } catch (err) {
-    console.error("Error creating user:", err);
+    await captureError(err, {
+      ...requestContext,
+      action: "create_user",
+    });
     return NextResponse.json(
       { error: "An error occurred" },
       { status: 500 }

@@ -35,13 +35,14 @@ Creating new endpoints (/api/sales/dashboard, /api/ratings/*, etc)
 ## What it does
 1. Reads system-prompt.txt (knows your rules)
 2. References CLAUDE.md (knows your architecture)
-3. Generates endpoint with Zod validation
-4. Applies company_id filter (RLS)
-5. Returns ONLY code, no explanation
-6. Auto-tests with npm run test
+3. Uses schemas from lib/validators.ts (no inline Zod)
+4. Generates endpoint with Auth → Validate → RLS Query → Respond
+5. Applies company_id filter (RLS)
+6. Returns ONLY code, no explanation
 
 ## Quality checks
 - Zod validation present
+- Validation schema imported from lib/validators.ts
 - company_id filter applied
 - Error handling with status codes
 - TypeScript strict mode

@@ -25,7 +25,7 @@ export function validateEnv() {
     .map((entry) => entry.key);
 
   if (missing.length && process.env.NODE_ENV !== "test") {
-    console.warn(`[env] Missing env vars: ${missing.join(", ")}`);
+    logger.warn("Missing env vars", { missing });
   }
 
   return { missing };
@@ -40,3 +40,4 @@ export function getBaseUrl() {
 export function isProd() {
   return process.env.NODE_ENV === "production";
 }
+import { logger } from "@/lib/logger";

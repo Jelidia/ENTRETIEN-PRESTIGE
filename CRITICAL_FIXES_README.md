@@ -4,7 +4,7 @@
 
 This document explains **four critical database issues** found in the schema and how to fix and verify them.
 
-Note: This repo does not currently include a dedicated migration file for these fixes. Apply the SQL snippets in the Fix sections via the Supabase SQL Editor, or add a migration under `db/migrations/YYYYMMDD_description.sql` if you track migrations in-repo.
+Note: This repo does not currently include a dedicated migration file for these fixes. Apply the SQL snippets in the Fix sections via the Supabase SQL Editor, or add a migration under `supabase/migrations/YYYYMMDD_description.sql` if you track migrations in-repo.
 
 ---
 
@@ -215,7 +215,7 @@ check (
 
 ```bash
 # Apply the SQL from the Fix sections using Supabase SQL Editor
-# (or store it in a migration under db/migrations/YYYYMMDD_description.sql)
+# (or store it in a migration under supabase/migrations/YYYYMMDD_description.sql)
 ```
 
 **What This Does:**

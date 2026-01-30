@@ -111,7 +111,7 @@ Example findings:
 ```
 ❌ No tests found
   File: app/api/sales/dashboard/route.ts
-  Fix: Create tests/api/sales/dashboard.test.ts
+  Fix: Create tests/salesDashboard.test.ts
 
 ⚠️ Coverage below 100%
   File: lib/pricing.ts
@@ -120,14 +120,14 @@ Example findings:
   Fix: Add test case for Quebec holidays
 
 ✅ Comprehensive test suite
-  File: tests/lib/auth.test.ts
+  File: tests/session.test.ts
   Coverage: 100% (statements, branches, functions, lines)
 ```
 
 ### Spec Compliance
 Priority: HIGH
 
-Check against ENTRETIEN_PRESTIGE_FINAL_SPEC-1.md:
+Check against ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md:
 - Required fields present
 - Business rules implemented correctly
 - French labels used
@@ -167,7 +167,7 @@ Example findings:
   Fix: .select("job_id, status, customer_id, scheduled_date")
 
 ⚠️ Missing index
-  File: db/migrations/20260128_add_ratings.sql
+  File: supabase/migrations/YYYYMMDD_add_ratings.sql
   Issue: customer_ratings table has no index on job_id
   Fix: CREATE INDEX idx_ratings_job ON customer_ratings(job_id);
 
@@ -352,7 +352,7 @@ Use this checklist for every review:
 
 ### Be Actionable
 ```
-✅ Good: "Create tests/api/sales/dashboard.test.ts with success case, 401 error, and company filtering test"
+✅ Good: "Create tests/salesDashboard.test.ts with success case, 401 error, and company filtering test"
 
 ❌ Bad: "Add tests"
 ```
@@ -387,7 +387,7 @@ Reviewed the new sales dashboard API endpoint. The core logic is solid, but ther
 ❌ **No tests found**
 - File: app/api/sales/dashboard/route.ts
 - Risk: Untested code in production
-- Fix: Create tests/api/sales/dashboard.test.ts with:
+- Fix: Create tests/salesDashboard.test.ts with:
   - Success case (200)
   - Auth error (401)
   - Wrong role (403)

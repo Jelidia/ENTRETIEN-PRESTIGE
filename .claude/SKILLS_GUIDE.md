@@ -14,8 +14,8 @@ This document lists all available skills for the Entretien Prestige project and 
 | `api-builder` | Generate API routes | Creating new endpoints |
 | `bug-fixer` | Debug and fix bugs | 404 errors, broken features, fake data |
 | `spec-enforcer` | Verify spec compliance | Before deploying features |
-| `test-generator` | Generate tests | After creating routes/components |
-| `ui-builder` | Generate React components | Creating pages or forms |
+| `test-generator` | Generate targeted tests | When logic or behavior changes |
+| `ui-builder` | Generate React components | Creating pages or forms (mobile-first) |
 | `migration-builder` | Generate SQL migrations | Adding/modifying database tables |
 | `french-ui-helper` | Generate French translations | Creating UI text, validation messages |
 | `rls-policy-builder` | Generate RLS policies | Adding access control to tables |
@@ -45,6 +45,7 @@ This document lists all available skills for the Entretien Prestige project and 
 
 **Features:**
 - Zod validation
+- Uses schemas from lib/validators.ts (no inline Zod)
 - RLS filtering by company_id
 - Error handling with status codes
 - TypeScript strict mode
@@ -57,7 +58,7 @@ This document lists all available skills for the Entretien Prestige project and 
 
 **Output:**
 - Complete route.ts file with auth, validation, DB query, error handling
-- Follows 4-step pattern: Auth → Validate → Query → Respond
+- Follows 4-step pattern: Auth → Validate → RLS Query → Respond
 
 ---
 
@@ -68,7 +69,7 @@ This document lists all available skills for the Entretien Prestige project and 
 - Root cause analysis
 - Minimal fixes (no refactoring)
 - Replaces mock data with real Supabase queries
-- Tests the fix
+- Runs targeted tests when needed
 
 **Example:**
 ```bash
@@ -83,7 +84,7 @@ This document lists all available skills for the Entretien Prestige project and 
 ---
 
 ### 3. spec-enforcer
-**Verify code matches ENTRETIEN_PRESTIGE_FINAL_SPEC-1.md requirements**
+**Verify code matches ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md requirements**
 
 **Features:**
 - Checks implementation against spec
@@ -103,13 +104,13 @@ This document lists all available skills for the Entretien Prestige project and 
 ---
 
 ### 4. test-generator
-**Generate Vitest tests with 100% coverage**
+**Generate targeted Vitest tests for changed logic**
 
 **Features:**
 - Unit tests for lib/ functions
 - Integration tests for API routes
 - Component tests for React components
-- Auto-runs `npm test`
+- Runs targeted tests when requested
 
 **Example:**
 ```bash
@@ -118,7 +119,7 @@ This document lists all available skills for the Entretien Prestige project and 
 
 **Output:**
 - Complete test file with success, error, and edge cases
-- Coverage report
+- Coverage summary for touched code
 
 ---
 
@@ -131,6 +132,7 @@ This document lists all available skills for the Entretien Prestige project and 
 - French labels
 - Zod form validation
 - Accessibility (ARIA, keyboard nav)
+- BottomNavMobile stays present; keep 5 tabs per role if nav changes
 
 **Example:**
 ```bash
@@ -216,6 +218,7 @@ This document lists all available skills for the Entretien Prestige project and 
 - Uses createUserClient() for RLS
 - Proper query methods (.single(), .maybeSingle(), .select())
 - Error handling
+- Excludes deleted_at rows when column exists
 
 **Example:**
 ```bash
@@ -230,7 +233,7 @@ This document lists all available skills for the Entretien Prestige project and 
 ---
 
 ### 10. docs-updater
-**Update CLAUDE.md, README.md, READY_TO_DEPLOY.md after changes**
+**Update CLAUDE.md, README.md, ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md after changes**
 
 **Features:**
 - Updates "Current Status" date
@@ -264,7 +267,7 @@ This document lists all available skills for the Entretien Prestige project and 
    ```bash
    /ui-builder Create FeatureForm component
    ```
-4. **Generate tests:**
+4. **Generate tests (when logic changes):**
    ```bash
    /test-generator Create tests for app/api/feature/route.ts
    ```
@@ -284,7 +287,7 @@ This document lists all available skills for the Entretien Prestige project and 
    ```bash
    /bug-fixer Fix: dashboard shows wrong revenue numbers
    ```
-3. **Generate tests to prevent regression:**
+3. **Generate tests to prevent regression (if needed):**
    ```bash
    /test-generator Create tests for lib/dashboardMetrics.ts
    ```
@@ -308,8 +311,9 @@ This document lists all available skills for the Entretien Prestige project and 
 1. **Always use skills for repetitive tasks** - Don't manually write code that follows patterns
 2. **Use docs-updater after every feature** - Keep documentation synchronized
 3. **Use spec-enforcer before deploying** - Catch compliance issues early
-4. **Chain skills together** - Example: api-builder → test-generator → docs-updater
-5. **Use french-ui-helper for all UI text** - Maintain consistent Quebec French
+4. **Chain skills together** - Example: api-builder → test-generator (if needed) → docs-updater
+5. **Avoid unnecessary tests** - Run targeted tests unless asked for full suite
+6. **Use french-ui-helper for all UI text** - Maintain consistent Quebec French
 
 ---
 

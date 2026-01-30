@@ -21,15 +21,11 @@ skills:
 hooks:
   - type: PreToolUse
     tool: Write
-    condition: path.includes('db/migrations/')
+    condition: path.includes('supabase/migrations/')
     script: !`.claude/hooks/validate-migration.sh`
-  - type: PostToolUse
-    tool: Write
-    condition: path.includes('db/migrations/')
-    script: !`.claude/hooks/validate-sql-syntax.sh`
 context:
-  - db/schema.sql
-  - db/migrations/*.sql
+  - supabase/schema.sql
+  - supabase/migrations/*.sql
   - CLAUDE.md
 ---
 
@@ -62,7 +58,7 @@ context:
 ```
 
 **Capabilities:**
-- Reads db/schema.sql and existing migrations
+- Reads supabase/schema.sql and existing migrations
 - Understands Supabase PostgreSQL patterns
 - Creates timestamped migration files
 - Generates RLS policies with company_id filtering
@@ -70,7 +66,7 @@ context:
 - Can use migration-builder, rls-policy-builder, supabase-query-builder skills
 
 **Expected output:**
-- SQL migration file in db/migrations/
+- SQL migration file in supabase/migrations/
 - RLS policies for new tables
 - Sample queries in comments
 - Rollback statements

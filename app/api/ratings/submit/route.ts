@@ -4,6 +4,8 @@ import { ratingSubmitSchema } from "@/lib/validators";
 import { getRequestIp, rateLimit } from "@/lib/rateLimit";
 import { logAudit } from "@/lib/audit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
+import { captureError } from "@/lib/errorTracking";
+import { getRequestContext } from "@/lib/requestId";
 
 // Get Google review URL from company settings
 async function getGoogleReviewUrl(companyId: string): Promise<string | null> {
@@ -24,6 +26,7 @@ async function getGoogleReviewUrl(companyId: string): Promise<string | null> {
 
 export async function POST(request: Request) {
   const ip = getRequestIp(request);
+  const requestContext = getRequestContext(request);
   const limit = rateLimit(`ratings:submit:${ip}`, 10, 15 * 60 * 1000);
   if (!limit.allowed) {
     return NextResponse.json(
@@ -116,7 +119,12 @@ export async function POST(request: Request) {
     .single();
 
   if (ratingError) {
-    console.error("Failed to insert rating:", ratingError);
+    await captureError(ratingError, {
+      ...requestContext,
+      action: "insert_rating",
+      job_id: job.job_id,
+      company_id: job.company_id,
+    });
     return NextResponse.json(
       { error: "Échec de l'enregistrement de l'évaluation" },
       { status: 500 }

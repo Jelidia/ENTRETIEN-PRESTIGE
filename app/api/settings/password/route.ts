@@ -6,6 +6,8 @@ import { changePasswordSchema } from "@/lib/validators";
 import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
+import { captureError } from "@/lib/errorTracking";
+import { getRequestContext } from "@/lib/requestId";
 
 // PATCH /api/settings/password - Change user's own password
 export async function PATCH(request: Request) {
@@ -13,6 +15,10 @@ export async function PATCH(request: Request) {
   if ("response" in auth) return auth.response;
 
   const { profile } = auth;
+  const requestContext = getRequestContext(request, {
+    user_id: profile.user_id,
+    company_id: profile.company_id,
+  });
 
   try {
     const body = await request.json();
@@ -58,7 +64,10 @@ export async function PATCH(request: Request) {
     });
 
     if (updateError) {
-      console.error("Failed to update password:", updateError);
+      await captureError(updateError, {
+        ...requestContext,
+        action: "update_password",
+      });
       return NextResponse.json(
         { error: "Failed to change password" },
         { status: 500 }
@@ -79,7 +88,10 @@ export async function PATCH(request: Request) {
     await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
     return NextResponse.json(responseBody);
   } catch (err) {
-    console.error("Error changing password:", err);
+    await captureError(err, {
+      ...requestContext,
+      action: "change_password",
+    });
     return NextResponse.json(
       { error: "An error occurred" },
       { status: 500 }

@@ -13,7 +13,7 @@ hooks:
   - type: PostToolUse
     tool: Write
     condition: content.includes('supabase.from')
-    script: !`.claude/hooks/validate-supabase-query.sh`
+    script: !`.claude/hooks/check-rls-filter.sh`
 ---
 
 # supabase-query-builder Skill
@@ -36,6 +36,7 @@ Writing database queries in API routes or server components
 - ALWAYS filter by company_id for multi-tenancy
 - Use createUserClient() for RLS-enforced queries
 - Prefer specific columns over SELECT *
+- Exclude deleted_at rows when column exists
 - Use .single() when expecting exactly 1 row
 - Use .maybeSingle() when row might not exist
 - Use .select() for arrays

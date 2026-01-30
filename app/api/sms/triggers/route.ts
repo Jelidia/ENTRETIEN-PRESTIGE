@@ -9,6 +9,8 @@ import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 import { smsTriggerBodySchema } from "@/lib/validators";
+import { captureError } from "@/lib/errorTracking";
+import { getRequestContext } from "@/lib/requestId";
 
 async function resolveThreadId(
   client: ReturnType<typeof createUserClient>,
@@ -43,6 +45,10 @@ export async function POST(request: Request) {
   const client = createUserClient(token ?? "");
   const { profile } = auth;
   const ip = getRequestIp(request);
+  const requestContext = getRequestContext(request, {
+    user_id: profile.user_id,
+    company_id: profile.company_id,
+  });
 
   const body = await request.json().catch(() => ({}));
   const bodyResult = smsTriggerBodySchema.safeParse(body);
@@ -234,10 +240,16 @@ export async function POST(request: Request) {
       };
       await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
       return NextResponse.json(responseBody);
-    } catch (error: any) {
-      console.error("Failed to send SMS:", error);
+    } catch (error) {
+      await captureError(error, {
+        ...requestContext,
+        action: "send_sms",
+        job_id: jobId,
+        event,
+      });
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
       return NextResponse.json(
-        { error: "Failed to send SMS", details: error.message },
+        { error: "Failed to send SMS", details: errorMessage },
         { status: 500 }
       );
     }

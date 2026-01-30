@@ -15,7 +15,10 @@ This directory contains all Claude Code automation configurations for the projec
 ├── SKILLS_GUIDE.md              # Skills documentation
 ├── AGENTS_GUIDE.md              # Agents documentation
 ├── system-prompt.txt            # System instructions
+├── settings.json                # Shared settings
 ├── settings.local.json          # Local settings
+├── hooks/                       # Session + validation hooks
+├── output-styles/               # Output style templates
 ├── skills/                      # Skill definitions (10 total)
 │   ├── api-builder/
 │   ├── bug-fixer/
@@ -34,7 +37,6 @@ This directory contains all Claude Code automation configurations for the projec
 │   ├── bug-hunter.md
 │   ├── deploy-manager.md
 │   └── code-reviewer.md
-└── commands/                    # Custom commands (if any)
 ```
 
 ---
@@ -55,6 +57,15 @@ This directory contains all Claude Code automation configurations for the projec
 "Use the bug-hunter agent to investigate [issue]"
 "Use the deploy-manager agent to verify deployment readiness"
 ```
+
+---
+
+## ✅ Repo Constraints (Keep in Mind)
+
+- API routes: Auth → Validate (lib/validators.ts) → RLS client → Respond
+- Multi-tenancy: company_id isolation enforced by RLS
+- UI: French (Québec) labels, max width 640px, BottomNavMobile always present
+- Navigation: exactly 5 tabs per role in BottomNavMobile
 
 ---
 
@@ -117,12 +128,12 @@ This directory contains all Claude Code automation configurations for the projec
 ### Building a New Feature:
 1. `feature-builder` agent → Complete implementation
 2. `code-reviewer` agent → Verify compliance
-3. `qa-engineer` agent → Ensure 100% coverage
+3. `qa-engineer` agent → Add targeted tests when needed
 4. `deploy-manager` agent → Pre-deploy checks
 
 ### Fixing a Bug:
 1. `bug-hunter` agent → Investigate & fix
-2. `/test-generator` skill → Regression tests
+2. `/test-generator` skill → Regression tests when behavior changes
 3. `/docs-updater` skill → Update docs
 
 ### Database Changes:
@@ -156,8 +167,8 @@ This directory contains all Claude Code automation configurations for the projec
 
 ### Project Context:
 - `../CLAUDE.md` - Project architecture
-- `../READY_TO_DEPLOY.md` - Current status
-- `../ENTRETIEN_PRESTIGE_FINAL_SPEC-1.md` - Requirements
+- `../ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` - Current status
+- `../ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md` - Requirements
 
 ---
 
@@ -194,11 +205,11 @@ This directory contains all Claude Code automation configurations for the projec
 - ✅ When scope is complex
 
 ### General Tips:
-1. **Always use skills/agents** instead of writing boilerplate manually
-2. **Use docs-updater** after every feature completion
-3. **Use code-reviewer** before merging features
-4. **Use deploy-manager** before production deploys
-5. **Chain workflows** (feature-builder → code-reviewer → qa-engineer)
+1. **Use skills/agents** for repeatable patterns, keep changes minimal
+2. **Run targeted tests only**; avoid full-suite runs unless requested or pre-deploy
+3. **Use docs-updater** after every feature completion
+4. **Use code-reviewer** before merging features
+5. **Use deploy-manager** before production deploys
 
 ---
 
@@ -233,7 +244,7 @@ ls .claude/skills/               # Verify directory structure
 - ✅ API routes (auth, validation, RLS)
 - ✅ React components (mobile-first, French)
 - ✅ Database migrations (RLS, indexes)
-- ✅ Test suites (100% coverage)
+- ✅ Targeted test suites for changed logic
 - ✅ Documentation updates
 - ✅ Deployment checks
 

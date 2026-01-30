@@ -1,151 +1,151 @@
 # AGENTS.md
 
 Guidance for agentic coding assistants working in this repo.
-Read `CLAUDE.md` first. It is the authoritative spec for business rules and architecture.
 
-## Repo Snapshot
-- Product: Entretien Prestige (field-service ERP for a Quebec cleaning company)
+Read `CLAUDE.md` first. It is the authoritative guide for business rules, architecture, and production blockers. If you are using Claude Code, follow the skills/agents decision trees described there.
+
+---
+
+## Repo snapshot
+- Product: Entretien Prestige (mobile-first field-service ERP for a Quebec cleaning company)
 - Stack: Next.js 14 App Router, TypeScript, Tailwind, Supabase (Postgres + RLS)
-- Language: French for UI/SMS/customer content; English for code and comments
-- Mobile-first: max width 640px, bottom nav always, no sidebar, exactly 5 tabs per role
+- Language: French for UI/SMS/customer-facing content; English for code/logs
+- UI constraints: max width 640px, bottom nav always, no sidebar, exactly 5 tabs per role
+- Status: not production-ready (see `ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md`)
+
+---
 
 ## Commands
-Install and run:
-```
+### Install / run
+```bash
 npm install
 npm run dev
 npm run build
 npm run start
 npm run lint
+npm run typecheck
 ```
 
-Tests:
-```
-npm test            # vitest run --coverage
-npm run test:watch  # vitest
-```
-
-Run a single test (Vitest):
-```
-npx vitest run auth
+### Unit/integration tests (Vitest)
+```bash
+npm test                 # vitest run --coverage
+npm run test:watch       # vitest
+npx vitest run auth      # match test name pattern
 npx vitest run --grep "login"
 npx vitest run tests/technicianDashboard.test.tsx
 ```
 
-Type check only:
+### E2E tests (Playwright)
+```bash
+npm run test:e2e
+npx playwright test tests/e2e/smoke.spec.ts
+npx playwright test --grep "smoke"
 ```
-npx tsc --noEmit
-```
+Notes: Prefer targeted tests first; run full suite only for broad changes or on request. Coverage thresholds are 100% (see `vitest.config.ts`); `coverage.all` is false by default, so untouched files may not count toward coverage.
 
-Coverage:
-- 100% required (statements, branches, functions, lines)
-- Includes `app/`, `components/`, `lib/`, `middleware.ts`
-- Excludes `.next/`, `tests/`, `vitest.*`
+---
 
-## Code Style and Conventions
-TypeScript and types:
-- Strict mode; avoid `any` (use `unknown` + type guards)
-- Prefer named exports over default exports
-- Use type-only imports where possible
-- Avoid type assertions unless required by an API surface
+## Code style & conventions
+### TypeScript
+- Strict mode is on; avoid `any` (use `unknown` + type guards).
+- Prefer named exports.
+- Use type-only imports where possible.
+- Avoid unsafe assertions unless required.
 
-Imports and module paths:
-- Use `@/` path alias for repo-root imports
-- Avoid relative traversals like `../../` when `@/` works
-- Group imports: external, internal (`@/`), then relative
+### Imports
+- Use `@/` alias for repo-root imports (see `tsconfig.json`).
+- Avoid deep `../../` when `@/` works.
+- Order imports: external → internal (`@/`) → relative.
 
-Naming conventions:
-- Components and types: `PascalCase`
-- Functions and variables: `camelCase`
-- Constants: `UPPER_SNAKE_CASE`
-- API route folders: `kebab-case`
-- Zod schemas: `camelCase` + `Schema` suffix (e.g., `loginSchema`)
+### Formatting
+- No dedicated formatter config; follow existing file style and ESLint guidance.
+- Keep JSX/Tailwind class ordering consistent with nearby code.
 
-Formatting and comments:
-- Follow existing formatting; keep diffs minimal
-- Tailwind utilities are standard; avoid new global styles unless needed
-- Avoid TODO/FIXME placeholders; code must be production-ready
-- Add comments only for non-obvious logic; keep comments in English
-- Check `lib/` for existing helpers before adding new ones
+### Naming
+- Components/types: `PascalCase`.
+- Hooks: `useSomething`.
+- Functions/vars: `camelCase`.
+- Constants: `UPPER_SNAKE_CASE`.
+- API folders/route segments: `kebab-case`.
+- Zod schemas: `camelCaseSchema` (e.g. `loginSchema`).
 
-Localization:
-- French for UI text, SMS templates, and customer-facing messages
-- English is acceptable for technical comments and logs
+### Error handling
+- Response shape: success `{ success: true, data }`, error `{ error: "Message", details?: technicalDetails }`.
+- Do not return raw DB errors to clients; log server-side with context.
+- Fail closed on missing required env vars or integrations (no silent fallbacks).
 
-Validation:
-- Validate all external input with Zod `safeParse`
-- Centralize ALL schemas in `lib/validators.ts` (no inline schemas)
-- Return friendly validation errors; do not leak internals
+### Localization
+- Customer-facing strings and UI labels: French (Quebec).
+- Technical logs/comments: English ok.
 
-Error handling:
-- Return user-friendly messages and appropriate HTTP status codes
-- Do not expose raw `error.message` to clients
-- Log server-side errors with context (e.g., jobId, userId, companyId)
+---
 
-## API Route Pattern
-1) Authenticate with `requireUser`, `requireRole`, or `requirePermission`
-2) Validate input with Zod `safeParse`
-3) Query Supabase with RLS and `company_id` filtering
-4) Return `NextResponse.json`
+## API route requirements (non-public)
+- Authenticate: `requireUser`, `requireRole`, or `requirePermission`.
+- Validate input with Zod in `lib/validators.ts` (no inline schemas in routes).
+- Prefer the RLS client (`createUserClient(accessToken)`).
+- Enforce multi-tenancy in every query (`company_id` scoping).
+- Use consistent response shapes and status codes.
 
-Response shape:
-- Success: `{ success: true, data }`
-- Error: `{ error: "Message", details?: technicalDetails }`
+---
 
-## Data Access Rules
-- No ORM; use Supabase client directly
-- Use `createUserClient` for RLS-enforced access
-- Use admin client only in trusted server code
-- Always filter by `company_id`
-- Prefer explicit column lists over `select("*")`
-- Use `.single()` when exactly one row is expected
-- Use `.maybeSingle()` when a row might not exist
+## Data access rules
+- Use Supabase client directly (no ORM).
+- Prefer explicit column lists over `select("*")`.
+- Use `.single()` when exactly one row is expected; `.maybeSingle()` when optional.
+- If a table has `deleted_at`, exclude soft-deleted rows in queries.
+- Treat webhook/third-party payloads as hostile; verify signatures and be idempotent.
 
-## UI/UX Rules
-- Mobile-first layout, max width 640px, centered on desktop
-- `BottomNavMobile` always present, exactly 5 tabs per role
-- No sidebar; no horizontal scroll
-- Prefer pagination or bottom sheets over long scrolls
+---
 
-## Testing Guidelines
-- Vitest + Testing Library + jsdom
-- 100% coverage required (statements, branches, functions, lines)
-- Unit tests for `lib/` logic in `tests/`
-- Mock Supabase clients for integration tests
+## UI/UX constraints
+- Mobile-first layout; max width 640px and centered on desktop.
+- `BottomNavMobile` always present; exactly 5 tabs per role.
+- No sidebar and no horizontal scrolling.
+- Prefer pagination or bottom sheets over long lists.
+- Reuse shared components where possible (e.g. `BottomNavMobile`, `Pagination`, `BottomSheet`).
 
-## Database Migrations
-- Add SQL files to `db/migrations/YYYYMMDD_description.sql`
-- Apply manually in Supabase SQL editor
-- Keep `db/schema.sql` and migrations in sync with code
+---
 
-## Environment Variables
-Required (local + deploy):
+## Testing guidelines
+- Add tests for new business logic (`lib/`), API routes, and critical UI.
+- If you fix a bug, add a regression test.
+- Prefer the smallest relevant test run while iterating.
+
+---
+
+## Database migrations
+- Migrations live in `supabase/migrations/`.
+- Create `YYYYMMDD_description.sql` files; apply via Supabase SQL editor or local workflow.
+- Validate RLS policies and indexes for any schema changes.
+
+---
+
+## Environment variables
+Required:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY` (server only)
-- `APP_ENCRYPTION_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `APP_ENCRYPTION_KEY` (must be required in production; fail closed)
 - `NEXT_PUBLIC_BASE_URL`
 
-Common optional keys:
+Optional integrations:
 - `TWILIO_*`, `STRIPE_*`, `RESEND_*`, `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`
 
-Never commit secrets. Only `NEXT_PUBLIC_*` may be exposed to the client.
+Rules:
+- Never commit secrets.
+- Only `NEXT_PUBLIC_*` values may be exposed to the client.
 
-## Cursor/Copilot Rules
-- No `.cursor/rules/`, `.cursorrules`, or `.github/copilot-instructions.md` found.
+---
 
-## Useful Files
-- `CLAUDE.md` - full spec and business rules
-- `READY_TO_DEPLOY.md` - implementation status and checklist
-- `README.md` - developer quick start
-- `middleware.ts` - auth checks and rate limiting
-- `lib/auth.ts` - auth helpers
-- `lib/permissions.ts` - permission resolution
-- `lib/validators.ts` - Zod schemas
-- `components/BottomNavMobile.tsx` - 5-tab nav enforcement
-- `vitest.config.ts` - coverage thresholds and test config
+## Where to look first
+- `CLAUDE.md` — architecture + non-negotiable rules (authoritative)
+- `ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` — production readiness
+- `ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md` — requirements/spec
+- `CRITICAL_FIXES_README.md` — immediate fixes overview
+- `TROUBLESHOOTING.md` — database issues and fixes
 
-## Skills and Agents (from CLAUDE.md)
-- If a task matches a listed skill, invoke the skill immediately
-- If work is multi-step or spans 2+ files, delegate to an agent
-- See `CLAUDE.md` for the decision trees and available skills/agents
+---
+
+## Cursor/Copilot rules
+No `.cursor/rules/`, `.cursorrules`, or `.github/copilot-instructions.md` were found at last scan. If you add one, keep it consistent with `CLAUDE.md`.

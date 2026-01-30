@@ -19,11 +19,8 @@ hooks:
     tool: Read
     condition: path.includes('app/api/')
     message: "Checking API route for auth, validation, and RLS compliance..."
-  - type: PostToolUse
-    tool: Grep
-    script: !`.claude/hooks/analyze-security.sh`
 context:
-  - ENTRETIEN_PRESTIGE_FINAL_SPEC-1.md
+  - ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md
   - CLAUDE.md
   - lib/auth.ts
   - lib/validators.ts
@@ -44,14 +41,15 @@ context:
 - Security audit
 
 **What it does:**
-1. Reads ENTRETIEN_PRESTIGE_FINAL_SPEC-1.md
+1. Reads ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md
 2. Reviews code against spec requirements
 3. Checks for pattern consistency
 4. Verifies security (RLS, auth, validation)
-5. Checks French UI labels
-6. Reviews mobile-first design (640px)
-7. Validates error handling
-8. Generates review report
+5. Ensures validation schemas are centralized in lib/validators.ts
+6. Checks French UI labels
+7. Reviews mobile-first design (640px)
+8. Validates error handling
+9. Generates review report
 
 **Example usage:**
 ```bash
@@ -64,7 +62,7 @@ context:
 - Searches codebase for pattern violations
 - Checks all API routes have auth
 - Verifies all queries filter by company_id
-- Checks all forms use Zod validation
+- Checks all forms use Zod validation from lib/validators.ts
 - Verifies French labels are correct
 - Reviews component max-width (640px)
 - Can use spec-enforcer skill
@@ -85,7 +83,7 @@ context:
 - ✅ Feature matches spec requirements (48+ requirements)
 - ✅ All API routes have requireUser/Role/Permission
 - ✅ All queries include company_id filter
-- ✅ All inputs validated with Zod
+- ✅ All inputs validated with Zod from lib/validators.ts
 - ✅ All errors are user-friendly (no DB details leaked)
 - ✅ All UI text is in French
 - ✅ All components max-width 640px

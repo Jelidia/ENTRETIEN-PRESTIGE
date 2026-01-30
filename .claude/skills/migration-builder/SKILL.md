@@ -15,16 +15,16 @@ agent: database-architect
 hooks:
   - type: PreToolUse
     tool: Write
-    condition: path.includes('db/migrations/')
+    condition: path.includes('supabase/migrations/')
     message: "Ensure: company_id column, RLS policies, indexes, timestamps"
   - type: PostToolUse
     tool: Write
-    condition: path.includes('db/migrations/')
-    script: !`.claude/hooks/validate-migration-syntax.sh`
+    condition: path.includes('supabase/migrations/')
+    script: !`.claude/hooks/validate-migration.sh`
   - type: PostToolUse
     tool: Write
-    condition: path.includes('db/migrations/')
-    script: !`.claude/hooks/check-rls-policies.sh`
+    condition: path.includes('supabase/migrations/')
+    script: !`.claude/hooks/check-rls-filter.sh`
 ---
 
 # migration-builder Skill
@@ -37,7 +37,7 @@ Adding/modifying database tables, columns, RLS policies, or indexes
 `/migration-builder Add contract_url, contract_status, id_photo_url, profile_photo_url to users table`
 
 ## What it does
-1. Reads db/schema.sql and existing migrations
+1. Reads supabase/schema.sql and existing migrations
 2. Generates timestamped migration file (YYYYMMDD_description.sql)
 3. Includes:
    - ALTER TABLE statements
@@ -54,6 +54,7 @@ Adding/modifying database tables, columns, RLS policies, or indexes
 - Foreign keys with ON DELETE CASCADE/SET NULL
 - Indexes on frequently queried columns
 - Timestamps (created_at, updated_at) with defaults
+- Add deleted_at when soft delete is required
 
 ## Example output
 ```sql

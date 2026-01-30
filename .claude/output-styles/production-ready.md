@@ -209,7 +209,7 @@ describe("POST /api/jobs", () => {
 ### Migrations Only
 ```sql
 -- ✅ Correct - proper migration
--- Migration: 20260128_add_feature.sql
+-- Migration: YYYYMMDD_add_feature.sql
 
 -- Add column
 ALTER TABLE jobs ADD COLUMN new_field TEXT;
