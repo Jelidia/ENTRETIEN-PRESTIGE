@@ -102,6 +102,10 @@ describe("GET /api/invoices/[id]/pdf", () => {
       params: { id: "inv-1", action: "pdf" },
     });
 
+    if (!response) {
+      throw new Error("No response returned from handler");
+    }
+
     expect(response.status).toBe(200);
     expect(response.headers.get("Content-Type")).toBe("application/pdf");
     expect(selectQuery).toContain("issued_date");
