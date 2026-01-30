@@ -142,7 +142,7 @@ describe("POST /api/auth/forgot-password", () => {
     const response = await callPost({ email: "test@example.com" });
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true });
     expect(mockResetPasswordForEmail).not.toHaveBeenCalled();
   });
 
@@ -189,7 +189,7 @@ describe("POST /api/auth/forgot-password", () => {
     const response = await callPost({ email: "test@example.com" });
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true, success: true });
     expect(mockResetPasswordForEmail).toHaveBeenCalledWith("test@example.com", {
       redirectTo: "https://example.com/reset-password",
     });
@@ -209,7 +209,7 @@ describe("POST /api/auth/forgot-password", () => {
       expect.anything(),
       "ip:hash",
       "hash-1",
-      { ok: true },
+      expect.objectContaining({ ok: true, success: true }),
       200
     );
   });

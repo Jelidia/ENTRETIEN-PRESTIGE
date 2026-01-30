@@ -147,7 +147,7 @@ describe("POST /api/auth/reset-password", () => {
     const response = await callPost({ code: "code", newPassword: "NewPass123!" });
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ success: true });
+    await expect(response.json()).resolves.toMatchObject({ success: true });
     expect(mockExchangeCodeForSession).not.toHaveBeenCalled();
   });
 
@@ -195,7 +195,7 @@ describe("POST /api/auth/reset-password", () => {
     const response = await callPost({ code: "code", newPassword: "NewPass123!" });
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ success: true });
+    await expect(response.json()).resolves.toMatchObject({ success: true });
     expect(mockSetSessionCookies).toHaveBeenCalledWith(response, expect.anything());
     expect(mockLogAudit).toHaveBeenCalled();
     expect(mockCompleteIdempotency).toHaveBeenCalledWith(
@@ -203,7 +203,7 @@ describe("POST /api/auth/reset-password", () => {
       expect.anything(),
       "ip:hash",
       "hash-1",
-      { success: true },
+      expect.objectContaining({ success: true }),
       200
     );
   });

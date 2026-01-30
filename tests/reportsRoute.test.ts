@@ -306,7 +306,7 @@ describe("GET /api/reports/[type]", () => {
     const response = await callGet("dashboard");
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ data: { revenue: 100, jobCount: 2 } });
+    await expect(response.json()).resolves.toMatchObject({ data: { revenue: 100, jobCount: 2 } });
   });
 
   it("returns dashboard stats with no jobs", async () => {
@@ -315,7 +315,7 @@ describe("GET /api/reports/[type]", () => {
     const response = await callGet("dashboard");
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ data: { revenue: 0, jobCount: 0 } });
+    await expect(response.json()).resolves.toMatchObject({ data: { revenue: 0, jobCount: 0 } });
   });
 
   it("returns datasets for report types", async () => {
@@ -329,18 +329,18 @@ describe("GET /api/reports/[type]", () => {
     tableData.incidents = [{ incident_id: "inc-1" }];
     tableData.job_quality_issues = [{ issue_id: "issue-1" }];
 
-    await expect((await callGet("revenue")).json()).resolves.toEqual({ data: tableData.jobs });
-    await expect((await callGet("technician")).json()).resolves.toEqual({ data: tableData.jobs });
-    await expect((await callGet("commission")).json()).resolves.toEqual({ data: tableData.employee_commissions });
-    await expect((await callGet("leads")).json()).resolves.toEqual({ data: tableData.leads });
-    await expect((await callGet("territories")).json()).resolves.toEqual({ data: tableData.sales_territories });
-    await expect((await callGet("leaderboard")).json()).resolves.toEqual({ data: tableData.leaderboard });
-    await expect((await callGet("payroll")).json()).resolves.toEqual({ data: tableData.payroll_statements });
-    await expect((await callGet("checklists")).json()).resolves.toEqual({ data: tableData.shift_checklists });
-    await expect((await callGet("incidents")).json()).resolves.toEqual({ data: tableData.incidents });
-    await expect((await callGet("quality-issues")).json()).resolves.toEqual({ data: tableData.job_quality_issues });
-    await expect((await callGet("quality")).json()).resolves.toEqual({ data: tableData.job_quality_issues });
-    await expect((await callGet("export")).json()).resolves.toEqual({ data: tableData.jobs });
+    await expect((await callGet("revenue")).json()).resolves.toMatchObject({ data: tableData.jobs });
+    await expect((await callGet("technician")).json()).resolves.toMatchObject({ data: tableData.jobs });
+    await expect((await callGet("commission")).json()).resolves.toMatchObject({ data: tableData.employee_commissions });
+    await expect((await callGet("leads")).json()).resolves.toMatchObject({ data: tableData.leads });
+    await expect((await callGet("territories")).json()).resolves.toMatchObject({ data: tableData.sales_territories });
+    await expect((await callGet("leaderboard")).json()).resolves.toMatchObject({ data: tableData.leaderboard });
+    await expect((await callGet("payroll")).json()).resolves.toMatchObject({ data: tableData.payroll_statements });
+    await expect((await callGet("checklists")).json()).resolves.toMatchObject({ data: tableData.shift_checklists });
+    await expect((await callGet("incidents")).json()).resolves.toMatchObject({ data: tableData.incidents });
+    await expect((await callGet("quality-issues")).json()).resolves.toMatchObject({ data: tableData.job_quality_issues });
+    await expect((await callGet("quality")).json()).resolves.toMatchObject({ data: tableData.job_quality_issues });
+    await expect((await callGet("export")).json()).resolves.toMatchObject({ data: tableData.jobs });
   });
 
   it("returns audit log csv with filters", async () => {
@@ -395,7 +395,7 @@ describe("GET /api/reports/[type]", () => {
     const response = await callGet("audit-log");
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ data: [] });
+    await expect(response.json()).resolves.toMatchObject({ data: [] });
   });
 
   it("returns audit log csv with no rows when data is null", async () => {
@@ -447,7 +447,7 @@ describe("POST /api/reports/[type]", () => {
     const response = await callPost("leads", { firstName: "Jean", lastName: "Dupont" });
 
     expect(response.status).toBe(201);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true });
     expect(mockLeadInsert).not.toHaveBeenCalled();
   });
 
@@ -515,7 +515,7 @@ describe("POST /api/reports/[type]", () => {
     const response = await callPost("leads", { firstName: "Jean", lastName: "Dupont" });
 
     expect(response.status).toBe(201);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true });
     expect(mockLeadInsert).toHaveBeenCalledWith(
       expect.objectContaining({
         company_id: "company-1",
@@ -547,7 +547,7 @@ describe("POST /api/reports/[type]", () => {
     const response = await callPost("leads", { firstName: "Jean", lastName: "Dupont" });
 
     expect(response.status).toBe(201);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true });
     expect(mockLeadInsert).toHaveBeenCalledWith(
       expect.objectContaining({
         company_id: "company-1",
@@ -561,7 +561,7 @@ describe("POST /api/reports/[type]", () => {
       expect.anything(),
       "user:user-1",
       "hash-1",
-      { ok: true },
+      expect.objectContaining({ ok: true, success: true }),
       201
     );
   });
@@ -591,7 +591,7 @@ describe("POST /api/reports/[type]", () => {
     const response = await callPost("territories", { territoryName: "Nord", salesRepId: "user-1" });
 
     expect(response.status).toBe(201);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true });
     expect(mockTerritoryInsert).toHaveBeenCalled();
   });
 
@@ -620,7 +620,7 @@ describe("POST /api/reports/[type]", () => {
     const response = await callPost("commission", { employeeId: "emp-1", servicePrice: 200, commissionRate: 10 });
 
     expect(response.status).toBe(201);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true });
     expect(mockCommissionInsert).toHaveBeenCalledWith(
       expect.objectContaining({
         estimated_commission: 20,
@@ -643,7 +643,7 @@ describe("POST /api/reports/[type]", () => {
     const response = await callPost("commission", { employeeId: "emp-1", servicePrice: 200, commissionRate: 10 });
 
     expect(response.status).toBe(201);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true });
     expect(mockCommissionInsert).toHaveBeenCalledWith(
       expect.objectContaining({
         estimated_commission: 42,
@@ -676,7 +676,7 @@ describe("POST /api/reports/[type]", () => {
     const response = await callPost("payroll", { employeeId: "emp-1", year: 2026, month: 1, baseSalary: 1000, netPay: 1150 });
 
     expect(response.status).toBe(201);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true });
     expect(mockPayrollInsert).toHaveBeenCalled();
   });
 
@@ -705,7 +705,7 @@ describe("POST /api/reports/[type]", () => {
     const response = await callPost("checklists", { technicianId: "tech-1", workDate: "2026-02-01" });
 
     expect(response.status).toBe(201);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true });
     expect(mockChecklistInsert).toHaveBeenCalledWith(
       expect.objectContaining({
         shift_status: "pending",
@@ -738,7 +738,7 @@ describe("POST /api/reports/[type]", () => {
     const response = await callPost("incidents", { description: "Incident" });
 
     expect(response.status).toBe(201);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true });
     expect(mockIncidentInsert).toHaveBeenCalledWith(
       expect.objectContaining({
         report_date: expect.any(String),
@@ -771,7 +771,7 @@ describe("POST /api/reports/[type]", () => {
     const response = await callPost("quality-issues", { jobId: "job-1", customerId: "cust-1", complaintType: "quality", description: "Issue" });
 
     expect(response.status).toBe(201);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true });
     expect(mockQualityInsert).toHaveBeenCalledWith(
       expect.objectContaining({
         reported_by: "user-1",
@@ -795,7 +795,7 @@ describe("POST /api/reports/[type]", () => {
     const response = await callPost("quality-issues", { jobId: "job-1", customerId: "cust-1", complaintType: "quality", description: "Issue" });
 
     expect(response.status).toBe(201);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true });
     expect(mockQualityInsert).toHaveBeenCalledWith(
       expect.objectContaining({
         reported_by: "rep-2",

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { loginSchema } from "@/lib/validators";
 import { createAnonClient, createAdminClient } from "@/lib/supabaseServer";
 import { setSessionCookies } from "@/lib/session";
-import { createChallenge, sendTwoFactorCode } from "@/lib/security";
+import { createChallenge } from "@/lib/security";
 import { isSmsConfigured } from "@/lib/twilio";
 import { getRequestIp, rateLimit } from "@/lib/rateLimit";
 import { hashCode } from "@/lib/crypto";
@@ -23,8 +23,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Too many attempts" }, { status: 429 });
   }
 
+  const admin = createAdminClient();
   const anon = createAnonClient();
-  const idempotency = await beginIdempotency(anon, request, null, {
+  const idempotency = await beginIdempotency(admin, request, null, {
     action: "login",
     email: parsed.data.email,
   });
@@ -38,7 +39,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
   }
 
-  const admin = createAdminClient();
   const { data: userRecord } = await admin
     .from("users")
     .select(
@@ -131,14 +131,13 @@ export async function POST(request: Request) {
         method: profile.two_factor_method ?? "sms",
         session: data.session,
       });
-      await sendTwoFactorCode(admin, data.user.id, challenge);
       const responseBody = {
         success: true,
         data: { mfaRequired: true, challengeId: challenge.challenge_id },
         mfaRequired: true,
         challengeId: challenge.challenge_id,
       };
-      await completeIdempotency(anon, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+      await completeIdempotency(admin, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
       return NextResponse.json(responseBody);
     } catch (error) {
       return NextResponse.json({ error: "Unable to send verification code" }, { status: 500 });
@@ -158,6 +157,6 @@ export async function POST(request: Request) {
   const responseBody = { success: true, data: { ok: true }, ok: true };
   const response = NextResponse.json(responseBody);
   setSessionCookies(response, data.session);
-  await completeIdempotency(anon, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+  await completeIdempotency(admin, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
   return response;
 }

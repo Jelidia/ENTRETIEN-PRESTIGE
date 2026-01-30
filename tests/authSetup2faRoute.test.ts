@@ -135,7 +135,10 @@ describe("POST /api/auth/setup-2fa", () => {
     const response = await callPost();
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ ok: true, otpauth: "otpauth://test" });
+    await expect(response.json()).resolves.toMatchObject({
+      ok: true,
+      otpauth: "otpauth://test",
+    });
     expect(mockUserUpdate).not.toHaveBeenCalled();
   });
 
@@ -179,7 +182,11 @@ describe("POST /api/auth/setup-2fa", () => {
     const response = await callPost();
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ ok: true, otpauth: "otpauth://test" });
+    await expect(response.json()).resolves.toMatchObject({
+      ok: true,
+      otpauth: "otpauth://test",
+      success: true,
+    });
     expect(mockUserUpdate).toHaveBeenCalledWith({
       two_factor_secret: "secret",
       two_factor_method: "authenticator",
@@ -192,7 +199,7 @@ describe("POST /api/auth/setup-2fa", () => {
       expect.anything(),
       "user:user-1",
       "hash-1",
-      { ok: true, otpauth: "otpauth://test" },
+      expect.objectContaining({ ok: true, otpauth: "otpauth://test", success: true }),
       200
     );
   });

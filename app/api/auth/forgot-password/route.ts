@@ -23,8 +23,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
+  const admin = createAdminClient();
   const anon = createAnonClient();
-  const idempotency = await beginIdempotency(anon, request, null, {
+  const idempotency = await beginIdempotency(admin, request, null, {
     action: "forgot_password",
     email: parsed.data.email,
   });
@@ -42,7 +43,6 @@ export async function POST(request: Request) {
   });
 
   if (error) {
-    const admin = createAdminClient();
     await logAudit(admin, null, "forgot_password", "user", null, "failed", {
       reason: "reset_email_failed",
       ipAddress: ip,
@@ -52,7 +52,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unable to send reset link" }, { status: 400 });
   }
 
-  const admin = createAdminClient();
   await logAudit(admin, null, "forgot_password", "user", null, "success", {
     ipAddress: ip,
     userAgent: request.headers.get("user-agent") ?? null,
@@ -60,6 +59,6 @@ export async function POST(request: Request) {
   });
 
   const responseBody = { success: true, data: { ok: true }, ok: true };
-  await completeIdempotency(anon, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+  await completeIdempotency(admin, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
   return NextResponse.json(responseBody);
 }

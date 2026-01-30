@@ -51,6 +51,7 @@ vi.mock("@/lib/rateLimit", () => ({
 let createBucketError: { message: string } | null = null;
 let uploadError: { message: string } | null = null;
 let updateError: { message: string } | null = null;
+const TEST_USER_ID = "11111111-1111-1111-1111-111111111111";
 
 const mockCreateBucket = vi.fn(async () => ({ error: createBucketError }));
 const mockUpload = vi.fn(async () => ({ error: uploadError }));
@@ -148,7 +149,7 @@ describe("POST /api/uploads", () => {
   });
 
   it("returns 400 when upload payload is missing", async () => {
-    const response = await callPost({ userId: "user-1" });
+    const response = await callPost({ userId: TEST_USER_ID });
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toEqual({ error: "Invalid upload request" });
   });
@@ -162,9 +163,9 @@ describe("POST /api/uploads", () => {
 
   it("returns 400 for unsupported document type", async () => {
     const file = createTestFile("test.pdf", "application/pdf");
-    const response = await callPost({ userId: "user-1", docType: "unknown", file });
+    const response = await callPost({ userId: TEST_USER_ID, docType: "unknown", file });
     expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toEqual({ error: "Unsupported document type" });
+    await expect(response.json()).resolves.toEqual({ error: "Invalid upload request" });
   });
 
   it("replays idempotency response when available", async () => {
@@ -176,7 +177,7 @@ describe("POST /api/uploads", () => {
 
     const file = createTestFile("id.png", "image/png");
     const response = await callPost({
-      userId: "user-1",
+      userId: TEST_USER_ID,
       docType: "id_front",
       file,
       headers: { "Idempotency-Key": "key-1" },
@@ -196,7 +197,7 @@ describe("POST /api/uploads", () => {
     mockBeginIdempotency.mockResolvedValueOnce({ action: "conflict" });
 
     const file = createTestFile("id.png", "image/png");
-    const response = await callPost({ userId: "user-1", docType: "id_front", file });
+    const response = await callPost({ userId: TEST_USER_ID, docType: "id_front", file });
 
     expect(response.status).toBe(409);
     await expect(response.json()).resolves.toEqual({ error: "Idempotency key conflict" });
@@ -207,7 +208,7 @@ describe("POST /api/uploads", () => {
     mockBeginIdempotency.mockResolvedValueOnce({ action: "in_progress" });
 
     const file = createTestFile("id.png", "image/png");
-    const response = await callPost({ userId: "user-1", docType: "id_front", file });
+    const response = await callPost({ userId: TEST_USER_ID, docType: "id_front", file });
 
     expect(response.status).toBe(409);
     await expect(response.json()).resolves.toEqual({ error: "Request already in progress" });
@@ -218,7 +219,7 @@ describe("POST /api/uploads", () => {
     createBucketError = { message: "boom" };
 
     const file = createTestFile("id.png", "image/png");
-    const response = await callPost({ userId: "user-1", docType: "id_front", file });
+    const response = await callPost({ userId: TEST_USER_ID, docType: "id_front", file });
 
     expect(response.status).toBe(500);
     await expect(response.json()).resolves.toEqual({ error: "Unable to prepare storage" });
@@ -229,12 +230,12 @@ describe("POST /api/uploads", () => {
     uploadError = { message: "upload failed" };
 
     const file = createTestFile("", "");
-    const response = await callPost({ userId: "user-1", docType: "id_front", file });
+    const response = await callPost({ userId: TEST_USER_ID, docType: "id_front", file });
 
     expect(response.status).toBe(500);
     await expect(response.json()).resolves.toEqual({ error: "Unable to upload file" });
     expect(mockUpload).toHaveBeenCalledWith(
-      "company-1/user-1/id_front/1700000000000-document",
+      "company-1/11111111-1111-1111-1111-111111111111/id_front/1700000000000-document",
       expect.any(Buffer),
       expect.objectContaining({ contentType: "application/octet-stream", upsert: true })
     );
@@ -245,7 +246,7 @@ describe("POST /api/uploads", () => {
     updateError = { message: "update failed" };
 
     const file = createTestFile("id.png", "image/png");
-    const response = await callPost({ userId: "user-1", docType: "id_front", file });
+    const response = await callPost({ userId: TEST_USER_ID, docType: "id_front", file });
 
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toEqual({ error: "Unable to update user" });
@@ -256,18 +257,18 @@ describe("POST /api/uploads", () => {
     createBucketError = { message: "Already exists" };
 
     const file = createTestFile("signature.png", "image/png");
-    const response = await callPost({ userId: "user-1", docType: "signature", file });
+    const response = await callPost({ userId: TEST_USER_ID, docType: "signature", file });
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({
+    await expect(response.json()).resolves.toMatchObject({
       ok: true,
-      path: "company-1/user-1/signature/1700000000000-signature.png",
+      path: "company-1/11111111-1111-1111-1111-111111111111/signature/1700000000000-signature.png",
       field: "contract_signature_url",
     });
 
     expect(updateQuery.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        contract_signature_url: "company-1/user-1/signature/1700000000000-signature.png",
+        contract_signature_url: "company-1/11111111-1111-1111-1111-111111111111/signature/1700000000000-signature.png",
         contract_signed_at: expect.any(String),
       })
     );
@@ -278,11 +279,12 @@ describe("POST /api/uploads", () => {
       expect.objectContaining({ url: "https://example.com/api/uploads" }),
       "scope-1",
       "hash-1",
-      {
+      expect.objectContaining({
         ok: true,
-        path: "company-1/user-1/signature/1700000000000-signature.png",
+        success: true,
+        path: "company-1/11111111-1111-1111-1111-111111111111/signature/1700000000000-signature.png",
         field: "contract_signature_url",
-      },
+      }),
       200
     );
 

@@ -4,7 +4,7 @@ import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 import { getRequestIp, rateLimit } from "@/lib/rateLimit";
 import { createAdminClient, createAnonClient } from "@/lib/supabaseServer";
 import { setSessionCookies } from "@/lib/session";
-import { createChallenge, sendTwoFactorCode } from "@/lib/security";
+import { createChallenge } from "@/lib/security";
 import { isSmsConfigured } from "@/lib/twilio";
 import { logAudit } from "@/lib/audit";
 
@@ -27,9 +27,8 @@ const { mockSetSessionCookies } = vi.hoisted(() => ({
   mockSetSessionCookies: vi.fn(),
 }));
 
-const { mockCreateChallenge, mockSendTwoFactorCode } = vi.hoisted(() => ({
+const { mockCreateChallenge } = vi.hoisted(() => ({
   mockCreateChallenge: vi.fn(),
-  mockSendTwoFactorCode: vi.fn(),
 }));
 
 const { mockIsSmsConfigured } = vi.hoisted(() => ({
@@ -65,7 +64,6 @@ vi.mock("@/lib/session", () => ({
 
 vi.mock("@/lib/security", () => ({
   createChallenge: mockCreateChallenge,
-  sendTwoFactorCode: mockSendTwoFactorCode,
 }));
 
 vi.mock("@/lib/twilio", () => ({
@@ -170,7 +168,6 @@ beforeEach(() => {
   });
   mockCompleteIdempotency.mockResolvedValue(undefined);
   mockCreateChallenge.mockResolvedValue({ challenge_id: "challenge-1" });
-  mockSendTwoFactorCode.mockResolvedValue(undefined);
   mockIsSmsConfigured.mockReturnValue(true);
   mockLogAudit.mockResolvedValue(undefined);
 });
@@ -330,7 +327,7 @@ describe("POST /api/auth/login", () => {
     const response = await callPost({ email: "test@example.com", password: "password" });
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true });
     expect(mockSignInWithPassword).toHaveBeenCalled();
   });
 
@@ -350,7 +347,7 @@ describe("POST /api/auth/login", () => {
     const response = await callPost({ email: "test@example.com", password: "password" });
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true });
     expect(mockSignInWithPassword).toHaveBeenCalled();
   });
 
@@ -364,7 +361,7 @@ describe("POST /api/auth/login", () => {
     const response = await callPost({ email: "test@example.com", password: "password" });
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true });
     expect(mockSignInWithPassword).not.toHaveBeenCalled();
   });
 
@@ -455,7 +452,7 @@ describe("POST /api/auth/login", () => {
     const response = await callPost({ email: "test@example.com", password: "password" });
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true });
     expect(mockSetSessionCookies).toHaveBeenCalledWith(response, expect.anything());
     expect(mockUserUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -467,7 +464,7 @@ describe("POST /api/auth/login", () => {
       expect.anything(),
       "ip:hash",
       "hash-1",
-      { ok: true },
+      expect.objectContaining({ ok: true, success: true }),
       200
     );
   });
@@ -485,14 +482,21 @@ describe("POST /api/auth/login", () => {
     const response = await callPost({ email: "test@example.com", password: "password" });
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ mfaRequired: true, challengeId: "challenge-1" });
-    expect(mockSendTwoFactorCode).toHaveBeenCalled();
+    await expect(response.json()).resolves.toMatchObject({
+      mfaRequired: true,
+      challengeId: "challenge-1",
+      success: true,
+    });
     expect(mockCompleteIdempotency).toHaveBeenCalledWith(
       expect.anything(),
       expect.anything(),
       "ip:hash",
       "hash-1",
-      { mfaRequired: true, challengeId: "challenge-1" },
+      expect.objectContaining({
+        mfaRequired: true,
+        challengeId: "challenge-1",
+        success: true,
+      }),
       200
     );
   });
@@ -510,7 +514,11 @@ describe("POST /api/auth/login", () => {
     const response = await callPost({ email: "test@example.com", password: "password" });
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ mfaRequired: true, challengeId: "challenge-1" });
+    await expect(response.json()).resolves.toMatchObject({
+      mfaRequired: true,
+      challengeId: "challenge-1",
+      success: true,
+    });
     expect(mockCreateChallenge).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ method: "sms" })
@@ -585,7 +593,7 @@ describe("POST /api/auth/login", () => {
     const response = await callPost({ email: "test@example.com", password: "password" });
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true });
     expect(mockSessionInsert).toHaveBeenCalledWith(
       expect.objectContaining({
         ip_address: null,

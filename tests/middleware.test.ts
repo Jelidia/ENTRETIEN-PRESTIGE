@@ -60,19 +60,11 @@ describe("middleware", () => {
     expect(response?.status).toBe(429);
   });
 
-  it("redirects unauthenticated protected paths", () => {
+  it("passes through protected paths without redirect", () => {
     const request = createRequest("https://example.com/dashboard");
     const response = middleware(request);
-    expect(response.status).toBe(307);
-    expect(response.headers.get("location")).toContain("/login");
-  });
-
-  it("allows protected paths with access token", () => {
-    const request = createRequest("https://example.com/dashboard", {
-      cookies: { ep_access_token: "token" },
-    });
-    const response = middleware(request);
     expect(response.status).toBe(200);
+    expect(response.headers.get("x-request-id")).toBeDefined();
   });
 
   it("passes through public paths", () => {

@@ -6,6 +6,7 @@ import { logAudit } from "@/lib/audit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 import { captureError } from "@/lib/errorTracking";
 import { getRequestContext } from "@/lib/requestId";
+import { hashCode, timingSafeEqualHex } from "@/lib/crypto";
 
 // Get Google review URL from company settings
 async function getGoogleReviewUrl(companyId: string): Promise<string | null> {
@@ -46,6 +47,7 @@ export async function POST(request: Request) {
   }
 
   const { token, rating_score, feedback, technician_mentioned } = validation.data;
+  const tokenHash = hashCode(token);
 
   const admin = createAdminClient();
   const idempotency = await beginIdempotency(admin, request, null, validation.data);
@@ -62,8 +64,8 @@ export async function POST(request: Request) {
   // Validate token
   const { data: ratingToken, error: tokenError } = await admin
     .from("customer_rating_tokens")
-    .select("token_id, job_id, expires_at, used_at")
-    .eq("token", token)
+    .select("token_id, job_id, expires_at, used_at, token_hash")
+    .eq("token_hash", tokenHash)
     .maybeSingle();
 
   if (tokenError || !ratingToken) {
@@ -73,8 +75,16 @@ export async function POST(request: Request) {
     );
   }
 
+  if (!timingSafeEqualHex(tokenHash, ratingToken.token_hash)) {
+    return NextResponse.json(
+      { error: "Token invalide" },
+      { status: 404 }
+    );
+  }
+
   // Check if token is expired
   const now = new Date();
+  const nowIso = now.toISOString();
   const expiresAt = new Date(ratingToken.expires_at);
 
   if (now > expiresAt) {
@@ -92,6 +102,21 @@ export async function POST(request: Request) {
     );
   }
 
+  const { data: consumedToken, error: consumeError } = await admin
+    .from("customer_rating_tokens")
+    .update({ used_at: nowIso })
+    .eq("token_id", ratingToken.token_id)
+    .is("used_at", null)
+    .select("token_id, job_id")
+    .maybeSingle();
+
+  if (consumeError || !consumedToken) {
+    return NextResponse.json(
+      { error: "Ce lien a déjà été utilisé" },
+      { status: 410 }
+    );
+  }
+
   // Get job details
   const { data: job, error: jobError } = await admin
     .from("jobs")
@@ -100,6 +125,10 @@ export async function POST(request: Request) {
     .single();
 
   if (jobError || !job) {
+    await admin
+      .from("customer_rating_tokens")
+      .update({ used_at: null })
+      .eq("token_id", ratingToken.token_id);
     return NextResponse.json(
       { error: "Service introuvable" },
       { status: 404 }
@@ -119,6 +148,10 @@ export async function POST(request: Request) {
     .single();
 
   if (ratingError) {
+    await admin
+      .from("customer_rating_tokens")
+      .update({ used_at: null })
+      .eq("token_id", ratingToken.token_id);
     await captureError(ratingError, {
       ...requestContext,
       action: "insert_rating",
@@ -130,12 +163,6 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-
-  // Mark token as used
-  await admin
-    .from("customer_rating_tokens")
-    .update({ used_at: now.toISOString() })
-    .eq("token_id", ratingToken.token_id);
 
   // If 4-5 stars and technician mentioned, create bonus record
   if (rating_score >= 4 && technician_mentioned && job.technician_id) {

@@ -68,6 +68,7 @@ create table auth_challenges (
   code_hash text not null,
   session_payload text not null,
   expires_at timestamptz not null,
+  attempt_count int not null default 0,
   consumed_at timestamptz,
   created_at timestamptz default now()
 );
@@ -232,7 +233,7 @@ create table jobs (
 create table customer_rating_tokens (
   token_id uuid primary key default gen_random_uuid(),
   job_id uuid references jobs(job_id) on delete cascade,
-  token text not null unique,
+  token_hash text not null unique,
   expires_at timestamptz not null,
   used_at timestamptz,
   created_at timestamptz default now()
@@ -694,7 +695,7 @@ create index idx_jobs_company_id on jobs(company_id);
 create index idx_jobs_customer_id on jobs(customer_id);
 create index idx_jobs_technician_id on jobs(technician_id);
 create index idx_rating_tokens_job on customer_rating_tokens(job_id);
-create index idx_rating_tokens_token on customer_rating_tokens(token);
+create index idx_rating_tokens_hash on customer_rating_tokens(token_hash);
 create index idx_invoices_company_id on invoices(company_id);
 create index idx_invoices_customer_id on invoices(customer_id);
 create index idx_notifications_user_id on notifications(user_id);
@@ -1052,14 +1053,6 @@ create policy history_company_read on job_history
     )
   );
 
-create policy rating_tokens_public_read on customer_rating_tokens
-  for select
-  using (true);
-
-create policy rating_tokens_public_update on customer_rating_tokens
-  for update
-  using (used_at is null);
-
 create policy auth_challenges_owner_insert on auth_challenges
   for insert
   with check (user_id = auth.uid());
@@ -1131,15 +1124,48 @@ create policy subscriptions_company_write on customer_subscriptions
 create policy availability_own_or_manager on employee_availability
   for select
   using (
-    user_id = auth.uid()
-    or public.is_manager_or_admin()
+    company_id = (select company_id from users where user_id = auth.uid())
+    and (
+      user_id = auth.uid()
+      or public.is_manager_or_admin()
+    )
   );
 
 create policy availability_own_or_manager_insert on employee_availability
   for insert
   with check (
-    user_id = auth.uid()
-    or public.is_manager_or_admin()
+    company_id = (select company_id from users where user_id = auth.uid())
+    and (
+      user_id = auth.uid()
+      or public.is_manager_or_admin()
+    )
+  );
+
+create policy availability_own_or_manager_update on employee_availability
+  for update
+  using (
+    company_id = (select company_id from users where user_id = auth.uid())
+    and (
+      user_id = auth.uid()
+      or public.is_manager_or_admin()
+    )
+  )
+  with check (
+    company_id = (select company_id from users where user_id = auth.uid())
+    and (
+      user_id = auth.uid()
+      or public.is_manager_or_admin()
+    )
+  );
+
+create policy availability_own_or_manager_delete on employee_availability
+  for delete
+  using (
+    company_id = (select company_id from users where user_id = auth.uid())
+    and (
+      user_id = auth.uid()
+      or public.is_manager_or_admin()
+    )
   );
 
 create policy bonuses_company_isolation on google_review_bonuses
@@ -1175,6 +1201,33 @@ create policy job_photos_company_isolation on job_photos
 create policy job_photos_company_write on job_photos
   for insert
   with check (
+    exists (
+      select 1 from jobs j
+      where j.job_id = job_photos.job_id
+        and j.company_id = (select company_id from users where user_id = auth.uid())
+    )
+  );
+
+create policy job_photos_company_update on job_photos
+  for update
+  using (
+    exists (
+      select 1 from jobs j
+      where j.job_id = job_photos.job_id
+        and j.company_id = (select company_id from users where user_id = auth.uid())
+    )
+  )
+  with check (
+    exists (
+      select 1 from jobs j
+      where j.job_id = job_photos.job_id
+        and j.company_id = (select company_id from users where user_id = auth.uid())
+    )
+  );
+
+create policy job_photos_company_delete on job_photos
+  for delete
+  using (
     exists (
       select 1 from jobs j
       where j.job_id = job_photos.job_id

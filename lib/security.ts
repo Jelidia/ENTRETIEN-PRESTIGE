@@ -13,6 +13,8 @@ type ChallengePayload = {
   expires_at: string;
 };
 
+const MAX_CHALLENGE_ATTEMPTS = 5;
+
 export function generateAuthenticatorSecret(label: string) {
   const secret = authenticator.generateSecret();
   const otpauth = authenticator.keyuri(label, "Entretien Prestige", secret);
@@ -98,10 +100,30 @@ export async function consumeChallenge(
     return null;
   }
 
+  if (data.consumed_at) {
+    return null;
+  }
+
   const expired = new Date(data.expires_at).getTime() < Date.now();
   if (expired) {
     return null;
   }
+
+  const attempts = data.attempt_count ?? 0;
+  if (attempts >= MAX_CHALLENGE_ATTEMPTS) {
+    return null;
+  }
+
+  const recordFailedAttempt = async () => {
+    const nextAttempts = attempts + 1;
+    await admin
+      .from("auth_challenges")
+      .update({
+        attempt_count: nextAttempts,
+        consumed_at: nextAttempts >= MAX_CHALLENGE_ATTEMPTS ? new Date().toISOString() : null,
+      })
+      .eq("challenge_id", challengeId);
+  };
 
   if (data.method === "authenticator") {
     const { data: profile } = await admin
@@ -111,16 +133,25 @@ export async function consumeChallenge(
       .single();
     const secret = profile?.two_factor_secret ? decryptPayload(profile.two_factor_secret) : "";
     if (!secret || !authenticator.check(code, secret)) {
+      await recordFailedAttempt();
       return null;
     }
   } else if (data.code_hash !== hashCode(code)) {
+    await recordFailedAttempt();
     return null;
   }
 
-  await admin
+  const { data: consumed } = await admin
     .from("auth_challenges")
     .update({ consumed_at: new Date().toISOString() })
-    .eq("challenge_id", challengeId);
+    .eq("challenge_id", challengeId)
+    .is("consumed_at", null)
+    .select("challenge_id")
+    .maybeSingle();
+
+  if (!consumed) {
+    return null;
+  }
 
   const sessionRaw = decryptPayload(data.session_payload ?? "");
   if (!sessionRaw) {

@@ -162,7 +162,7 @@ describe("POST /api/auth/register", () => {
     const response = await callPost({ email: "test@example.com" });
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true });
     expect(mockCompanyInsert).not.toHaveBeenCalled();
   });
 
@@ -215,7 +215,7 @@ describe("POST /api/auth/register", () => {
     const response = await callPost({ email: "test@example.com" });
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true, success: true });
     expect(mockProfileInsert).toHaveBeenCalledWith(
       expect.objectContaining({
         two_factor_enabled: true,
@@ -227,7 +227,7 @@ describe("POST /api/auth/register", () => {
       expect.anything(),
       "ip:hash",
       "hash-1",
-      { ok: true },
+      expect.objectContaining({ ok: true, success: true }),
       200
     );
   });
@@ -238,7 +238,7 @@ describe("POST /api/auth/register", () => {
     const response = await callPost({ email: "test@example.com" });
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true, success: true });
     expect(mockProfileInsert).toHaveBeenCalledWith(
       expect.objectContaining({
         two_factor_enabled: false,

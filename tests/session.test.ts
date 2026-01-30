@@ -1,3 +1,4 @@
+import { createHmac } from "crypto";
 import { describe, expect, it, vi } from "vitest";
 import { NextResponse } from "next/server";
 import type { Session } from "@supabase/supabase-js";
@@ -8,6 +9,7 @@ import {
   getRefreshTokenFromRequest,
   setSessionCookies,
 } from "@/lib/session";
+import { verifyTwilioSignature } from "@/lib/twilio";
 
 const { cookieValue } = vi.hoisted(() => ({
   cookieValue: { value: "cookie-token" as string | undefined },
@@ -93,5 +95,46 @@ describe("session helpers", () => {
     cookieValue.value = undefined;
     expect(getAccessTokenFromCookies()).toBeNull();
     cookieValue.value = "cookie-token";
+  });
+});
+
+function createSignature(url: string, params: Record<string, string>, authToken: string) {
+  const data = Object.keys(params)
+    .sort()
+    .reduce((acc, key) => acc + key + params[key], url);
+  return createHmac("sha1", authToken).update(data).digest("base64");
+}
+
+describe("twilio signature verification", () => {
+  it("accepts a valid signature", () => {
+    const authToken = "test-auth-token";
+    const url = "https://example.com/api/sms/webhook";
+    const params = {
+      Body: "Bonjour",
+      From: "+15551234567",
+      MessageSid: "SM123",
+    };
+    const signature = createSignature(url, params, authToken);
+
+    const isValid = verifyTwilioSignature({ signature, url, params, authToken });
+    expect(isValid).toBe(true);
+  });
+
+  it("rejects an invalid signature", () => {
+    const authToken = "test-auth-token";
+    const url = "https://example.com/api/sms/webhook";
+    const params = {
+      Body: "Bonjour",
+      From: "+15551234567",
+    };
+
+    const isValid = verifyTwilioSignature({
+      signature: "bad-signature",
+      url,
+      params,
+      authToken,
+    });
+
+    expect(isValid).toBe(false);
   });
 });

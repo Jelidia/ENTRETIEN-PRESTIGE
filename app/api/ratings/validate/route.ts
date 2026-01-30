@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabaseServer";
+import { hashCode, timingSafeEqualHex } from "@/lib/crypto";
 import { getRequestIp, rateLimit } from "@/lib/rateLimit";
 import { ratingsValidateQuerySchema } from "@/lib/validators";
 
@@ -22,17 +23,25 @@ export async function GET(request: Request) {
     );
   }
   const { token } = queryResult.data;
+  const tokenHash = hashCode(token);
 
   const admin = createAdminClient();
 
   // Find the rating token
   const { data: ratingToken, error: tokenError } = await admin
     .from("customer_rating_tokens")
-    .select("token_id, job_id, expires_at, used_at")
-    .eq("token", token)
+    .select("token_id, job_id, expires_at, used_at, token_hash")
+    .eq("token_hash", tokenHash)
     .maybeSingle();
 
   if (tokenError || !ratingToken) {
+    return NextResponse.json(
+      { error: "Token invalide" },
+      { status: 404 }
+    );
+  }
+
+  if (!timingSafeEqualHex(tokenHash, ratingToken.token_hash)) {
     return NextResponse.json(
       { error: "Token invalide" },
       { status: 404 }

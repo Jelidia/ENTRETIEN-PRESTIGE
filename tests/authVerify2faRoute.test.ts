@@ -175,7 +175,7 @@ describe("POST /api/auth/verify-2fa", () => {
     const response = await callPost({ challengeId: "challenge-1", code: "123456" });
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true });
     expect(mockConsumeChallenge).not.toHaveBeenCalled();
   });
 
@@ -212,7 +212,7 @@ describe("POST /api/auth/verify-2fa", () => {
     const response = await callPost({ challengeId: "challenge-1", code: "123456" });
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true, success: true });
     expect(mockSessionInsert).not.toHaveBeenCalled();
     expect(mockLogAudit).not.toHaveBeenCalled();
     expect(mockSetSessionCookies).toHaveBeenCalled();
@@ -222,7 +222,7 @@ describe("POST /api/auth/verify-2fa", () => {
     const response = await callPost({ challengeId: "challenge-1", code: "123456" });
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true, success: true });
     expect(mockSessionInsert).toHaveBeenCalledWith(
       expect.objectContaining({
         user_id: "user-1",
@@ -237,7 +237,7 @@ describe("POST /api/auth/verify-2fa", () => {
       expect.anything(),
       "ip:hash",
       "hash-1",
-      { ok: true },
+      expect.objectContaining({ ok: true, success: true }),
       200
     );
   });
@@ -254,7 +254,7 @@ describe("POST /api/auth/verify-2fa", () => {
     );
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true, success: true });
     expect(mockSessionInsert).toHaveBeenCalledWith(
       expect.objectContaining({
         ip_address: null,

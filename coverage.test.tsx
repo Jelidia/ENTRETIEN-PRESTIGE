@@ -154,6 +154,7 @@ describe("env helpers", () => {
 describe("crypto helpers", () => {
   const env = process.env as Record<string, string | undefined>;
   const originalKey = env.APP_ENCRYPTION_KEY;
+  const originalNodeEnv = env.NODE_ENV;
 
   beforeEach(() => {
     vi.resetModules();
@@ -161,27 +162,26 @@ describe("crypto helpers", () => {
 
   afterEach(() => {
     env.APP_ENCRYPTION_KEY = originalKey;
+    env.NODE_ENV = originalNodeEnv;
   });
 
-  it("returns plaintext when no encryption key is set", async () => {
+  it("throws when no encryption key is set", async () => {
     delete env.APP_ENCRYPTION_KEY;
-    const { encryptPayload, decryptPayload, hashCode } = await import("@/lib/crypto");
-    const payload = "hello";
-    expect(encryptPayload(payload)).toBe(payload);
-    expect(decryptPayload(payload)).toBe(payload);
-    expect(hashCode("value")).toHaveLength(64);
+    env.NODE_ENV = "production";
+    await expect(import("@/lib/crypto")).rejects.toThrow(/APP_ENCRYPTION_KEY/);
   });
 
   it("encrypts and decrypts payloads when key exists", async () => {
     env.APP_ENCRYPTION_KEY = Buffer.from(
       "12345678901234567890123456789012"
     ).toString("base64");
-    const { encryptPayload, decryptPayload } = await import("@/lib/crypto");
+    const { encryptPayload, decryptPayload, hashCode } = await import("@/lib/crypto");
     const payload = "secret";
     const encrypted = encryptPayload(payload);
     expect(encrypted).not.toBe(payload);
     expect(decryptPayload(encrypted)).toBe(payload);
     expect(decryptPayload("invalid")).toBe("");
+    expect(hashCode("value")).toHaveLength(64);
   });
 });
 

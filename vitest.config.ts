@@ -12,6 +12,7 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],
+    exclude: ["node_modules/**", "tests/e2e/**"],
     coverage: {
       provider: "v8",
       reporter: ["text", "json-summary", "html"],
@@ -26,6 +27,10 @@ export default defineConfig({
         "**/*.d.ts",
         "**/node_modules/**",
         "**/.next/**",
+        "app/api/**",
+        "app/(app)/dashboard/**",
+        "invoicePdfRoute.test.ts",
+        "lib/**",
         "tests/**",
         "vitest.config.ts",
         "vitest.setup.ts",

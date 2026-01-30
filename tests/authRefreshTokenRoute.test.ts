@@ -128,7 +128,7 @@ describe("POST /api/auth/refresh-token", () => {
     const response = await callPost();
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true });
     expect(mockRefreshSession).not.toHaveBeenCalled();
   });
 
@@ -163,14 +163,14 @@ describe("POST /api/auth/refresh-token", () => {
     const response = await callPost();
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true, success: true });
     expect(mockSetSessionCookies).toHaveBeenCalledWith(response, expect.anything());
     expect(mockCompleteIdempotency).toHaveBeenCalledWith(
       expect.anything(),
       expect.anything(),
       "ip:hash",
       "hash-1",
-      { ok: true },
+      expect.objectContaining({ ok: true, success: true }),
       200
     );
     expect(mockLogAudit).toHaveBeenCalled();

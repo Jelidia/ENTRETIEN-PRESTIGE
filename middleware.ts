@@ -3,29 +3,14 @@ import type { NextRequest } from "next/server";
 import { getRequestIp, rateLimit } from "./lib/rateLimit";
 import { REQUEST_ID_HEADER, generateRequestId } from "./lib/requestId";
 
-const protectedPaths = [
-  "/admin",
-  "/dashboard",
-  "/dispatch",
-  "/inbox",
-  "/jobs",
-  "/customers",
-  "/invoices",
-  "/profile",
-  "/sales",
-  "/operations",
-  "/reports",
-  "/settings",
-  "/team",
-  "/technician",
-  "/notifications",
-];
+const ORIGINAL_PATH_HEADER = "x-original-path";
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const requestId = request.headers.get(REQUEST_ID_HEADER) ?? generateRequestId();
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set(REQUEST_ID_HEADER, requestId);
+  requestHeaders.set(ORIGINAL_PATH_HEADER, pathname);
   if (pathname.startsWith("/api/")) {
     const rule = resolveApiLimit(pathname, request.method);
     const ip = getRequestIp(request);
@@ -55,24 +40,6 @@ export function middleware(request: NextRequest) {
     response.headers.set("X-RateLimit-Reset", String(result.resetAt));
     return response;
   }
-  const isProtected = protectedPaths.some((path) => pathname.startsWith(path));
-
-  if (!isProtected) {
-    const response = NextResponse.next({ request: { headers: requestHeaders } });
-    response.headers.set(REQUEST_ID_HEADER, requestId);
-    return response;
-  }
-
-  const token = request.cookies.get("ep_access_token")?.value;
-  if (!token) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("redirect", pathname);
-    const response = NextResponse.redirect(url);
-    response.headers.set(REQUEST_ID_HEADER, requestId);
-    return response;
-  }
-
   const response = NextResponse.next({ request: { headers: requestHeaders } });
   response.headers.set(REQUEST_ID_HEADER, requestId);
   return response;

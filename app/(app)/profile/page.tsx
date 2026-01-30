@@ -24,6 +24,15 @@ export default function ProfilePage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [documentUrls, setDocumentUrls] = useState<{
+    contract: string | null;
+    id_photo: string | null;
+    profile_photo: string | null;
+  }>({
+    contract: null,
+    id_photo: null,
+    profile_photo: null,
+  });
 
   // Password form
   const [passwordForm, setPasswordForm] = useState({
@@ -68,10 +77,42 @@ export default function ProfilePage() {
         const userData = await userRes.json();
         setUser(userData.data);
         setEditName(userData.data.full_name);
+        await refreshDocumentUrls(userData.data);
       }
     } catch (err) {
       setError("Failed to load profile");
     }
+  }
+
+  async function refreshDocumentUrls(nextUser: User) {
+    const types: Array<{ type: "contract" | "id_photo" | "profile_photo"; hasValue: boolean }> = [
+      { type: "contract", hasValue: Boolean(nextUser.contract_document_url) },
+      { type: "id_photo", hasValue: Boolean(nextUser.id_document_front_url) },
+      { type: "profile_photo", hasValue: Boolean(nextUser.avatar_url) },
+    ];
+
+    const results = await Promise.all(
+      types.map(async ({ type, hasValue }) => {
+        if (!hasValue) {
+          return { type, url: null };
+        }
+        const response = await fetch(`/api/settings/document?type=${type}`);
+        const json = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          return { type, url: null };
+        }
+        const url = json.url ?? json.data?.url ?? null;
+        return { type, url };
+      })
+    );
+
+    setDocumentUrls((prev) => {
+      const next = { ...prev };
+      results.forEach((result) => {
+        next[result.type] = result.url;
+      });
+      return next;
+    });
   }
 
   async function handleFileUpload(type: "contract" | "id_photo" | "profile_photo", file: File) {
@@ -93,6 +134,11 @@ export default function ProfilePage() {
       if (!res.ok) {
         setError(data.error || "Failed to upload file");
         return;
+      }
+
+      const uploadedUrl = data?.data?.url ?? null;
+      if (uploadedUrl) {
+        setDocumentUrls((prev) => ({ ...prev, [type]: uploadedUrl }));
       }
 
       setSuccess(
@@ -272,7 +318,7 @@ export default function ProfilePage() {
           {/* Contract */}
           <div className="card" style={{ marginBottom: 16 }}>
             <h3 style={{ fontWeight: 600, marginBottom: 8 }}>Contrat signé</h3>
-            {user.contract_document_url && contractStatus ? (
+              {user.contract_document_url && contractStatus ? (
               <div>
                 <span
                   style={{
@@ -288,9 +334,9 @@ export default function ProfilePage() {
                 >
                   {contractStatusLabels[contractStatus]?.label || contractStatus}
                 </span>
-                {contractStatus === "signed" && (
+                {contractStatus === "signed" && documentUrls.contract && (
                   <div>
-                    <a href={user.contract_document_url} target="_blank" rel="noopener noreferrer" className="button-secondary">
+                    <a href={documentUrls.contract} target="_blank" rel="noopener noreferrer" className="button-secondary">
                       Afficher le PDF
                     </a>
                   </div>
@@ -328,10 +374,10 @@ export default function ProfilePage() {
           {/* ID Photo */}
           <div className="card" style={{ marginBottom: 16 }}>
             <h3 style={{ fontWeight: 600, marginBottom: 8 }}>Pièce d&apos;identité</h3>
-            {user.id_document_front_url ? (
+            {documentUrls.id_photo ? (
               <div>
                 <Image
-                  src={user.id_document_front_url}
+                  src={documentUrls.id_photo}
                   alt="ID"
                   width={100}
                   height={100}
@@ -373,10 +419,10 @@ export default function ProfilePage() {
           {/* Profile Photo */}
           <div className="card">
             <h3 style={{ fontWeight: 600, marginBottom: 8 }}>Photo de profil</h3>
-            {user.avatar_url ? (
+            {documentUrls.profile_photo ? (
               <div>
                 <Image
-                  src={user.avatar_url}
+                  src={documentUrls.profile_photo}
                   alt="Profile"
                   width={200}
                   height={200}

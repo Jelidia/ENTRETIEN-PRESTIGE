@@ -1,13 +1,20 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { smsSendSchema } from "@/lib/validators";
-import { sendSms } from "@/lib/twilio";
+import { sendSms, verifyTwilioSignature } from "@/lib/twilio";
 import { createAdminClient, createUserClient } from "@/lib/supabaseServer";
 import { requireRole } from "@/lib/auth";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
+import { logger } from "@/lib/logger";
+import { getRequestContext } from "@/lib/requestId";
+
+function smsUnavailable(error: unknown) {
+  logger.error("SMS is unavailable", { error });
+  return NextResponse.json({ error: "SMS is unavailable" }, { status: 503 });
+}
 
 async function resolveThreadId(
   admin: ReturnType<typeof createAdminClient>,
@@ -39,9 +46,44 @@ export async function POST(
   const action = params.action;
   if (action === "webhook") {
     const formData = await request.formData();
-    const from = formData.get("From")?.toString() ?? "";
-    const body = formData.get("Body")?.toString() ?? "";
+    const signature = request.headers.get("x-twilio-signature");
+    const paramsMap: Record<string, string> = {};
+    for (const [key, value] of formData.entries()) {
+      paramsMap[key] = value.toString();
+    }
+    const isValid = verifyTwilioSignature({
+      signature,
+      url: request.url,
+      params: paramsMap,
+    });
+    if (!isValid) {
+      logger.warn(
+        "Rejected inbound SMS webhook with invalid signature",
+        getRequestContext(request, { signature_present: Boolean(signature) })
+      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const from = paramsMap.From ?? "";
+    const body = paramsMap.Body ?? "";
+    const messageSid = paramsMap.MessageSid ?? "";
     const admin = createAdminClient();
+    if (messageSid) {
+      const { data: existing, error } = await admin
+        .from("sms_messages")
+        .select("sms_id")
+        .eq("twilio_sid", messageSid)
+        .maybeSingle();
+      if (error) {
+        logger.error(
+          "Failed to check inbound SMS dedupe",
+          getRequestContext(request, { error })
+        );
+      }
+      if (existing) {
+        return NextResponse.json({ success: true, data: { ok: true }, ok: true });
+      }
+    }
     const { data: customer } = await admin
       .from("customers")
       .select("customer_id, company_id")
@@ -54,6 +96,7 @@ export async function POST(
       phone_number: from,
       content: body,
       direction: "inbound",
+      twilio_sid: messageSid || null,
       thread_id: threadId,
       is_read: false,
       created_at: new Date().toISOString(),
@@ -73,7 +116,6 @@ export async function POST(
     return NextResponse.json({ error: "Invalid message" }, { status: 400 });
   }
 
-  await sendSms(parsed.data.to, parsed.data.message);
   const admin = createAdminClient();
   const threadId = parsed.data.threadId
     ? parsed.data.threadId
@@ -91,6 +133,11 @@ export async function POST(
   }
   if (idempotency.action === "in_progress") {
     return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+  }
+  try {
+    await sendSms(parsed.data.to, parsed.data.message);
+  } catch (error) {
+    return smsUnavailable(error);
   }
   await admin.from("sms_messages").insert({
     company_id: profile.company_id,

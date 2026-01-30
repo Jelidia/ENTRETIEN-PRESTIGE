@@ -138,7 +138,7 @@ describe("POST /api/auth/logout", () => {
     const response = await callPost();
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true });
     expect(mockSignOut).not.toHaveBeenCalled();
     expect(mockClearSessionCookies).toHaveBeenCalledWith(response);
   });
@@ -168,7 +168,7 @@ describe("POST /api/auth/logout", () => {
     const response = await callPost(null);
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true });
     expect(mockSessionUpdate).not.toHaveBeenCalled();
     expect(mockLogAudit).not.toHaveBeenCalled();
     expect(mockClearSessionCookies).toHaveBeenCalledWith(response);
@@ -180,7 +180,7 @@ describe("POST /api/auth/logout", () => {
     const response = await callPost("token");
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true, success: true });
     expect(mockSignOut).toHaveBeenCalled();
     expect(mockSessionUpdate).toHaveBeenCalledWith({ is_active: false });
     expect(mockSessionEq).toHaveBeenCalled();
@@ -192,7 +192,7 @@ describe("POST /api/auth/logout", () => {
       expect.anything(),
       "user:user-1",
       "hash-1",
-      { ok: true },
+      expect.objectContaining({ ok: true, success: true }),
       200
     );
   });

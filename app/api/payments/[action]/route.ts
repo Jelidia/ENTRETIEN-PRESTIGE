@@ -8,6 +8,21 @@ import { createAdminClient } from "@/lib/supabaseServer";
 import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
+import { logger } from "@/lib/logger";
+import { hashCode } from "@/lib/crypto";
+
+function stripeUnavailable(error: unknown) {
+  logger.error("Stripe is unavailable", { error });
+  return NextResponse.json({ error: "Payments are unavailable" }, { status: 503 });
+}
+
+function getIdempotencyKey(request: Request) {
+  return (
+    request.headers.get("idempotency-key") ??
+    request.headers.get("Idempotency-Key") ??
+    request.headers.get("x-idempotency-key")
+  );
+}
 
 export async function POST(
   request: Request,
@@ -19,15 +34,44 @@ export async function POST(
   if (action === "callback") {
     const payload = await request.text();
     const signature = request.headers.get("stripe-signature") ?? "";
-    const result = await handleStripeWebhook(payload, signature);
+    let result: { ok: true; event?: unknown };
+    try {
+      result = await handleStripeWebhook(payload, signature);
+    } catch (error) {
+      return stripeUnavailable(error);
+    }
 
     if ("event" in result && result.event) {
       const event: any = result.event;
+      const eventId = event.id;
+      const admin = createAdminClient();
+      if (eventId) {
+        const { data: existing, error } = await admin
+          .from("idempotency_keys")
+          .select("id")
+          .eq("idempotency_key", eventId)
+          .eq("scope", "stripe:webhook")
+          .maybeSingle();
+        if (error) {
+          logger.error("Stripe webhook idempotency check failed", { error, eventId });
+        }
+        if (existing) {
+          return NextResponse.json({ success: true, data: { ok: true }, ok: true });
+        }
+        const { error: insertError } = await admin.from("idempotency_keys").insert({
+          idempotency_key: eventId,
+          scope: "stripe:webhook",
+          request_hash: hashCode(payload),
+          status: "processing",
+        });
+        if (insertError) {
+          logger.error("Stripe webhook idempotency insert failed", { error: insertError, eventId });
+        }
+      }
       if (event.type === "payment_intent.succeeded") {
         const intent = event.data.object;
         const invoiceId = intent.metadata?.invoiceId;
         if (invoiceId) {
-          const admin = createAdminClient();
           await admin
             .from("invoices")
             .update({ payment_status: "paid", paid_amount: intent.amount_received / 100, paid_date: new Date().toISOString() })
@@ -38,6 +82,13 @@ export async function POST(
             newValues: { event: event.type },
           });
         }
+      }
+      if (eventId) {
+        await admin
+          .from("idempotency_keys")
+          .update({ status: "completed", response_status: 200, updated_at: new Date().toISOString() })
+          .eq("idempotency_key", eventId)
+          .eq("scope", "stripe:webhook");
       }
     }
 
@@ -73,11 +124,18 @@ export async function POST(
       return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
     }
 
-    const intent = await createPaymentIntent({
-      amount: parsed.data.amount,
-      currency: parsed.data.currency,
-      metadata: { invoiceId: parsed.data.invoiceId },
-    });
+    const stripeIdempotencyKey = getIdempotencyKey(request);
+    let intent: { id: string; client_secret: string | null };
+    try {
+      intent = await createPaymentIntent({
+        amount: parsed.data.amount,
+        currency: parsed.data.currency,
+        metadata: { invoiceId: parsed.data.invoiceId },
+        idempotencyKey: stripeIdempotencyKey,
+      });
+    } catch (error) {
+      return stripeUnavailable(error);
+    }
     await logAudit(client, auth.profile.user_id, "payment_init", "invoice", parsed.data.invoiceId, "success", {
       ipAddress: ip,
       userAgent: request.headers.get("user-agent") ?? null,
@@ -137,7 +195,17 @@ export async function POST(
       return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
     }
 
-    const result = await refundPayment(parsed.data.paymentIntentId, parsed.data.amount);
+    const stripeIdempotencyKey = getIdempotencyKey(request);
+    let result: { id: string };
+    try {
+      result = await refundPayment(
+        parsed.data.paymentIntentId,
+        parsed.data.amount,
+        stripeIdempotencyKey
+      );
+    } catch (error) {
+      return stripeUnavailable(error);
+    }
     await logAudit(client, auth.profile.user_id, "payment_refund", "payment", null, "success", {
       ipAddress: ip,
       userAgent: request.headers.get("user-agent") ?? null,

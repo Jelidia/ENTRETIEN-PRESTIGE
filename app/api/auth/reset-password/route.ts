@@ -33,8 +33,9 @@ export async function POST(request: Request) {
   const { code, newPassword } = result.data;
 
   // 2. Exchange code for session
+  const admin = createAdminClient();
   const anon = createAnonClient();
-  const idempotency = await beginIdempotency(anon, request, null, {
+  const idempotency = await beginIdempotency(admin, request, null, {
     action: "reset_password",
   });
   if (idempotency.action === "replay") {
@@ -68,7 +69,6 @@ export async function POST(request: Request) {
     );
   }
 
-  const admin = createAdminClient();
   const userId = exchangeData.session.user.id;
   await logAudit(admin, userId, "reset_password", "user", userId, "success", {
     ipAddress: ip,
@@ -79,6 +79,6 @@ export async function POST(request: Request) {
   const responseBody = { success: true, data: { success: true } };
   const response = NextResponse.json(responseBody);
   setSessionCookies(response, exchangeData.session);
-  await completeIdempotency(anon, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+  await completeIdempotency(admin, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
   return response;
 }

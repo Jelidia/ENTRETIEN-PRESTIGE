@@ -1,5 +1,7 @@
 import { hashCode } from "@/lib/crypto";
 import { getRequestIp } from "@/lib/rateLimit";
+import { logger } from "@/lib/logger";
+import { getRequestContext } from "@/lib/requestId";
 
 type IdempotencyState =
   | { action: "proceed"; scope: string; requestHash: string }
@@ -47,12 +49,24 @@ export async function beginIdempotency(
   const scope = getIdempotencyScope(request, userId ?? null);
   const requestHash = getIdempotencyRequestHash(payload);
 
-  const { data } = await client
+  const { data, error } = await client
     .from("idempotency_keys")
     .select("request_hash, response_status, response_body, status")
     .eq("idempotency_key", key)
     .eq("scope", scope)
     .maybeSingle();
+
+  if (error) {
+    logger.error(
+      "Idempotency lookup failed",
+      getRequestContext(request, {
+        idempotency_key: key,
+        scope,
+        error,
+      })
+    );
+    return { action: "proceed", scope, requestHash };
+  }
 
   if (data) {
     if (data.request_hash !== requestHash) {
@@ -64,12 +78,23 @@ export async function beginIdempotency(
     return { action: "in_progress" };
   }
 
-  await client.from("idempotency_keys").insert({
+  const { error: insertError } = await client.from("idempotency_keys").insert({
     idempotency_key: key,
     scope,
     request_hash: requestHash,
     status: "processing",
   });
+
+  if (insertError) {
+    logger.error(
+      "Idempotency insert failed",
+      getRequestContext(request, {
+        idempotency_key: key,
+        scope,
+        error: insertError,
+      })
+    );
+  }
 
   return { action: "proceed", scope, requestHash };
 }
@@ -87,7 +112,7 @@ export async function completeIdempotency(
     return;
   }
 
-  await client
+  const { error } = await client
     .from("idempotency_keys")
     .update({
       status: "completed",
@@ -98,4 +123,15 @@ export async function completeIdempotency(
     .eq("idempotency_key", key)
     .eq("scope", scope)
     .eq("request_hash", requestHash);
+
+  if (error) {
+    logger.error(
+      "Idempotency completion failed",
+      getRequestContext(request, {
+        idempotency_key: key,
+        scope,
+        error,
+      })
+    );
+  }
 }

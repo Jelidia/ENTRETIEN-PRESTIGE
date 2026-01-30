@@ -186,7 +186,7 @@ These are referenced by API routes but missing from the local schema:
 
 ## P0 — Security & authentication hardening (must be correct before real users)
 
-### EP-P0-SEC-01 — Enforce encryption key and stop crypto from failing open
+### - [x] EP-P0-SEC-01 — Enforce encryption key and stop crypto from failing open
 **Priority:** P0
 
 **Why it matters**
@@ -229,7 +229,7 @@ These are referenced by API routes but missing from the local schema:
 - Rate limits hold across multiple instances.
 - OTP brute force is prevented with a strict attempt limit and lockout per challenge + per account/IP.
 
-### EP-P0-SEC-03 — Lock down customer rating token RLS (currently dangerously permissive)
+### - [x] EP-P0-SEC-03 — Lock down customer rating token RLS (currently dangerously permissive)
 **Priority:** P0
 
 **Why it matters**
@@ -272,7 +272,7 @@ These are referenced by API routes but missing from the local schema:
 - Passing `redirect=https://evil.com` does not redirect off-site.
 - Legitimate internal redirects still work.
 
-### EP-P0-SEC-05 — Fix idempotency and ordering for external side-effects (SMS/email/payments)
+### - [x] EP-P0-SEC-05 — Fix idempotency and ordering for external side-effects (SMS/email/payments)
 **Priority:** P0
 
 **Why it matters**
@@ -297,7 +297,7 @@ These are referenced by API routes but missing from the local schema:
 - Retrying the same request does not send duplicate SMS/emails or double-process payments.
 - Webhook processing is idempotent.
 
-### - [ ] EP-P0-SEC-06 — Require and verify webhook signatures (Twilio at minimum) (WIP)
+### - [x] EP-P0-SEC-06 — Require and verify webhook signatures (Twilio at minimum)
 **Priority:** P0
 
 **Why it matters**
@@ -333,7 +333,7 @@ These are referenced by API routes but missing from the local schema:
 **Acceptance criteria**
 - Registration behavior matches the business model and cannot be abused to create unlimited companies/users.
 
-### EP-P0-SEC-08 — Stop using “cookie presence” as authentication in middleware (validate session)
+### - [x] EP-P0-SEC-08 — Stop using “cookie presence” as authentication in middleware (validate session)
 **Priority:** P0
 
 **Why it matters**
@@ -353,7 +353,7 @@ These are referenced by API routes but missing from the local schema:
 - If a session is expired/invalid, the user is redirected to `/login` (no partially-rendered app pages).
 - No dashboard data is shown without verified auth.
 
-### EP-P0-SEC-09 — Fix idempotency storage for unauthenticated endpoints (RLS currently blocks it)
+### - [x] EP-P0-SEC-09 — Fix idempotency storage for unauthenticated endpoints (RLS currently blocks it)
 **Priority:** P0
 
 **Why it matters**
@@ -378,7 +378,7 @@ These are referenced by API routes but missing from the local schema:
 - Unauth endpoints correctly enforce idempotency across retries.
 - No RLS errors are swallowed for idempotency writes in production logs.
 
-### EP-P0-SEC-10 — Fix 2FA challenge security (single SMS, non-reusable codes, attempt limits)
+### - [x] EP-P0-SEC-10 — Fix 2FA challenge security (single SMS, non-reusable codes, attempt limits)
 **Priority:** P0
 
 **Why it matters**
@@ -1480,11 +1480,11 @@ technician_location_daily
 
 - [ ] Supabase migrations apply cleanly on a fresh DB (CI enforced).
 - [ ] RLS enabled and tested for every tenant table.
-- [ ] `APP_ENCRYPTION_KEY` present and validated in production.
-- [ ] Stripe keys + webhook secret configured (or payments feature disabled explicitly).
-- [ ] Twilio configured + webhook signature verification enabled (or SMS disabled explicitly).
-- [ ] Resend configured (or email disabled explicitly).
-- [ ] Storage buckets private and signed URLs used for documents/photos.
-- [ ] No demo/mock fallback data in production paths.
+- [x] `APP_ENCRYPTION_KEY` present and validated in production.
+- [x] Stripe keys + webhook secret configured (or payments feature disabled explicitly).
+- [x] Twilio configured + webhook signature verification enabled (or SMS disabled explicitly).
+- [x] Resend configured (or email disabled explicitly).
+- [x] Storage buckets private and signed URLs used for documents/photos.
+- [x] No demo/mock fallback data in production paths.
 - [x] CI: lint + typecheck + unit + E2E tests passing.
 - [x] Observability: structured logs + request IDs + error tracking configured.

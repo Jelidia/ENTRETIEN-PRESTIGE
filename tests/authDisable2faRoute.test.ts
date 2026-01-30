@@ -162,7 +162,7 @@ describe("POST /api/auth/disable-2fa", () => {
     const response = await callPost({});
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true });
     expect(mockAdminUpdate).not.toHaveBeenCalled();
   });
 
@@ -194,10 +194,10 @@ describe("POST /api/auth/disable-2fa", () => {
   });
 
   it("uses provided user id when present", async () => {
-    const response = await callPost({ userId: "target-2" });
+    const response = await callPost({ userId: "22222222-2222-2222-2222-222222222222" });
 
     expect(response.status).toBe(200);
-    expect(mockUserEq).toHaveBeenCalledWith("user_id", "target-2");
+    expect(mockUserEq).toHaveBeenCalledWith("user_id", "22222222-2222-2222-2222-222222222222");
   });
 
   it("uses empty token when access token is missing", async () => {
@@ -213,7 +213,7 @@ describe("POST /api/auth/disable-2fa", () => {
     const response = await callPost({});
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ ok: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true, success: true });
     expect(mockAdminUpdate).toHaveBeenCalledWith({ two_factor_enabled: false, two_factor_secret: null });
     expect(mockAdminEq).toHaveBeenCalledWith("user_id", "admin-1");
     expect(mockLogAudit).toHaveBeenCalled();
@@ -222,7 +222,7 @@ describe("POST /api/auth/disable-2fa", () => {
       expect.anything(),
       "user:admin-1",
       "hash-1",
-      { ok: true },
+      expect.objectContaining({ ok: true, success: true }),
       200
     );
   });

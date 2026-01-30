@@ -7,6 +7,12 @@ import { getRequestIp } from "@/lib/rateLimit";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
+import { logger } from "@/lib/logger";
+
+function emailUnavailable(error: unknown) {
+  logger.error("Email is unavailable", { error });
+  return NextResponse.json({ error: "Email is unavailable" }, { status: 503 });
+}
 
 export async function POST(
   request: Request,
@@ -42,7 +48,11 @@ export async function POST(
     return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
   }
 
-  await sendEmail(parsed.data.to, parsed.data.subject, parsed.data.html);
+  try {
+    await sendEmail(parsed.data.to, parsed.data.subject, parsed.data.html);
+  } catch (error) {
+    return emailUnavailable(error);
+  }
   await logAudit(client, profile.user_id, "email_send", "customer", null, "success", {
     ipAddress: ip,
     userAgent: request.headers.get("user-agent") ?? null,

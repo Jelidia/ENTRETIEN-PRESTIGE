@@ -435,7 +435,7 @@ export const ratingsValidateQuerySchema = z.object({
 });
 
 export const settingsDocumentQuerySchema = z.object({
-  type: z.enum(["id_photo", "profile_photo"]),
+  type: z.enum(["id_photo", "profile_photo", "contract"]),
 });
 
 export const settingsUploadQuerySchema = z.object({

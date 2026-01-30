@@ -32,8 +32,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing refresh token" }, { status: 401 });
   }
 
+  const admin = createAdminClient();
   const anon = createAnonClient();
-  const idempotency = await beginIdempotency(anon, request, null, {
+  const idempotency = await beginIdempotency(admin, request, null, {
     action: "refresh_token",
   });
   if (idempotency.action === "replay") {
@@ -51,7 +52,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unable to refresh session" }, { status: 401 });
   }
 
-  const admin = createAdminClient();
   await logAudit(admin, data.session.user.id, "refresh_session", "user", data.session.user.id, "success", {
     ipAddress: ip,
     userAgent: request.headers.get("user-agent") ?? null,
@@ -60,6 +60,6 @@ export async function POST(request: Request) {
   const responseBody = { success: true, data: { ok: true }, ok: true };
   const response = NextResponse.json(responseBody);
   setSessionCookies(response, data.session);
-  await completeIdempotency(anon, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+  await completeIdempotency(admin, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
   return response;
 }

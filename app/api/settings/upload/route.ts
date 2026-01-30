@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
-import { createUserClient } from "@/lib/supabaseServer";
+import { createAdminClient, createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
@@ -10,6 +10,16 @@ import { captureError } from "@/lib/errorTracking";
 import { getRequestContext } from "@/lib/requestId";
 
 // POST /api/settings/upload?type=contract|id_photo|profile_photo
+const bucketName = "user-documents";
+
+function normalizeStoragePath(raw: string) {
+  const marker = `/storage/v1/object/public/${bucketName}/`;
+  if (raw.includes(marker)) {
+    return raw.slice(raw.indexOf(marker) + marker.length);
+  }
+  return raw;
+}
+
 export async function POST(request: Request) {
   const auth = await requireUser(request);
   if ("response" in auth) return auth.response;
@@ -64,6 +74,7 @@ export async function POST(request: Request) {
     }
 
     const client = createUserClient(getAccessTokenFromRequest(request) ?? "");
+    const admin = createAdminClient();
     const idempotency = await beginIdempotency(client, request, profile.user_id, {
       type,
       fileName: file.name,
@@ -82,12 +93,19 @@ export async function POST(request: Request) {
     const timestamp = Date.now();
     const extension = file.name.split(".").pop();
     const filename = `${profile.user_id}/${type}/${timestamp}.${extension}`;
+    const storagePath = normalizeStoragePath(filename);
+
+    const createResult = await admin.storage.createBucket(bucketName, { public: false });
+    const createError = createResult.error?.message?.toLowerCase() ?? "";
+    if (createResult.error && !createError.includes("already exists")) {
+      return NextResponse.json({ error: "Unable to prepare storage" }, { status: 500 });
+    }
 
     // Upload to Supabase Storage
     const fileBuffer = await file.arrayBuffer();
-    const { data: uploadData, error: uploadError } = await client.storage
-      .from("user-documents")
-      .upload(filename, fileBuffer, {
+    const { error: uploadError } = await admin.storage
+      .from(bucketName)
+      .upload(storagePath, fileBuffer, {
         contentType: file.type,
         upsert: false,
       });
@@ -104,21 +122,25 @@ export async function POST(request: Request) {
       );
     }
 
-    // Get public URL
-    const { data: urlData } = client.storage
-      .from("user-documents")
-      .getPublicUrl(filename);
+    const { data: signed, error: signError } = await admin.storage
+      .from(bucketName)
+      .createSignedUrl(storagePath, 300);
 
-    const fileUrl = urlData.publicUrl;
+    if (signError || !signed?.signedUrl) {
+      return NextResponse.json(
+        { error: "Failed to sign document" },
+        { status: 500 }
+      );
+    }
 
     // Update user record with file URL
     const updateData: Record<string, unknown> = {};
     if (type === "contract") {
-      updateData.contract_document_url = fileUrl;
+      updateData.contract_document_url = storagePath;
     } else if (type === "id_photo") {
-      updateData.id_document_front_url = fileUrl;
+      updateData.id_document_front_url = storagePath;
     } else if (type === "profile_photo") {
-      updateData.avatar_url = fileUrl;
+      updateData.avatar_url = storagePath;
     }
 
     const { error: updateError } = await client
@@ -147,7 +169,8 @@ export async function POST(request: Request) {
     const responseBody = {
       success: true,
       data: {
-        url: fileUrl,
+        url: signed.signedUrl,
+        path: storagePath,
       },
     };
     await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);

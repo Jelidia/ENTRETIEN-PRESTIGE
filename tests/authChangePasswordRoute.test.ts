@@ -199,7 +199,7 @@ describe("POST /api/auth/change-password", () => {
     const response = await callPost(defaultBody);
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ success: true });
+    await expect(response.json()).resolves.toMatchObject({ success: true });
     expect(mockUpdateUser).not.toHaveBeenCalled();
   });
 
@@ -227,7 +227,7 @@ describe("POST /api/auth/change-password", () => {
     const response = await callPost(defaultBody);
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ success: true });
+    await expect(response.json()).resolves.toMatchObject({ success: true });
     expect(mockSignInWithPassword).toHaveBeenCalled();
     expect(mockUpdateUser).toHaveBeenCalledWith({ password: defaultBody.newPassword });
     expect(mockLogAudit).toHaveBeenCalled();
@@ -236,7 +236,7 @@ describe("POST /api/auth/change-password", () => {
       expect.anything(),
       "user:user-123",
       "hash-123",
-      { success: true },
+      expect.objectContaining({ success: true }),
       200
     );
   });

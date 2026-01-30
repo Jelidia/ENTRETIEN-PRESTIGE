@@ -9,6 +9,17 @@ import { generateInvoicePdf } from "@/lib/pdf";
 import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
+import { logger } from "@/lib/logger";
+
+function emailUnavailable(error: unknown) {
+  logger.error("Email is unavailable", { error });
+  return NextResponse.json({ error: "Email is unavailable" }, { status: 503 });
+}
+
+function smsUnavailable(error: unknown) {
+  logger.error("SMS is unavailable", { error });
+  return NextResponse.json({ error: "SMS is unavailable" }, { status: 503 });
+}
 
 export async function POST(
   request: Request,
@@ -46,9 +57,17 @@ export async function POST(
     }
 
     if (parsed.data.channel === "email") {
-      await sendInvoiceEmail(parsed.data.to, parsed.data.subject, parsed.data.body);
+      try {
+        await sendInvoiceEmail(parsed.data.to, parsed.data.subject, parsed.data.body);
+      } catch (error) {
+        return emailUnavailable(error);
+      }
     } else {
-      await sendSms(parsed.data.to, parsed.data.body);
+      try {
+        await sendSms(parsed.data.to, parsed.data.body);
+      } catch (error) {
+        return smsUnavailable(error);
+      }
     }
 
     await client
