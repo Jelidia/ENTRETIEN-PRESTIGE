@@ -3,6 +3,7 @@ import { createAdminClient, createAnonClient } from "@/lib/supabaseServer";
 import { getRefreshTokenFromRequest, setSessionCookies } from "@/lib/session";
 import { getRequestIp, rateLimit } from "@/lib/rateLimit";
 import { logAudit } from "@/lib/audit";
+import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 
 export async function POST(request: Request) {
   const ip = getRequestIp(request);
@@ -20,6 +21,18 @@ export async function POST(request: Request) {
   }
 
   const anon = createAnonClient();
+  const idempotency = await beginIdempotency(anon, request, null, {
+    action: "refresh_token",
+  });
+  if (idempotency.action === "replay") {
+    return NextResponse.json(idempotency.body, { status: idempotency.status });
+  }
+  if (idempotency.action === "conflict") {
+    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+  }
+  if (idempotency.action === "in_progress") {
+    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+  }
   const { data, error } = await anon.auth.refreshSession({ refresh_token: refreshToken });
 
   if (error || !data.session) {
@@ -32,7 +45,9 @@ export async function POST(request: Request) {
     userAgent: request.headers.get("user-agent") ?? null,
   });
 
-  const response = NextResponse.json({ ok: true });
+  const responseBody = { ok: true };
+  const response = NextResponse.json(responseBody);
   setSessionCookies(response, data.session);
+  await completeIdempotency(anon, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
   return response;
 }

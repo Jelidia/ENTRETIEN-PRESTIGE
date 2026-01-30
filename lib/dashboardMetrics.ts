@@ -53,9 +53,12 @@ export function buildDashboardKpis(
   }, 0);
 
   const activeClients = customers.filter((customer) => customer.status === "active").length;
-  const ratedCustomers = customers.filter((customer) => typeof customer.average_rating === "number");
+  const ratedCustomers = customers.filter(
+    (customer): customer is DashboardCustomer & { average_rating: number } =>
+      typeof customer.average_rating === "number"
+  );
   const averageRating = ratedCustomers.length
-    ? ratedCustomers.reduce((sum, customer) => sum + (customer.average_rating ?? 0), 0) / ratedCustomers.length
+    ? ratedCustomers.reduce((sum, customer) => sum + customer.average_rating, 0) / ratedCustomers.length
     : 0;
 
   return [
@@ -90,10 +93,11 @@ export function buildRevenueBars(jobs: DashboardJob[], now: Date): number[] {
       continue;
     }
     const key = `${date.getUTCFullYear()}-${date.getUTCMonth()}`;
-    if (!buckets.has(key)) {
+    const current = buckets.get(key);
+    if (current === undefined) {
       continue;
     }
-    buckets.set(key, (buckets.get(key) ?? 0) + getJobRevenue(job));
+    buckets.set(key, current + getJobRevenue(job));
   }
 
   const values = Array.from(buckets.values());

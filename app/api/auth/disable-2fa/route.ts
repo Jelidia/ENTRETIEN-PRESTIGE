@@ -4,6 +4,7 @@ import { requireRole } from "@/lib/auth";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { getRequestIp, rateLimit } from "@/lib/rateLimit";
 import { logAudit } from "@/lib/audit";
+import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 
 export async function POST(request: Request) {
   const auth = await requireRole(request, ["admin"]);
@@ -35,6 +36,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
   }
 
+  const idempotency = await beginIdempotency(client, request, profile.user_id, {
+    action: "disable_2fa",
+  });
+  if (idempotency.action === "replay") {
+    return NextResponse.json(idempotency.body, { status: idempotency.status });
+  }
+  if (idempotency.action === "conflict") {
+    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+  }
+  if (idempotency.action === "in_progress") {
+    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+  }
+
   const admin = createAdminClient();
   const { error } = await admin
     .from("users")
@@ -50,5 +64,7 @@ export async function POST(request: Request) {
     userAgent: request.headers.get("user-agent") ?? null,
   });
 
-  return NextResponse.json({ ok: true });
+  const responseBody = { ok: true };
+  await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+  return NextResponse.json(responseBody);
 }

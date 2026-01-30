@@ -7,6 +7,7 @@ import { isSmsConfigured } from "@/lib/twilio";
 import { getRequestIp, rateLimit } from "@/lib/rateLimit";
 import { hashCode } from "@/lib/crypto";
 import { logAudit } from "@/lib/audit";
+import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -20,6 +21,21 @@ export async function POST(request: Request) {
   const limit = rateLimit(`login:${ip}`, 5, 15 * 60 * 1000);
   if (!limit.allowed) {
     return NextResponse.json({ error: "Too many attempts" }, { status: 429 });
+  }
+
+  const anon = createAnonClient();
+  const idempotency = await beginIdempotency(anon, request, null, {
+    action: "login",
+    email: parsed.data.email,
+  });
+  if (idempotency.action === "replay") {
+    return NextResponse.json(idempotency.body, { status: idempotency.status });
+  }
+  if (idempotency.action === "conflict") {
+    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+  }
+  if (idempotency.action === "in_progress") {
+    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
   }
 
   const admin = createAdminClient();
@@ -56,7 +72,6 @@ export async function POST(request: Request) {
     }
   }
 
-  const anon = createAnonClient();
   const { data, error } = await anon.auth.signInWithPassword({
     email: parsed.data.email,
     password: parsed.data.password,
@@ -111,13 +126,15 @@ export async function POST(request: Request) {
       }
     }
     try {
-    const challenge = await createChallenge(admin, {
-      userId: data.user.id,
-      method: profile.two_factor_method ?? "sms",
-      session: data.session,
-    });
-    await sendTwoFactorCode(admin, data.user.id, challenge);
-    return NextResponse.json({ mfaRequired: true, challengeId: challenge.challenge_id });
+      const challenge = await createChallenge(admin, {
+        userId: data.user.id,
+        method: profile.two_factor_method ?? "sms",
+        session: data.session,
+      });
+      await sendTwoFactorCode(admin, data.user.id, challenge);
+      const responseBody = { mfaRequired: true, challengeId: challenge.challenge_id };
+      await completeIdempotency(anon, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+      return NextResponse.json(responseBody);
     } catch (error) {
       return NextResponse.json({ error: "Unable to send verification code" }, { status: 500 });
     }
@@ -133,7 +150,9 @@ export async function POST(request: Request) {
     last_activity: new Date().toISOString(),
   });
 
-  const response = NextResponse.json({ ok: true });
+  const responseBody = { ok: true };
+  const response = NextResponse.json(responseBody);
   setSessionCookies(response, data.session);
+  await completeIdempotency(anon, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
   return response;
 }

@@ -1,7 +1,7 @@
 # ENTRETIEN PRESTIGE — Master Backlog (Auto-generated)
 - Generated: 2026-01-29 05:49:44
 - Repo: `/mnt/data/ENTRETIEN_PRESTIGE/ENTRETIEN-PRESTIGE-main`
-- Total items: **1442** (numbered list below)
+- Total items: **1437** (numbered list below)
 
 ## Legend
 - **CONFIRMED**: Found directly by static scan (pattern-based).
@@ -9,7 +9,7 @@
 
 ## Counts by priority
 - **P0**: 81
-- **P1**: 316
+- **P1**: 311
 - **P2**: 937
 - **P3**: 108
 
@@ -24,11 +24,6 @@
 ## API-Audit
 
 ## API-Idempotency
-135. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/auth/change-password mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/auth/change-password/route.ts`
-136. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/auth/disable-2fa mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/auth/disable-2fa/route.ts`
-137. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/auth/forgot-password mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/auth/forgot-password/route.ts`
-138. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/auth/login mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/auth/login/route.ts`
-139. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/auth/logout mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/auth/logout/route.ts`
 140. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/auth/refresh-token mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/auth/refresh-token/route.ts`
 141. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/auth/register mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/auth/register/route.ts`
 142. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/auth/reset-password mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/auth/reset-password/route.ts`

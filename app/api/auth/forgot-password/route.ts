@@ -4,6 +4,7 @@ import { createAdminClient, createAnonClient } from "@/lib/supabaseServer";
 import { getBaseUrl } from "@/lib/env";
 import { getRequestIp, rateLimit } from "@/lib/rateLimit";
 import { logAudit } from "@/lib/audit";
+import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 
 export async function POST(request: Request) {
   const ip = getRequestIp(request);
@@ -23,6 +24,19 @@ export async function POST(request: Request) {
   }
 
   const anon = createAnonClient();
+  const idempotency = await beginIdempotency(anon, request, null, {
+    action: "forgot_password",
+    email: parsed.data.email,
+  });
+  if (idempotency.action === "replay") {
+    return NextResponse.json(idempotency.body, { status: idempotency.status });
+  }
+  if (idempotency.action === "conflict") {
+    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+  }
+  if (idempotency.action === "in_progress") {
+    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+  }
   const { error } = await anon.auth.resetPasswordForEmail(parsed.data.email, {
     redirectTo: `${getBaseUrl()}/reset-password`,
   });
@@ -45,5 +59,7 @@ export async function POST(request: Request) {
     newValues: { email: parsed.data.email },
   });
 
-  return NextResponse.json({ ok: true });
+  const responseBody = { ok: true };
+  await completeIdempotency(anon, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+  return NextResponse.json(responseBody);
 }

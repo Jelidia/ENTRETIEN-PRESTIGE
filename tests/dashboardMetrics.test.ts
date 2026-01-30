@@ -102,4 +102,55 @@ describe("buildDashboardData", () => {
     expect(result.scheduleToday[0].customer).toBe("Client");
     expect(result.revenueBars.every((value) => value === 0)).toBe(true);
   });
+
+  it("skips jobs without scheduled dates", () => {
+    const now = new Date("2026-01-27T12:00:00Z");
+    const jobs = [
+      {
+        job_id: "job-1",
+        estimated_revenue: 120,
+      },
+    ];
+
+    const result = buildDashboardData({ jobs, customers: [], now });
+
+    expect(result.kpis[0].value).toBe("0");
+    expect(result.scheduleToday).toHaveLength(0);
+  });
+
+  it("handles mixed date formats and missing revenue", () => {
+    const now = new Date("2026-01-27T12:00:00Z");
+    const jobs = [
+      {
+        job_id: "job-1",
+        scheduled_date: "2026-01-27",
+        scheduled_start_time: "9",
+        estimated_revenue: 50,
+      },
+      {
+        job_id: "job-2",
+        scheduled_date: "2026-01-27",
+        actual_revenue: null,
+        estimated_revenue: null,
+      },
+      {
+        job_id: "job-3",
+        scheduled_date: "2026-01-10T00:00:00Z",
+        estimated_revenue: 25,
+      },
+      {
+        job_id: "job-4",
+        scheduled_date: "2024-01-01",
+        estimated_revenue: 100,
+      },
+    ];
+
+    const result = buildDashboardData({ jobs, customers: [], now });
+
+    expect(result.scheduleToday).toHaveLength(2);
+    expect(result.scheduleToday[0].time).toBe("9");
+    expect(result.scheduleToday[1].revenue).toBe("$0");
+    expect(result.revenueBars).toHaveLength(12);
+    expect(result.revenueBars.some((value) => value === 100)).toBe(true);
+  });
 });

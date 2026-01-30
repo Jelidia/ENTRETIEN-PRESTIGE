@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { createAdminClient } from "@/lib/supabaseServer";
 import StatusBadge from "@/components/StatusBadge";
 import { formatPhoneNumber, smsTemplates } from "@/lib/smsTemplates";
 import { mergeRolePermissions, resolvePermissions } from "@/lib/permissions";
@@ -32,6 +33,7 @@ describe("smsTemplates", () => {
     expect(formatPhoneNumber("15145551234")).toBe("+15145551234");
     expect(formatPhoneNumber("+15145551234")).toBe("+15145551234");
     expect(formatPhoneNumber("(514) 555-1234 x9")).toBe("+51455512349");
+    expect(formatPhoneNumber("+44 20 1234 5678")).toBe("+44 20 1234 5678");
   });
 
   it("renders a sample job scheduled template", () => {
@@ -104,51 +106,65 @@ describe("permissions", () => {
     expect(resolved.technician).toBe(true);
   });
 
+  it("falls back to empty permissions for unknown roles", () => {
+    const resolved = resolvePermissions("contractor");
+    expect(resolved.dashboard).toBe(false);
+    expect(resolved.jobs).toBe(false);
+  });
+
   it("falls back to base role permissions", () => {
     const resolved = resolvePermissions("manager");
     expect(resolved.dashboard).toBe(true);
     expect(resolved.team).toBe(true);
   });
+
+  it("merges overrides for new roles", () => {
+    const merged = mergeRolePermissions({ contractor: { dashboard: true } });
+    expect(merged.contractor.dashboard).toBe(true);
+    expect(merged.contractor.jobs).toBe(false);
+  });
 });
 
 describe("env helpers", () => {
-  const originalBaseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-  const originalEnv = process.env.NODE_ENV;
+  const env = process.env as Record<string, string | undefined>;
+  const originalBaseUrl = env.NEXT_PUBLIC_BASE_URL;
+  const originalEnv = env.NODE_ENV;
 
   afterEach(() => {
-    process.env.NEXT_PUBLIC_BASE_URL = originalBaseUrl;
-    process.env.NODE_ENV = originalEnv;
+    env.NEXT_PUBLIC_BASE_URL = originalBaseUrl;
+    env.NODE_ENV = originalEnv;
   });
 
   it("returns configured base url when present", () => {
-    process.env.NEXT_PUBLIC_BASE_URL = "https://example.com";
+    env.NEXT_PUBLIC_BASE_URL = "https://example.com";
     expect(getBaseUrl()).toBe("https://example.com");
   });
 
   it("returns fallback base url when missing", () => {
-    delete process.env.NEXT_PUBLIC_BASE_URL;
+    delete env.NEXT_PUBLIC_BASE_URL;
     expect(getBaseUrl()).toBe("http://localhost:3000");
   });
 
   it("detects production environment", () => {
-    process.env.NODE_ENV = "production";
+    env.NODE_ENV = "production";
     expect(isProd()).toBe(true);
   });
 });
 
 describe("crypto helpers", () => {
-  const originalKey = process.env.APP_ENCRYPTION_KEY;
+  const env = process.env as Record<string, string | undefined>;
+  const originalKey = env.APP_ENCRYPTION_KEY;
 
   beforeEach(() => {
     vi.resetModules();
   });
 
   afterEach(() => {
-    process.env.APP_ENCRYPTION_KEY = originalKey;
+    env.APP_ENCRYPTION_KEY = originalKey;
   });
 
   it("returns plaintext when no encryption key is set", async () => {
-    delete process.env.APP_ENCRYPTION_KEY;
+    delete env.APP_ENCRYPTION_KEY;
     const { encryptPayload, decryptPayload, hashCode } = await import("@/lib/crypto");
     const payload = "hello";
     expect(encryptPayload(payload)).toBe(payload);
@@ -157,7 +173,7 @@ describe("crypto helpers", () => {
   });
 
   it("encrypts and decrypts payloads when key exists", async () => {
-    process.env.APP_ENCRYPTION_KEY = Buffer.from(
+    env.APP_ENCRYPTION_KEY = Buffer.from(
       "12345678901234567890123456789012"
     ).toString("base64");
     const { encryptPayload, decryptPayload } = await import("@/lib/crypto");
@@ -173,9 +189,7 @@ describe("notifications", () => {
   it("creates notifications with expected payload", async () => {
     const insert = vi.fn().mockResolvedValue({});
     const from = vi.fn().mockReturnValue({ insert });
-    const admin = { from } as unknown as {
-      from: (table: string) => { insert: (payload: unknown) => Promise<unknown> };
-    };
+    const admin = { from } as unknown as ReturnType<typeof createAdminClient>;
 
     await createNotification(admin, {
       userId: "user-1",

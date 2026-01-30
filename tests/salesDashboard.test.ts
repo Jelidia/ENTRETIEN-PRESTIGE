@@ -125,4 +125,74 @@ describe("buildSalesStats", () => {
     expect(stats.leaderboard.percentageVsFirst).toBe(-50);
     expect(stats.leaderboard.percentageVsAverage).toBe(-33.3);
   });
+
+  it("handles estimated and unknown leads with invalid dates", () => {
+    const now = new Date("2026-01-27T12:00:00Z");
+    const leads = [
+      {
+        lead_id: "lead-8",
+        status: "estimated",
+        estimated_job_value: 200,
+        created_at: "not-a-date",
+        sales_rep_id: "rep-4",
+      },
+      {
+        lead_id: "lead-8b",
+        status: "won",
+        estimated_job_value: null,
+        created_at: "2026-01-05T00:00:00Z",
+        sales_rep_id: "rep-4",
+      },
+      {
+        lead_id: "lead-9",
+        status: "archived",
+        estimated_job_value: 150,
+        created_at: null,
+        sales_rep_id: "rep-4",
+      },
+      {
+        lead_id: "lead-10",
+        follow_up_date: "2026-01-29",
+        created_at: "2026-01-27",
+        sales_rep_id: "rep-4",
+      },
+    ];
+    const leaderboard = [
+      { sales_rep_id: "rep-4", total_revenue: Number.NaN, rank: null },
+      { sales_rep_id: "rep-5", total_revenue: 0, rank: 1 },
+    ];
+
+    const stats = buildSalesStats({ leads, leaderboard, userId: "rep-4", role: "sales_rep", now });
+
+    expect(stats.pipeline.estimated).toBe(1);
+    expect(stats.pipeline.won).toBe(1);
+    expect(stats.thisMonth.leads).toBe(2);
+    expect(stats.followUps[0].status).toBe("new");
+    expect(stats.leaderboard.rank).toBe(0);
+    expect(stats.leaderboard.percentageVsFirst).toBe(0);
+    expect(stats.leaderboard.percentageVsAverage).toBe(0);
+  });
+
+  it("returns zero deltas when user is missing from leaderboard", () => {
+    const now = new Date("2026-01-27T12:00:00Z");
+    const leads = [
+      {
+        lead_id: "lead-11",
+        status: "new",
+        created_at: "2026-01-26",
+        sales_rep_id: "rep-1",
+      },
+    ];
+    const leaderboard = [
+      { sales_rep_id: "rep-1", total_revenue: null, rank: 1 },
+      { sales_rep_id: "rep-2", total_revenue: 0, rank: 2 },
+    ];
+
+    const stats = buildSalesStats({ leads, leaderboard, userId: "rep-9", role: "manager", now });
+
+    expect(stats.leaderboard.rank).toBe(0);
+    expect(stats.leaderboard.totalReps).toBe(2);
+    expect(stats.leaderboard.percentageVsFirst).toBe(0);
+    expect(stats.leaderboard.percentageVsAverage).toBe(0);
+  });
 });

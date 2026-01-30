@@ -143,15 +143,17 @@ function buildPipelineCounts(leads: LeadRow[]) {
 }
 
 function buildFollowUps(leads: LeadRow[]) {
-  return leads
-    .filter((lead) => Boolean(lead.follow_up_date))
+  const leadsWithFollowUps = leads.filter(
+    (lead): lead is LeadRow & { follow_up_date: string } => Boolean(lead.follow_up_date)
+  );
+  return leadsWithFollowUps
     .filter((lead) => lead.status !== "won" && lead.status !== "lost")
     .map((lead) => ({ lead, sortDate: parseDate(lead.follow_up_date) }))
     .sort((a, b) => (a.sortDate?.getTime() ?? Number.POSITIVE_INFINITY) - (b.sortDate?.getTime() ?? Number.POSITIVE_INFINITY))
     .map(({ lead }) => ({
       lead_id: lead.lead_id,
       customer_name: buildCustomerName(lead),
-      follow_up_date: lead.follow_up_date ?? "",
+      follow_up_date: lead.follow_up_date,
       status: lead.status ?? "new",
       estimated_value: lead.estimated_job_value ?? 0,
     }));

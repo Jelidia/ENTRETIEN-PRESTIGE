@@ -88,6 +88,16 @@ describe("SalesDashboard", () => {
     expect(await screen.findByText("Boom")).toBeInTheDocument();
   });
 
+  it("falls back to default error when missing", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: false,
+      json: async () => ({}),
+    });
+
+    render(<SalesDashboard />);
+    expect(await screen.findByText("Unable to load sales dashboard")).toBeInTheDocument();
+  });
+
   it("shows error when response has no data", async () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
@@ -95,7 +105,7 @@ describe("SalesDashboard", () => {
     });
 
     render(<SalesDashboard />);
-    expect(await screen.findByText("Unable to load sales dashboard")).toBeInTheDocument();
+    expect(await screen.findByText("No data available.")).toBeInTheDocument();
   });
 
   it("renders stats with conversion and leaderboard deltas", async () => {
@@ -140,5 +150,24 @@ describe("SalesDashboard", () => {
     expect(screen.getByText("You're #1! 🎉")).toBeInTheDocument();
     expect(screen.getByText("At average")).toBeInTheDocument();
     expect(screen.getByText("Claire")).toBeInTheDocument();
+  });
+
+  it("renders negative and positive leaderboard deltas", async () => {
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        ...baseStats,
+        leaderboard: {
+          rank: 3,
+          totalReps: 5,
+          percentageVsFirst: -15,
+          percentageVsAverage: 12,
+        },
+      }),
+    });
+
+    render(<SalesDashboard />);
+    expect(await screen.findByText("-15% below #1")).toBeInTheDocument();
+    expect(screen.getByText("+12% above average")).toBeInTheDocument();
   });
 });

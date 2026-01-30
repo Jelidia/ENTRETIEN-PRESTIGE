@@ -53,8 +53,14 @@ export default function SalesDashboard() {
     setError("");
     const res = await fetch("/api/sales/dashboard");
     const data = await res.json().catch(() => null);
-    if (!res.ok || !data) {
+    if (!res.ok) {
       setError(data?.error ?? "Unable to load sales dashboard");
+      setStats(null);
+      setLoading(false);
+      return;
+    }
+    if (!data) {
+      setError("");
       setStats(null);
       setLoading(false);
       return;

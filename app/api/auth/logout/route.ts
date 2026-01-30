@@ -4,6 +4,7 @@ import { createAnonClient, createAdminClient } from "@/lib/supabaseServer";
 import { hashCode } from "@/lib/crypto";
 import { getRequestIp, rateLimit } from "@/lib/rateLimit";
 import { logAudit } from "@/lib/audit";
+import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 
 export async function POST(request: Request) {
   const ip = getRequestIp(request);
@@ -20,6 +21,20 @@ export async function POST(request: Request) {
   const { data: userData } = token ? await admin.auth.getUser(token) : { data: null };
   const userId = userData?.user?.id ?? null;
   const anon = createAnonClient(token ?? undefined);
+  const idempotency = await beginIdempotency(anon, request, userId, {
+    action: "logout",
+  });
+  if (idempotency.action === "replay") {
+    const response = NextResponse.json(idempotency.body, { status: idempotency.status });
+    clearSessionCookies(response);
+    return response;
+  }
+  if (idempotency.action === "conflict") {
+    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+  }
+  if (idempotency.action === "in_progress") {
+    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+  }
   await anon.auth.signOut();
 
   if (token) {
@@ -36,7 +51,9 @@ export async function POST(request: Request) {
     });
   }
 
-  const response = NextResponse.json({ ok: true });
+  const responseBody = { ok: true };
+  const response = NextResponse.json(responseBody);
   clearSessionCookies(response);
+  await completeIdempotency(anon, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
   return response;
 }
