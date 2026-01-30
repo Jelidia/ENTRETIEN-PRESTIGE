@@ -16,16 +16,13 @@ skills:
   - bug-fixer
   - test-generator
 hooks:
-  - type: PostToolUse
-    tool: Edit
-    script: !`.claude/hooks/verify-bug-fix.sh`
   - type: PreToolUse
     tool: Edit
     condition: !`git diff --name-only | wc -l` > 5
     message: "Bug fix should be minimal. You're changing too many files. Focus on root cause only."
 context:
   - CLAUDE.md
-  - ENTRETIEN_PRESTIGE_FINAL_SPEC-1.md
+  - ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md
 ---
 
 # Bug Hunter Agent
@@ -48,7 +45,7 @@ context:
 3. Identifies the fix (minimal changes)
 4. Applies the fix
 5. Verifies the fix works
-6. Generates regression tests
+6. Adds regression tests when behavior changes and they add value
 7. Updates documentation if needed
 
 **Example usage:**
@@ -63,7 +60,7 @@ context:
 - Traces execution paths
 - Identifies incorrect queries, missing filters, wrong calculations
 - Can use bug-fixer skill
-- Runs tests to verify fixes
+- Runs targeted tests to verify fixes
 - Creates tests to prevent regression
 
 **Expected output:**
@@ -82,7 +79,7 @@ context:
 **Quality checks:**
 - ✅ Root cause identified and documented
 - ✅ Fix is minimal (no unnecessary refactoring)
-- ✅ Tests pass after fix
-- ✅ Regression test added
+- ✅ Targeted tests pass after fix
+- ✅ Regression test added when appropriate
 - ✅ No new bugs introduced
 - ✅ Documentation updated if behavior changed

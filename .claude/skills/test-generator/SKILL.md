@@ -1,6 +1,6 @@
 ---
 name: test-generator
-description: Generate Vitest tests with 100% coverage for API routes and components. Auto-runs tests and reports coverage.
+description: Generate targeted Vitest tests for changed logic in API routes and components. Runs focused tests when needed.
 argument-hint: "File path to test (e.g., 'Create tests for app/api/sales/dashboard/route.ts')"
 user-invocable: true
 allowed-tools:
@@ -27,7 +27,7 @@ hooks:
 ## Generate Vitest tests with 100% coverage
 
 ## When to use
-After creating any API route or component
+After adding logic or fixing behavior where a test adds value
 
 ## Example
 `/test-generator Create tests for app/api/sales/dashboard/route.ts`
@@ -36,11 +36,11 @@ After creating any API route or component
 1. Reads source file
 2. Generates complete Vitest suite
 3. Includes success cases, error cases, edge cases
-4. Runs npm run test automatically
-5. Reports coverage %
+4. Runs targeted tests when requested
+5. Reports coverage for touched code
 
 ## Quality checks
-- 100% coverage
-- All functions tested
+- Coverage meets repo thresholds for touched code
+- All relevant functions tested
 - Success AND error paths
 - Edge cases included

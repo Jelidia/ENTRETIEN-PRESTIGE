@@ -15,12 +15,12 @@ agent: database-architect
 hooks:
   - type: PreToolUse
     tool: Write
-    condition: path.includes('db/') && content.includes('CREATE POLICY')
+    condition: path.includes('supabase/') && content.includes('CREATE POLICY')
     message: "Remember: company_id filter, role checks, auth.uid()"
   - type: PostToolUse
     tool: Write
     condition: content.includes('CREATE POLICY')
-    script: !`.claude/hooks/validate-rls-policy.sh`
+    script: !`.claude/hooks/check-rls-filter.sh`
 ---
 
 # rls-policy-builder Skill
@@ -48,6 +48,7 @@ Creating new tables or adding access control to existing tables
 - Technicians only see assigned jobs
 - Sales reps only see own leads/customers
 - Enable RLS with: ALTER TABLE table_name ENABLE ROW LEVEL SECURITY;
+- If table has soft delete, SELECT policies should exclude deleted_at rows
 
 ## Example output
 ```sql

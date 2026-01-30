@@ -6,6 +6,8 @@ import { availabilityUpdateSchema } from "@/lib/validators";
 import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
+import { captureError } from "@/lib/errorTracking";
+import { getRequestContext } from "@/lib/requestId";
 
 // GET /api/users/[id]/availability - Get user's availability
 export async function GET(
@@ -18,6 +20,11 @@ export async function GET(
   const { profile, user } = auth;
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
+  const requestContext = getRequestContext(request, {
+    user_id: user.id,
+    company_id: profile.company_id,
+    target_user_id: params.id,
+  });
 
   // Technicians can only view their own availability
   if (profile.role === "technician" && params.id !== user.id) {
@@ -58,7 +65,10 @@ export async function GET(
     .order("hour", { ascending: true });
 
   if (error) {
-    console.error("Failed to fetch availability:", error);
+    await captureError(error, {
+      ...requestContext,
+      action: "fetch_availability",
+    });
     return NextResponse.json(
       { error: "Échec du chargement de la disponibilité" },
       { status: 500 }
@@ -84,6 +94,11 @@ export async function POST(
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
   const ip = getRequestIp(request);
+  const requestContext = getRequestContext(request, {
+    user_id: user.id,
+    company_id: profile.company_id,
+    target_user_id: params.id,
+  });
 
   // Technicians can only update their own availability
   if (profile.role === "technician" && params.id !== user.id) {
@@ -161,7 +176,10 @@ export async function POST(
       .insert(availableSlots);
 
     if (insertError) {
-      console.error("Failed to save availability:", insertError);
+      await captureError(insertError, {
+        ...requestContext,
+        action: "save_availability",
+      });
       return NextResponse.json(
         { error: "Échec de l'enregistrement de la disponibilité" },
         { status: 500 }

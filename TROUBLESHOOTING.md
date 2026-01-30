@@ -41,7 +41,7 @@ rm -rf node_modules .next coverage
 npm install
 npm run build
 npm run lint
-npx tsc --noEmit
+npm run typecheck
 
 # Reset database connection
 # Check Supabase dashboard for active connections
@@ -332,6 +332,8 @@ import { Component } from './Component' // Not './component'
 
 ## Testing Issues
 
+Prefer targeted test runs while debugging (e.g., `npx vitest run <file>`); reserve full-suite runs for broad changes or pre-deploy verification.
+
 ### Issue: Tests Pass Locally, Fail in CI
 
 **Common causes:**
@@ -485,7 +487,7 @@ ls -la .claude/hooks/
 chmod +x .claude/hooks/*.sh
 
 # Test hook manually
-bash .claude/hooks/validate-migration.sh db/migrations/test.sql
+bash .claude/hooks/validate-migration.sh supabase/migrations/test.sql
 ```
 
 **Windows fix:**
@@ -690,7 +692,7 @@ const result = await handleStripeWebhook(payload, signature);
 npm run build
 npm run lint
 npm test
-npx tsc --noEmit
+npm run typecheck
 ```
 
 **Database:**
@@ -871,11 +873,11 @@ Include:
 ### Documentation Locations
 
 - **Project docs:** `/CLAUDE.md`, `/README.md`
-- **Spec:** `/ENTRETIEN_PRESTIGE_FINAL_SPEC-1.md`
+- **Spec:** `/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md`
 - **Agents:** `/.claude/AGENTS_GUIDE.md`
 - **Skills:** `/.claude/SKILLS_GUIDE.md`
-- **Migrations:** `/SQL_MIGRATION_GUIDE.md` (if exists)
-- **Deployment:** `/READY_TO_DEPLOY.md`
+- **Migrations:** `/supabase/migrations/`
+- **Deployment:** `/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md`
 
 ### Community Support
 

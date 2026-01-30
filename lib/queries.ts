@@ -1,6 +1,7 @@
 import { getAccessTokenFromCookies } from "./session";
 import { createUserClient } from "./supabaseServer";
 import { buildDashboardData, formatDateKey } from "./dashboardMetrics";
+import { logger } from "@/lib/logger";
 import {
   customers as fallbackCustomers,
   dashboardKpis,
@@ -56,10 +57,10 @@ export async function getDashboardData() {
     .eq("company_id", profile.company_id);
 
   if (jobsError || customersError || !jobs || !customers) {
-    console.error("Failed to load dashboard data", {
+    logger.error("Failed to load dashboard data", {
       jobsError,
       customersError,
-      companyId: profile.company_id,
+      company_id: profile.company_id,
     });
     return { kpis: dashboardKpis, revenueBars, scheduleToday };
   }

@@ -59,7 +59,7 @@ claude --mcp supabase-local query "SELECT * FROM users LIMIT 5"
 claude --mcp supabase-local schema users
 
 # Test migration
-claude --mcp supabase-local migrate db/migrations/20260128_test.sql
+claude --mcp supabase-local migrate supabase/migrations/20260129120000_add_customer_rating_tokens.sql
 ```
 
 **Environment Variables:**
@@ -197,7 +197,7 @@ npm list vitest
 claude --mcp testing runTests
 
 # Run specific file
-claude --mcp testing runTests --file tests/lib/pricing.test.ts
+claude --mcp testing runTests --file tests/dashboardMetrics.test.ts
 
 # Run with pattern
 claude --mcp testing runTests --pattern "auth"
@@ -206,7 +206,7 @@ claude --mcp testing runTests --pattern "auth"
 claude --mcp testing getCoverage
 
 # Watch mode
-claude --mcp testing watchMode --file tests/lib/pricing.test.ts
+claude --mcp testing watchMode --file tests/dashboardMetrics.test.ts
 ```
 
 ### 6. Stripe Integration (`stripe-integration`)
@@ -634,7 +634,7 @@ claude --agent database-architect \
   "Add rating_score column to jobs table"
 
 # 3. Test migration
-claude --mcp supabase-local migrate db/migrations/20260128_add_rating.sql
+claude --mcp supabase-local migrate supabase/migrations/20260129120000_add_customer_rating_tokens.sql
 
 # 4. Commit changes
 claude --mcp git-integration commit -m "Add rating_score to jobs table"

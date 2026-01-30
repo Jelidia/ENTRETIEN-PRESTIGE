@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getRequestIp, rateLimit } from "./lib/rateLimit";
+import { REQUEST_ID_HEADER, generateRequestId } from "./lib/requestId";
 
 const protectedPaths = [
   "/admin",
@@ -22,6 +23,9 @@ const protectedPaths = [
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const requestId = request.headers.get(REQUEST_ID_HEADER) ?? generateRequestId();
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set(REQUEST_ID_HEADER, requestId);
   if (pathname.startsWith("/api/")) {
     const rule = resolveApiLimit(pathname, request.method);
     const ip = getRequestIp(request);
@@ -35,6 +39,7 @@ export function middleware(request: NextRequest) {
         status: 429,
         headers: {
           "Content-Type": "application/json",
+          [REQUEST_ID_HEADER]: requestId,
           "Retry-After": String(retryAfter),
           "X-RateLimit-Limit": String(rule.limit),
           "X-RateLimit-Remaining": "0",
@@ -43,7 +48,8 @@ export function middleware(request: NextRequest) {
       });
     }
 
-    const response = NextResponse.next();
+    const response = NextResponse.next({ request: { headers: requestHeaders } });
+    response.headers.set(REQUEST_ID_HEADER, requestId);
     response.headers.set("X-RateLimit-Limit", String(rule.limit));
     response.headers.set("X-RateLimit-Remaining", String(result.remaining));
     response.headers.set("X-RateLimit-Reset", String(result.resetAt));
@@ -52,7 +58,9 @@ export function middleware(request: NextRequest) {
   const isProtected = protectedPaths.some((path) => pathname.startsWith(path));
 
   if (!isProtected) {
-    return NextResponse.next();
+    const response = NextResponse.next({ request: { headers: requestHeaders } });
+    response.headers.set(REQUEST_ID_HEADER, requestId);
+    return response;
   }
 
   const token = request.cookies.get("ep_access_token")?.value;
@@ -60,10 +68,14 @@ export function middleware(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(url);
+    const response = NextResponse.redirect(url);
+    response.headers.set(REQUEST_ID_HEADER, requestId);
+    return response;
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  response.headers.set(REQUEST_ID_HEADER, requestId);
+  return response;
 }
 
 type ApiRateRule = {

@@ -6,6 +6,8 @@ import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 import { settingsDocumentQuerySchema } from "@/lib/validators";
+import { captureError } from "@/lib/errorTracking";
+import { getRequestContext } from "@/lib/requestId";
 
 // DELETE /api/settings/document?type=id_photo|profile_photo
 export async function DELETE(request: Request) {
@@ -14,6 +16,10 @@ export async function DELETE(request: Request) {
 
   const { profile } = auth;
   const ip = getRequestIp(request);
+  const requestContext = getRequestContext(request, {
+    user_id: profile.user_id,
+    company_id: profile.company_id,
+  });
   const { searchParams } = new URL(request.url);
   const queryResult = settingsDocumentQuerySchema.safeParse(Object.fromEntries(searchParams));
   if (!queryResult.success) {
@@ -77,7 +83,11 @@ export async function DELETE(request: Request) {
       .eq("user_id", profile.user_id);
 
     if (updateError) {
-      console.error("Failed to update user record:", updateError);
+      await captureError(updateError, {
+        ...requestContext,
+        action: "update_user_document",
+        document_type: type,
+      });
       return NextResponse.json(
         { error: "Failed to delete document" },
         { status: 500 }
@@ -98,7 +108,11 @@ export async function DELETE(request: Request) {
     await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
     return NextResponse.json(responseBody);
   } catch (err) {
-    console.error("Error deleting document:", err);
+    await captureError(err, {
+      ...requestContext,
+      action: "delete_document",
+      document_type: type,
+    });
     return NextResponse.json(
       { error: "An error occurred" },
       { status: 500 }

@@ -6,6 +6,8 @@ import { adminResetPasswordSchema } from "@/lib/validators";
 import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
+import { captureError } from "@/lib/errorTracking";
+import { getRequestContext } from "@/lib/requestId";
 
 // POST /api/admin/users/[user_id]/reset-password - Admin resets user password
 export async function POST(
@@ -18,6 +20,11 @@ export async function POST(
 
   const { profile } = auth;
   const userId = params.user_id;
+  const requestContext = getRequestContext(request, {
+    user_id: profile.user_id,
+    company_id: profile.company_id,
+    target_user_id: userId,
+  });
 
   // 2. Validate input
   const body = await request.json().catch(() => null);
@@ -74,7 +81,10 @@ export async function POST(
   });
 
   if (updateError) {
-    console.error("Admin password reset failed:", updateError);
+    await captureError(updateError, {
+      ...requestContext,
+      action: "admin_reset_password",
+    });
     return NextResponse.json(
       { error: "Impossible de réinitialiser le mot de passe" },
       { status: 500 }

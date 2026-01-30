@@ -7,6 +7,8 @@ import { getRequestIp } from "@/lib/rateLimit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
+import { captureError } from "@/lib/errorTracking";
+import { getRequestContext } from "@/lib/requestId";
 
 // POST /api/admin/reset-password - Admin resets password by email
 export async function POST(request: Request) {
@@ -14,6 +16,10 @@ export async function POST(request: Request) {
   const auth = await requireRole(request, ["admin"]);
   if ("response" in auth) return auth.response;
   const { profile } = auth;
+  const requestContext = getRequestContext(request, {
+    user_id: profile.user_id,
+    company_id: profile.company_id,
+  });
 
   // 2. Validate input
   const body = await request.json().catch(() => null);
@@ -62,7 +68,10 @@ export async function POST(request: Request) {
   });
 
   if (updateError) {
-    console.error("Failed to reset password:", updateError);
+    await captureError(updateError, {
+      ...requestContext,
+      action: "admin_reset_password_by_email",
+    });
     return NextResponse.json(
       { error: "Impossible de réinitialiser le mot de passe" },
       { status: 500 }

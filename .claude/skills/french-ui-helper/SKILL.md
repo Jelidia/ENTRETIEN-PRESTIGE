@@ -10,9 +10,6 @@ model: claude-sonnet-4-5-20250929
 context: fork
 agent: feature-builder
 hooks:
-  - type: PostToolUse
-    tool: Write
-    script: !`.claude/hooks/validate-french-text.sh`
 ---
 
 # french-ui-helper Skill

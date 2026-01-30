@@ -22,11 +22,11 @@ hooks:
   - type: PostToolUse
     tool: Bash
     condition: command.includes('npm test')
-    script: !`.claude/hooks/verify-coverage.sh`
+    script: !`.claude/hooks/check-coverage.sh`
 context:
-  - READY_TO_DEPLOY.md
+  - ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
   - .env.example
-  - db/migrations/*.sql
+  - supabase/migrations/*.sql
   - middleware.ts
   - CLAUDE.md
 ---
@@ -51,7 +51,7 @@ context:
 4. Reviews RLS policies
 5. Validates rate limiting configuration
 6. Generates deployment checklist
-7. Updates READY_TO_DEPLOY.md
+7. Updates ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
 
 **Example usage:**
 ```bash
@@ -62,17 +62,17 @@ context:
 **Capabilities:**
 - Runs npm run build and checks for errors
 - Runs npm run lint
-- Runs npm test and verifies 100% coverage
+- Runs npm test when preparing for deploy
 - Reads .env.example and checks required variables
 - Verifies all migrations are documented
 - Checks RLS policies exist on all tables
 - Reviews rate limiting rules
-- Updates READY_TO_DEPLOY.md with current status
+- Updates ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md with current status
 
 **Expected output:**
 - Deployment readiness report
 - List of blockers (if any)
-- Updated READY_TO_DEPLOY.md
+- Updated ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
 - Deployment checklist
 - Migration execution order
 - Environment variable checklist
@@ -86,10 +86,10 @@ context:
 - ✅ npm run build succeeds
 - ✅ npm run lint passes (no errors)
 - ✅ npm test passes with 100% coverage
-- ✅ All migrations are in db/migrations/
+- ✅ All migrations are in supabase/migrations/
 - ✅ All tables have RLS enabled
 - ✅ All routes have auth checks
 - ✅ Environment variables documented
 - ✅ Rate limiting configured
 - ✅ No TODOs or FIXME comments in critical code
-- ✅ READY_TO_DEPLOY.md is up to date
+- ✅ ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md is up to date

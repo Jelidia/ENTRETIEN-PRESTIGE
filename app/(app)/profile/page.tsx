@@ -177,14 +177,14 @@ export default function ProfilePage() {
     }
   }
 
-  function handleLogout() {
-    // Clear tokens
-    localStorage.removeItem("ep_access_token");
-    localStorage.removeItem("lastPhone");
-    document.cookie = "ep_access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-
-    // Redirect to login
-    router.push("/login?message=deconnecte");
+  async function handleLogout() {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } finally {
+      localStorage.removeItem("ep_access_token");
+      localStorage.removeItem("lastPhone");
+      router.push("/login?message=deconnecte");
+    }
   }
 
   const roleLabels: Record<string, string> = {

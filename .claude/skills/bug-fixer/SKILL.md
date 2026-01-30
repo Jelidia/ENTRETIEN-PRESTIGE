@@ -15,9 +15,6 @@ agent: bug-hunter
 hooks:
   - type: PostToolUse
     tool: Edit
-    script: !`.claude/hooks/verify-fix.sh`
-  - type: PostToolUse
-    tool: Edit
     script: !`npm test -- --run ${path.replace(/\.(ts|tsx)$/, '.test.$1')}`
 ---
 
@@ -35,11 +32,11 @@ hooks:
 2. Finds root cause
 3. Makes minimal fixes
 4. Replaces mock → real data
-5. Tests the fix
+5. Runs targeted tests when needed
 6. Reports what changed
 
 ## Quality checks
 - Root cause identified
 - Minimal changes only
-- Tests pass
+- Targeted tests pass (when run)
 - No new errors

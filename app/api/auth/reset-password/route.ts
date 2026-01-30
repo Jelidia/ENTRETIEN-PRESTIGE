@@ -5,9 +5,12 @@ import { setSessionCookies } from "@/lib/session";
 import { getRequestIp, rateLimit } from "@/lib/rateLimit";
 import { logAudit } from "@/lib/audit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
+import { captureError } from "@/lib/errorTracking";
+import { getRequestContext } from "@/lib/requestId";
 
 export async function POST(request: Request) {
   const ip = getRequestIp(request);
+  const requestContext = getRequestContext(request);
   const limit = rateLimit(`auth:reset-password:${ip}`, 5, 15 * 60 * 1000);
   if (!limit.allowed) {
     return NextResponse.json(
@@ -55,7 +58,10 @@ export async function POST(request: Request) {
   // 3. Update password
   const { error: updateError } = await anon.auth.updateUser({ password: newPassword });
   if (updateError) {
-    console.error("Password reset failed:", updateError);
+    await captureError(updateError, {
+      ...requestContext,
+      action: "reset_password",
+    });
     return NextResponse.json(
       { error: "Impossible de mettre à jour le mot de passe" },
       { status: 500 }

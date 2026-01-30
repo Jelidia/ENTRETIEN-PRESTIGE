@@ -4,6 +4,8 @@ import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { buildSalesStats, type LeadRow, type LeaderboardRow } from "@/lib/salesDashboard";
 import { emptyQuerySchema } from "@/lib/validators";
+import { captureError } from "@/lib/errorTracking";
+import { getRequestContext } from "@/lib/requestId";
 
 export async function GET(request: Request) {
   const auth = await requireRole(request, ["admin", "manager", "sales_rep"], "sales");
@@ -20,6 +22,10 @@ export async function GET(request: Request) {
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
   const now = new Date();
+  const requestContext = getRequestContext(request, {
+    user_id: user.id,
+    company_id: profile.company_id,
+  });
 
   let leadQuery = client
     .from("leads")
@@ -38,11 +44,10 @@ export async function GET(request: Request) {
     .eq("year", now.getUTCFullYear());
 
   if (leadsError || leaderboardError) {
-    console.error("Failed to load sales dashboard", {
+    await captureError(new Error("Failed to load sales dashboard"), {
       leadsError,
       leaderboardError,
-      userId: user.id,
-      companyId: profile.company_id,
+      ...requestContext,
     });
     return NextResponse.json({ error: "Unable to load sales dashboard" }, { status: 500 });
   }

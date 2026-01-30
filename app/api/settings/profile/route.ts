@@ -6,6 +6,8 @@ import { profileUpdateSchema } from "@/lib/validators";
 import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
+import { captureError } from "@/lib/errorTracking";
+import { getRequestContext } from "@/lib/requestId";
 
 // PATCH /api/settings/profile - Update user's own profile
 export async function PATCH(request: Request) {
@@ -14,6 +16,10 @@ export async function PATCH(request: Request) {
 
   const { profile } = auth;
   const ip = getRequestIp(request);
+  const requestContext = getRequestContext(request, {
+    user_id: profile.user_id,
+    company_id: profile.company_id,
+  });
 
   try {
     const body = await request.json();
@@ -49,7 +55,10 @@ export async function PATCH(request: Request) {
       .single();
 
     if (error) {
-      console.error("Failed to update profile:", error);
+      await captureError(error, {
+        ...requestContext,
+        action: "update_profile",
+      });
       return NextResponse.json(
         { error: "Failed to update profile" },
         { status: 500 }
@@ -69,7 +78,10 @@ export async function PATCH(request: Request) {
     await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
     return NextResponse.json(responseBody);
   } catch (err) {
-    console.error("Error updating profile:", err);
+    await captureError(err, {
+      ...requestContext,
+      action: "update_profile",
+    });
     return NextResponse.json(
       { error: "An error occurred" },
       { status: 500 }

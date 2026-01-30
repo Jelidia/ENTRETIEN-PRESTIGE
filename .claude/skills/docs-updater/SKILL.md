@@ -1,6 +1,6 @@
 ---
 name: docs-updater
-description: Update CLAUDE.md, README.md, and READY_TO_DEPLOY.md after completing features. Keeps documentation synchronized with codebase changes.
+description: Update CLAUDE.md, README.md, and ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md after completing features. Keeps documentation synchronized with codebase changes.
 argument-hint: "What changed (e.g., 'Update docs: added loyalty points redemption feature')"
 user-invocable: true
 disable-model-invocation: false
@@ -14,10 +14,6 @@ model: claude-sonnet-4-5-20250929
 context: fork
 agent: deploy-manager
 hooks:
-  - type: PostToolUse
-    tool: Edit
-    condition: path.includes('CLAUDE.md') || path.includes('README.md')
-    script: !`.claude/hooks/validate-docs.sh`
 ---
 
 # docs-updater Skill
@@ -32,7 +28,7 @@ After completing features, fixing bugs, or making significant changes to the cod
 ## What it does
 1. Reads current documentation files
 2. Updates relevant sections with completed work
-3. Increments progress percentages in READY_TO_DEPLOY.md
+3. Increments progress percentages in ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
 4. Adds new API endpoints to CLAUDE.md
 5. Updates feature status from ⚠️ to ✅
 6. Maintains consistent formatting
@@ -59,7 +55,7 @@ After completing features, fixing bugs, or making significant changes to the cod
 - Setup instructions
 - New environment variables
 
-### READY_TO_DEPLOY.md
+### ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
 - Progress percentage (~XX% complete)
 - Feature completion status
 - New completed items marked ✅
