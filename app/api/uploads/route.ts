@@ -3,6 +3,7 @@ import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabaseServer";
 import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
+import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 
 const bucketName = "documents";
 const docTypeMap: Record<string, string> = {
@@ -38,6 +39,20 @@ export async function POST(request: Request) {
   }
 
   const admin = createAdminClient();
+  const idempotency = await beginIdempotency(admin, request, auth.profile.user_id, {
+    userId,
+    docType,
+    fileName: file.name,
+  });
+  if (idempotency.action === "replay") {
+    return NextResponse.json(idempotency.body, { status: idempotency.status });
+  }
+  if (idempotency.action === "conflict") {
+    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+  }
+  if (idempotency.action === "in_progress") {
+    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+  }
   const createResult = await admin.storage.createBucket(bucketName, { public: false });
   const createError = createResult.error?.message?.toLowerCase() ?? "";
   if (createResult.error && !createError.includes("already exists")) {
@@ -77,5 +92,14 @@ export async function POST(request: Request) {
     newValues: { doc_type: docType, path: storagePath },
   });
 
-  return NextResponse.json({ ok: true, path: storagePath, field: column });
+  const responseBody = { ok: true, path: storagePath, field: column };
+  await completeIdempotency(
+    admin,
+    request,
+    idempotency.scope,
+    idempotency.requestHash,
+    responseBody,
+    200
+  );
+  return NextResponse.json(responseBody);
 }

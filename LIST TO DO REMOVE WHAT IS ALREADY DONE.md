@@ -1,7 +1,7 @@
 # ENTRETIEN PRESTIGE — Master Backlog (Auto-generated)
 - Generated: 2026-01-29 05:49:44
 - Repo: `/mnt/data/ENTRETIEN_PRESTIGE/ENTRETIEN-PRESTIGE-main`
-- Total items: **1432** (numbered list below)
+- Total items: **1405** (numbered list below)
 
 ## Legend
 - **CONFIRMED**: Found directly by static scan (pattern-based).
@@ -9,7 +9,7 @@
 
 ## Counts by priority
 - **P0**: 81
-- **P1**: 306
+- **P1**: 279
 - **P2**: 937
 - **P3**: 108
 
@@ -24,37 +24,10 @@
 ## API-Audit
 
 ## API-Idempotency
-164. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/reports/[type] mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/reports/[type]/route.ts`
-172. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/uploads mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/uploads/route.ts`
 
 ## API-RateLimit
 
 ## API-Security
-178. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/access ensure auth + permission gates are correct for role/tenant. Methods=GET — `app/api/access/route.ts`
-179. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/admin/reset-password ensure auth + permission gates are correct for role/tenant. Methods=POST — `app/api/admin/reset-password/route.ts`
-180. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/admin/seed ensure auth + permission gates are correct for role/tenant. Methods=POST — `app/api/admin/seed/route.ts`
-181. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/admin/users/[user_id]/reset-password ensure auth + permission gates are correct for role/tenant. Methods=POST — `app/api/admin/users/[user_id]/reset-password/route.ts`
-182. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/admin/users/[user_id] ensure auth + permission gates are correct for role/tenant. Methods=DELETE,PATCH — `app/api/admin/users/[user_id]/route.ts`
-183. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/admin/users ensure auth + permission gates are correct for role/tenant. Methods=GET,POST — `app/api/admin/users/route.ts`
-184. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/auth/change-password is public (auth); verify rate limits, abuse prevention, and minimal data exposure. Methods=POST — `app/api/auth/change-password/route.ts`
-185. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/auth/disable-2fa is public (auth); verify rate limits, abuse prevention, and minimal data exposure. Methods=POST — `app/api/auth/disable-2fa/route.ts`
-186. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/auth/forgot-password is public (auth); verify rate limits, abuse prevention, and minimal data exposure. Methods=POST — `app/api/auth/forgot-password/route.ts`
-187. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/auth/login is public (auth); verify rate limits, abuse prevention, and minimal data exposure. Methods=POST — `app/api/auth/login/route.ts`
-188. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/auth/logout is public (auth); verify rate limits, abuse prevention, and minimal data exposure. Methods=POST — `app/api/auth/logout/route.ts`
-189. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/auth/refresh-token is public (auth); verify rate limits, abuse prevention, and minimal data exposure. Methods=POST — `app/api/auth/refresh-token/route.ts`
-190. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/auth/register is public (auth); verify rate limits, abuse prevention, and minimal data exposure. Methods=POST — `app/api/auth/register/route.ts`
-191. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/auth/reset-password is public (auth); verify rate limits, abuse prevention, and minimal data exposure. Methods=POST — `app/api/auth/reset-password/route.ts`
-192. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/auth/setup-2fa is public (auth); verify rate limits, abuse prevention, and minimal data exposure. Methods=POST — `app/api/auth/setup-2fa/route.ts`
-193. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/auth/verify-2fa is public (auth); verify rate limits, abuse prevention, and minimal data exposure. Methods=POST — `app/api/auth/verify-2fa/route.ts`
-194. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/company ensure auth + permission gates are correct for role/tenant. Methods=GET,PATCH — `app/api/company/route.ts`
-195. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/customers/[id]/[action] ensure auth + permission gates are correct for role/tenant. Methods=GET,POST — `app/api/customers/[id]/[action]/route.ts`
-196. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/customers/[id] ensure auth + permission gates are correct for role/tenant. Methods=GET,PATCH — `app/api/customers/[id]/route.ts`
-197. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/customers ensure auth + permission gates are correct for role/tenant. Methods=GET,POST — `app/api/customers/route.ts`
-198. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/dispatch/[action] ensure auth + permission gates are correct for role/tenant. Methods=GET,POST — `app/api/dispatch/[action]/route.ts`
-199. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/dispatch/calendar ensure auth + permission gates are correct for role/tenant. Methods=GET — `app/api/dispatch/calendar/route.ts`
-200. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/dispatch/technician/[id] ensure auth + permission gates are correct for role/tenant. Methods=GET — `app/api/dispatch/technician/[id]/route.ts`
-201. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/documents ensure auth + permission gates are correct for role/tenant. Methods=GET — `app/api/documents/route.ts`
-202. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/email/[action] ensure auth + permission gates are correct for role/tenant. Methods=GET,POST — `app/api/email/[action]/route.ts`
 203. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/gps/[action] ensure auth + permission gates are correct for role/tenant. Methods=GET,POST — `app/api/gps/[action]/route.ts`
 204. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/gps/geofence/[id] ensure auth + permission gates are correct for role/tenant. Methods=GET — `app/api/gps/geofence/[id]/route.ts`
 205. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/gps/technician/[id] ensure auth + permission gates are correct for role/tenant. Methods=GET — `app/api/gps/technician/[id]/route.ts`
