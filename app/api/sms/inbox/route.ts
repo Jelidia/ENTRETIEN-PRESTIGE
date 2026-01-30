@@ -2,12 +2,18 @@ import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
+import { emptyQuerySchema } from "@/lib/validators";
 
 // Get SMS inbox threads (role-based filtering)
 export async function GET(request: Request) {
   const auth = await requireUser(request);
   if ("response" in auth) {
     return auth.response;
+  }
+
+  const queryResult = emptyQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
+  if (!queryResult.success) {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
   const token = getAccessTokenFromRequest(request);

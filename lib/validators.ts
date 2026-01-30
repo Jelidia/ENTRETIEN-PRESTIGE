@@ -403,3 +403,69 @@ export const availabilityUpdateSchema = z.object({
 export const profileUpdateSchema = z.object({
   fullName: z.string().min(2).max(100),
 });
+
+const uuidSchema = z.string().uuid();
+
+export const emptyBodySchema = z.object({}).passthrough();
+export const emptyQuerySchema = z.object({}).passthrough();
+
+export const disable2faBodySchema = z.object({
+  userId: uuidSchema.optional(),
+});
+
+export const idParamSchema = z.object({
+  id: uuidSchema,
+});
+
+export const threadIdParamSchema = z.object({
+  threadId: uuidSchema,
+});
+
+export const documentsQuerySchema = z.object({
+  userId: uuidSchema,
+  docType: z.enum(["id_front", "id_back", "contract", "signature"]),
+});
+
+export const notificationDeleteQuerySchema = z.object({
+  id: uuidSchema,
+});
+
+export const ratingsValidateQuerySchema = z.object({
+  token: z.string().min(1),
+});
+
+export const settingsDocumentQuerySchema = z.object({
+  type: z.enum(["id_photo", "profile_photo"]),
+});
+
+export const settingsUploadQuerySchema = z.object({
+  type: z.enum(["contract", "id_photo", "profile_photo"]),
+});
+
+export const uploadsFormSchema = z.object({
+  userId: uuidSchema,
+  docType: z.enum(["id_front", "id_back", "contract", "signature"]),
+});
+
+export const mapsActionParamSchema = z.object({
+  action: z.enum(["geocode", "distance", "territory"]),
+});
+
+export const mapsGeocodeQuerySchema = z.object({
+  address: z.string().min(3),
+});
+
+export const mapsDistanceQuerySchema = z.object({
+  origins: z.string().min(1),
+  destinations: z.string().min(1),
+});
+
+export const mapsTerritoryQuerySchema = z.object({
+  polygon: z.string().min(1),
+});
+
+export const smsTriggerBodySchema = z.object({
+  event: z.enum(["job_scheduled", "reminder_24h", "reminder_1h", "job_completed", "no_show"]),
+  jobId: uuidSchema,
+  customData: z.record(z.any()).optional(),
+});

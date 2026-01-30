@@ -5,6 +5,7 @@ import { getAccessTokenFromRequest } from "@/lib/session";
 import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
+import { settingsUploadQuerySchema } from "@/lib/validators";
 
 // POST /api/settings/upload?type=contract|id_photo|profile_photo
 export async function POST(request: Request) {
@@ -14,14 +15,14 @@ export async function POST(request: Request) {
   const { profile } = auth;
   const ip = getRequestIp(request);
   const { searchParams } = new URL(request.url);
-  const type = searchParams.get("type");
-
-  if (!type || !["contract", "id_photo", "profile_photo"].includes(type)) {
+  const queryResult = settingsUploadQuerySchema.safeParse(Object.fromEntries(searchParams));
+  if (!queryResult.success) {
     return NextResponse.json(
       { error: "Invalid type. Must be: contract, id_photo, or profile_photo" },
       { status: 400 }
     );
   }
+  const { type } = queryResult.data;
 
   try {
     const formData = await request.formData();

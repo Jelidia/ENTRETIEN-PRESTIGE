@@ -5,6 +5,7 @@ import { getAccessTokenFromRequest } from "@/lib/session";
 import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
+import { idParamSchema } from "@/lib/validators";
 
 export async function POST(
   request: Request,
@@ -14,11 +15,16 @@ export async function POST(
   if ("response" in auth) {
     return auth.response;
   }
+  const paramsResult = idParamSchema.safeParse(params);
+  if (!paramsResult.success) {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+  const notifId = paramsResult.data.id;
   const { profile } = auth;
   const ip = getRequestIp(request);
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
-  const idempotency = await beginIdempotency(client, request, profile.user_id, { notif_id: params.id });
+  const idempotency = await beginIdempotency(client, request, profile.user_id, { notif_id: notifId });
   if (idempotency.action === "replay") {
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
@@ -31,13 +37,13 @@ export async function POST(
   const { error } = await client
     .from("notifications")
     .update({ is_read: true, read_at: new Date().toISOString(), status: "read" })
-    .eq("notif_id", params.id);
+    .eq("notif_id", notifId);
 
   if (error) {
     return NextResponse.json({ error: "Unable to update" }, { status: 400 });
   }
 
-  await logAudit(client, profile.user_id, "notification_read", "notification", params.id, "success", {
+  await logAudit(client, profile.user_id, "notification_read", "notification", notifId, "success", {
     ipAddress: ip,
     userAgent: request.headers.get("user-agent") ?? null,
   });

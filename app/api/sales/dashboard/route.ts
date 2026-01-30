@@ -3,11 +3,17 @@ import { requireRole } from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { buildSalesStats, type LeadRow, type LeaderboardRow } from "@/lib/salesDashboard";
+import { emptyQuerySchema } from "@/lib/validators";
 
 export async function GET(request: Request) {
   const auth = await requireRole(request, ["admin", "manager", "sales_rep"], "sales");
   if ("response" in auth) {
     return auth.response;
+  }
+
+  const queryResult = emptyQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
+  if (!queryResult.success) {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
   const { profile, user } = auth;

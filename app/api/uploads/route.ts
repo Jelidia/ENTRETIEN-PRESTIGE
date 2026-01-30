@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabaseServer";
 import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
+import { uploadsFormSchema } from "@/lib/validators";
 
 const bucketName = "documents";
 const docTypeMap: Record<string, string> = {
@@ -29,19 +30,18 @@ export async function POST(request: Request) {
   const docType = String(formData.get("docType") ?? "");
   const file = formData.get("file");
 
-  if (!userId || !docType || !(file instanceof File)) {
+  const formResult = uploadsFormSchema.safeParse({ userId, docType });
+  if (!formResult.success || !(file instanceof File)) {
     return NextResponse.json({ error: "Invalid upload request" }, { status: 400 });
   }
 
-  const column = docTypeMap[docType];
-  if (!column) {
-    return NextResponse.json({ error: "Unsupported document type" }, { status: 400 });
-  }
+  const { userId: safeUserId, docType: safeDocType } = formResult.data;
+  const column = docTypeMap[safeDocType];
 
   const admin = createAdminClient();
   const idempotency = await beginIdempotency(admin, request, auth.profile.user_id, {
-    userId,
-    docType,
+    userId: safeUserId,
+    docType: safeDocType,
     fileName: file.name,
   });
   if (idempotency.action === "replay") {
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
 
   const buffer = Buffer.from(await file.arrayBuffer());
   const safeName = normalizeFileName(file.name || "document");
-  const storagePath = `${auth.profile.company_id}/${userId}/${docType}/${Date.now()}-${safeName}`;
+  const storagePath = `${auth.profile.company_id}/${safeUserId}/${safeDocType}/${Date.now()}-${safeName}`;
 
   const { error: uploadError } = await admin.storage
     .from(bucketName)
@@ -72,24 +72,24 @@ export async function POST(request: Request) {
   }
 
   const updates: Record<string, string> = { [column]: storagePath };
-  if (docType === "signature") {
+  if (safeDocType === "signature") {
     updates.contract_signed_at = new Date().toISOString();
   }
 
   const { error: updateError } = await admin
     .from("users")
     .update(updates)
-    .eq("user_id", userId)
+    .eq("user_id", safeUserId)
     .eq("company_id", auth.profile.company_id);
 
   if (updateError) {
     return NextResponse.json({ error: "Unable to update user" }, { status: 400 });
   }
 
-  await logAudit(admin, auth.profile.user_id, "document_upload", "user", userId, "success", {
+  await logAudit(admin, auth.profile.user_id, "document_upload", "user", safeUserId, "success", {
     ipAddress: ip,
     userAgent: request.headers.get("user-agent") ?? null,
-    newValues: { doc_type: docType, path: storagePath },
+    newValues: { doc_type: safeDocType, path: storagePath },
   });
 
   const responseBody = { ok: true, path: storagePath, field: column };

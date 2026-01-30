@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
+import { threadIdParamSchema } from "@/lib/validators";
 
 // Get messages for a specific thread
 export async function GET(
@@ -13,9 +14,14 @@ export async function GET(
     return auth.response;
   }
 
+  const paramsResult = threadIdParamSchema.safeParse(params);
+  if (!paramsResult.success) {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
-  const { threadId } = params;
+  const { threadId } = paramsResult.data;
 
   const { data: messages, error } = await client
     .from("sms_messages")

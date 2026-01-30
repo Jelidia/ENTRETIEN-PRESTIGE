@@ -2,11 +2,18 @@ import { NextResponse } from "next/server";
 import { requirePermission } from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
+import { emptyQuerySchema } from "@/lib/validators";
 
 export async function GET(request: Request) {
   const auth = await requirePermission(request, "dispatch");
   if ("response" in auth) {
     return auth.response;
+  }
+  const { profile } = auth;
+
+  const queryResult = emptyQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
+  if (!queryResult.success) {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
@@ -15,6 +22,7 @@ export async function GET(request: Request) {
     .from("users")
     .select("user_id, full_name")
     .eq("role", "technician")
+    .eq("company_id", profile.company_id)
     .limit(20);
 
   const { data: jobs } = await client
@@ -22,6 +30,7 @@ export async function GET(request: Request) {
     .select(
       "job_id, technician_id, address, service_type, estimated_revenue, scheduled_date, scheduled_start_time, scheduled_end_time, status"
     )
+    .eq("company_id", profile.company_id)
     .order("scheduled_date", { ascending: true })
     .limit(200);
 

@@ -3,6 +3,7 @@ import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabaseServer";
 import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
+import { documentsQuerySchema } from "@/lib/validators";
 
 const bucketName = "documents";
 const docTypeMap: Record<string, string> = {
@@ -20,17 +21,12 @@ export async function GET(request: Request) {
   const ip = getRequestIp(request);
 
   const { searchParams } = new URL(request.url);
-  const userId = searchParams.get("userId") ?? "";
-  const docType = searchParams.get("docType") ?? "";
-
-  if (!userId || !docType) {
-    return NextResponse.json({ error: "Missing document request" }, { status: 400 });
+  const queryResult = documentsQuerySchema.safeParse(Object.fromEntries(searchParams));
+  if (!queryResult.success) {
+    return NextResponse.json({ error: "Invalid document request" }, { status: 400 });
   }
-
+  const { userId, docType } = queryResult.data;
   const column = docTypeMap[docType];
-  if (!column) {
-    return NextResponse.json({ error: "Unsupported document type" }, { status: 400 });
-  }
 
   const admin = createAdminClient();
   const { data: user, error } = await admin

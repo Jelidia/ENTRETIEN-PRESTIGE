@@ -5,6 +5,7 @@ import { getAccessTokenFromRequest } from "@/lib/session";
 import { getRequestIp, rateLimit } from "@/lib/rateLimit";
 import { logAudit } from "@/lib/audit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
+import { disable2faBodySchema, emptyQuerySchema } from "@/lib/validators";
 
 export async function POST(request: Request) {
   const auth = await requireRole(request, ["admin"]);
@@ -12,6 +13,11 @@ export async function POST(request: Request) {
     return auth.response;
   }
   const { profile } = auth;
+
+  const queryResult = emptyQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
+  if (!queryResult.success) {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
 
   const ip = getRequestIp(request);
   const limit = rateLimit(`auth:disable-2fa:${profile.user_id}:${ip}`, 5, 15 * 60 * 1000);
@@ -22,8 +28,12 @@ export async function POST(request: Request) {
     );
   }
 
-  const body = await request.json().catch(() => null);
-  const userId = body?.userId ?? profile.user_id;
+  const body = await request.json().catch(() => ({}));
+  const bodyResult = disable2faBodySchema.safeParse(body);
+  if (!bodyResult.success) {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+  const userId = bodyResult.data.userId ?? profile.user_id;
 
   const client = createUserClient(getAccessTokenFromRequest(request) ?? "");
   const { data: targetUser, error: targetError } = await client

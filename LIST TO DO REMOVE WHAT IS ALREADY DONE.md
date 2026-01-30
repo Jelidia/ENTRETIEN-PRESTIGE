@@ -1,7 +1,7 @@
 # ENTRETIEN PRESTIGE — Master Backlog (Auto-generated)
 - Generated: 2026-01-29 05:49:44
 - Repo: `/mnt/data/ENTRETIEN_PRESTIGE/ENTRETIEN-PRESTIGE-main`
-- Total items: **1405** (numbered list below)
+- Total items: **1301** (numbered list below)
 
 ## Legend
 - **CONFIRMED**: Found directly by static scan (pattern-based).
@@ -9,7 +9,7 @@
 
 ## Counts by priority
 - **P0**: 81
-- **P1**: 279
+- **P1**: 175
 - **P2**: 937
 - **P3**: 108
 
@@ -28,60 +28,8 @@
 ## API-RateLimit
 
 ## API-Security
-203. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/gps/[action] ensure auth + permission gates are correct for role/tenant. Methods=GET,POST — `app/api/gps/[action]/route.ts`
-204. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/gps/geofence/[id] ensure auth + permission gates are correct for role/tenant. Methods=GET — `app/api/gps/geofence/[id]/route.ts`
-205. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/gps/technician/[id] ensure auth + permission gates are correct for role/tenant. Methods=GET — `app/api/gps/technician/[id]/route.ts`
-206. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/health is public (health); verify rate limits, abuse prevention, and minimal data exposure. Methods=(implicit) — `app/api/health/route.ts`
-207. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/invoices/[id]/[action] ensure auth + permission gates are correct for role/tenant. Methods=GET,POST — `app/api/invoices/[id]/[action]/route.ts`
-208. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/invoices/[id] ensure auth + permission gates are correct for role/tenant. Methods=GET,PATCH — `app/api/invoices/[id]/route.ts`
-209. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/invoices ensure auth + permission gates are correct for role/tenant. Methods=GET,POST — `app/api/invoices/route.ts`
-210. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/jobs/[id]/[action] ensure auth + permission gates are correct for role/tenant. Methods=POST — `app/api/jobs/[id]/[action]/route.ts`
-211. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/jobs/[id]/photos ensure auth + permission gates are correct for role/tenant. Methods=DELETE,GET,POST — `app/api/jobs/[id]/photos/route.ts`
-212. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/jobs/[id] ensure auth + permission gates are correct for role/tenant. Methods=DELETE,GET,PATCH — `app/api/jobs/[id]/route.ts`
-213. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/jobs/export ensure auth + permission gates are correct for role/tenant. Methods=GET — `app/api/jobs/export/route.ts`
-214. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/jobs ensure auth + permission gates are correct for role/tenant. Methods=GET,POST — `app/api/jobs/route.ts`
-215. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/maps/[action] ensure auth + permission gates are correct for role/tenant. Methods=GET — `app/api/maps/[action]/route.ts`
-216. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/notifications/[id]/read ensure auth + permission gates are correct for role/tenant. Methods=POST — `app/api/notifications/[id]/read/route.ts`
-217. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/notifications ensure auth + permission gates are correct for role/tenant. Methods=DELETE,GET — `app/api/notifications/route.ts`
-218. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/notifications/settings ensure auth + permission gates are correct for role/tenant. Methods=GET,POST — `app/api/notifications/settings/route.ts`
-219. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/payments/[action] ensure auth + permission gates are correct for role/tenant. Methods=GET,POST — `app/api/payments/[action]/route.ts`
-220. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/ratings/submit is public (public_ratings); verify rate limits, abuse prevention, and minimal data exposure. Methods=POST — `app/api/ratings/submit/route.ts`
-221. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/ratings/validate is public (public_ratings); verify rate limits, abuse prevention, and minimal data exposure. Methods=GET — `app/api/ratings/validate/route.ts`
-222. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/reports/[type] ensure auth + permission gates are correct for role/tenant. Methods=GET,POST — `app/api/reports/[type]/route.ts`
-223. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/sales/dashboard ensure auth + permission gates are correct for role/tenant. Methods=GET — `app/api/sales/dashboard/route.ts`
-224. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/settings/document ensure auth + permission gates are correct for role/tenant. Methods=DELETE — `app/api/settings/document/route.ts`
-225. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/settings/password ensure auth + permission gates are correct for role/tenant. Methods=PATCH — `app/api/settings/password/route.ts`
-226. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/settings/profile ensure auth + permission gates are correct for role/tenant. Methods=PATCH — `app/api/settings/profile/route.ts`
-227. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/settings/upload ensure auth + permission gates are correct for role/tenant. Methods=POST — `app/api/settings/upload/route.ts`
-228. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/sms/[action] ensure auth + permission gates are correct for role/tenant. Methods=GET,POST — `app/api/sms/[action]/route.ts`
-229. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/sms/inbox/[threadId]/read ensure auth + permission gates are correct for role/tenant. Methods=POST — `app/api/sms/inbox/[threadId]/read/route.ts`
-230. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/sms/inbox/[threadId] ensure auth + permission gates are correct for role/tenant. Methods=GET — `app/api/sms/inbox/[threadId]/route.ts`
-231. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/sms/inbox ensure auth + permission gates are correct for role/tenant. Methods=GET — `app/api/sms/inbox/route.ts`
-232. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/sms/triggers ensure auth + permission gates are correct for role/tenant. Methods=POST — `app/api/sms/triggers/route.ts`
-233. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/uploads ensure auth + permission gates are correct for role/tenant. Methods=POST — `app/api/uploads/route.ts`
-234. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/users/[id]/availability ensure auth + permission gates are correct for role/tenant. Methods=GET,POST — `app/api/users/[id]/availability/route.ts`
-235. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/users/[id] ensure auth + permission gates are correct for role/tenant. Methods=GET,PATCH — `app/api/users/[id]/route.ts`
-236. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/users/me ensure auth + permission gates are correct for role/tenant. Methods=GET — `app/api/users/me/route.ts`
-237. **[P1][API-Security][VERIFY][CHECKLIST]** [CHECKLIST] /api/users ensure auth + permission gates are correct for role/tenant. Methods=GET,POST — `app/api/users/route.ts`
 
 ## API-Tenancy
-238. **[P1][API-Tenancy][FIX][CHECKLIST]** [CHECKLIST] /api/admin/reset-password ensure strict company_id scoping (especially if admin/service-role used). — `app/api/admin/reset-password/route.ts`
-239. **[P1][API-Tenancy][FIX][CHECKLIST]** [CHECKLIST] /api/admin/seed-users ensure strict company_id scoping (especially if admin/service-role used). — `app/api/admin/seed-users/route.ts`
-240. **[P1][API-Tenancy][FIX][CHECKLIST]** [CHECKLIST] /api/admin/seed ensure strict company_id scoping (especially if admin/service-role used). — `app/api/admin/seed/route.ts`
-241. **[P1][API-Tenancy][FIX][CHECKLIST]** [CHECKLIST] /api/admin/users/[user_id]/reset-password ensure strict company_id scoping (especially if admin/service-role used). — `app/api/admin/users/[user_id]/reset-password/route.ts`
-242. **[P1][API-Tenancy][FIX][CHECKLIST]** [CHECKLIST] /api/auth/disable-2fa ensure strict company_id scoping (especially if admin/service-role used). — `app/api/auth/disable-2fa/route.ts`
-243. **[P1][API-Tenancy][FIX][CHECKLIST]** [CHECKLIST] /api/auth/login ensure strict company_id scoping (especially if admin/service-role used). — `app/api/auth/login/route.ts`
-244. **[P1][API-Tenancy][FIX][CHECKLIST]** [CHECKLIST] /api/auth/logout ensure strict company_id scoping (especially if admin/service-role used). — `app/api/auth/logout/route.ts`
-245. **[P1][API-Tenancy][FIX][CHECKLIST]** [CHECKLIST] /api/auth/register ensure strict company_id scoping (especially if admin/service-role used). — `app/api/auth/register/route.ts`
-246. **[P1][API-Tenancy][FIX][CHECKLIST]** [CHECKLIST] /api/auth/setup-2fa ensure strict company_id scoping (especially if admin/service-role used). — `app/api/auth/setup-2fa/route.ts`
-247. **[P1][API-Tenancy][FIX][CHECKLIST]** [CHECKLIST] /api/auth/verify-2fa ensure strict company_id scoping (especially if admin/service-role used). — `app/api/auth/verify-2fa/route.ts`
-248. **[P1][API-Tenancy][FIX][CHECKLIST]** [CHECKLIST] /api/documents ensure strict company_id scoping (especially if admin/service-role used). — `app/api/documents/route.ts`
-249. **[P1][API-Tenancy][FIX][CHECKLIST]** [CHECKLIST] /api/invoices/[id]/[action] ensure strict company_id scoping (especially if admin/service-role used). — `app/api/invoices/[id]/[action]/route.ts`
-250. **[P1][API-Tenancy][FIX][CHECKLIST]** [CHECKLIST] /api/jobs/[id]/[action] ensure strict company_id scoping (especially if admin/service-role used). — `app/api/jobs/[id]/[action]/route.ts`
-251. **[P1][API-Tenancy][FIX][CHECKLIST]** [CHECKLIST] /api/payments/[action] ensure strict company_id scoping (especially if admin/service-role used). — `app/api/payments/[action]/route.ts`
-252. **[P1][API-Tenancy][FIX][CHECKLIST]** [CHECKLIST] /api/sms/[action] ensure strict company_id scoping (especially if admin/service-role used). — `app/api/sms/[action]/route.ts`
-253. **[P1][API-Tenancy][FIX][CHECKLIST]** [CHECKLIST] /api/uploads ensure strict company_id scoping (especially if admin/service-role used). — `app/api/uploads/route.ts`
-254. **[P1][API-Tenancy][FIX][CHECKLIST]** [CHECKLIST] /api/users ensure strict company_id scoping (especially if admin/service-role used). — `app/api/users/route.ts`
 255. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/access ensure strict company_id scoping (especially if admin/service-role used). — `app/api/access/route.ts`
 256. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/admin/users/[user_id] ensure strict company_id scoping (especially if admin/service-role used). — `app/api/admin/users/[user_id]/route.ts`
 257. **[P1][API-Tenancy][VERIFY][CHECKLIST]** [CHECKLIST] /api/admin/users ensure strict company_id scoping (especially if admin/service-role used). — `app/api/admin/users/route.ts`
@@ -173,60 +121,8 @@
 339. **[P1][Config][ADD][CONFIRMED]** Env var used but not validated in lib/env.ts: NEXT_PUBLIC_GOOGLE_MAPS_API_KEY — `tests/technicianMap.test.tsx:179`
 
 ## DB-RLS
-340. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'auth_challenges' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-341. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'customer_blacklist' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-342. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'customer_communication' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-343. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'customer_ratings' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-344. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'customer_subscriptions' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-345. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'customers' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-346. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'employee_availability' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-347. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'employee_commissions' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-348. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'equipment_checklist_templates' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-349. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'geofences' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-350. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'google_review_bonuses' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-351. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'gps_locations' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-352. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'incidents' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-353. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'invoices' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-354. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'job_assignments' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-355. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'job_history' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-356. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'job_photos' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-357. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'job_quality_issues' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-358. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'job_rework' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-359. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'job_upsells' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-360. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'jobs' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-361. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'leaderboard' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-362. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'leads' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-363. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'loyalty_points' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-364. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'loyalty_transactions' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-365. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'notifications' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-366. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'onboarding_progress' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-367. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'payroll_statements' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-368. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'referrals' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-369. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'sales_territories' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-370. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'shift_checklists' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-371. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'sms_messages' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-372. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'termination_records' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-373. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'upsell_items' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
-374. **[P1][DB-RLS][VERIFY][CHECKLIST]** [CHECKLIST] Table 'users' has RLS enable statement; verify policies cover read/write for each role. — `db/*`
 
 ## UI-Security
-375. **[P1][UI-Security][VERIFY][CHECKLIST]** [CHECKLIST] Page /customers verify auth + permission gating (server and client). — `app/(app)/customers/page.tsx`
-376. **[P1][UI-Security][VERIFY][CHECKLIST]** [CHECKLIST] Page /dashboard verify auth + permission gating (server and client). — `app/(app)/dashboard/page.tsx`
-377. **[P1][UI-Security][VERIFY][CHECKLIST]** [CHECKLIST] Page /dispatch verify auth + permission gating (server and client). — `app/(app)/dispatch/page.tsx`
-378. **[P1][UI-Security][VERIFY][CHECKLIST]** [CHECKLIST] Page /invoices verify auth + permission gating (server and client). — `app/(app)/invoices/page.tsx`
-379. **[P1][UI-Security][VERIFY][CHECKLIST]** [CHECKLIST] Page /jobs verify auth + permission gating (server and client). — `app/(app)/jobs/page.tsx`
-380. **[P1][UI-Security][VERIFY][CHECKLIST]** [CHECKLIST] Page /notifications verify auth + permission gating (server and client). — `app/(app)/notifications/page.tsx`
-381. **[P1][UI-Security][VERIFY][CHECKLIST]** [CHECKLIST] Page /operations verify auth + permission gating (server and client). — `app/(app)/operations/page.tsx`
-382. **[P1][UI-Security][VERIFY][CHECKLIST]** [CHECKLIST] Page /reports verify auth + permission gating (server and client). — `app/(app)/reports/page.tsx`
-383. **[P1][UI-Security][VERIFY][CHECKLIST]** [CHECKLIST] Page /sales/dashboard verify auth + permission gating (server and client). — `app/(app)/sales/dashboard/page.tsx`
-384. **[P1][UI-Security][VERIFY][CHECKLIST]** [CHECKLIST] Page /sales/earnings verify auth + permission gating (server and client). — `app/(app)/sales/earnings/page.tsx`
-385. **[P1][UI-Security][VERIFY][CHECKLIST]** [CHECKLIST] Page /sales/leads verify auth + permission gating (server and client). — `app/(app)/sales/leads/page.tsx`
-386. **[P1][UI-Security][VERIFY][CHECKLIST]** [CHECKLIST] Page /sales verify auth + permission gating (server and client). — `app/(app)/sales/page.tsx`
-387. **[P1][UI-Security][VERIFY][CHECKLIST]** [CHECKLIST] Page /sales/schedule verify auth + permission gating (server and client). — `app/(app)/sales/schedule/page.tsx`
-388. **[P1][UI-Security][VERIFY][CHECKLIST]** [CHECKLIST] Page /sales/settings verify auth + permission gating (server and client). — `app/(app)/sales/settings/page.tsx`
-389. **[P1][UI-Security][VERIFY][CHECKLIST]** [CHECKLIST] Page /settings verify auth + permission gating (server and client). — `app/(app)/settings/page.tsx`
-390. **[P1][UI-Security][VERIFY][CHECKLIST]** [CHECKLIST] Page /technician/customers verify auth + permission gating (server and client). — `app/(app)/technician/customers/page.tsx`
-391. **[P1][UI-Security][VERIFY][CHECKLIST]** [CHECKLIST] Page /technician/earnings verify auth + permission gating (server and client). — `app/(app)/technician/earnings/page.tsx`
 392. **[P1][UI-Security][VERIFY][CHECKLIST]** [CHECKLIST] Page /technician/equipment verify auth + permission gating (server and client). — `app/(app)/technician/equipment/page.tsx`
 393. **[P1][UI-Security][VERIFY][CHECKLIST]** [CHECKLIST] Page /technician/map verify auth + permission gating (server and client). — `app/(app)/technician/map/page.tsx`
 394. **[P1][UI-Security][VERIFY][CHECKLIST]** [CHECKLIST] Page /technician verify auth + permission gating (server and client). — `app/(app)/technician/page.tsx`

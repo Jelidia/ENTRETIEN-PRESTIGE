@@ -5,11 +5,16 @@ import { getAccessTokenFromRequest } from "@/lib/session";
 import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
+import { emptyQuerySchema, notificationDeleteQuerySchema } from "@/lib/validators";
 
 export async function GET(request: Request) {
   const auth = await requirePermission(request, "notifications");
   if ("response" in auth) {
     return auth.response;
+  }
+  const queryResult = emptyQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
+  if (!queryResult.success) {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
   const { user } = auth;
   const token = getAccessTokenFromRequest(request);
@@ -35,10 +40,11 @@ export async function DELETE(request: Request) {
   const { profile } = auth;
   const ip = getRequestIp(request);
   const { searchParams } = new URL(request.url);
-  const id = searchParams.get("id");
-  if (!id) {
-    return NextResponse.json({ error: "Missing notification id" }, { status: 400 });
+  const queryResult = notificationDeleteQuerySchema.safeParse(Object.fromEntries(searchParams));
+  if (!queryResult.success) {
+    return NextResponse.json({ error: "Invalid notification id" }, { status: 400 });
   }
+  const { id } = queryResult.data;
 
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");

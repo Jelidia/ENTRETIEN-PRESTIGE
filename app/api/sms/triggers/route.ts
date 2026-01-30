@@ -8,6 +8,7 @@ import { smsTemplates, formatPhoneNumber } from "@/lib/smsTemplates";
 import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
+import { smsTriggerBodySchema } from "@/lib/validators";
 
 async function resolveThreadId(
   client: ReturnType<typeof createUserClient>,
@@ -43,15 +44,15 @@ export async function POST(request: Request) {
   const { profile } = auth;
   const ip = getRequestIp(request);
 
-  const body = await request.json();
-  const { event, jobId, customData } = body;
-
-  if (!event || !jobId) {
+  const body = await request.json().catch(() => ({}));
+  const bodyResult = smsTriggerBodySchema.safeParse(body);
+  if (!bodyResult.success) {
     return NextResponse.json(
       { error: "Missing event or jobId" },
       { status: 400 }
     );
   }
+  const { event, jobId, customData } = bodyResult.data;
 
   // Get job details
   const { data: job, error: jobError } = await client

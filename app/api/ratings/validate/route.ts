@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabaseServer";
 import { getRequestIp, rateLimit } from "@/lib/rateLimit";
+import { ratingsValidateQuerySchema } from "@/lib/validators";
 
 export async function GET(request: Request) {
   const ip = getRequestIp(request);
@@ -13,14 +14,14 @@ export async function GET(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const token = searchParams.get("token");
-
-  if (!token) {
+  const queryResult = ratingsValidateQuerySchema.safeParse(Object.fromEntries(searchParams));
+  if (!queryResult.success) {
     return NextResponse.json(
       { error: "Token manquant" },
       { status: 400 }
     );
   }
+  const { token } = queryResult.data;
 
   const admin = createAdminClient();
 

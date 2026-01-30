@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { createUserClient } from "@/lib/supabaseServer";
+import { emptyQuerySchema } from "@/lib/validators";
 
 export async function GET(request: Request) {
   if (process.env.NODE_ENV !== "development") {
@@ -11,6 +12,11 @@ export async function GET(request: Request) {
   const auth = await requireRole(request, ["admin"]);
   if ("response" in auth) {
     return auth.response;
+  }
+
+  const queryResult = emptyQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
+  if (!queryResult.success) {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
   const token = getAccessTokenFromRequest(request);

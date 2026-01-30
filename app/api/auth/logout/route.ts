@@ -5,6 +5,7 @@ import { hashCode } from "@/lib/crypto";
 import { getRequestIp, rateLimit } from "@/lib/rateLimit";
 import { logAudit } from "@/lib/audit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
+import { emptyBodySchema, emptyQuerySchema } from "@/lib/validators";
 
 export async function POST(request: Request) {
   const ip = getRequestIp(request);
@@ -14,6 +15,17 @@ export async function POST(request: Request) {
       { error: "Trop de tentatives. Réessayez plus tard." },
       { status: 429 }
     );
+  }
+
+  const queryResult = emptyQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
+  if (!queryResult.success) {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+
+  const body = await request.json().catch(() => ({}));
+  const bodyResult = emptyBodySchema.safeParse(body);
+  if (!bodyResult.success) {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
   const token = getAccessTokenFromRequest(request);

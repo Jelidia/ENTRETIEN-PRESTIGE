@@ -5,6 +5,7 @@ import { getAccessTokenFromRequest } from "@/lib/session";
 import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
+import { threadIdParamSchema } from "@/lib/validators";
 
 // Mark thread messages as read
 export async function POST(
@@ -16,9 +17,14 @@ export async function POST(
     return auth.response;
   }
 
+  const paramsResult = threadIdParamSchema.safeParse(params);
+  if (!paramsResult.success) {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
-  const { threadId } = params;
+  const { threadId } = paramsResult.data;
   const { profile } = auth;
   const ip = getRequestIp(request);
   const idempotency = await beginIdempotency(client, request, profile.user_id, { threadId });

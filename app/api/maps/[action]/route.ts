@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { geocodeAddress, getDistanceMatrix } from "@/lib/maps";
 import { requirePermission } from "@/lib/auth";
+import {
+  mapsActionParamSchema,
+  mapsDistanceQuerySchema,
+  mapsGeocodeQuerySchema,
+  mapsTerritoryQuerySchema,
+} from "@/lib/validators";
 
 export async function GET(
   request: Request,
@@ -12,23 +18,39 @@ export async function GET(
   }
 
   const { searchParams } = new URL(request.url);
-  const action = params.action;
+  const paramsResult = mapsActionParamSchema.safeParse(params);
+  if (!paramsResult.success) {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+  const action = paramsResult.data.action;
+  const query = Object.fromEntries(searchParams);
 
   if (action === "geocode") {
-    const address = searchParams.get("address") ?? "";
+    const queryResult = mapsGeocodeQuerySchema.safeParse(query);
+    if (!queryResult.success) {
+      return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    }
+    const { address } = queryResult.data;
     const data = await geocodeAddress(address);
     return NextResponse.json({ data });
   }
 
   if (action === "distance") {
-    const origins = searchParams.get("origins") ?? "";
-    const destinations = searchParams.get("destinations") ?? "";
+    const queryResult = mapsDistanceQuerySchema.safeParse(query);
+    if (!queryResult.success) {
+      return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    }
+    const { origins, destinations } = queryResult.data;
     const data = await getDistanceMatrix(origins, destinations);
     return NextResponse.json({ data });
   }
 
   if (action === "territory") {
-    const polygon = searchParams.get("polygon") ?? "";
+    const queryResult = mapsTerritoryQuerySchema.safeParse(query);
+    if (!queryResult.success) {
+      return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    }
+    const { polygon } = queryResult.data;
     return NextResponse.json({ data: { polygon } });
   }
 

@@ -5,6 +5,7 @@ import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 import { getRequestIp } from "@/lib/rateLimit";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { createAdminClient, createUserClient } from "@/lib/supabaseServer";
+import { emptyBodySchema, emptyQuerySchema } from "@/lib/validators";
 
 // WARNING: This endpoint creates users with proper authentication
 // Only use in development/initial setup
@@ -19,6 +20,17 @@ export async function POST(request: Request) {
     return auth.response;
   }
   const { profile } = auth;
+
+  const queryResult = emptyQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
+  if (!queryResult.success) {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+
+  const body = await request.json().catch(() => ({}));
+  const bodyResult = emptyBodySchema.safeParse(body);
+  if (!bodyResult.success) {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
 
   const userClient = createUserClient(getAccessTokenFromRequest(request) ?? "");
   const idempotency = await beginIdempotency(userClient, request, profile.user_id, {
@@ -37,29 +49,7 @@ export async function POST(request: Request) {
   const admin = createAdminClient();
 
   try {
-    // Step 1: Delete all existing users (both auth.users and public.users)
-
-    // Get all auth.users
-    const { data: authUsers, error: listError } = await admin.auth.admin.listUsers();
-
-    if (listError) {
-      return NextResponse.json(
-        { error: "Failed to list existing users", details: listError.message },
-        { status: 500 }
-      );
-    }
-
-    // Delete all auth.users (cascades to public.users via FK)
-    if (authUsers.users && authUsers.users.length > 0) {
-      for (const user of authUsers.users) {
-        await admin.auth.admin.deleteUser(user.id);
-      }
-    }
-
-    // Also clean up any orphaned public.users (shouldn't exist with FK, but just in case)
-    await admin.from("users").delete().neq("user_id", "00000000-0000-0000-0000-000000000000");
-
-    // Step 2: Ensure company exists
+    // Step 1: Ensure company exists
     const { data: company } = await admin
       .from("companies")
       .select("company_id")
@@ -82,6 +72,28 @@ export async function POST(request: Request) {
         .single();
       companyId = newCompany!.company_id;
     }
+
+    // Step 2: Delete existing users for this company only
+    const { data: existingUsers, error: usersError } = await admin
+      .from("users")
+      .select("user_id")
+      .eq("company_id", companyId);
+
+    if (usersError) {
+      return NextResponse.json(
+        { error: "Failed to list existing users", details: usersError.message },
+        { status: 500 }
+      );
+    }
+
+    if (existingUsers && existingUsers.length > 0) {
+      for (const user of existingUsers) {
+        await admin.auth.admin.deleteUser(user.user_id);
+      }
+    }
+
+    // Also clean up any orphaned public.users for this company
+    await admin.from("users").delete().eq("company_id", companyId);
 
     // Step 3: Define users to create
     const usersToCreate = [

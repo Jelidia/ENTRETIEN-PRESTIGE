@@ -40,6 +40,7 @@ export async function PATCH(
     .from("users")
     .update(parsed.data)
     .eq("user_id", params.id)
+    .eq("company_id", profile.company_id)
     .select()
     .single();
 
@@ -66,6 +67,7 @@ export async function GET(
   if ("response" in auth) {
     return auth.response;
   }
+  const { profile } = auth;
 
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
@@ -75,6 +77,7 @@ export async function GET(
       "user_id, full_name, email, phone, role, status, address, city, province, postal_code, country, id_document_front_url, id_document_back_url, contract_document_url, contract_signature_url, contract_signed_at, avatar_url"
     )
     .eq("user_id", params.id)
+    .eq("company_id", profile.company_id)
     .single();
 
   if (error || !data) {

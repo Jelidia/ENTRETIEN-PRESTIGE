@@ -5,6 +5,7 @@ import { generateAuthenticatorSecret } from "@/lib/security";
 import { getRequestIp, rateLimit } from "@/lib/rateLimit";
 import { logAudit } from "@/lib/audit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
+import { emptyBodySchema, emptyQuerySchema } from "@/lib/validators";
 
 export async function POST(request: Request) {
   const auth = await requireRole(request, ["admin"]);
@@ -12,6 +13,17 @@ export async function POST(request: Request) {
     return auth.response;
   }
   const { user } = auth;
+
+  const queryResult = emptyQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
+  if (!queryResult.success) {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
+
+  const body = await request.json().catch(() => ({}));
+  const bodyResult = emptyBodySchema.safeParse(body);
+  if (!bodyResult.success) {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
 
   const ip = getRequestIp(request);
   const limit = rateLimit(`auth:setup-2fa:${user.id}:${ip}`, 5, 15 * 60 * 1000);
