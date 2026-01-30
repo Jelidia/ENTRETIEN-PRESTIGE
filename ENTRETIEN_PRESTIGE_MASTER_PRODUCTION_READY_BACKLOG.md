@@ -89,7 +89,7 @@ These are referenced by API routes but missing from the local schema:
 - All migrations apply cleanly in order with no missing-table errors.
 - App boots and core API routes function with that fresh schema.
 
-### - [ ] EP-P0-DB-02 — Create the missing tables referenced by the API routes (WIP)
+### - [x] EP-P0-DB-02 — Create the missing tables referenced by the API routes
 **Priority:** P0
 
 **Why it matters**
@@ -116,7 +116,7 @@ These are referenced by API routes but missing from the local schema:
 - All referenced API routes run without “relation does not exist” errors.
 - RLS is enabled and tested for each new table.
 
-### EP-P0-DB-03 — Fix invoice tax/date fields so PDF + accounting works
+### - [x] EP-P0-DB-03 — Fix invoice tax/date fields so PDF + accounting works
 **Priority:** P0
 
 **Why it matters**
@@ -252,7 +252,7 @@ These are referenced by API routes but missing from the local schema:
 - Tokens cannot be reused; expired tokens are rejected.
 - Only the server can validate/consume tokens.
 
-### - [ ] EP-P0-SEC-04 — Fix open redirect risks in auth UI (WIP)
+### - [x] EP-P0-SEC-04 — Fix open redirect risks in auth UI
 **Priority:** P0
 
 **Why it matters**
@@ -297,7 +297,7 @@ These are referenced by API routes but missing from the local schema:
 - Retrying the same request does not send duplicate SMS/emails or double-process payments.
 - Webhook processing is idempotent.
 
-### EP-P0-SEC-06 — Require and verify webhook signatures (Twilio at minimum)
+### - [ ] EP-P0-SEC-06 — Require and verify webhook signatures (Twilio at minimum) (WIP)
 **Priority:** P0
 
 **Why it matters**
@@ -523,7 +523,7 @@ These are referenced by API routes but missing from the local schema:
 - Submitting a rating writes a DB record and marks token used.
 - If rating qualifies, a bonus record is created and appears in technician earnings.
 
-### EP-P0-FLOW-05 — Remove mock fallback data in production dashboards
+### - [x] EP-P0-FLOW-05 — Remove mock fallback data in production dashboards
 **Priority:** P0
 
 **Why it matters**

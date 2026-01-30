@@ -2,11 +2,23 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import TechnicianMapPage from "@/app/(app)/technician/map/page";
 
-type FetchHandler = (input: RequestInfo, init?: RequestInit) => Promise<Response>;
+type FetchMock = ReturnType<typeof vi.fn>;
 
-function createFetchMock(historyData: any[] = []): FetchHandler {
-  return vi.fn(async (input: RequestInfo, init?: RequestInit) => {
-    const url = typeof input === "string" ? input : input.url;
+type GpsPoint = {
+  location_id: string;
+  latitude: number;
+  longitude: number;
+  timestamp: string;
+};
+
+function createFetchMock(historyData: GpsPoint[] = []): FetchMock {
+  return vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url =
+      typeof input === "string"
+        ? input
+        : input instanceof URL
+          ? input.toString()
+          : input.url;
     if (url.includes("/api/gps/history")) {
       return new Response(JSON.stringify({ data: historyData }), { status: 200 });
     }
@@ -14,7 +26,7 @@ function createFetchMock(historyData: any[] = []): FetchHandler {
       return new Response(JSON.stringify({ ok: true }), { status: 200 });
     }
     return new Response(JSON.stringify({ ok: true }), { status: 200 });
-  }) as unknown as FetchHandler;
+  });
 }
 
 function setGeolocation(success = true) {
@@ -98,15 +110,21 @@ describe("TechnicianMapPage", () => {
     );
     const refreshButtons = await screen.findAllByRole("button", { name: "Refresh" });
     refreshButtons[0].click();
-    await waitFor(() =>
-      expect(fetchMock.mock.calls.filter((call) => String(call[0]).includes("/api/gps/history")).length).toBeGreaterThan(1)
-    );
+    await waitFor(() => {
+      const historyCalls = fetchMock.mock.calls.filter((call: unknown[]) =>
+        String(call[0]).includes("/api/gps/history")
+      );
+      expect(historyCalls.length).toBeGreaterThan(1);
+    });
 
     delete (window as any).google.maps;
     refreshButtons[0].click();
-    await waitFor(() =>
-      expect(fetchMock.mock.calls.filter((call) => String(call[0]).includes("/api/gps/history")).length).toBeGreaterThan(2)
-    );
+    await waitFor(() => {
+      const historyCalls = fetchMock.mock.calls.filter((call: unknown[]) =>
+        String(call[0]).includes("/api/gps/history")
+      );
+      expect(historyCalls.length).toBeGreaterThan(2);
+    });
   });
 
   it("shows empty state when there are no points", async () => {
@@ -158,19 +176,18 @@ describe("TechnicianMapPage", () => {
     delete (window as any).google;
 
     const originalCreate = document.createElement.bind(document);
-    let createdScript: HTMLScriptElement | null = null;
+    const createdScript = document.createElement("script");
     vi.spyOn(document, "createElement").mockImplementation((tagName) => {
-      const element = originalCreate(tagName);
       if (tagName === "script") {
-        createdScript = element as HTMLScriptElement;
+        return createdScript;
       }
-      return element;
+      return originalCreate(tagName);
     });
 
     render(<TechnicianMapPage />);
 
-    await waitFor(() => expect(createdScript).not.toBeNull());
-    createdScript?.onerror?.(new Event("error"));
+    await waitFor(() => expect(createdScript).toBeTruthy());
+    createdScript.dispatchEvent(new Event("error"));
 
     expect(await screen.findByText(/Unable to load maps/i)).toBeInTheDocument();
   });
@@ -182,19 +199,18 @@ describe("TechnicianMapPage", () => {
     (window as any).google = {};
 
     const originalCreate = document.createElement.bind(document);
-    let createdScript: HTMLScriptElement | null = null;
+    const createdScript = document.createElement("script");
     vi.spyOn(document, "createElement").mockImplementation((tagName) => {
-      const element = originalCreate(tagName);
       if (tagName === "script") {
-        createdScript = element as HTMLScriptElement;
+        return createdScript;
       }
-      return element;
+      return originalCreate(tagName);
     });
 
     render(<TechnicianMapPage />);
 
-    await waitFor(() => expect(createdScript).not.toBeNull());
-    createdScript?.onload?.(new Event("load"));
+    await waitFor(() => expect(createdScript).toBeTruthy());
+    createdScript.dispatchEvent(new Event("load"));
 
     expect(await screen.findByText(/Loading map/i)).toBeInTheDocument();
   });
