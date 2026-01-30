@@ -227,6 +227,34 @@ describe("POST /api/auth/login", () => {
     );
   });
 
+  it("denies suspended accounts without user id", async () => {
+    mockUserMaybeSingle.mockResolvedValueOnce({
+      data: {
+        user_id: null,
+        failed_login_attempts: 0,
+        last_failed_login: null,
+        status: "suspended",
+        two_factor_enabled: false,
+        two_factor_method: null,
+        login_count: 0,
+      },
+    });
+
+    const response = await callPost({ email: "test@example.com", password: "password" });
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({ error: "Account suspended" });
+    expect(mockLogAudit).toHaveBeenCalledWith(
+      expect.anything(),
+      null,
+      "login",
+      "user",
+      null,
+      "denied",
+      expect.objectContaining({ reason: "account_suspended" })
+    );
+  });
+
   it("denies locked accounts", async () => {
     mockUserMaybeSingle.mockResolvedValueOnce({
       data: {
@@ -250,6 +278,35 @@ describe("POST /api/auth/login", () => {
       "login",
       "user",
       "user-1",
+      "denied",
+      expect.objectContaining({ reason: "account_locked" })
+    );
+    expect(mockSignInWithPassword).not.toHaveBeenCalled();
+  });
+
+  it("denies locked accounts without user id", async () => {
+    mockUserMaybeSingle.mockResolvedValueOnce({
+      data: {
+        user_id: null,
+        failed_login_attempts: 5,
+        last_failed_login: new Date().toISOString(),
+        status: "active",
+        two_factor_enabled: false,
+        two_factor_method: null,
+        login_count: 0,
+      },
+    });
+
+    const response = await callPost({ email: "test@example.com", password: "password" });
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({ error: "Account locked" });
+    expect(mockLogAudit).toHaveBeenCalledWith(
+      expect.anything(),
+      null,
+      "login",
+      "user",
+      null,
       "denied",
       expect.objectContaining({ reason: "account_locked" })
     );

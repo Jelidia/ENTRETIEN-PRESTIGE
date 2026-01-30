@@ -13,6 +13,7 @@ import {
 } from "@/lib/validators";
 import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
+import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 
 function toCsvValue(value: unknown) {
   if (value === null || value === undefined) {
@@ -208,6 +209,24 @@ export async function POST(
   const client = createUserClient(token ?? "");
   const body = await request.json().catch(() => null);
   const ip = getRequestIp(request);
+  const idempotency = await beginIdempotency(client, request, profile.user_id, {
+    action: `report_${type}_create`,
+  });
+  if (idempotency.action === "replay") {
+    return NextResponse.json(idempotency.body, { status: idempotency.status });
+  }
+  if (idempotency.action === "conflict") {
+    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+  }
+  if (idempotency.action === "in_progress") {
+    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+  }
+
+  const respondCreated = async () => {
+    const responseBody = { ok: true };
+    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 201);
+    return NextResponse.json(responseBody, { status: 201 });
+  };
 
   if (type === "leads") {
     const parsed = leadCreateSchema.safeParse(body);
@@ -237,7 +256,7 @@ export async function POST(
       userAgent: request.headers.get("user-agent") ?? null,
       newValues: { status: parsed.data.status ?? "new" },
     });
-    return NextResponse.json({ ok: true }, { status: 201 });
+    return await respondCreated();
   }
 
   if (type === "territories") {
@@ -260,7 +279,7 @@ export async function POST(
       userAgent: request.headers.get("user-agent") ?? null,
       newValues: { sales_rep_id: parsed.data.salesRepId },
     });
-    return NextResponse.json({ ok: true }, { status: 201 });
+    return await respondCreated();
   }
 
   if (type === "commission") {
@@ -288,7 +307,7 @@ export async function POST(
       userAgent: request.headers.get("user-agent") ?? null,
       newValues: { employee_id: parsed.data.employeeId, job_id: parsed.data.jobId },
     });
-    return NextResponse.json({ ok: true }, { status: 201 });
+    return await respondCreated();
   }
 
   if (type === "payroll") {
@@ -316,7 +335,7 @@ export async function POST(
       userAgent: request.headers.get("user-agent") ?? null,
       newValues: { employee_id: parsed.data.employeeId, year: parsed.data.year, month: parsed.data.month },
     });
-    return NextResponse.json({ ok: true }, { status: 201 });
+    return await respondCreated();
   }
 
   if (type === "checklists") {
@@ -344,7 +363,7 @@ export async function POST(
       userAgent: request.headers.get("user-agent") ?? null,
       newValues: { technician_id: parsed.data.technicianId, work_date: parsed.data.workDate },
     });
-    return NextResponse.json({ ok: true }, { status: 201 });
+    return await respondCreated();
   }
 
   if (type === "incidents") {
@@ -370,7 +389,7 @@ export async function POST(
       userAgent: request.headers.get("user-agent") ?? null,
       newValues: { job_id: parsed.data.jobId, incident_type: parsed.data.incidentType },
     });
-    return NextResponse.json({ ok: true }, { status: 201 });
+    return await respondCreated();
   }
 
   if (type === "quality-issues") {
@@ -396,7 +415,7 @@ export async function POST(
       userAgent: request.headers.get("user-agent") ?? null,
       newValues: { job_id: parsed.data.jobId, complaint_type: parsed.data.complaintType },
     });
-    return NextResponse.json({ ok: true }, { status: 201 });
+    return await respondCreated();
   }
 
   return NextResponse.json({ error: "Unsupported report" }, { status: 400 });

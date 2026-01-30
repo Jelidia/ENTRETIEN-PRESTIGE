@@ -4,6 +4,7 @@ import { requireRole } from "@/lib/auth";
 import { generateAuthenticatorSecret } from "@/lib/security";
 import { getRequestIp, rateLimit } from "@/lib/rateLimit";
 import { logAudit } from "@/lib/audit";
+import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 
 export async function POST(request: Request) {
   const auth = await requireRole(request, ["admin"]);
@@ -22,6 +23,18 @@ export async function POST(request: Request) {
   }
 
   const admin = createAdminClient();
+  const idempotency = await beginIdempotency(admin, request, user.id, {
+    action: "setup_2fa",
+  });
+  if (idempotency.action === "replay") {
+    return NextResponse.json(idempotency.body, { status: idempotency.status });
+  }
+  if (idempotency.action === "conflict") {
+    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+  }
+  if (idempotency.action === "in_progress") {
+    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+  }
   const secret = generateAuthenticatorSecret(user.email ?? "user");
 
   const { error } = await admin
@@ -42,5 +55,7 @@ export async function POST(request: Request) {
     userAgent: request.headers.get("user-agent") ?? null,
   });
 
-  return NextResponse.json({ ok: true, otpauth: secret.otpauth });
+  const responseBody = { ok: true, otpauth: secret.otpauth };
+  await completeIdempotency(admin, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+  return NextResponse.json(responseBody);
 }

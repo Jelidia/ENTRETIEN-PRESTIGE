@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabaseServer";
 import { logAudit } from "@/lib/audit";
 import { isSmsConfigured } from "@/lib/twilio";
 import { getRequestIp, rateLimit } from "@/lib/rateLimit";
+import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 
 export async function POST(request: Request) {
   const ip = getRequestIp(request);
@@ -24,6 +25,20 @@ export async function POST(request: Request) {
 
   const admin = createAdminClient();
   const { companyName, fullName, email, phone, password } = parsed.data;
+  const idempotency = await beginIdempotency(admin, request, null, {
+    action: "register",
+    email,
+    companyName,
+  });
+  if (idempotency.action === "replay") {
+    return NextResponse.json(idempotency.body, { status: idempotency.status });
+  }
+  if (idempotency.action === "conflict") {
+    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+  }
+  if (idempotency.action === "in_progress") {
+    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+  }
 
   const { data: company, error: companyError } = await admin
     .from("companies")
@@ -73,5 +88,7 @@ export async function POST(request: Request) {
     },
   });
 
-  return NextResponse.json({ ok: true });
+  const responseBody = { ok: true };
+  await completeIdempotency(admin, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+  return NextResponse.json(responseBody);
 }

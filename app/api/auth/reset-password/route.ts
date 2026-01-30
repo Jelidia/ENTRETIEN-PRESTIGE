@@ -4,6 +4,7 @@ import { createAdminClient, createAnonClient } from "@/lib/supabaseServer";
 import { setSessionCookies } from "@/lib/session";
 import { getRequestIp, rateLimit } from "@/lib/rateLimit";
 import { logAudit } from "@/lib/audit";
+import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 
 export async function POST(request: Request) {
   const ip = getRequestIp(request);
@@ -30,6 +31,18 @@ export async function POST(request: Request) {
 
   // 2. Exchange code for session
   const anon = createAnonClient();
+  const idempotency = await beginIdempotency(anon, request, null, {
+    action: "reset_password",
+  });
+  if (idempotency.action === "replay") {
+    return NextResponse.json(idempotency.body, { status: idempotency.status });
+  }
+  if (idempotency.action === "conflict") {
+    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+  }
+  if (idempotency.action === "in_progress") {
+    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+  }
   const { data: exchangeData, error: exchangeError } = await anon.auth.exchangeCodeForSession(code);
 
   if (exchangeError || !exchangeData.session) {
@@ -57,7 +70,9 @@ export async function POST(request: Request) {
   });
 
   // 4. Return success with session cookies
-  const response = NextResponse.json({ success: true });
+  const responseBody = { success: true };
+  const response = NextResponse.json(responseBody);
   setSessionCookies(response, exchangeData.session);
+  await completeIdempotency(anon, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
   return response;
 }

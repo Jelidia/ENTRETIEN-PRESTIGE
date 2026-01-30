@@ -6,6 +6,7 @@ import { setSessionCookies } from "@/lib/session";
 import { hashCode } from "@/lib/crypto";
 import { getRequestIp, rateLimit } from "@/lib/rateLimit";
 import { logAudit } from "@/lib/audit";
+import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 
 export async function POST(request: Request) {
   const ip = getRequestIp(request);
@@ -25,6 +26,19 @@ export async function POST(request: Request) {
   }
 
   const admin = createAdminClient();
+  const idempotency = await beginIdempotency(admin, request, null, {
+    action: "verify_2fa",
+    challengeId: parsed.data.challengeId,
+  });
+  if (idempotency.action === "replay") {
+    return NextResponse.json(idempotency.body, { status: idempotency.status });
+  }
+  if (idempotency.action === "conflict") {
+    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+  }
+  if (idempotency.action === "in_progress") {
+    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+  }
   const session = await consumeChallenge(admin, parsed.data.challengeId, parsed.data.code);
 
   if (!session) {
@@ -49,7 +63,9 @@ export async function POST(request: Request) {
     });
   }
 
-  const response = NextResponse.json({ ok: true });
+  const responseBody = { ok: true };
+  const response = NextResponse.json(responseBody);
   setSessionCookies(response, session);
+  await completeIdempotency(admin, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
   return response;
 }

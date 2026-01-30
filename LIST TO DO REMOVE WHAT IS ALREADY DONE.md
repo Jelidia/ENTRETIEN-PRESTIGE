@@ -1,7 +1,7 @@
 # ENTRETIEN PRESTIGE — Master Backlog (Auto-generated)
 - Generated: 2026-01-29 05:49:44
 - Repo: `/mnt/data/ENTRETIEN_PRESTIGE/ENTRETIEN-PRESTIGE-main`
-- Total items: **1437** (numbered list below)
+- Total items: **1432** (numbered list below)
 
 ## Legend
 - **CONFIRMED**: Found directly by static scan (pattern-based).
@@ -9,7 +9,7 @@
 
 ## Counts by priority
 - **P0**: 81
-- **P1**: 311
+- **P1**: 306
 - **P2**: 937
 - **P3**: 108
 
@@ -24,11 +24,6 @@
 ## API-Audit
 
 ## API-Idempotency
-140. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/auth/refresh-token mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/auth/refresh-token/route.ts`
-141. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/auth/register mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/auth/register/route.ts`
-142. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/auth/reset-password mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/auth/reset-password/route.ts`
-143. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/auth/setup-2fa mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/auth/setup-2fa/route.ts`
-144. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/auth/verify-2fa mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/auth/verify-2fa/route.ts`
 164. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/reports/[type] mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/reports/[type]/route.ts`
 172. **[P1][API-Idempotency][ADD][CHECKLIST]** [CHECKLIST] /api/uploads mutation endpoint: add idempotency key support to prevent duplicate creates on retries. — `app/api/uploads/route.ts`
 
