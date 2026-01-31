@@ -7,8 +7,7 @@ import { REQUEST_ID_HEADER } from "@/lib/requestId";
 
 type TeamMember = {
   user_id: string;
-  first_name: string | null;
-  last_name: string | null;
+  full_name: string | null;
   email: string;
   role: string;
   phone: string | null;
@@ -22,9 +21,16 @@ async function getTeamMembers() {
   }
 
   const client = createUserClient(token);
+  const { data: { user } } = await client.auth.getUser();
+
+  if (!user) {
+    return { members: [], error: "session_expired" };
+  }
+
   const { data: profile } = await client
-    .from("user_profiles")
+    .from("users")
     .select("company_id, role")
+    .eq("user_id", user.id)
     .single();
 
   if (!profile) {
@@ -37,10 +43,11 @@ async function getTeamMembers() {
   }
 
   const { data: members, error } = await client
-    .from("user_profiles")
-    .select("user_id, first_name, last_name, email, role, phone, status")
+    .from("users")
+    .select("user_id, full_name, email, role, phone, status")
     .eq("company_id", profile.company_id)
-    .order("first_name", { ascending: true });
+    .is("deleted_at", null)
+    .order("full_name", { ascending: true });
 
   if (error) {
     console.error("Failed to load team members:", error);
@@ -139,9 +146,7 @@ export default async function TeamPage() {
                 >
                   <div>
                     <strong>
-                      {member.first_name && member.last_name
-                        ? `${member.first_name} ${member.last_name}`
-                        : member.email}
+                      {member.full_name || member.email}
                     </strong>
                     <div className="card-meta">
                       {roleLabels[member.role] || member.role}
