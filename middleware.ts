@@ -65,8 +65,8 @@ export function middleware(request: NextRequest) {
   const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route));
 
   if (isProtectedRoute) {
-    // Check if access token exists
-    const accessToken = request.cookies.get("access_token")?.value;
+    // Check if access token exists (cookie name is ep_access_token)
+    const accessToken = request.cookies.get("ep_access_token")?.value;
 
     // No token - redirect to login
     if (!accessToken) {
