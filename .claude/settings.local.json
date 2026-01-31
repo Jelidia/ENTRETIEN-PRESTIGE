@@ -8,7 +8,8 @@
       "Bash(grep:*)",
       "Bash(tree:*)",
       "Bash(npm install)",
-      "Bash(npm run lint)"
+      "Bash(npm run lint)",
+      "Bash(if exist \"supabase\\\\migrations\\\\20260131170659_remote_schema.sql\" del \"supabase\\\\migrations\\\\20260131170659_remote_schema.sql\")"
     ]
   }
 }
