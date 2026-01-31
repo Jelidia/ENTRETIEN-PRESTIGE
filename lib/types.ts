@@ -126,16 +126,32 @@ export type Checklist = {
   shift_status: string;
 };
 
+export function getDefaultDashboard(role?: string): string {
+  switch (role) {
+    case "sales_rep":
+      return "/sales/dashboard";
+    case "technician":
+      return "/technician";
+    case "admin":
+    case "manager":
+    default:
+      return "/dashboard";
+  }
+}
+
 export function sanitizeRedirect(
   target: string | null | undefined,
-  fallback = "/dashboard"
+  fallback?: string,
+  role?: string
 ): string {
+  const defaultFallback = fallback || getDefaultDashboard(role);
+
   if (!target) {
-    return fallback;
+    return defaultFallback;
   }
 
   if (!target.startsWith("/") || target.startsWith("//") || target.includes("://")) {
-    return fallback;
+    return defaultFallback;
   }
 
   return target;

@@ -36,6 +36,16 @@ export async function GET(request: Request) {
   }
 
   const { data: leads, error: leadsError } = await leadQuery;
+
+  if (leadsError) {
+    await captureError(new Error("Failed to load leads"), {
+      leadsError,
+      ...requestContext,
+    });
+    return NextResponse.json({ error: "Unable to load sales dashboard" }, { status: 500 });
+  }
+
+  // Leaderboard is optional - if it fails or is empty, continue with empty array
   const { data: leaderboard, error: leaderboardError } = await client
     .from("leaderboard")
     .select("sales_rep_id, total_revenue, rank")
@@ -43,13 +53,8 @@ export async function GET(request: Request) {
     .eq("month", now.getUTCMonth() + 1)
     .eq("year", now.getUTCFullYear());
 
-  if (leadsError || leaderboardError) {
-    await captureError(new Error("Failed to load sales dashboard"), {
-      leadsError,
-      leaderboardError,
-      ...requestContext,
-    });
-    return NextResponse.json({ error: "Unable to load sales dashboard" }, { status: 500 });
+  if (leaderboardError) {
+    console.warn("Leaderboard query failed (non-critical):", leaderboardError);
   }
 
   const stats = buildSalesStats({

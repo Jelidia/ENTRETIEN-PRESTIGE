@@ -154,7 +154,7 @@ export async function POST(request: Request) {
     last_activity: new Date().toISOString(),
   });
 
-  const responseBody = { success: true, data: { ok: true }, ok: true };
+  const responseBody = { success: true, data: { ok: true, role: profile?.role }, ok: true, role: profile?.role };
   const response = NextResponse.json(responseBody);
   setSessionCookies(response, data.session);
   await completeIdempotency(admin, request, idempotency.scope, idempotency.requestHash, responseBody, 200);

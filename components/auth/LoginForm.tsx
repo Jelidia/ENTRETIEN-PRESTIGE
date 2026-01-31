@@ -4,11 +4,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { sanitizeRedirect } from "@/lib/types";
+import { sanitizeRedirect, getDefaultDashboard } from "@/lib/types";
 
 export default function LoginForm({ redirect }: { redirect?: string }) {
   const router = useRouter();
-  const safeRedirect = sanitizeRedirect(redirect);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -28,11 +27,18 @@ export default function LoginForm({ redirect }: { redirect?: string }) {
       fetch("/api/access")
         .then((res) => {
           if (res.ok) {
-            // Valid session - auto-redirect to dashboard
-            router.push(safeRedirect);
+            return res.json();
           } else {
             // Session expired - pre-fill email/phone
             setEmail(lastPhone);
+            return null;
+          }
+        })
+        .then((data) => {
+          if (data) {
+            // Valid session - auto-redirect to role-appropriate dashboard
+            const safeRedirect = sanitizeRedirect(redirect, undefined, data.role);
+            router.push(safeRedirect);
           }
         })
         .catch(() => {
@@ -43,7 +49,7 @@ export default function LoginForm({ redirect }: { redirect?: string }) {
       // No session but has remembered phone - pre-fill
       setEmail(lastPhone);
     }
-  }, [safeRedirect, router]);
+  }, [redirect, router]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -69,6 +75,9 @@ export default function LoginForm({ redirect }: { redirect?: string }) {
     } else {
       localStorage.removeItem("lastPhone");
     }
+
+    // Calculate role-aware redirect
+    const safeRedirect = sanitizeRedirect(redirect, undefined, data.role);
 
     if (data.mfaRequired) {
       router.push(

@@ -12,7 +12,6 @@ export default function VerifyTwoFactorForm({
   redirect?: string;
 }) {
   const router = useRouter();
-  const safeRedirect = sanitizeRedirect(redirect);
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -39,6 +38,8 @@ export default function VerifyTwoFactorForm({
       return;
     }
 
+    // Calculate role-aware redirect
+    const safeRedirect = sanitizeRedirect(redirect, undefined, data.role);
     router.push(safeRedirect);
   }
 

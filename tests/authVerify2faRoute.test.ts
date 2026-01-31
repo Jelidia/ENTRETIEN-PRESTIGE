@@ -69,9 +69,18 @@ vi.mock("@/lib/validators", () => ({
 
 const mockGetUser = vi.fn();
 const mockSessionInsert = vi.fn();
+const mockUserSelect = vi.fn();
+const mockUserEq = vi.fn();
+const mockUserSingle = vi.fn();
+
 const mockAdminFrom = vi.fn((table: string) => {
   if (table === "user_sessions") {
     return { insert: mockSessionInsert };
+  }
+  if (table === "users") {
+    return {
+      select: mockUserSelect,
+    };
   }
   return { insert: mockSessionInsert };
 });
@@ -131,6 +140,11 @@ beforeEach(() => {
 
   mockGetUser.mockResolvedValue({ data: { user: { id: "user-1" } } });
   mockSessionInsert.mockResolvedValue({});
+
+  // Setup user role query chain
+  mockUserSingle.mockResolvedValue({ data: { role: "admin" } });
+  mockUserEq.mockReturnValue({ single: mockUserSingle });
+  mockUserSelect.mockReturnValue({ eq: mockUserEq });
 
   mockBeginIdempotency.mockResolvedValue({
     action: "proceed",
@@ -222,7 +236,7 @@ describe("POST /api/auth/verify-2fa", () => {
     const response = await callPost({ challengeId: "challenge-1", code: "123456" });
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toMatchObject({ ok: true, success: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true, success: true, role: "admin" });
     expect(mockSessionInsert).toHaveBeenCalledWith(
       expect.objectContaining({
         user_id: "user-1",
@@ -237,7 +251,7 @@ describe("POST /api/auth/verify-2fa", () => {
       expect.anything(),
       "ip:hash",
       "hash-1",
-      expect.objectContaining({ ok: true, success: true }),
+      expect.objectContaining({ ok: true, success: true, role: "admin" }),
       200
     );
   });
@@ -254,7 +268,7 @@ describe("POST /api/auth/verify-2fa", () => {
     );
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toMatchObject({ ok: true, success: true });
+    await expect(response.json()).resolves.toMatchObject({ ok: true, success: true, role: "admin" });
     expect(mockSessionInsert).toHaveBeenCalledWith(
       expect.objectContaining({
         ip_address: null,

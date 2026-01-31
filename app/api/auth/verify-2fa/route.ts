@@ -46,7 +46,17 @@ export async function POST(request: Request) {
   }
 
   const { data: userData } = await admin.auth.getUser(session.access_token);
+  let userRole: string | undefined;
+
   if (userData?.user) {
+    const { data: profile } = await admin
+      .from("users")
+      .select("role")
+      .eq("user_id", userData.user.id)
+      .single();
+
+    userRole = profile?.role;
+
     await admin.from("user_sessions").insert({
       user_id: userData.user.id,
       ip_address: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
@@ -63,7 +73,7 @@ export async function POST(request: Request) {
     });
   }
 
-  const responseBody = { success: true, data: { ok: true }, ok: true };
+  const responseBody = { success: true, data: { ok: true, role: userRole }, ok: true, role: userRole };
   const response = NextResponse.json(responseBody);
   setSessionCookies(response, session);
   await completeIdempotency(admin, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
