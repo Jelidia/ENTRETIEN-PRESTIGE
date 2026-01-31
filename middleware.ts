@@ -2,11 +2,10 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getRequestIp, rateLimit } from "./lib/rateLimit";
 import { REQUEST_ID_HEADER, generateRequestId } from "./lib/requestId";
-import { createClient } from "@supabase/supabase-js";
 
 const ORIGINAL_PATH_HEADER = "x-original-path";
 
-export async function middleware(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const requestId = request.headers.get(REQUEST_ID_HEADER) ?? generateRequestId();
   const requestHeaders = new Headers(request.headers);
@@ -44,7 +43,7 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  // Protected routes - check authentication and role
+  // Protected routes - simple auth check only
   const protectedRoutes = [
     "/dashboard",
     "/dispatch",
@@ -66,7 +65,7 @@ export async function middleware(request: NextRequest) {
   const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route));
 
   if (isProtectedRoute) {
-    // Get access token from cookies
+    // Check if access token exists
     const accessToken = request.cookies.get("access_token")?.value;
 
     // No token - redirect to login
@@ -76,64 +75,8 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    // Create client with user's token
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        global: {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        },
-      }
-    );
-
-    // Get user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-    // Invalid token - redirect to login
-    if (userError || !user) {
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("redirect", pathname);
-      loginUrl.searchParams.set("message", "session-expired");
-      return NextResponse.redirect(loginUrl);
-    }
-
-    // Get user profile to check role
-    const { data: profile } = await supabase
-      .from("users")
-      .select("role")
-      .eq("user_id", user.id)
-      .single();
-
-    const userRole = profile?.role;
-
-    // Role-based route protection
-    if (userRole === "technician") {
-      // Technicians can only access /technician, /profile, /notifications
-      const allowedPaths = ["/technician", "/profile", "/notifications"];
-      const isAllowed = allowedPaths.some((path) => pathname.startsWith(path));
-
-      if (!isAllowed) {
-        return NextResponse.redirect(new URL("/technician", request.url));
-      }
-    } else if (userRole === "sales_rep") {
-      // Sales reps can access /sales, /customers, /profile, /notifications
-      const allowedPaths = ["/sales", "/customers", "/profile", "/notifications"];
-      const isAllowed = allowedPaths.some((path) => pathname.startsWith(path));
-
-      if (!isAllowed) {
-        return NextResponse.redirect(new URL("/sales/dashboard", request.url));
-      }
-    } else if (userRole === "manager" || userRole === "admin") {
-      // Managers and admins have full access
-      // No restrictions
-    } else {
-      // Unknown role - redirect to login
-      return NextResponse.redirect(new URL("/login", request.url));
-    }
-
+    // Has token - let them through
+    // Role-based checks happen in the page components
     const response = NextResponse.next({ request: { headers: requestHeaders } });
     response.headers.set(REQUEST_ID_HEADER, requestId);
     return response;

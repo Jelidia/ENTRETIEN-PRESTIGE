@@ -5,9 +5,32 @@ import StatusBadge from "@/components/StatusBadge";
 import TopBar from "@/components/TopBar";
 import { getDashboardData } from "@/lib/queries";
 import { REQUEST_ID_HEADER } from "@/lib/requestId";
+import { getAccessTokenFromCookies } from "@/lib/session";
+import { createUserClient } from "@/lib/supabaseServer";
+import { redirect } from "next/navigation";
+import { getDefaultDashboard } from "@/lib/types";
 
 export default async function DashboardPage() {
   const requestId = headers().get(REQUEST_ID_HEADER) ?? undefined;
+
+  // Check user role and redirect if not admin/manager
+  const token = getAccessTokenFromCookies();
+  if (token) {
+    const client = createUserClient(token);
+    const { data: { user } } = await client.auth.getUser();
+    if (user) {
+      const { data: profile } = await client
+        .from("users")
+        .select("role")
+        .eq("user_id", user.id)
+        .single();
+
+      if (profile && profile.role !== "admin" && profile.role !== "manager") {
+        redirect(getDefaultDashboard(profile.role));
+      }
+    }
+  }
+
   const { kpis, revenueBars, scheduleToday, error } = await getDashboardData({ requestId });
   const errorDetails =
     error === "session_expired"
