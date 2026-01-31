@@ -1,890 +1,842 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 import TopBar from "@/components/TopBar";
-import Link from "next/link";
-import NotificationSettingsForm from "@/components/forms/NotificationSettingsForm";
-import { useEffect, useMemo, useState } from "react";
-import {
-  defaultRolePermissions,
-  mergeRolePermissions,
-  permissionKeys,
-  resolvePermissions,
-  type PermissionKey,
-  type PermissionMap,
-} from "@/lib/permissions";
+import { useLanguage } from "@/contexts/LanguageContext";
+import type { Language } from "@/lib/i18n";
 
-type TeamUser = {
+type User = {
   user_id: string;
-  full_name: string;
   email: string;
+  full_name: string;
   phone?: string | null;
   role: string;
-  status: string;
-  access_permissions?: PermissionMap | null;
+  company_id: string;
+  created_at: string;
+  contract_document_url?: string | null;
+  contract_signed_at?: string | null;
+  id_document_front_url?: string | null;
+  avatar_url?: string | null;
 };
-
-type SeedResult = {
-  role: string;
-  email: string;
-  status: "created" | "exists" | "failed";
-  password?: string;
-  error?: string;
-};
-
-const roleOptions = [
-  { value: "admin", label: "Admin" },
-  { value: "manager", label: "Manager" },
-  { value: "dispatcher", label: "Dispatcher" },
-  { value: "sales_rep", label: "Door-to-door seller" },
-  { value: "technician", label: "Technician" },
-];
-
-const roleLabels = roleOptions.reduce<Record<string, string>>((acc, option) => {
-  acc[option.value] = option.label;
-  return acc;
-}, {});
-
-const statusOptions = ["active", "inactive", "suspended"];
-
-const permissionLabels: Record<PermissionKey, string> = {
-  dashboard: "Dashboard",
-  dispatch: "Dispatch",
-  jobs: "Jobs",
-  customers: "Customers",
-  invoices: "Invoices",
-  sales: "Sales",
-  operations: "Operations",
-  reports: "Reports",
-  team: "Team",
-  notifications: "Notifications",
-  settings: "Settings",
-  technician: "Technician view",
-};
-
-const emptyPermissions = permissionKeys.reduce<PermissionMap>((acc, key) => {
-  acc[key] = false;
-  return acc;
-}, {} as PermissionMap);
-
-const passwordAlphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
-
-function generatePassword(length = 24) {
-  const values = new Uint32Array(length);
-  crypto.getRandomValues(values);
-  return Array.from(values, (value) => passwordAlphabet[value % passwordAlphabet.length]).join("");
-}
 
 export default function SettingsPage() {
-  const [otpAuth, setOtpAuth] = useState("");
-  const [securityStatus, setSecurityStatus] = useState("");
-  const [team, setTeam] = useState<TeamUser[]>([]);
-  const [teamStatus, setTeamStatus] = useState("");
-  const [teamEdits, setTeamEdits] = useState<Record<string, { role: string; status: string }>>({});
-  const [createStatus, setCreateStatus] = useState("");
-  const [userForm, setUserForm] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    role: "technician",
-    password: "",
-  });
-  const [rolePermissions, setRolePermissions] = useState<Record<string, PermissionMap>>(
-    defaultRolePermissions
-  );
-  const [rolePermissionsStatus, setRolePermissionsStatus] = useState("");
-  const [selectedUserId, setSelectedUserId] = useState("");
-  const [userOverrides, setUserOverrides] = useState<PermissionMap>(emptyPermissions);
-  const [userOverrideStatus, setUserOverrideStatus] = useState("");
-  const [seedForm, setSeedForm] = useState({
-    admin: { fullName: "", email: "", phone: "" },
-    technician: { fullName: "", email: "", phone: "" },
-    sales: { fullName: "", email: "", phone: "" },
-  });
-  const [seedResults, setSeedResults] = useState<SeedResult[]>([]);
-  const [seedStatus, setSeedStatus] = useState("");
+  const router = useRouter();
+  const { language, setLanguage: changeLanguage, t } = useLanguage();
+  const [user, setUser] = useState<User | null>(null);
+  const [activeTab, setActiveTab] = useState<"profile" | "security" | "documents" | "preferences">("profile");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [uploading, setUploading] = useState(false);
 
-  const selectedUser = useMemo(
-    () => team.find((member) => member.user_id === selectedUserId),
-    [team, selectedUserId]
-  );
+  // Document URLs
+  const [documentUrls, setDocumentUrls] = useState<{
+    contract: string | null;
+    id_photo: string | null;
+    profile_photo: string | null;
+  }>({
+    contract: null,
+    id_photo: null,
+    profile_photo: null,
+  });
+
+  // Profile edit
+  const [showEditName, setShowEditName] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [showEditEmail, setShowEditEmail] = useState(false);
+  const [editEmail, setEditEmail] = useState("");
+  const [showEditPhone, setShowEditPhone] = useState(false);
+  const [editPhone, setEditPhone] = useState("");
+
+  // Password form
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [passwordStrength, setPasswordStrength] = useState<"weak" | "medium" | "strong">("weak");
+
+  // Logout modal
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   useEffect(() => {
-    void loadSettings();
+    loadUser();
   }, []);
 
   useEffect(() => {
-    setUserForm((prev) => (prev.password ? prev : { ...prev, password: generatePassword() }));
-  }, []);
-
-  useEffect(() => {
-    if (!selectedUser) {
-      setUserOverrides(emptyPermissions);
-      return;
+    // Calculate password strength
+    const pw = passwordForm.newPassword;
+    if (pw.length < 8) {
+      setPasswordStrength("weak");
+    } else if (pw.length >= 12 && /[A-Z]/.test(pw) && /[0-9]/.test(pw) && /[!@#$%^&*]/.test(pw)) {
+      setPasswordStrength("strong");
+    } else {
+      setPasswordStrength("medium");
     }
-    const resolved = resolvePermissions(
-      selectedUser.role,
-      rolePermissions,
-      selectedUser.access_permissions ?? null
+  }, [passwordForm.newPassword]);
+
+  async function loadUser() {
+    try {
+      const res = await fetch("/api/access");
+      if (!res.ok) throw new Error("Failed to load user");
+      const data = await res.json();
+
+      // Get full user data
+      const userRes = await fetch(`/api/users/${data.userId}`);
+      if (userRes.ok) {
+        const userData = await userRes.json();
+        setUser(userData.data);
+        setEditName(userData.data.full_name);
+        setEditEmail(userData.data.email);
+        setEditPhone(userData.data.phone || "");
+        await refreshDocumentUrls(userData.data);
+      }
+    } catch (err) {
+      setError(t("error.unknown"));
+    }
+  }
+
+  async function refreshDocumentUrls(nextUser: User) {
+    const types: Array<{ type: "contract" | "id_photo" | "profile_photo"; hasValue: boolean }> = [
+      { type: "contract", hasValue: Boolean(nextUser.contract_document_url) },
+      { type: "id_photo", hasValue: Boolean(nextUser.id_document_front_url) },
+      { type: "profile_photo", hasValue: Boolean(nextUser.avatar_url) },
+    ];
+
+    const results = await Promise.all(
+      types.map(async ({ type, hasValue }) => {
+        if (!hasValue) {
+          return { type, url: null };
+        }
+        const response = await fetch(`/api/settings/document?type=${type}`);
+        const json = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          return { type, url: null };
+        }
+        const url = json.url ?? json.data?.url ?? null;
+        return { type, url };
+      })
     );
-    setUserOverrides(resolved);
-  }, [selectedUser, rolePermissions]);
 
-  async function loadSettings() {
-    const [teamRes, companyRes] = await Promise.all([fetch("/api/users"), fetch("/api/company")]);
-    const teamJson = await teamRes.json().catch(() => ({ data: [] }));
-    const companyJson = await companyRes.json().catch(() => ({ data: null }));
-
-    const teamData = (teamJson.data ?? []) as TeamUser[];
-    setTeam(teamData);
-    const nextEdits: Record<string, { role: string; status: string }> = {};
-    teamData.forEach((member) => {
-      nextEdits[member.user_id] = { role: member.role ?? "technician", status: member.status ?? "active" };
+    setDocumentUrls((prev) => {
+      const next = { ...prev };
+      results.forEach((result) => {
+        next[result.type] = result.url;
+      });
+      return next;
     });
-    setTeamEdits(nextEdits);
-
-    const mergedPermissions = mergeRolePermissions(companyJson.data?.role_permissions ?? null);
-    setRolePermissions(mergedPermissions);
-    setSelectedUserId((current) => current || teamData[0]?.user_id || "");
   }
 
-  async function handleSetup2fa() {
-    setSecurityStatus("");
-    const response = await fetch("/api/auth/setup-2fa", { method: "POST" });
-    const json = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      setSecurityStatus(json.error ?? "Unable to enable 2FA");
-      return;
+  async function handleFileUpload(type: "contract" | "id_photo" | "profile_photo", file: File) {
+    setUploading(true);
+    setError("");
+    setSuccess("");
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch(`/api/settings/upload?type=${type}`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || t("error.unknown"));
+        return;
+      }
+
+      const uploadedUrl = data?.data?.url ?? null;
+      if (uploadedUrl) {
+        setDocumentUrls((prev) => ({ ...prev, [type]: uploadedUrl }));
+      }
+
+      setSuccess(
+        type === "contract"
+          ? "Contrat téléchargé avec succès"
+          : type === "id_photo"
+          ? "Pièce d'identité téléchargée avec succès"
+          : "Photo de profil téléchargée avec succès"
+      );
+      loadUser();
+    } catch (err) {
+      setError(t("error.unknown"));
+    } finally {
+      setUploading(false);
     }
-    setOtpAuth(json.otpauth ?? "");
-    setSecurityStatus("Authenticator setup ready.");
   }
 
-  async function handleDisable2fa() {
-    setSecurityStatus("");
-    const response = await fetch("/api/auth/disable-2fa", { method: "POST" });
-    const json = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      setSecurityStatus(json.error ?? "Unable to disable 2FA");
+  async function handlePasswordChange(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setError("Les mots de passe ne correspondent pas");
       return;
     }
-    setOtpAuth("");
-    setSecurityStatus("Two-factor disabled.");
+
+    try {
+      const res = await fetch("/api/settings/password", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword,
+          confirmPassword: passwordForm.confirmPassword,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || t("error.unknown"));
+        return;
+      }
+
+      setSuccess("Mot de passe changé avec succès. Vous serez déconnecté dans 2 secondes...");
+      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+
+      // Logout after 2 seconds
+      setTimeout(() => {
+        handleLogout();
+      }, 2000);
+    } catch (err) {
+      setError(t("error.unknown"));
+    }
   }
 
-  function updateTeamEdit(userId: string, key: "role" | "status", value: string) {
-    setTeamEdits((prev) => ({
-      ...prev,
-      [userId]: { ...prev[userId], [key]: value },
-    }));
+  async function handleNameUpdate(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+
+    try {
+      const res = await fetch("/api/settings/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fullName: editName }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || t("error.unknown"));
+        return;
+      }
+
+      setSuccess(t("common.save") + " réussi");
+      setShowEditName(false);
+      loadUser();
+    } catch (err) {
+      setError(t("error.unknown"));
+    }
   }
 
-  async function saveTeamMember(member: TeamUser) {
-    const edits = teamEdits[member.user_id];
-    if (!edits) {
-      return;
-    }
-    const payload: Record<string, string> = {};
-    if (edits.role && edits.role !== member.role) {
-      payload.role = edits.role;
-    }
-    if (edits.status && edits.status !== member.status) {
-      payload.status = edits.status;
-    }
-    if (!Object.keys(payload).length) {
-      setTeamStatus("No changes to save.");
-      return;
-    }
+  async function handleEmailUpdate(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
 
-    setTeamStatus("");
-    const response = await fetch(`/api/users/${member.user_id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    const json = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      setTeamStatus(json.error ?? "Unable to update team member");
-      return;
+    try {
+      const res = await fetch("/api/settings/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: editEmail }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || t("error.unknown"));
+        return;
+      }
+
+      setSuccess("Email mis à jour avec succès. Un email de confirmation a été envoyé.");
+      setShowEditEmail(false);
+      loadUser();
+    } catch (err) {
+      setError(t("error.unknown"));
     }
-    setTeamStatus("Team member updated.");
-    void loadSettings();
   }
 
-  async function createTeamMember(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setCreateStatus("");
-    const response = await fetch("/api/users", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        fullName: userForm.fullName,
-        email: userForm.email,
-        phone: userForm.phone || undefined,
-        role: userForm.role,
-        password: userForm.password,
-      }),
-    });
-    const json = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      setCreateStatus(json.error ?? "Unable to create user");
-      return;
+  async function handlePhoneUpdate(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+
+    try {
+      const res = await fetch("/api/settings/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: editPhone }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || t("error.unknown"));
+        return;
+      }
+
+      setSuccess("Téléphone mis à jour avec succès");
+      setShowEditPhone(false);
+      loadUser();
+    } catch (err) {
+      setError(t("error.unknown"));
     }
-    setCreateStatus("User created.");
-    setUserForm({ fullName: "", email: "", phone: "", role: "technician", password: "" });
-    void loadSettings();
   }
 
-  async function saveRolePermissions() {
-    setRolePermissionsStatus("");
-    const response = await fetch("/api/company", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ rolePermissions }),
-    });
-    const json = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      setRolePermissionsStatus(json.error ?? "Unable to save role access");
-      return;
+  async function handleLogout() {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } finally {
+      localStorage.removeItem("ep_access_token");
+      localStorage.removeItem("lastPhone");
+      router.push("/login?message=deconnecte");
     }
-    setRolePermissionsStatus("Role access saved.");
-    void loadSettings();
   }
 
-  function updateRolePermission(role: string, permission: PermissionKey, value: boolean) {
-    setRolePermissions((prev) => ({
-      ...prev,
-      [role]: { ...(prev[role] ?? emptyPermissions), [permission]: value },
-    }));
+  function handleLanguageChange(newLang: Language) {
+    changeLanguage(newLang);
+    setSuccess(newLang === "fr" ? "Langue changée vers Français" : "Language changed to English");
+    setTimeout(() => setSuccess(""), 2000);
   }
 
-  async function saveUserOverrides() {
-    if (!selectedUser) {
-      setUserOverrideStatus("Select a team member.");
-      return;
-    }
-    setUserOverrideStatus("");
-    const response = await fetch(`/api/users/${selectedUser.user_id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ access_permissions: userOverrides }),
-    });
-    const json = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      setUserOverrideStatus(json.error ?? "Unable to save overrides");
-      return;
-    }
-    setUserOverrideStatus("Overrides saved.");
-    void loadSettings();
+  const roleLabels: Record<string, string> = {
+    admin: t("role.admin"),
+    manager: t("role.manager"),
+    sales_rep: t("role.sales_rep"),
+    technician: t("role.technician"),
+  };
+
+  const contractStatusLabels = {
+    signed: { label: t("documents.status.signed"), color: "#dcfce7", textColor: "#166534" },
+    pending: { label: t("documents.status.pending"), color: "#fef3c7", textColor: "#92400e" },
+  };
+
+  if (!user) {
+    return (
+      <div className="page">
+        <TopBar title={t("settings.title")} />
+        <p className="card-meta" style={{ marginTop: 24 }}>{t("common.loading")}</p>
+      </div>
+    );
   }
 
-  async function clearUserOverrides() {
-    if (!selectedUser) {
-      setUserOverrideStatus("Select a team member.");
-      return;
-    }
-    setUserOverrideStatus("");
-    const response = await fetch(`/api/users/${selectedUser.user_id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ access_permissions: null }),
-    });
-    const json = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      setUserOverrideStatus(json.error ?? "Unable to clear overrides");
-      return;
-    }
-    setUserOverrideStatus("Overrides cleared.");
-    void loadSettings();
-  }
+  const contractStatus = user.contract_signed_at
+    ? "signed"
+    : user.contract_document_url
+    ? "pending"
+    : null;
 
-  async function seedAccounts(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setSeedStatus("");
-    setSeedResults([]);
-    const accounts = [
-      { role: "admin", ...seedForm.admin },
-      { role: "technician", ...seedForm.technician },
-      { role: "sales_rep", ...seedForm.sales },
-    ].filter((account) => account.fullName && account.email);
-
-    if (accounts.length !== 3) {
-      setSeedStatus("Provide a name and email for each seed account.");
-      return;
-    }
-
-    const response = await fetch("/api/admin/seed", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ accounts }),
-    });
-    const json = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      setSeedStatus(json.error ?? "Unable to seed accounts");
-      return;
-    }
-    setSeedResults(json.results ?? []);
-    setSeedStatus("Seed accounts processed.");
-    void loadSettings();
-  }
+  // Check if user needs documents (not admin/manager)
+  const needsDocuments = !["admin", "manager"].includes(user.role);
 
   return (
     <div className="page">
-      <TopBar
-        title="Settings"
-        subtitle="Security, access control, and notifications"
-      />
+      <TopBar title={t("settings.title")} subtitle={t("settings.subtitle")} />
 
-      <section className="section">
-        <div className="section-header">
-          <div>
-            <div className="card-label">Security</div>
-            <h2 className="section-title">Account protection</h2>
-            <div className="section-subtitle">Two-factor, sessions, and alert preferences.</div>
-          </div>
+      {error && (
+        <div className="alert" style={{ marginTop: 16, marginBottom: 16, backgroundColor: "#fee2e2", color: "#991b1b" }}>
+          {error}
         </div>
-        <div className="grid-2">
+      )}
+      {success && (
+        <div className="alert" style={{ marginTop: 16, marginBottom: 16, backgroundColor: "#dcfce7", color: "#166534" }}>
+          {success}
+        </div>
+      )}
+
+      {/* Tabs */}
+      <div style={{ display: "flex", gap: 16, borderBottom: "2px solid #e5e7eb", marginTop: 24, marginBottom: 24, overflowX: "auto" }}>
+        <button
+          onClick={() => setActiveTab("profile")}
+          style={{
+            padding: "12px 16px",
+            fontWeight: 600,
+            borderBottom: activeTab === "profile" ? "2px solid #1E40AF" : "2px solid transparent",
+            color: activeTab === "profile" ? "#1E40AF" : "#6b7280",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {t("settings.profile")}
+        </button>
+        <button
+          onClick={() => setActiveTab("security")}
+          style={{
+            padding: "12px 16px",
+            fontWeight: 600,
+            borderBottom: activeTab === "security" ? "2px solid #1E40AF" : "2px solid transparent",
+            color: activeTab === "security" ? "#1E40AF" : "#6b7280",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {t("settings.security")}
+        </button>
+        {needsDocuments && (
+          <button
+            onClick={() => setActiveTab("documents")}
+            style={{
+              padding: "12px 16px",
+              fontWeight: 600,
+              borderBottom: activeTab === "documents" ? "2px solid #1E40AF" : "2px solid transparent",
+              color: activeTab === "documents" ? "#1E40AF" : "#6b7280",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {t("settings.documents")}
+          </button>
+        )}
+        <button
+          onClick={() => setActiveTab("preferences")}
+          style={{
+            padding: "12px 16px",
+            fontWeight: 600,
+            borderBottom: activeTab === "preferences" ? "2px solid #1E40AF" : "2px solid transparent",
+            color: activeTab === "preferences" ? "#1E40AF" : "#6b7280",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            whiteSpace: "nowrap",
+          }}
+        >
+          Préférences
+        </button>
+      </div>
+
+      {/* Profile Tab */}
+      {activeTab === "profile" && (
+        <section className="section">
           <div className="card">
-            <h3 className="card-title">Security controls</h3>
-            <div className="card-meta">Two-factor can be enabled per user.</div>
-          <div className="list" style={{ marginTop: 12 }}>
-            <div className="list-item">
+            <h2 className="card-title">{t("settings.profile")}</h2>
+            <div style={{ marginTop: 16, display: "grid", gap: 16 }}>
               <div>
-                <strong>Two-factor protection</strong>
-                <div className="card-meta">Enable SMS or authenticator per user.</div>
-              </div>
-              <span className="tag">Recommended</span>
-            </div>
-            <div className="list-item">
-              <div>
-                <strong>Session timeout</strong>
-                <div className="card-meta">15 minutes for all roles</div>
-              </div>
-              <span className="tag">Active</span>
-            </div>
-            <div className="list-item">
-              <div>
-                <strong>Account lockout</strong>
-                <div className="card-meta">5 attempts, 30 minute hold</div>
-              </div>
-              <span className="tag">Active</span>
-            </div>
-          </div>
-
-          <div style={{ marginTop: 24, display: "grid", gap: 12 }}>
-            <button className="button-secondary" type="button" onClick={handleSetup2fa}>
-              Generate authenticator setup
-            </button>
-            <button className="button-ghost" type="button" onClick={handleDisable2fa}>
-              Disable two-factor
-            </button>
-            {otpAuth ? (
-              <div className="card" style={{ padding: 12 }}>
-                <div className="card-meta">Scan with your authenticator app:</div>
-                <code style={{ fontSize: 12, wordBreak: "break-all" }}>{otpAuth}</code>
-              </div>
-            ) : null}
-            {securityStatus ? <div className="hint">{securityStatus}</div> : null}
-          </div>
-        </div>
-          <div className="card">
-            <h3 className="card-title">Notification rules</h3>
-            <div className="card-meta">Control how the team gets updates.</div>
-            <NotificationSettingsForm />
-          </div>
-        </div>
-      </section>
-
-      <section className="section">
-        <div className="section-header">
-          <div>
-            <div className="card-label">Team</div>
-            <h2 className="section-title">People and access</h2>
-            <div className="section-subtitle">Invite staff, manage roles, and review access.</div>
-          </div>
-        </div>
-        <div className="grid-2">
-        <div className="card">
-          <div className="card-header">
-            <div>
-              <h3 className="card-title">Team roster</h3>
-              <div className="card-meta">Assign roles, status, and access overrides.</div>
-            </div>
-          </div>
-          <div className="table-scroll">
-          <table className="table table-desktop">
-            <thead>
-              <tr>
-                <th>Member</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Access</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {team.map((member) => {
-                const edits = teamEdits[member.user_id] ?? { role: member.role, status: member.status };
-                return (
-                  <tr key={member.user_id}>
-                    <td>
-                      <div>{member.full_name}</div>
-                      <div className="card-meta">{member.email}</div>
-                    </td>
-                    <td>
-                      <select
-                        className="select"
-                        value={edits.role}
-                        onChange={(event) => updateTeamEdit(member.user_id, "role", event.target.value)}
-                      >
-                        {roleOptions.map((role) => (
-                          <option key={role.value} value={role.value}>
-                            {role.label}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td>
-                      <select
-                        className="select"
-                        value={edits.status}
-                        onChange={(event) => updateTeamEdit(member.user_id, "status", event.target.value)}
-                      >
-                        {statusOptions.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td>
-                      {member.access_permissions ? <span className="tag">Custom</span> : "Role default"}
-                    </td>
-                    <td>
-                      <div className="table-actions">
-                        <button className="button-secondary" type="button" onClick={() => saveTeamMember(member)}>
-                          Save
-                        </button>
-                        <Link className="button-ghost" href={`/team/${member.user_id}`}>
-                          Profile
-                        </Link>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          </div>
-          <div className="card-list-mobile">
-            {team.map((member) => {
-              const edits = teamEdits[member.user_id] ?? { role: member.role, status: member.status };
-              return (
-                <div key={member.user_id} className="mobile-card">
-                  <div className="mobile-card-title">{member.full_name}</div>
-                  <div className="mobile-card-meta">{member.email}</div>
-                  <div className="grid-2">
-                    <div className="form-row">
-                      <label className="label" htmlFor={`role-${member.user_id}`}>Role</label>
-                      <select
-                        id={`role-${member.user_id}`}
-                        className="select"
-                        value={edits.role}
-                        onChange={(event) => updateTeamEdit(member.user_id, "role", event.target.value)}
-                      >
-                        {roleOptions.map((role) => (
-                          <option key={role.value} value={role.value}>
-                            {role.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="form-row">
-                      <label className="label" htmlFor={`status-${member.user_id}`}>Status</label>
-                      <select
-                        id={`status-${member.user_id}`}
-                        className="select"
-                        value={edits.status}
-                        onChange={(event) => updateTeamEdit(member.user_id, "status", event.target.value)}
-                      >
-                        {statusOptions.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                  <div className="hint">Access: {member.access_permissions ? "Custom" : "Role default"}</div>
-                  <div className="table-actions">
-                    <button className="button-secondary" type="button" onClick={() => saveTeamMember(member)}>
-                      Save
-                    </button>
-                    <Link className="button-ghost" href={`/team/${member.user_id}`}>
-                      Profile
-                    </Link>
-                  </div>
+                <p style={{ fontSize: 14, fontWeight: 600, color: "#6b7280" }}>{t("profile.name")}</p>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <p style={{ fontSize: 16, fontWeight: 600 }}>{user.full_name}</p>
+                  <button onClick={() => setShowEditName(true)} className="button-ghost">
+                    {t("common.edit")}
+                  </button>
                 </div>
-              );
-            })}
+              </div>
+              <div>
+                <p style={{ fontSize: 14, fontWeight: 600, color: "#6b7280" }}>{t("profile.email")}</p>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <p style={{ fontSize: 16 }}>{user.email}</p>
+                  <button onClick={() => setShowEditEmail(true)} className="button-ghost">
+                    {t("common.edit")}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <p style={{ fontSize: 14, fontWeight: 600, color: "#6b7280" }}>{t("profile.phone")}</p>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <p style={{ fontSize: 16 }}>{user.phone || "Non fourni"}</p>
+                  <button onClick={() => setShowEditPhone(true)} className="button-ghost">
+                    {t("common.edit")}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <p style={{ fontSize: 14, fontWeight: 600, color: "#6b7280" }}>{t("profile.role")}</p>
+                <p style={{ fontSize: 16 }}>{roleLabels[user.role] || user.role}</p>
+              </div>
+              <div>
+                <p style={{ fontSize: 14, fontWeight: 600, color: "#6b7280" }}>{t("profile.created")}</p>
+                <p style={{ fontSize: 16 }}>
+                  {new Date(user.created_at).toLocaleDateString("fr-FR", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </p>
+              </div>
+            </div>
           </div>
-          {teamStatus ? <div className="hint">{teamStatus}</div> : null}
-        </div>
+        </section>
+      )}
 
-        <div className="card">
-          <div className="card-header">
-            <div>
-              <h3 className="card-title">Add team member</h3>
-              <div className="card-meta">Create logins for technicians, sales, and admins.</div>
-            </div>
-          </div>
-          <form className="form-grid" onSubmit={createTeamMember}>
-            <div className="form-row">
-              <label className="label" htmlFor="teamFullName">Full name</label>
-              <input
-                id="teamFullName"
-                className="input"
-                value={userForm.fullName}
-                onChange={(event) => setUserForm({ ...userForm, fullName: event.target.value })}
-                required
-              />
-            </div>
-            <div className="form-row">
-              <label className="label" htmlFor="teamEmail">Email</label>
-              <input
-                id="teamEmail"
-                className="input"
-                type="email"
-                value={userForm.email}
-                onChange={(event) => setUserForm({ ...userForm, email: event.target.value })}
-                required
-              />
-            </div>
-            <div className="grid-2">
+      {/* Security Tab */}
+      {activeTab === "security" && (
+        <section className="section">
+          <div className="card">
+            <h2 className="card-title">{t("security.password.change")}</h2>
+            <form onSubmit={handlePasswordChange} style={{ marginTop: 16 }}>
               <div className="form-row">
-                <label className="label" htmlFor="teamPhone">Phone</label>
+                <label className="label">{t("security.password.current")}</label>
                 <input
-                  id="teamPhone"
+                  type="password"
                   className="input"
-                  value={userForm.phone}
-                  onChange={(event) => setUserForm({ ...userForm, phone: event.target.value })}
+                  value={passwordForm.currentPassword}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                  required
                 />
-                <div className="hint">Needed for SMS 2FA and alerts.</div>
               </div>
               <div className="form-row">
-                <label className="label" htmlFor="teamRole">Role</label>
-                <select
-                  id="teamRole"
-                  className="select"
-                  value={userForm.role}
-                  onChange={(event) => setUserForm({ ...userForm, role: event.target.value })}
-                >
-                  {roleOptions.map((role) => (
-                    <option key={role.value} value={role.value}>
-                      {role.label}
-                    </option>
-                  ))}
-                </select>
+                <label className="label">{t("security.password.new")}</label>
+                <input
+                  type="password"
+                  className="input"
+                  value={passwordForm.newPassword}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                  required
+                />
+                <div style={{ display: "flex", gap: 4, marginTop: 8 }}>
+                  <span
+                    className="pill"
+                    style={{
+                      backgroundColor:
+                        passwordStrength === "strong" ? "#dcfce7" : passwordStrength === "medium" ? "#fef3c7" : "#fee2e2",
+                      color: passwordStrength === "strong" ? "#166534" : passwordStrength === "medium" ? "#92400e" : "#991b1b",
+                    }}
+                  >
+                    {passwordStrength === "strong"
+                      ? t("security.password.strength.strong")
+                      : passwordStrength === "medium"
+                      ? t("security.password.strength.medium")
+                      : t("security.password.strength.weak")}
+                  </span>
+                </div>
+                <div className="hint">Min 8 caractères, 1 majuscule, 1 chiffre, 1 caractère spécial</div>
               </div>
-            </div>
-            <div className="form-row">
-              <label className="label" htmlFor="teamPassword">Temporary password</label>
-              <input
-                id="teamPassword"
-                className="input"
-                value={userForm.password}
-                onChange={(event) => setUserForm({ ...userForm, password: event.target.value })}
-                minLength={16}
-                required
-              />
-              <div className="hint">16+ characters. Without a phone, 2FA stays off until they set up an authenticator.</div>
+              <div className="form-row">
+                <label className="label">{t("security.password.confirm")}</label>
+                <input
+                  type="password"
+                  className="input"
+                  value={passwordForm.confirmPassword}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                  required
+                />
+              </div>
+              <button type="submit" className="button-primary">
+                {t("security.password.change")}
+              </button>
+            </form>
+          </div>
+        </section>
+      )}
+
+      {/* Documents Tab (only for sales_rep and technician) */}
+      {activeTab === "documents" && needsDocuments && (
+        <section className="section">
+          {/* Contract */}
+          <div className="card" style={{ marginBottom: 16 }}>
+            <h3 className="card-title">{t("documents.contract")}</h3>
+            {user.contract_document_url && contractStatus ? (
+              <div>
+                <span className="pill" style={{
+                  backgroundColor: contractStatusLabels[contractStatus]?.color || "#e5e7eb",
+                  color: contractStatusLabels[contractStatus]?.textColor || "#000",
+                  marginBottom: 12,
+                }}>
+                  {contractStatusLabels[contractStatus]?.label || contractStatus}
+                </span>
+                {contractStatus === "signed" && documentUrls.contract && (
+                  <div>
+                    <a href={documentUrls.contract} target="_blank" rel="noopener noreferrer" className="button-secondary">
+                      {t("documents.view")}
+                    </a>
+                  </div>
+                )}
+                {contractStatus === "pending" && (
+                  <div>
+                    <input
+                      type="file"
+                      accept=".pdf"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleFileUpload("contract", file);
+                      }}
+                      style={{ display: "block", marginTop: 8 }}
+                    />
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div>
+                <p className="card-meta" style={{ marginBottom: 8 }}>
+                  PDF uniquement, max 5MB
+                </p>
+                <input
+                  type="file"
+                  accept=".pdf"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFileUpload("contract", file);
+                  }}
+                  disabled={uploading}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* ID Photo */}
+          <div className="card" style={{ marginBottom: 16 }}>
+            <h3 className="card-title">{t("documents.id")}</h3>
+            {documentUrls.id_photo ? (
+              <div>
+                <Image
+                  src={documentUrls.id_photo}
+                  alt="ID"
+                  width={100}
+                  height={100}
+                  sizes="100px"
+                  style={{ objectFit: "cover", borderRadius: 8, marginBottom: 8 }}
+                />
+                <div style={{ display: "flex", gap: 8 }}>
+                  <label className="button-secondary" style={{ cursor: "pointer" }}>
+                    Changer
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleFileUpload("id_photo", file);
+                      }}
+                      style={{ display: "none" }}
+                      disabled={uploading}
+                    />
+                  </label>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <p className="card-meta" style={{ marginBottom: 8 }}>
+                  JPG ou PNG uniquement, max 5MB
+                </p>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFileUpload("id_photo", file);
+                  }}
+                  disabled={uploading}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Profile Photo */}
+          <div className="card">
+            <h3 className="card-title">{t("profile.avatar")}</h3>
+            {documentUrls.profile_photo ? (
+              <div>
+                <Image
+                  src={documentUrls.profile_photo}
+                  alt="Profile"
+                  width={200}
+                  height={200}
+                  sizes="200px"
+                  style={{ objectFit: "cover", borderRadius: "50%", marginBottom: 12 }}
+                />
+                <div>
+                  <label className="button-secondary" style={{ cursor: "pointer" }}>
+                    Changer
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleFileUpload("profile_photo", file);
+                      }}
+                      style={{ display: "none" }}
+                      disabled={uploading}
+                    />
+                  </label>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <p className="card-meta" style={{ marginBottom: 8 }}>
+                  JPG ou PNG uniquement, max 5MB
+                </p>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFileUpload("profile_photo", file);
+                  }}
+                  disabled={uploading}
+                />
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Preferences Tab */}
+      {activeTab === "preferences" && (
+        <section className="section">
+          <div className="card">
+            <h2 className="card-title">{t("settings.language")}</h2>
+            <div className="card-meta" style={{ marginBottom: 16 }}>
+              Choisissez votre langue préférée
             </div>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <button className="button-primary" type="submit">Create user</button>
               <button
-                className="button-secondary"
-                type="button"
-                onClick={() => setUserForm({ ...userForm, password: generatePassword() })}
+                onClick={() => handleLanguageChange("fr")}
+                className={language === "fr" ? "button-primary" : "button-secondary"}
               >
-                Generate password
+                {t("settings.language.french")}
+              </button>
+              <button
+                onClick={() => handleLanguageChange("en")}
+                className={language === "en" ? "button-primary" : "button-secondary"}
+              >
+                {t("settings.language.english")}
               </button>
             </div>
-            {createStatus ? <div className="hint">{createStatus}</div> : null}
-          </form>
-        </div>
-        </div>
-      </section>
+          </div>
+        </section>
+      )}
 
-      <section className="section">
-        <div className="section-header">
-          <div>
-            <div className="card-label">Access</div>
-            <h2 className="section-title">Permissions</h2>
-            <div className="section-subtitle">Fine-tune what each role can see.</div>
-          </div>
-        </div>
-        <div className="grid-2">
-        <div className="card">
-          <div className="card-header">
-            <div>
-              <h3 className="card-title">Role access control</h3>
-              <div className="card-meta">Set the default access level per role.</div>
-            </div>
-          </div>
-          <div style={{ overflowX: "auto" }}>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Role</th>
-                  {permissionKeys.map((permission) => (
-                    <th key={permission}>{permissionLabels[permission]}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {roleOptions.map((role) => (
-                  <tr key={role.value}>
-                    <td>{role.label}</td>
-                    {permissionKeys.map((permission) => (
-                      <td key={permission}>
-                        <input
-                          type="checkbox"
-                          checked={Boolean(rolePermissions[role.value]?.[permission])}
-                          onChange={(event) =>
-                            updateRolePermission(role.value, permission, event.target.checked)
-                          }
-                        />
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div style={{ marginTop: 12, display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <button className="button-primary" type="button" onClick={saveRolePermissions}>
-              Save role access
-            </button>
-            {rolePermissionsStatus ? <div className="hint">{rolePermissionsStatus}</div> : null}
-          </div>
-        </div>
+      {/* Logout Button */}
+      <div style={{ marginTop: 32, paddingTop: 24, borderTop: "2px solid #e5e7eb" }}>
+        <button
+          onClick={() => setShowLogoutModal(true)}
+          style={{
+            padding: "12px 24px",
+            backgroundColor: "#dc2626",
+            color: "white",
+            border: "none",
+            borderRadius: 8,
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
+        >
+          {t("logout.title")}
+        </button>
+      </div>
 
-        <div className="card">
-          <div className="card-header">
-            <div>
-              <h3 className="card-title">User access overrides</h3>
-              <div className="card-meta">Give specific teammates extra access.</div>
-            </div>
-          </div>
-          <div className="form-row">
-            <label className="label" htmlFor="overrideUser">Team member</label>
-            <select
-              id="overrideUser"
-              className="select"
-              value={selectedUserId}
-              onChange={(event) => setSelectedUserId(event.target.value)}
-            >
-              <option value="">Select a team member</option>
-              {team.map((member) => (
-                <option key={member.user_id} value={member.user_id}>
-                  {member.full_name} ({roleLabels[member.role] ?? member.role})
-                </option>
-              ))}
-            </select>
-          </div>
-          {selectedUser ? (
-            <div className="card-meta" style={{ marginTop: 8 }}>
-              {selectedUser.access_permissions ? "Custom overrides active" : "Using role defaults"}
-            </div>
-          ) : null}
-          <div className="list" style={{ marginTop: 12 }}>
-            {permissionKeys.map((permission) => (
-              <label key={permission} className="list-item" style={{ alignItems: "center" }}>
-                <span>{permissionLabels[permission]}</span>
+      {/* Edit Name Modal */}
+      {showEditName && (
+        <div className="modal-overlay">
+          <div className="modal" style={{ maxWidth: 400 }}>
+            <h2 className="card-title">{t("profile.edit.name")}</h2>
+            <form onSubmit={handleNameUpdate}>
+              <div className="form-row">
+                <label className="label">{t("profile.name")}</label>
                 <input
-                  type="checkbox"
-                  checked={Boolean(userOverrides[permission])}
-                  onChange={(event) =>
-                    setUserOverrides({ ...userOverrides, [permission]: event.target.checked })
-                  }
+                  type="text"
+                  className="input"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  required
+                  minLength={2}
+                  maxLength={100}
                 />
-              </label>
-            ))}
+              </div>
+              <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+                <button type="submit" className="button-primary">{t("common.save")}</button>
+                <button type="button" onClick={() => setShowEditName(false)} className="button-secondary">
+                  {t("common.cancel")}
+                </button>
+              </div>
+            </form>
           </div>
-          <div style={{ marginTop: 12, display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <button className="button-primary" type="button" onClick={saveUserOverrides}>
-              Save overrides
-            </button>
-            <button className="button-secondary" type="button" onClick={clearUserOverrides}>
-              Clear overrides
-            </button>
-          </div>
-          {userOverrideStatus ? <div className="hint">{userOverrideStatus}</div> : null}
         </div>
-        </div>
-      </section>
+      )}
 
-      <section className="section">
-        <div className="section-header">
-          <div>
-            <div className="card-label">Onboarding</div>
-            <h2 className="section-title">Seed starter accounts</h2>
-            <div className="section-subtitle">Create the first admin, technician, and seller in one step.</div>
+      {/* Edit Email Modal */}
+      {showEditEmail && (
+        <div className="modal-overlay">
+          <div className="modal" style={{ maxWidth: 400 }}>
+            <h2 className="card-title">Modifier l&apos;email</h2>
+            <form onSubmit={handleEmailUpdate}>
+              <div className="form-row">
+                <label className="label">{t("profile.email")}</label>
+                <input
+                  type="email"
+                  className="input"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  required
+                />
+                <div className="hint">Un email de confirmation sera envoyé</div>
+              </div>
+              <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+                <button type="submit" className="button-primary">{t("common.save")}</button>
+                <button type="button" onClick={() => setShowEditEmail(false)} className="button-secondary">
+                  {t("common.cancel")}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-        <div className="card">
-          <div className="card-header">
-            <div>
-              <h3 className="card-title">Seed starter accounts</h3>
-              <div className="card-meta">We will generate temporary passwords for each role.</div>
-            </div>
+      )}
+
+      {/* Edit Phone Modal */}
+      {showEditPhone && (
+        <div className="modal-overlay">
+          <div className="modal" style={{ maxWidth: 400 }}>
+            <h2 className="card-title">Modifier le téléphone</h2>
+            <form onSubmit={handlePhoneUpdate}>
+              <div className="form-row">
+                <label className="label">{t("profile.phone")}</label>
+                <input
+                  type="tel"
+                  className="input"
+                  value={editPhone}
+                  onChange={(e) => setEditPhone(e.target.value)}
+                  placeholder="+1 (514) 555-0123"
+                />
+                <div className="hint">Format: +1 (XXX) XXX-XXXX</div>
+              </div>
+              <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+                <button type="submit" className="button-primary">{t("common.save")}</button>
+                <button type="button" onClick={() => setShowEditPhone(false)} className="button-secondary">
+                  {t("common.cancel")}
+                </button>
+              </div>
+            </form>
           </div>
-          <form className="form-grid" onSubmit={seedAccounts}>
-          <div className="grid-3">
-            <div className="form-row">
-              <label className="label" htmlFor="seedAdminName">Admin name</label>
-              <input
-                id="seedAdminName"
-                className="input"
-                value={seedForm.admin.fullName}
-                onChange={(event) =>
-                  setSeedForm({ ...seedForm, admin: { ...seedForm.admin, fullName: event.target.value } })
-                }
-              />
-            </div>
-            <div className="form-row">
-              <label className="label" htmlFor="seedAdminEmail">Admin email</label>
-              <input
-                id="seedAdminEmail"
-                className="input"
-                type="email"
-                value={seedForm.admin.email}
-                onChange={(event) =>
-                  setSeedForm({ ...seedForm, admin: { ...seedForm.admin, email: event.target.value } })
-                }
-              />
-            </div>
-            <div className="form-row">
-              <label className="label" htmlFor="seedAdminPhone">Admin phone</label>
-              <input
-                id="seedAdminPhone"
-                className="input"
-                value={seedForm.admin.phone}
-                onChange={(event) =>
-                  setSeedForm({ ...seedForm, admin: { ...seedForm.admin, phone: event.target.value } })
-                }
-              />
-            </div>
-          </div>
-          <div className="grid-3">
-            <div className="form-row">
-              <label className="label" htmlFor="seedTechName">Technician name</label>
-              <input
-                id="seedTechName"
-                className="input"
-                value={seedForm.technician.fullName}
-                onChange={(event) =>
-                  setSeedForm({
-                    ...seedForm,
-                    technician: { ...seedForm.technician, fullName: event.target.value },
-                  })
-                }
-              />
-            </div>
-            <div className="form-row">
-              <label className="label" htmlFor="seedTechEmail">Technician email</label>
-              <input
-                id="seedTechEmail"
-                className="input"
-                type="email"
-                value={seedForm.technician.email}
-                onChange={(event) =>
-                  setSeedForm({
-                    ...seedForm,
-                    technician: { ...seedForm.technician, email: event.target.value },
-                  })
-                }
-              />
-            </div>
-            <div className="form-row">
-              <label className="label" htmlFor="seedTechPhone">Technician phone</label>
-              <input
-                id="seedTechPhone"
-                className="input"
-                value={seedForm.technician.phone}
-                onChange={(event) =>
-                  setSeedForm({
-                    ...seedForm,
-                    technician: { ...seedForm.technician, phone: event.target.value },
-                  })
-                }
-              />
-            </div>
-          </div>
-          <div className="grid-3">
-            <div className="form-row">
-              <label className="label" htmlFor="seedSalesName">Seller name</label>
-              <input
-                id="seedSalesName"
-                className="input"
-                value={seedForm.sales.fullName}
-                onChange={(event) =>
-                  setSeedForm({ ...seedForm, sales: { ...seedForm.sales, fullName: event.target.value } })
-                }
-              />
-            </div>
-            <div className="form-row">
-              <label className="label" htmlFor="seedSalesEmail">Seller email</label>
-              <input
-                id="seedSalesEmail"
-                className="input"
-                type="email"
-                value={seedForm.sales.email}
-                onChange={(event) =>
-                  setSeedForm({ ...seedForm, sales: { ...seedForm.sales, email: event.target.value } })
-                }
-              />
-            </div>
-            <div className="form-row">
-              <label className="label" htmlFor="seedSalesPhone">Seller phone</label>
-              <input
-                id="seedSalesPhone"
-                className="input"
-                value={seedForm.sales.phone}
-                onChange={(event) =>
-                  setSeedForm({ ...seedForm, sales: { ...seedForm.sales, phone: event.target.value } })
-                }
-              />
-            </div>
-          </div>
-          <button className="button-primary" type="submit">Create seed accounts</button>
-          {seedStatus ? <div className="hint">{seedStatus}</div> : null}
-        </form>
-        {seedResults.length ? (
-          <div className="table-scroll" style={{ marginTop: 16 }}>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Role</th>
-                <th>Email</th>
-                <th>Status</th>
-                <th>Temporary password</th>
-              </tr>
-            </thead>
-            <tbody>
-              {seedResults.map((result) => (
-                <tr key={`${result.role}-${result.email}`}>
-                  <td>{roleLabels[result.role] ?? result.role}</td>
-                  <td>{result.email}</td>
-                  <td>{result.status}</td>
-                  <td>{result.password ?? result.error ?? "-"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          </div>
-        ) : null}
         </div>
-      </section>
+      )}
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div className="modal-overlay">
+          <div className="modal" style={{ maxWidth: 400 }}>
+            <h2 className="card-title">{t("logout.confirm")}</h2>
+            <p style={{ marginBottom: 16 }}>{t("logout.message")}</p>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                onClick={handleLogout}
+                style={{
+                  padding: "8px 16px",
+                  backgroundColor: "#dc2626",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 6,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                {t("common.yes")}
+              </button>
+              <button onClick={() => setShowLogoutModal(false)} className="button-secondary">
+                {t("common.cancel")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

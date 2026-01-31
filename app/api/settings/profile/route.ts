@@ -32,10 +32,10 @@ export async function PATCH(request: Request) {
       );
     }
 
-    const { fullName } = result.data;
+    const { fullName, email, phone } = result.data;
 
     const client = createUserClient(getAccessTokenFromRequest(request) ?? "");
-    const idempotency = await beginIdempotency(client, request, profile.user_id, { fullName });
+    const idempotency = await beginIdempotency(client, request, profile.user_id, result.data);
     if (idempotency.action === "replay") {
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
@@ -46,12 +46,18 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
     }
 
-    // Update full name
+    // Build update object with only provided fields
+    const updateData: Record<string, unknown> = {};
+    if (fullName !== undefined) updateData.full_name = fullName;
+    if (email !== undefined) updateData.email = email;
+    if (phone !== undefined) updateData.phone = phone;
+
+    // Update user profile
     const { data: updatedUser, error } = await client
       .from("users")
-      .update({ full_name: fullName })
+      .update(updateData)
       .eq("user_id", profile.user_id)
-      .select("user_id, full_name")
+      .select("user_id, full_name, email, phone")
       .single();
 
     if (error) {
@@ -68,7 +74,7 @@ export async function PATCH(request: Request) {
     await logAudit(client, profile.user_id, "profile_update", "user", profile.user_id, "success", {
       ipAddress: ip,
       userAgent: request.headers.get("user-agent") ?? null,
-      newValues: { full_name: fullName },
+      newValues: updateData,
     });
 
     const responseBody = {

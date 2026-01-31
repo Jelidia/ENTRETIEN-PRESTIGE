@@ -401,7 +401,11 @@ export const availabilityUpdateSchema = z.object({
 });
 
 export const profileUpdateSchema = z.object({
-  fullName: z.string().min(2).max(100),
+  fullName: z.string().min(2).max(100).optional(),
+  email: z.string().email().optional(),
+  phone: z.string().min(10).max(20).optional().nullable(),
+}).refine((data) => data.fullName || data.email || data.phone !== undefined, {
+  message: "At least one field must be provided for update",
 });
 
 const uuidSchema = z.string().uuid();
