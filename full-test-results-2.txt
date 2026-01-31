@@ -1,0 +1,77 @@
+
+Running 6 tests using 6 workers
+
+Admin - Logout button found: [33mfalse[39m
+Admin - Navigation tabs count: [33m0[39m
+Found 7 buttons on dashboard
+Found 0 links on dashboard
+Button "Export" - Visible: true, Disabled: false
+Button "New job" - Visible: true, Disabled: false
+Button "" - Visible: true, Disabled: false
+Button "Dispatch crew" - Visible: true, Disabled: false
+Button "Add customer" - Visible: true, Disabled: false
+Button "Build estimate" - Visible: true, Disabled: false
+Button "Export report" - Visible: true, Disabled: false
+  ok 2 [chromium] › tests\e2e\full-site-test.spec.ts:161:7 › Complete Site Testing - All Users › Check All Buttons and Links (7.7s)
+Manager - Team members shown: [33m1[39m
+  ok 6 [chromium] › tests\e2e\full-site-test.spec.ts:83:7 › Complete Site Testing - All Users › Manager - Full Flow Test (13.9s)
+Technician - Tried to access /dashboard, ended at: http://localhost:3001/technician
+Sales - Tried to access /dashboard, ended at: http://localhost:3001/sales/dashboard
+  ok 4 [chromium] › tests\e2e\full-site-test.spec.ts:104:7 › Complete Site Testing - All Users › Sales Rep - Full Flow Test (17.7s)
+Technician - Tried to access /team, ended at: http://localhost:3001/technician
+  ok 1 [chromium] › tests\e2e\full-site-test.spec.ts:130:7 › Complete Site Testing - All Users › Technician - Full Flow Test (19.8s)
+  x  5 [chromium] › tests\e2e\full-site-test.spec.ts:190:7 › Complete Site Testing - All Users › Mobile Constraints Check (30.2s)
+  x  3 [chromium] › tests\e2e\full-site-test.spec.ts:18:7 › Complete Site Testing - All Users › Admin - Full Flow Test (30.2s)
+
+
+  1) [chromium] › tests\e2e\full-site-test.spec.ts:18:7 › Complete Site Testing - All Users › Admin - Full Flow Test 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.goto: Target page, context or browser has been closed
+
+      43 |
+      44 |     // Test Team page
+    > 45 |     await page.click('text=Équipe').catch(() => page.goto(`${BASE_URL}/team`));
+         |                                                      ^
+      46 |     await page.waitForURL(/team/);
+      47 |
+      48 |     // Check if team members are shown
+        at C:\Users\adam\OneDrive\CODE\ENTRETIEN PRESTIGE\tests\e2e\full-site-test.spec.ts:45:54
+        at C:\Users\adam\OneDrive\CODE\ENTRETIEN PRESTIGE\tests\e2e\full-site-test.spec.ts:45:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\full-site-test-Complete-Si-f90d3-sers-Admin---Full-Flow-Test-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\full-site-test-Complete-Si-f90d3-sers-Admin---Full-Flow-Test-chromium\error-context.md
+
+  2) [chromium] › tests\e2e\full-site-test.spec.ts:190:7 › Complete Site Testing - All Users › Mobile Constraints Check 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.waitForURL: Test timeout of 30000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+      navigated to "http://localhost:3001/login"
+    ============================================================
+
+      197 |
+      198 |     await Promise.all([
+    > 199 |       page.waitForURL(/dashboard/),
+          |            ^
+      200 |       page.click('button[type="submit"]')
+      201 |     ]);
+      202 |
+        at C:\Users\adam\OneDrive\CODE\ENTRETIEN PRESTIGE\tests\e2e\full-site-test.spec.ts:199:12
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\full-site-test-Complete-Si-f3a29-rs-Mobile-Constraints-Check-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\full-site-test-Complete-Si-f3a29-rs-Mobile-Constraints-Check-chromium\error-context.md
+
+  2 failed
+    [chromium] › tests\e2e\full-site-test.spec.ts:18:7 › Complete Site Testing - All Users › Admin - Full Flow Test 
+    [chromium] › tests\e2e\full-site-test.spec.ts:190:7 › Complete Site Testing - All Users › Mobile Constraints Check 
+  4 passed (33.6s)

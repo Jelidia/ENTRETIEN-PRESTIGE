@@ -129,9 +129,13 @@ async function diagnose() {
   }
 
   console.log("\n5️⃣ Checking if auth.uid() is set correctly...");
-  const { data: authUidTest } = await userClient
-    .rpc("check_auth_uid")
-    .catch(() => ({ data: null }));
+  let authUidTest = null;
+  try {
+    const result = await userClient.rpc("check_auth_uid");
+    authUidTest = result.data;
+  } catch {
+    authUidTest = null;
+  }
 
   if (!authUidTest) {
     console.log("   ⚠️  Custom RPC not available (expected)");

@@ -2,14 +2,16 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import LogoutButton from "./LogoutButton";
 
 type TopBarProps = {
   title: string;
   subtitle?: string;
   actions?: React.ReactNode;
+  showLogout?: boolean;
 };
 
-export default function TopBar({ title, subtitle, actions }: TopBarProps) {
+export default function TopBar({ title, subtitle, actions, showLogout = true }: TopBarProps) {
   const [logoError, setLogoError] = useState(false);
 
   return (
@@ -50,7 +52,10 @@ export default function TopBar({ title, subtitle, actions }: TopBarProps) {
           {subtitle ? <div className="card-meta">{subtitle}</div> : null}
         </div>
       </div>
-      {actions ? <div className="top-actions">{actions}</div> : null}
+      <div className="top-actions" style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+        {actions}
+        {showLogout && <LogoutButton />}
+      </div>
     </div>
   );
 }

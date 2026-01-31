@@ -1,9 +1,11 @@
 import TopBar from "@/components/TopBar";
 import Link from "next/link";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { getAccessTokenFromCookies } from "@/lib/session";
 import { createUserClient } from "@/lib/supabaseServer";
 import { REQUEST_ID_HEADER } from "@/lib/requestId";
+import { getDefaultDashboard } from "@/lib/types";
 
 type TeamMember = {
   user_id: string;
@@ -37,9 +39,9 @@ async function getTeamMembers() {
     return { members: [], error: "missing_profile" };
   }
 
-  // Only admin and manager can view team
+  // Only admin and manager can view team - redirect others
   if (profile.role !== "admin" && profile.role !== "manager") {
-    return { members: [], error: "forbidden" };
+    return { members: [], error: "forbidden", role: profile.role };
   }
 
   const { data: members, error } = await client
@@ -59,7 +61,12 @@ async function getTeamMembers() {
 
 export default async function TeamPage() {
   const requestId = headers().get(REQUEST_ID_HEADER) ?? undefined;
-  const { members, error } = await getTeamMembers();
+  const { members, error, role } = await getTeamMembers() as { members: TeamMember[], error: string | null, role?: string };
+
+  // Redirect non-admin/manager users to their dashboard
+  if (error === "forbidden" && role) {
+    redirect(getDefaultDashboard(role));
+  }
 
   const errorDetails =
     error === "session_expired"

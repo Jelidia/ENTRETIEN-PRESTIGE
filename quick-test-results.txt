@@ -1,0 +1,16 @@
+
+Running 1 test using 1 worker
+
+Current URL: http://localhost:3001/dashboard
+Page title: Entretien Prestige
+Navigation links found: [33m5[39m
+Nav link: "Home" -> /dashboard
+Nav link: "Schedule" -> /dispatch
+Nav link: "Customers" -> /customers
+Nav link: "Team" -> /team
+Nav link: "Settings" -> /settings
+Team members shown: [33m1[39m
+Team page content (first 500 chars): Entretien PrestigeÉquipe1 membreAjouter membreAdam JelidiAdministrateur · 5147587963ActifHomeScheduleCustomersTeamSettings(self.__next_f=self.__next_f||[]).push([0]);self.__next_f.push([2,null])self.__next_f.push([1,"1:HL[\"/_next/static/css/app/layout.css?v=1769898241708\",\"style\"]\n0:D{\"name\":\"r5\",\"env\":\"Server\"}\n"])self.__next_f.push([1,"2:I[\"(app-pages-browser)/./node_modules/next/dist/client/components/app-router.js\",[\"app-pages-internals\",\"static/chunks/app-pages-internals.
+  ok 1 [chromium] › tests\e2e\quick-test.spec.ts:3:5 › Quick Login and Navigation Test (12.9s)
+
+  1 passed (16.3s)
