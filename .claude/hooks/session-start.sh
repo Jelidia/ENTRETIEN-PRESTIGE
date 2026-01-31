@@ -1,32 +1,6 @@
 #!/bin/bash
-# Session start hook
+# Session start hook - silent mode
 
-echo "👋 Welcome to Entretien Prestige Development"
-echo ""
-echo "📋 Project Info:"
-echo "   - Mobile-first ERP for Quebec cleaning company"
-echo "   - Stack: Next.js 14, TypeScript, Supabase, Tailwind"
-echo "   - French UI primary, 640px max-width"
-echo ""
-echo "🎯 Quick Commands:"
-echo "   npm run dev     - Start dev server"
-echo "   npm test        - Run tests"
-echo "   npm run build   - Build for production"
-echo ""
-echo "🤖 Available Agents:"
-echo "   /agent feature-builder    - End-to-end features"
-echo "   /agent database-architect - Schema & migrations"
-echo "   /agent qa-engineer        - Testing & coverage"
-echo "   /agent bug-hunter         - Debug & fix"
-echo "   /agent deploy-manager     - Deploy prep"
-echo "   /agent code-reviewer      - Code review"
-echo ""
-echo "🔧 Available Skills:"
-echo "   /api-builder          - Create API routes"
-echo "   /ui-builder           - Create components"
-echo "   /test-generator       - Generate tests"
-echo "   /migration-builder    - Create migrations"
-echo "   /spec-enforcer        - Verify compliance"
-echo ""
-echo "📖 Key Docs: CLAUDE.md, ENTRETIEN_PRESTIGE_FINAL_SPEC-1.md"
-echo ""
+# All project info is in CLAUDE.md which is auto-included
+# No output needed
+exit 0

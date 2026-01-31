@@ -1,18 +1,16 @@
 #!/bin/bash
 # Cleanup session hook
 
-echo "🧹 Cleaning up session..."
-
-# Clean up temporary files
+# Silent cleanup - only output on errors
+# Clean up temporary files if they exist
 if [ -d ".claude/tmp" ]; then
-  rm -rf .claude/tmp
-  echo "✅ Cleaned temporary files"
+  find .claude/tmp -type f -delete 2>/dev/null || true
+  rmdir .claude/tmp 2>/dev/null || true
 fi
 
 # Clear test cache if exists
 if [ -d "node_modules/.vitest" ]; then
-  rm -rf node_modules/.vitest
-  echo "✅ Cleared test cache"
+  find node_modules/.vitest -type f -delete 2>/dev/null || true
 fi
 
-echo "✅ Cleanup complete"
+exit 0

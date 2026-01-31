@@ -14,7 +14,8 @@
       "Bash(npm test:*)",
       "mcp__supabase__execute_sql",
       "Bash(timeout /t 5)",
-      "Bash(timeout /t 6)"
+      "Bash(timeout /t 6)",
+      "Bash(curl:*)"
     ]
   }
 }
