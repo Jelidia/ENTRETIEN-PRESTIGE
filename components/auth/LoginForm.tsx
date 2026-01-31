@@ -86,7 +86,12 @@ export default function LoginForm({ redirect }: { redirect?: string }) {
       return;
     }
 
-    router.push(safeRedirect);
+    // Wait for cookies to be set by browser before redirecting
+    // This prevents infinite redirect loop
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Force a full page reload to ensure middleware sees the cookies
+    window.location.href = safeRedirect;
   }
 
   return (
