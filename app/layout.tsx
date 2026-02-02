@@ -47,3 +47,5 @@ export default function RootLayout({
     </html>
   );
 }
+
+// Force scroll fix update
