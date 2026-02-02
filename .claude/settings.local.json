@@ -30,7 +30,9 @@
       "Bash(taskkill:*)",
       "Bash(agent-browser close:*)",
       "Bash(find:*)",
-      "Bash(tail:*)"
+      "Bash(tail:*)",
+      "Bash(dir /b \"C:\\\\Users\\\\adam\\\\.claude\"\" 2>nul || echo \"Directory not found \")",
+      "Bash(npm search:*)"
     ]
   },
   "enabledMcpjsonServers": [
