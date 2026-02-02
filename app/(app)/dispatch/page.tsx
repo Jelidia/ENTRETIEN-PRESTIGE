@@ -87,6 +87,8 @@ export default function DispatchPage() {
   const [quickCreateStatus, setQuickCreateStatus] = useState("");
   const [quickCreateAssign, setQuickCreateAssign] = useState(true);
   const [quickCreateTechnician, setQuickCreateTechnician] = useState({ id: "", name: "" });
+  const [isCompact, setIsCompact] = useState(false);
+  const [activeTechKey, setActiveTechKey] = useState("");
   const [quickCreateForm, setQuickCreateForm] = useState({
     customerId: "",
     serviceType: "window_cleaning",
@@ -183,6 +185,15 @@ export default function DispatchPage() {
   useEffect(() => {
     void loadDispatch();
   }, [loadDispatch]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsCompact(window.innerWidth <= 640);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     boardRef.current = board;
@@ -632,6 +643,24 @@ export default function DispatchPage() {
     }));
   }, [board, selectedDate]);
 
+  useEffect(() => {
+    if (!isCompact) return;
+    const keys = columns.map(getTechKey);
+    if (keys.length === 0) {
+      setActiveTechKey("");
+      return;
+    }
+    if (!keys.includes(activeTechKey)) {
+      setActiveTechKey(keys[0]);
+    }
+  }, [columns, isCompact, activeTechKey]);
+
+  const visibleColumns = useMemo(() => {
+    if (!isCompact) return columns;
+    if (!activeTechKey) return columns.slice(0, 1);
+    return columns.filter((column) => getTechKey(column) === activeTechKey);
+  }, [columns, isCompact, activeTechKey]);
+
   const hourLabels = useMemo(() => {
     const hours: string[] = [];
     for (let hour = START_HOUR; hour < END_HOUR; hour += 1) {
@@ -641,7 +670,7 @@ export default function DispatchPage() {
   }, []);
 
   const gridHeight = (END_HOUR - START_HOUR) * HOUR_HEIGHT;
-  const gridTemplate = `80px repeat(${Math.max(columns.length, 1)}, minmax(220px, 1fr))`;
+  const gridTemplate = `80px repeat(${Math.max(visibleColumns.length, 1)}, minmax(180px, 1fr))`;
   const dateLabel = selectedDate
     ? new Date(`${selectedDate}T00:00:00`).toLocaleDateString("en-CA", {
         weekday: "short",
@@ -686,6 +715,27 @@ export default function DispatchPage() {
             <div className="card-label">Schedule</div>
             <div className="dispatch-date">{dateLabel}</div>
           </div>
+          {isCompact && (
+            <div className="dispatch-tech-select">
+              <label className="label" htmlFor="dispatchTech">Technicien</label>
+              <select
+                id="dispatchTech"
+                className="select"
+                value={activeTechKey}
+                onChange={(event) => setActiveTechKey(event.target.value)}
+              >
+                {columns.map((column) => {
+                  const techKey = getTechKey(column);
+                  const techLabel = column.technician || "Non assigne";
+                  return (
+                    <option key={techKey} value={techKey}>
+                      {techLabel}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+          )}
           <div className="dispatch-controls">
             <button className="button-ghost" type="button" onClick={() => shiftDate(-1)}>
               Prev
@@ -706,7 +756,7 @@ export default function DispatchPage() {
         <div className="calendar-shell">
           <div className="calendar-header" style={{ gridTemplateColumns: gridTemplate }}>
             <div className="calendar-time-header">Time</div>
-            {columns.map((column) => (
+            {visibleColumns.map((column) => (
               <div key={getTechKey(column)} className="calendar-tech-header">
                 <span>{column.technician}</span>
                 <span className="calendar-tech-meta">{column.jobs.length} jobs</span>
@@ -721,7 +771,7 @@ export default function DispatchPage() {
                 </div>
               ))}
             </div>
-            {columns.map((column) => {
+            {visibleColumns.map((column) => {
               const techKey = getTechKey(column);
               return (
                 <div

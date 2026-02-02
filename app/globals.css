@@ -186,6 +186,8 @@ code {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -313,6 +315,9 @@ code {
   display: grid;
   gap: 24px;
   animation: page-enter 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 @keyframes page-enter {
@@ -400,6 +405,7 @@ code {
   border: 1px solid var(--line);
   box-shadow: var(--shadow-sm);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 0;
 }
 
 .card:hover {
@@ -414,6 +420,39 @@ code {
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 12px;
+}
+
+.tabs-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  row-gap: 8px;
+  padding-bottom: 8px;
+}
+
+.pipeline-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.lead-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.inbox-container {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 20px;
+  height: calc(100vh - 200px);
+}
+
+.dispatch-tech-select {
+  display: grid;
+  gap: 6px;
+  min-width: 200px;
 }
 
 .card-header .card-title {
@@ -564,6 +603,18 @@ code {
 .mobile-card-meta {
   font-size: 12px;
   color: var(--ink-500);
+}
+
+.mobile-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.permission-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
 }
 
 .table th,
@@ -1195,6 +1246,36 @@ code {
     height: 100%;
     max-height: none;
     border-radius: 0;
+  }
+
+  .pipeline-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .lead-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .inbox-container {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .dispatch-tech-select {
+    width: 100%;
+  }
+
+  .calendar-shell {
+    overflow-x: hidden;
+  }
+
+  .calendar-header,
+  .calendar-body {
+    min-width: 0;
+  }
+
+  .permission-grid {
+    grid-template-columns: 1fr;
   }
 }
 
