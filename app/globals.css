@@ -93,13 +93,15 @@ code {
 }
 
 .shell {
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .app-body {
-  min-height: 100vh;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* SPEC: NO left sidebar ever - mobile-first only */
@@ -181,6 +183,10 @@ code {
   margin: 0 auto;
   padding: 24px 20px calc(48px + var(--bottom-nav-height));
   width: 100%;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Device-specific styles (if needed for future use) */

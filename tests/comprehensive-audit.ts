@@ -132,39 +132,48 @@ async function testScrolling(): Promise<void> {
   try {
     // Check CSS
     const hasOverflowY = await page.evaluate(() => {
-      const appBody = document.querySelector('.app-body');
-      if (!appBody) return false;
-      const style = window.getComputedStyle(appBody);
+      const content = document.querySelector('.content');
+      if (!content) return false;
+      const style = window.getComputedStyle(content);
       return style.overflowY === 'auto' || style.overflowY === 'scroll';
     });
 
     if (!hasOverflowY) {
-      log('UI', 'Global', page.url(), 'FAIL', 'overflow-y not set on .app-body');
+      log('UI', 'Global', page.url(), 'FAIL', 'overflow-y not set on .content');
       return;
     }
 
     log('UI', 'Global', page.url(), 'PASS', 'overflow-y is set correctly');
 
-    // Try scrolling
-    const beforeScroll = await page.evaluate(() => window.scrollY);
-    await page.evaluate(() => window.scrollTo(0, 500));
-    await page.waitForTimeout(500);
-    const afterScroll = await page.evaluate(() => window.scrollY);
+    const scrollState = await page.evaluate(() => {
+      const content = document.querySelector('.content') as HTMLElement | null;
+      if (!content) {
+        return { exists: false, before: 0, after: 0, scrollHeight: 0, clientHeight: 0 };
+      }
+      const before = content.scrollTop;
+      content.scrollTop = before + 500;
+      const after = content.scrollTop;
+      return { exists: true, before, after, scrollHeight: content.scrollHeight, clientHeight: content.clientHeight };
+    });
 
-    const bodyHeight = await page.evaluate(() => document.body.scrollHeight);
-    const viewportHeight = await page.evaluate(() => window.innerHeight);
+    if (!scrollState.exists) {
+      log('UI', 'Global', page.url(), 'FAIL', 'Missing .content container');
+      return;
+    }
 
-    if (bodyHeight > viewportHeight) {
-      if (afterScroll > beforeScroll) {
+    const { scrollHeight, clientHeight, before, after } = scrollState;
+
+    if (scrollHeight > clientHeight) {
+      if (after > before) {
         log('UI', 'Global', page.url(), 'PASS', 'Page scrolls correctly', [
-          `Body height: ${bodyHeight}px`,
-          `Viewport: ${viewportHeight}px`,
-          `Scrolled: ${afterScroll}px`
+          `Content height: ${scrollHeight}px`,
+          `Viewport: ${clientHeight}px`,
+          `Scrolled: ${after}px`
         ]);
       } else {
         log('UI', 'Global', page.url(), 'WARNING', 'Content is scrollable but scroll did not move', [
-          `Before: ${beforeScroll}px`,
-          `After: ${afterScroll}px`
+          `Before: ${before}px`,
+          `After: ${after}px`
         ]);
       }
     } else {
