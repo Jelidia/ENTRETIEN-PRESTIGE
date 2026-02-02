@@ -12,14 +12,38 @@ build/
 .env
 .env.local
 .env.*
+!.env.example
 
 # Supabase
 # NOTE: Usually you want to keep 'migrations', but this ignores the WHOLE folder as requested.
 supabase/
 .mcp.json
+.mcp.json.local
 
 # Vercel
 .vercel/
+
+# Logs & Reports
+*.log
+logs/
+reports/
+test-results/
+playwright-report/
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+
+# Editor & Tooling
+.vscode/
+.idea/
+.eslintcache
+.stylelintcache
+*.swp
+*.swo
+*.tmp
+*.bak
 
 # System Files
 .DS_Store

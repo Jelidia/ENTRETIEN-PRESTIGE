@@ -173,17 +173,17 @@
   },
   "context": {
     "alwaysInclude": [
-      "CLAUDE.md",
-      "ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md",
-      "COMMIT_READY.md"
+      "docs/ai/claude/CLAUDE.md",
+      "docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md",
+      "docs/status/COMMIT_READY.md"
     ],
     "documentation": [
       "README.md",
-      "AGENTS.md",
+      "docs/ai/claude/CLAUDE.md",
       ".claude/AGENTS_GUIDE.md",
       ".claude/SKILLS_GUIDE.md",
       "DATABASE_SETUP.md",
-      "TROUBLESHOOTING.md"
+      "docs/ops/TROUBLESHOOTING.md"
     ]
   },
   "scripts": {

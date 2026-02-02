@@ -461,10 +461,10 @@ tests/
 ├── dashboardMetrics.test.ts     # Metrics logic
 ├── rateLimit.test.ts            # Rate limiting
 ├── technicianDashboard.test.tsx # UI coverage
+├── coverage.test.tsx             # Coverage guard
+├── pagesCoverage.test.tsx        # App route coverage
 └── e2e/
     └── smoke.spec.ts            # Playwright smoke
-coverage.test.tsx                # Coverage guard
-pagesCoverage.test.tsx           # App route coverage
 ```
 
 ### Example Test
@@ -548,7 +548,7 @@ See `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` for detail
 ### For Developers
 
 - **docs/ai/claude/CLAUDE.md** - Complete architecture guide with code examples (read this first!)
-- **docs/ai/agents/AGENTS.md** - OpenCode/Codex quick reference for AI coding assistants
+- **docs/ai/codex/AGENTS.md** - OpenCode/Codex quick reference for AI coding assistants
 - **README.md** - This file (setup and overview)
 
 ### For Deployment
@@ -703,7 +703,7 @@ SELECT company_id FROM jobs WHERE job_id = 'yyy';
 
 **For technical questions:**
 - See `docs/ai/claude/CLAUDE.md` - Complete architecture
-- See `docs/ai/agents/AGENTS.md` - OpenCode/Codex quick reference
+- See `docs/ai/codex/AGENTS.md` - OpenCode/Codex quick reference
 - See `docs/ops/TROUBLESHOOTING.md` - Database issues
 
 **For business requirements:**

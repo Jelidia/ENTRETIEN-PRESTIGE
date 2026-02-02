@@ -29,7 +29,7 @@ export default defineConfig({
         "**/.next/**",
         "app/api/**",
         "app/(app)/dashboard/**",
-        "invoicePdfRoute.test.ts",
+        "tests/invoicePdfRoute.test.ts",
         "lib/**",
         "tests/**",
         "vitest.config.ts",
