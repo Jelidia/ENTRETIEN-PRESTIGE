@@ -1008,6 +1008,16 @@ code {
   cursor: ns-resize;
 }
 
+@media (pointer: coarse) {
+  .calendar-event {
+    touch-action: pan-y;
+  }
+
+  .calendar-event-handle {
+    touch-action: none;
+  }
+}
+
 .quick-create-backdrop {
   position: fixed;
   inset: 0;

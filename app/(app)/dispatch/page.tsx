@@ -464,6 +464,7 @@ export default function DispatchPage() {
     event: React.PointerEvent<HTMLDivElement>,
     column: DispatchColumnType
   ) {
+    if (event.pointerType === "touch") return;
     if (event.target !== event.currentTarget) return;
     if (dragState || resizeState || quickCreateOpen) return;
     if (event.button !== 0) return;
@@ -559,6 +560,7 @@ export default function DispatchPage() {
     job: DispatchJob,
     column: DispatchColumnType
   ) {
+    if (event.pointerType === "touch") return;
     if (event.button !== 0 || resizeState) return;
     const techKey = getTechKey(column);
     const columnEl = columnRefs.current[techKey];
@@ -592,6 +594,7 @@ export default function DispatchPage() {
     job: DispatchJob,
     column: DispatchColumnType
   ) {
+    if (event.pointerType === "touch") return;
     event.stopPropagation();
     if (event.button !== 0 || dragState) return;
     const { start, end } = getJobTimes(job);
