@@ -23,26 +23,24 @@ test.describe('Critical Bugs', () => {
     // Wait for navigation to dashboard
     await page.waitForURL('**/dashboard', { timeout: 10000 });
 
-    // Check if page is scrollable
-    const isScrollable = await page.evaluate(() => {
-      const body = document.querySelector('.app-body');
-      if (!body) return false;
-      const style = window.getComputedStyle(body);
-      return style.overflowY === 'auto' || style.overflowY === 'scroll';
+    const scrollState = await page.evaluate(() => {
+      const content = document.querySelector('.content') as HTMLElement | null;
+      if (!content) {
+        return { exists: false, scrollable: false, before: 0, after: 0, overflowY: null, scrollHeight: 0, clientHeight: 0 };
+      }
+      const before = content.scrollTop;
+      const scrollable = content.scrollHeight > content.clientHeight + 1;
+      content.scrollTop = before + 500;
+      const after = content.scrollTop;
+      const overflowY = window.getComputedStyle(content).overflowY;
+      return { exists: true, scrollable, before, after, overflowY, scrollHeight: content.scrollHeight, clientHeight: content.clientHeight };
     });
 
-    expect(isScrollable).toBe(true);
+    expect(scrollState.exists).toBe(true);
+    expect(scrollState.overflowY === 'auto' || scrollState.overflowY === 'scroll').toBe(true);
 
-    // Try to scroll down
-    await page.evaluate(() => window.scrollTo(0, 500));
-    const scrollY = await page.evaluate(() => window.scrollY);
-
-    // Scroll should work (scrollY > 0) OR page content fits in viewport
-    const viewportHeight = await page.evaluate(() => window.innerHeight);
-    const bodyHeight = await page.evaluate(() => document.body.scrollHeight);
-
-    if (bodyHeight > viewportHeight) {
-      expect(scrollY).toBeGreaterThan(0);
+    if (scrollState.scrollable) {
+      expect(scrollState.after).toBeGreaterThan(scrollState.before);
     }
   });
 });

@@ -58,9 +58,9 @@ async function testScrolling(page: Page): Promise<TestResult> {
 
   try {
     const isScrollable = await page.evaluate(() => {
-      const body = document.querySelector('.app-body');
-      if (!body) return false;
-      const style = window.getComputedStyle(body);
+      const content = document.querySelector('.content');
+      if (!content) return false;
+      const style = window.getComputedStyle(content);
       return style.overflowY === 'auto' || style.overflowY === 'scroll';
     });
 
@@ -68,19 +68,30 @@ async function testScrolling(page: Page): Promise<TestResult> {
       return {
         page: 'Global',
         status: 'FAIL',
-        message: 'Page is not scrollable - overflow-y not set',
+        message: 'Page is not scrollable - overflow-y not set on .content',
       };
     }
 
-    // Try scrolling
-    await page.evaluate(() => window.scrollTo(0, 500));
-    const scrollY = await page.evaluate(() => window.scrollY);
+    const scrollState = await page.evaluate(() => {
+      const content = document.querySelector('.content') as HTMLElement | null;
+      if (!content) {
+        return { exists: false, before: 0, after: 0, scrollHeight: 0, clientHeight: 0 };
+      }
+      const before = content.scrollTop;
+      content.scrollTop = before + 500;
+      const after = content.scrollTop;
+      return { exists: true, before, after, scrollHeight: content.scrollHeight, clientHeight: content.clientHeight };
+    });
 
-    // Check if content is taller than viewport
-    const viewportHeight = await page.evaluate(() => window.innerHeight);
-    const bodyHeight = await page.evaluate(() => document.body.scrollHeight);
+    if (!scrollState.exists) {
+      return {
+        page: 'Global',
+        status: 'FAIL',
+        message: 'Missing .content container',
+      };
+    }
 
-    if (bodyHeight > viewportHeight && scrollY === 0) {
+    if (scrollState.scrollHeight > scrollState.clientHeight && scrollState.after === scrollState.before) {
       return {
         page: 'Global',
         status: 'FAIL',
