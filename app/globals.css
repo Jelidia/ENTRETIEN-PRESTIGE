@@ -200,6 +200,26 @@ code {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Mobile/tablet: fall back to native body scrolling to avoid freezes */
+.device-mobile .shell,
+.device-tablet .shell {
+  height: auto;
+  min-height: 100dvh;
+  overflow: visible;
+}
+
+.device-mobile .app-body,
+.device-tablet .app-body {
+  height: auto;
+  min-height: 100dvh;
+  overflow: visible;
+}
+
+.device-mobile .content,
+.device-tablet .content {
+  overflow-y: visible;
+}
+
 .top-bar {
   display: flex;
   align-items: center;
