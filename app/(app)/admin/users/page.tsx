@@ -192,8 +192,8 @@ export default function AdminUsersPage() {
       {error && <div className="alert" style={{ marginBottom: 16 }}>{error}</div>}
 
       {/* Users Table */}
-      <div style={{ overflowX: "auto", marginBottom: 24 }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <div className="table-desktop" style={{ marginBottom: 24 }}>
+        <table className="table">
           <thead>
             <tr style={{ borderBottom: "2px solid #e5e7eb" }}>
               <th style={{ padding: 12, textAlign: "left", fontWeight: 600 }}>Email</th>
@@ -235,6 +235,38 @@ export default function AdminUsersPage() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="card-list-mobile" style={{ marginBottom: 24 }}>
+        {users.map((user) => (
+          <div key={user.user_id} className="mobile-card">
+            <div className="mobile-card-title">{user.full_name}</div>
+            <div className="mobile-card-meta">{user.email}</div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <span className="tag">{roleLabels[user.role] || user.role}</span>
+              <span
+                className="tag"
+                style={{
+                  backgroundColor: user.status === "active" ? "#dcfce7" : "#fee2e2",
+                  color: user.status === "active" ? "#166534" : "#991b1b",
+                }}
+              >
+                {user.status === "active" ? "Actif" : "Inactif"}
+              </span>
+            </div>
+            <div className="mobile-card-actions">
+              <button onClick={() => openEditModal(user)} className="button-secondary">
+                Modifier
+              </button>
+              <button
+                onClick={() => openDeleteModal(user)}
+                style={{ padding: "6px 12px", color: "#dc2626", border: "1px solid #dc2626", borderRadius: 6, background: "white" }}
+              >
+                Supprimer
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Pagination */}

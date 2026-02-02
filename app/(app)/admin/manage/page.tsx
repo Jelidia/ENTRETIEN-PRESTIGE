@@ -283,14 +283,14 @@ export default function AdminManagePage() {
 
           <div style={{ marginTop: 24, display: "grid", gap: 12 }}>
             <button className="button-secondary" type="button" onClick={handleSetup2fa}>
-              Generate authenticator setup
+              Generer la configuration d'authentification
             </button>
             <button className="button-ghost" type="button" onClick={handleDisable2fa}>
-              Disable two-factor
+              Desactiver la double verification
             </button>
             {otpAuth ? (
               <div className="card" style={{ padding: 12 }}>
-                <div className="card-meta">Scan with your authenticator app:</div>
+                <div className="card-meta">Scannez avec votre application d'authentification :</div>
                 <code style={{ fontSize: 12, wordBreak: "break-all" }}>{otpAuth}</code>
               </div>
             ) : null}
@@ -298,8 +298,8 @@ export default function AdminManagePage() {
           </div>
         </div>
           <div className="card">
-            <h3 className="card-title">Notification rules</h3>
-            <div className="card-meta">Control how the team gets updates.</div>
+            <h3 className="card-title">Regles de notification</h3>
+            <div className="card-meta">Controlez comment l'equipe recoit les mises a jour.</div>
             <NotificationSettingsForm />
           </div>
         </div>
@@ -308,20 +308,20 @@ export default function AdminManagePage() {
       <section className="section">
         <div className="section-header">
           <div>
-            <div className="card-label">Access</div>
+            <div className="card-label">Acces</div>
             <h2 className="section-title">Permissions</h2>
-            <div className="section-subtitle">Fine-tune what each role can see.</div>
+            <div className="section-subtitle">Ajustez ce que chaque role peut voir.</div>
           </div>
         </div>
         <div className="grid-2">
         <div className="card">
           <div className="card-header">
             <div>
-              <h3 className="card-title">Role access control</h3>
-              <div className="card-meta">Set the default access level per role.</div>
+              <h3 className="card-title">Controle d'acces par role</h3>
+              <div className="card-meta">Definir le niveau d'acces par role.</div>
             </div>
           </div>
-          <div style={{ overflowX: "auto" }}>
+          <div className="table-desktop">
             <table className="table">
               <thead>
                 <tr>
@@ -351,9 +351,28 @@ export default function AdminManagePage() {
               </tbody>
             </table>
           </div>
+          <div className="card-list-mobile">
+            {roleOptions.map((role) => (
+              <div key={role.value} className="mobile-card">
+                <div className="mobile-card-title">{role.label}</div>
+                <div className="permission-grid">
+                  {permissionKeys.map((permission) => (
+                    <label key={permission} className="list-item" style={{ padding: "10px 12px", cursor: "default" }}>
+                      <span>{permissionLabels[permission]}</span>
+                      <input
+                        type="checkbox"
+                        checked={Boolean(rolePermissions[role.value]?.[permission])}
+                        onChange={(event) => updateRolePermission(role.value, permission, event.target.checked)}
+                      />
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
           <div style={{ marginTop: 12, display: "flex", gap: 12, flexWrap: "wrap" }}>
             <button className="button-primary" type="button" onClick={saveRolePermissions}>
-              Save role access
+              Sauvegarder les acces
             </button>
             {rolePermissionsStatus ? <div className="hint">{rolePermissionsStatus}</div> : null}
           </div>
@@ -362,19 +381,19 @@ export default function AdminManagePage() {
         <div className="card">
           <div className="card-header">
             <div>
-              <h3 className="card-title">User access overrides</h3>
-              <div className="card-meta">Give specific teammates extra access.</div>
+              <h3 className="card-title">Acces par utilisateur</h3>
+              <div className="card-meta">Accorder un acces specifique a un membre.</div>
             </div>
           </div>
           <div className="form-row">
-            <label className="label" htmlFor="overrideUser">Team member</label>
+            <label className="label" htmlFor="overrideUser">Membre de l'equipe</label>
             <select
               id="overrideUser"
               className="select"
               value={selectedUserId}
               onChange={(event) => setSelectedUserId(event.target.value)}
             >
-              <option value="">Select a team member</option>
+              <option value="">Selectionner un membre</option>
               {team.map((member) => (
                 <option key={member.user_id} value={member.user_id}>
                   {member.full_name} ({roleLabels[member.role] ?? member.role})
@@ -384,7 +403,7 @@ export default function AdminManagePage() {
           </div>
           {selectedUser ? (
             <div className="card-meta" style={{ marginTop: 8 }}>
-              {selectedUser.access_permissions ? "Custom overrides active" : "Using role defaults"}
+              {selectedUser.access_permissions ? "Acces personnalise actif" : "Acces par defaut"}
             </div>
           ) : null}
           <div className="list" style={{ marginTop: 12 }}>
@@ -403,10 +422,10 @@ export default function AdminManagePage() {
           </div>
           <div style={{ marginTop: 12, display: "flex", gap: 12, flexWrap: "wrap" }}>
             <button className="button-primary" type="button" onClick={saveUserOverrides}>
-              Save overrides
+              Sauvegarder les acces
             </button>
             <button className="button-secondary" type="button" onClick={clearUserOverrides}>
-              Clear overrides
+              Reinitialiser
             </button>
           </div>
           {userOverrideStatus ? <div className="hint">{userOverrideStatus}</div> : null}

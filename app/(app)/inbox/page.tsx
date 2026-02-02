@@ -82,7 +82,7 @@ export default function InboxPage() {
       // Reload messages
       await loadMessages(selectedThread);
     } else {
-      alert("Failed to send message");
+      alert("Echec de l'envoi du message");
     }
     setSending(false);
   }
@@ -90,24 +90,24 @@ export default function InboxPage() {
   return (
     <div className="page">
       <TopBar
-        title="Inbox"
-        subtitle="Two-way SMS conversations"
+        title="Boite de reception"
+        subtitle="Conversations SMS bidirectionnelles"
         actions={
           <button className="button-secondary" onClick={loadThreads}>
-            ↻ Refresh
+            ↻ Rafraichir
           </button>
         }
       />
 
-      <div className="inbox-container" style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: "20px", height: "calc(100vh - 200px)" }}>
+      <div className="inbox-container">
         {/* Thread List */}
         <div className="card" style={{ overflow: "auto" }}>
           <h3 className="card-title">Conversations</h3>
 
-          {loading && <p>Loading...</p>}
+          {loading && <p>Chargement...</p>}
 
           {!loading && threads.length === 0 && (
-            <p className="card-meta">No conversations yet</p>
+            <p className="card-meta">Aucune conversation pour l'instant</p>
           )}
 
           <div className="list">
@@ -150,7 +150,7 @@ export default function InboxPage() {
         <div className="card" style={{ display: "flex", flexDirection: "column" }}>
           {!selectedThread && (
             <div style={{ display: "grid", placeItems: "center", height: "100%", color: "var(--ink-500)" }}>
-              Select a conversation to view messages
+              Selectionnez une conversation pour voir les messages
             </div>
           )}
 
@@ -204,7 +204,7 @@ export default function InboxPage() {
                 <div style={{ display: "flex", gap: "12px" }}>
                   <textarea
                     className="textarea"
-                    placeholder="Type your message..."
+                    placeholder="Ecrivez votre message..."
                     value={replyMessage}
                     onChange={(e) => setReplyMessage(e.target.value)}
                     rows={2}
@@ -221,7 +221,7 @@ export default function InboxPage() {
                     onClick={sendReply}
                     disabled={sending || !replyMessage.trim()}
                   >
-                    {sending ? "Sending..." : "Send"}
+                    {sending ? "Envoi..." : "Envoyer"}
                   </button>
                 </div>
               </div>

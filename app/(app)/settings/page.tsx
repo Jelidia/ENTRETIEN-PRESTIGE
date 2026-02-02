@@ -352,7 +352,7 @@ export default function SettingsPage() {
       )}
 
       {/* Tabs */}
-      <div style={{ display: "flex", gap: 16, borderBottom: "2px solid #e5e7eb", marginTop: 24, marginBottom: 24, overflowX: "auto" }}>
+      <div style={{ display: "flex", gap: 16, borderBottom: "2px solid #e5e7eb", marginTop: 24, marginBottom: 24, flexWrap: "wrap", rowGap: 8 }}>
         <button
           onClick={() => setActiveTab("profile")}
           style={{

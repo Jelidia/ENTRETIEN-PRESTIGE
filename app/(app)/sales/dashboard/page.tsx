@@ -54,7 +54,7 @@ export default function SalesDashboard() {
     const res = await fetch("/api/sales/dashboard");
     const data = await res.json().catch(() => null);
     if (!res.ok) {
-      setError(data?.error ?? "Unable to load sales dashboard");
+      setError(data?.error ?? "Impossible de charger le tableau de bord des ventes");
       setStats(null);
       setLoading(false);
       return;
@@ -72,7 +72,7 @@ export default function SalesDashboard() {
   if (loading) {
     return (
       <div className="page">
-        <TopBar title="Sales Dashboard" subtitle="Loading..." />
+        <TopBar title="Tableau de bord ventes" subtitle="Chargement..." />
       </div>
     );
   }
@@ -81,16 +81,16 @@ export default function SalesDashboard() {
     return (
       <div className="page">
         <TopBar
-          title="Sales Dashboard"
-          subtitle="Unable to load stats"
+          title="Tableau de bord ventes"
+          subtitle="Impossible de charger les statistiques"
           actions={
             <button className="button-secondary" onClick={loadStats}>
-              ↻ Refresh
+              ↻ Rafraichir
             </button>
           }
         />
         <div className="alert" style={{ marginTop: "16px" }}>
-          {error || "No data available."}
+          {error || "Aucune donnee disponible."}
         </div>
       </div>
     );
@@ -103,11 +103,11 @@ export default function SalesDashboard() {
   return (
     <div className="page">
       <TopBar
-        title="Sales Dashboard"
-        subtitle="Your performance overview"
+        title="Tableau de bord ventes"
+        subtitle="Apercu de votre performance"
         actions={
           <button className="button-secondary" onClick={loadStats}>
-            ↻ Refresh
+            ↻ Rafraichir
           </button>
         }
       />
@@ -115,50 +115,50 @@ export default function SalesDashboard() {
       {/* KPIs - This Month */}
       <section className="kpi-grid">
         <div className="card">
-          <div className="card-label">This Month Revenue</div>
+          <div className="card-label">Revenu du mois</div>
           <div className="card-value">${stats.thisMonth.revenue.toLocaleString()}</div>
-          <div className="card-meta">{stats.thisMonth.conversions} jobs won</div>
+          <div className="card-meta">{stats.thisMonth.conversions} travaux gagnes</div>
         </div>
 
         <div className="card">
-          <div className="card-label">This Week</div>
+          <div className="card-label">Cette semaine</div>
           <div className="card-value">${stats.thisWeek.revenue.toLocaleString()}</div>
-          <div className="card-meta">{stats.thisWeek.leads} new leads</div>
+          <div className="card-meta">{stats.thisWeek.leads} nouveaux leads</div>
         </div>
 
         <div className="card">
-          <div className="card-label">Conversion Rate</div>
+          <div className="card-label">Taux de conversion</div>
           <div className="card-value">{conversionRate}%</div>
           <div className="card-meta">{stats.thisMonth.conversions} / {stats.thisMonth.leads} leads</div>
         </div>
 
         <div className="card">
-          <div className="card-label">Avg Deal Size</div>
+          <div className="card-label">Valeur moyenne</div>
           <div className="card-value">${stats.thisMonth.avgDealSize.toFixed(0)}</div>
-          <div className="card-meta">Per job</div>
+          <div className="card-meta">Par travail</div>
         </div>
       </section>
 
       {/* Leaderboard Rank */}
       <section className="card" style={{ marginTop: "24px" }}>
-        <h3 className="card-title">Leaderboard Position</h3>
+        <h3 className="card-title">Position au classement</h3>
         <div style={{ display: "flex", alignItems: "center", gap: "24px", marginTop: "12px" }}>
           <div style={{ fontSize: "48px", fontWeight: "bold", color: "var(--accent)" }}>
             #{stats.leaderboard.rank}
           </div>
           <div>
             <div style={{ fontSize: "18px", fontWeight: 600 }}>
-              of {stats.leaderboard.totalReps} sales reps
+              sur {stats.leaderboard.totalReps} representants
             </div>
             <div className="card-meta" style={{ marginTop: "4px" }}>
-              {stats.leaderboard.percentageVsFirst > 0 && `+${stats.leaderboard.percentageVsFirst}% above #1`}
-              {stats.leaderboard.percentageVsFirst < 0 && `${stats.leaderboard.percentageVsFirst}% below #1`}
-              {stats.leaderboard.percentageVsFirst === 0 && "You're #1! 🎉"}
+              {stats.leaderboard.percentageVsFirst > 0 && `+${stats.leaderboard.percentageVsFirst}% au-dessus du #1`}
+              {stats.leaderboard.percentageVsFirst < 0 && `${stats.leaderboard.percentageVsFirst}% en dessous du #1`}
+              {stats.leaderboard.percentageVsFirst === 0 && "Vous etes #1! 🎉"}
             </div>
             <div className="card-meta">
-              {stats.leaderboard.percentageVsAverage > 0 && `+${stats.leaderboard.percentageVsAverage}% above average`}
-              {stats.leaderboard.percentageVsAverage < 0 && `${stats.leaderboard.percentageVsAverage}% below average`}
-              {stats.leaderboard.percentageVsAverage === 0 && "At average"}
+              {stats.leaderboard.percentageVsAverage > 0 && `+${stats.leaderboard.percentageVsAverage}% au-dessus de la moyenne`}
+              {stats.leaderboard.percentageVsAverage < 0 && `${stats.leaderboard.percentageVsAverage}% sous la moyenne`}
+              {stats.leaderboard.percentageVsAverage === 0 && "Dans la moyenne"}
             </div>
           </div>
         </div>
@@ -166,18 +166,18 @@ export default function SalesDashboard() {
 
       {/* Pipeline Visualization */}
       <section className="card" style={{ marginTop: "24px" }}>
-        <h3 className="card-title">Sales Pipeline</h3>
+        <h3 className="card-title">Pipeline des ventes</h3>
         <div className="card-meta" style={{ marginBottom: "16px" }}>
-          Track your leads through each stage
+          Suivez vos leads par etape
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "12px" }}>
+        <div className="pipeline-grid">
           {[
-            { label: "New", count: stats.pipeline.new, color: "#64748b" },
-            { label: "Contacted", count: stats.pipeline.contacted, color: "#3b82f6" },
-            { label: "Estimated", count: stats.pipeline.estimated, color: "#f59e0b" },
-            { label: "Won", count: stats.pipeline.won, color: "#10b981" },
-            { label: "Lost", count: stats.pipeline.lost, color: "#ef4444" },
+            { label: "Nouveau", count: stats.pipeline.new, color: "#64748b" },
+            { label: "Contacte", count: stats.pipeline.contacted, color: "#3b82f6" },
+            { label: "Estime", count: stats.pipeline.estimated, color: "#f59e0b" },
+            { label: "Gagne", count: stats.pipeline.won, color: "#10b981" },
+            { label: "Perdu", count: stats.pipeline.lost, color: "#ef4444" },
           ].map((stage) => (
             <div
               key={stage.label}
@@ -203,25 +203,25 @@ export default function SalesDashboard() {
       <section className="card" style={{ marginTop: "24px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
           <h3 className="card-title" style={{ margin: 0 }}>
-            Follow-up Reminders
+            Rappels de suivi
           </h3>
           <Link href="/sales/leads" className="button-ghost" style={{ padding: "8px 12px" }}>
-            View All
+            Tout voir
           </Link>
         </div>
 
         {stats.followUps.length === 0 && (
-          <p className="card-meta">No follow-ups scheduled</p>
+          <p className="card-meta">Aucun suivi planifie</p>
         )}
 
         <div className="list">
           {stats.followUps.slice(0, 5).map((followUp) => (
             <div key={followUp.lead_id} className="list-item">
-              <div>
-                <strong>{followUp.customer_name}</strong>
-                <div className="card-meta">
-                  Follow up: {new Date(followUp.follow_up_date).toLocaleDateString("fr-CA")}
-                </div>
+                <div>
+                  <strong>{followUp.customer_name}</strong>
+                  <div className="card-meta">
+                    Suivi: {new Date(followUp.follow_up_date).toLocaleDateString("fr-CA")}
+                  </div>
                 <div style={{ marginTop: "4px" }}>
                   Est. ${followUp.estimated_value.toLocaleString()}
                 </div>

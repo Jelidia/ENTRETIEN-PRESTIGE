@@ -61,7 +61,7 @@ export default function LeadsPage() {
       loadLeads();
       setSelectedLead(null);
     } else {
-      alert("Failed to update lead");
+      alert("Echec de la mise a jour du lead");
     }
   }
 
@@ -74,14 +74,14 @@ export default function LeadsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: "call",
-          notes: "Called customer",
+          notes: "Appel au client",
         }),
       });
     }
   }
 
   async function sendSMS(phone: string) {
-    const message = prompt("Enter message to send:");
+    const message = prompt("Entrer le message a envoyer:");
     if (!message) return;
 
     const res = await fetch("/api/sms/send", {
@@ -94,7 +94,7 @@ export default function LeadsPage() {
     });
 
     if (res.ok) {
-      alert("SMS sent successfully");
+      alert("SMS envoye avec succes");
       if (selectedLead) {
         await fetch(`/api/leads/${selectedLead.lead_id}/activity`, {
           method: "POST",
@@ -106,7 +106,7 @@ export default function LeadsPage() {
         });
       }
     } else {
-      alert("Failed to send SMS");
+      alert("Echec de l'envoi du SMS");
     }
   }
 
@@ -116,27 +116,28 @@ export default function LeadsPage() {
   );
 
   const tabs: Array<{ key: Lead["status"]; label: string; color: string }> = [
-    { key: "new", label: "New", color: "#64748b" },
-    { key: "contacted", label: "Contacted", color: "#3b82f6" },
-    { key: "estimated", label: "Estimated", color: "#f59e0b" },
-    { key: "won", label: "Won", color: "#10b981" },
-    { key: "lost", label: "Lost", color: "#ef4444" },
+    { key: "new", label: "Nouveau", color: "#64748b" },
+    { key: "contacted", label: "Contacte", color: "#3b82f6" },
+    { key: "estimated", label: "Estime", color: "#f59e0b" },
+    { key: "won", label: "Gagne", color: "#10b981" },
+    { key: "lost", label: "Perdu", color: "#ef4444" },
   ];
+  const selectedTabLabel = tabs.find((tab) => tab.key === selectedTab)?.label ?? "";
 
   return (
     <div className="page">
       <TopBar
-        title="Leads & Customers"
-        subtitle="Manage your sales pipeline"
+        title="Leads et clients"
+        subtitle="Gerer votre pipeline de ventes"
         actions={
           <button className="button-primary" onClick={() => setShowCreateForm(true)}>
-            + New Lead
+            + Nouveau lead
           </button>
         }
       />
 
       {/* Tabs */}
-      <div style={{ display: "flex", gap: "8px", overflowX: "auto", paddingBottom: "8px" }}>
+      <div className="tabs-row">
         {tabs.map((tab) => {
           const count = leads.filter((l) => l.status === tab.key).length;
           return (
@@ -160,13 +161,13 @@ export default function LeadsPage() {
       </div>
 
       {/* Leads List */}
-      {loading && <p>Loading...</p>}
+      {loading && <p>Chargement...</p>}
 
       {!loading && filteredLeads.length === 0 && (
         <div className="card" style={{ padding: "40px", textAlign: "center" }}>
           <div style={{ fontSize: "48px", marginBottom: "16px" }}>📋</div>
-          <h3>No {selectedTab} leads</h3>
-          <p className="card-meta">Leads will appear here as you add them</p>
+          <h3>Aucun lead {selectedTabLabel.toLowerCase()}</h3>
+          <p className="card-meta">Les leads apparaitront ici apres creation</p>
         </div>
       )}
 
@@ -188,7 +189,7 @@ export default function LeadsPage() {
                   </div>
                   {lead.follow_up_date && (
                     <div className="card-meta" style={{ marginTop: "4px" }}>
-                      Follow up: {new Date(lead.follow_up_date).toLocaleDateString("fr-CA")}
+                      Suivi: {new Date(lead.follow_up_date).toLocaleDateString("fr-CA")}
                     </div>
                   )}
                 </div>
@@ -200,7 +201,7 @@ export default function LeadsPage() {
                       color: tabs.find((t) => t.key === lead.status)?.color,
                     }}
                   >
-                    {lead.status}
+                    {tabs.find((t) => t.key === lead.status)?.label ?? lead.status}
                   </span>
                 </div>
               </div>
@@ -244,18 +245,18 @@ export default function LeadsPage() {
         >
           <div className="stack">
             <div className="card-muted" style={{ padding: "16px" }}>
-              <div><strong>Phone:</strong> {selectedLead.phone}</div>
-              <div style={{ marginTop: "8px" }}><strong>Email:</strong> {selectedLead.email || "N/A"}</div>
-              <div style={{ marginTop: "8px" }}><strong>Address:</strong> {selectedLead.address || "N/A"}</div>
+              <div><strong>Telephone:</strong> {selectedLead.phone}</div>
+              <div style={{ marginTop: "8px" }}><strong>Courriel:</strong> {selectedLead.email || "N/A"}</div>
+              <div style={{ marginTop: "8px" }}><strong>Adresse:</strong> {selectedLead.address || "N/A"}</div>
               <div style={{ marginTop: "8px" }}>
-                <strong>Estimated Value:</strong> ${selectedLead.estimated_value.toLocaleString()}
+                <strong>Valeur estimee:</strong> ${selectedLead.estimated_value.toLocaleString()}
               </div>
               <div style={{ marginTop: "8px" }}>
-                <strong>Status:</strong> {selectedLead.status}
+                <strong>Statut:</strong> {tabs.find((tab) => tab.key === selectedLead.status)?.label ?? selectedLead.status}
               </div>
               {selectedLead.follow_up_date && (
                 <div style={{ marginTop: "8px" }}>
-                  <strong>Follow-up:</strong> {new Date(selectedLead.follow_up_date).toLocaleDateString("fr-CA")}
+                  <strong>Suivi:</strong> {new Date(selectedLead.follow_up_date).toLocaleDateString("fr-CA")}
                 </div>
               )}
             </div>
@@ -267,13 +268,13 @@ export default function LeadsPage() {
               </div>
             )}
 
-            <h4>Quick Actions</h4>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+            <h4>Actions rapides</h4>
+            <div className="lead-actions">
               <button
                 className="button-primary"
                 onClick={() => callCustomer(selectedLead.phone)}
               >
-                📞 CALL
+                📞 APPEL
               </button>
               <button
                 className="button-secondary"
@@ -283,7 +284,7 @@ export default function LeadsPage() {
               </button>
             </div>
 
-            <h4 style={{ marginTop: "24px" }}>Update Status</h4>
+            <h4 style={{ marginTop: "24px" }}>Mettre a jour le statut</h4>
             <div style={{ display: "grid", gap: "8px" }}>
               {tabs
                 .filter((tab) => tab.key !== selectedLead.status)
@@ -297,7 +298,7 @@ export default function LeadsPage() {
                       color: tab.color,
                     }}
                   >
-                    Move to {tab.label}
+                    Passer a {tab.label}
                   </button>
                 ))}
             </div>
@@ -308,7 +309,7 @@ export default function LeadsPage() {
                 onClick={() => updateLeadStatus(selectedLead.lead_id, "won")}
                 style={{ marginTop: "16px", background: "#10b981" }}
               >
-                ✅ CONVERT TO JOB
+                ✅ CONVERTIR EN TRAVAIL
               </button>
             )}
           </div>
