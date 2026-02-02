@@ -1,151 +1,113 @@
-# AGENTS.md
+# AGENTS.md — Entretien Prestige
 
-Guidance for agentic coding assistants working in this repo.
+This file is the **high‑signal, always‑on** project context for coding agents.
 
-Read `CLAUDE.md` first. It is the authoritative guide for business rules, architecture, and production blockers. If you are using Claude Code, follow the skills/agents decision trees described there.
+- Keep it **short and accurate** (agents will see it often).
+- Put deep details in other docs and point to them.
 
----
+If you need deeper context, prefer **targeted reads** (don’t paste huge files by default).
 
 ## Repo snapshot
-- Product: Entretien Prestige (mobile-first field-service ERP for a Quebec cleaning company)
-- Stack: Next.js 14 App Router, TypeScript, Tailwind, Supabase (Postgres + RLS)
-- Language: French for UI/SMS/customer-facing content; English for code/logs
-- UI constraints: max width 640px, bottom nav always, no sidebar, exactly 5 tabs per role
-- Status: not production-ready (see `ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md`)
 
----
+**Product:** Quebec cleaning company ERP
+**Stack:** Next.js 14 (App Router) + TypeScript + Supabase (Postgres + RLS) + Tailwind
+**UI language:** Quebec French (code in English)
 
-## Commands
-### Install / run
+### Key directories
+
+- `app/` — Next.js routes (App Router)
+  - `app/(app)/` protected routes
+  - `app/(auth)/` login
+  - `app/api/` API routes
+- `components/` — UI components
+- `lib/` — shared server/client logic
+  - `lib/auth.ts` — `requireUser/requireRole/requirePermission`
+  - `lib/supabaseServer.ts` — `createUserClient/createAdminClient`
+  - `lib/validators.ts` — **ALL Zod schemas live here**
+- `scripts/` — operational scripts (RLS/policies, reseed, verify users)
+- `supabase/` — schema, migrations, RLS policies (tracked)
+
+## Non‑negotiables (project rules)
+
+### UI/UX
+
+1. **Mobile-first only**: max width `640px`, bottom navigation.
+2. **French UI**: Quebec French strings for labels, errors, SMS/email templates.
+3. Role-based UX: 5 bottom nav tabs per role.
+
+### API + Security + Multi‑tenant
+
+1. **Every API route must authenticate** (`requireUser/requireRole/requirePermission`).
+2. **Multi‑tenant always**: scope reads/writes by `company_id`.
+3. Prefer `createUserClient(accessToken)` so RLS protects data.
+4. Use `createAdminClient()` only when required (admin-only flows) **and still scope by `company_id`**.
+5. Validate external input with **Zod schemas from `lib/validators.ts`** (never inline schemas).
+
+### Operational patterns (don’t reinvent)
+
+- **Idempotency**: write endpoints that can be retried should use the helpers in `lib/idempotency.ts`.
+- **Audit logging**: sensitive actions should log via `lib/auditLog.ts`.
+- **Rate limiting**: currently disabled (see `lib/rateLimit.ts` + `RATE_LIMIT_DISABLED.md`). Don’t accidentally remove/ignore this in “cleanup” work.
+
+### Code conventions
+
+- Use path aliases: prefer `@/…` imports over long relative paths.
+- Keep server-side logic in `lib/` and UI in `components/`.
+
+### Quality gates
+
+- Prefer small, focused diffs.
+- Don’t touch build artifacts: `.next/`, `node_modules/`, `coverage/`, `test-results/`.
+- Don’t commit secrets (`.env*`, `.mcp.json`, service keys).
+
+## How to work in this repo (agent workflow)
+
+1. **Restate the goal** and any assumptions.
+2. **Locate existing patterns** before writing new code (search similar routes/components).
+3. **Plan the smallest change**: list files to touch.
+4. Implement.
+5. **Run checks** (choose what fits the change):
+   - `npm run typecheck`
+   - `npm run lint`
+   - `npm test` (Vitest)
+   - `npm run test:e2e` (Playwright)
+6. Summarize: what changed, why, files touched, commands run.
+
+## Common commands
+
 ```bash
 npm install
 npm run dev
-npm run build
-npm run start
 npm run lint
 npm run typecheck
-```
-
-### Unit/integration tests (Vitest)
-```bash
-npm test                 # vitest run --coverage
-npm run test:watch       # vitest
-npx vitest run auth      # match test name pattern
-npx vitest run --grep "login"
-npx vitest run tests/technicianDashboard.test.tsx
-```
-
-### E2E tests (Playwright)
-```bash
+npm test
 npm run test:e2e
-npx playwright test tests/e2e/smoke.spec.ts
-npx playwright test --grep "smoke"
 ```
-Notes: Prefer targeted tests first; run full suite only for broad changes or on request. Coverage thresholds are 100% (see `vitest.config.ts`); `coverage.all` is false by default, so untouched files may not count toward coverage.
 
----
+## Repo-specific diagnostics (useful before blaming RLS/auth)
 
-## Code style & conventions
-### TypeScript
-- Strict mode is on; avoid `any` (use `unknown` + type guards).
-- Prefer named exports.
-- Use type-only imports where possible.
-- Avoid unsafe assertions unless required.
+```bash
+node scripts/check-rls-status.ts
+node scripts/diagnose-rls.ts
+node scripts/test-login-flow.ts
+node scripts/verify-users-exist.ts
+```
 
-### Imports
-- Use `@/` alias for repo-root imports (see `tsconfig.json`).
-- Avoid deep `../../` when `@/` works.
-- Order imports: external → internal (`@/`) → relative.
+## “If you only read 3 docs”
 
-### Formatting
-- No dedicated formatter config; follow existing file style and ESLint guidance.
-- Keep JSX/Tailwind class ordering consistent with nearby code.
+1. `README.md` — setup + high-level rules + known issues
+2. `ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md` — full product specification
+3. `TROUBLESHOOTING.md` — debugging playbook
 
-### Naming
-- Components/types: `PascalCase`.
-- Hooks: `useSomething`.
-- Functions/vars: `camelCase`.
-- Constants: `UPPER_SNAKE_CASE`.
-- API folders/route segments: `kebab-case`.
-- Zod schemas: `camelCaseSchema` (e.g. `loginSchema`).
+`CLAUDE.md` is a deeper operational playbook (agents/skills, checklists).
 
-### Error handling
-- Response shape: success `{ success: true, data }`, error `{ error: "Message", details?: technicalDetails }`.
-- Do not return raw DB errors to clients; log server-side with context.
-- Fail closed on missing required env vars or integrations (no silent fallbacks).
+## OpenCode quality-of-life
 
-### Localization
-- Customer-facing strings and UI labels: French (Quebec).
-- Technical logs/comments: English ok.
+This repo includes OpenCode config (`opencode.json`) plus a few custom commands:
 
----
-
-## API route requirements (non-public)
-- Authenticate: `requireUser`, `requireRole`, or `requirePermission`.
-- Validate input with Zod in `lib/validators.ts` (no inline schemas in routes).
-- Prefer the RLS client (`createUserClient(accessToken)`).
-- Enforce multi-tenancy in every query (`company_id` scoping).
-- Use consistent response shapes and status codes.
-
----
-
-## Data access rules
-- Use Supabase client directly (no ORM).
-- Prefer explicit column lists over `select("*")`.
-- Use `.single()` when exactly one row is expected; `.maybeSingle()` when optional.
-- If a table has `deleted_at`, exclude soft-deleted rows in queries.
-- Treat webhook/third-party payloads as hostile; verify signatures and be idempotent.
-
----
-
-## UI/UX constraints
-- Mobile-first layout; max width 640px and centered on desktop.
-- `BottomNavMobile` always present; exactly 5 tabs per role.
-- No sidebar and no horizontal scrolling.
-- Prefer pagination or bottom sheets over long lists.
-- Reuse shared components where possible (e.g. `BottomNavMobile`, `Pagination`, `BottomSheet`).
-
----
-
-## Testing guidelines
-- Add tests for new business logic (`lib/`), API routes, and critical UI.
-- If you fix a bug, add a regression test.
-- Prefer the smallest relevant test run while iterating.
-
----
-
-## Database migrations
-- Migrations live in `supabase/migrations/`.
-- Create `YYYYMMDD_description.sql` files; apply via Supabase SQL editor or local workflow.
-- Validate RLS policies and indexes for any schema changes.
-
----
-
-## Environment variables
-Required:
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `APP_ENCRYPTION_KEY` (must be required in production; fail closed)
-- `NEXT_PUBLIC_BASE_URL`
-
-Optional integrations:
-- `TWILIO_*`, `STRIPE_*`, `RESEND_*`, `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`
-
-Rules:
-- Never commit secrets.
-- Only `NEXT_PUBLIC_*` values may be exposed to the client.
-
----
-
-## Where to look first
-- `CLAUDE.md` — architecture + non-negotiable rules (authoritative)
-- `ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` — production readiness
-- `ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md` — requirements/spec
-- `CRITICAL_FIXES_README.md` — immediate fixes overview
-- `TROUBLESHOOTING.md` — database issues and fixes
-
----
-
-## Cursor/Copilot rules
-No `.cursor/rules/`, `.cursorrules`, or `.github/copilot-instructions.md` were found at last scan. If you add one, keep it consistent with `CLAUDE.md`.
+- `/improve <request>` — rewrite a raw request into an AI-optimized prompt
+- `/typecheck` — run `npm run typecheck`
+- `/lint` — run `npm run lint`
+- `/test` — run `npm test`
+- `/rls-check` — run `node scripts/check-rls-status.ts`
+- `/review` — run a read-only review of the current `git diff`

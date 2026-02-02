@@ -63,3 +63,917 @@
  GET /api/access 200 in 317ms
  GET /api/admin/users?page=1&limit=4 200 in 322ms
  GET /team 200 in 273ms
+ GET /login 200 in 2386ms
+ GET / 200 in 2296ms
+ GET /login 200 in 869ms
+ GET /login 200 in 567ms
+ GET /login 200 in 966ms
+ GET /login 200 in 753ms
+ GET /login 200 in 864ms
+ POST /api/auth/login 200 in 1117ms
+ POST /api/auth/login 200 in 1174ms
+ POST /api/auth/login 200 in 1209ms
+ POST /api/auth/login 200 in 1237ms
+ POST /api/auth/login 200 in 1246ms
+ POST /api/auth/login 200 in 1197ms
+ GET /dashboard 200 in 603ms
+ GET /dashboard 200 in 1491ms
+ GET /dashboard 200 in 1421ms
+ GET /dashboard 200 in 1343ms
+ GET /dashboard 200 in 1366ms
+ GET /dashboard 200 in 1379ms
+ ○ Compiling /api/access ...
+ ✓ Compiled /api/access in 3.1s (720 modules)
+ GET /api/access 200 in 4207ms
+ GET /api/access 200 in 4216ms
+ GET /api/access 200 in 4272ms
+ GET /api/access 200 in 4278ms
+ GET /api/access 200 in 4379ms
+ GET /api/access 200 in 4517ms
+ GET /api/access 200 in 488ms
+ GET /api/access 200 in 528ms
+ GET /api/access 200 in 543ms
+ GET /api/access 200 in 554ms
+ GET /api/access 200 in 400ms
+ GET /api/access 200 in 414ms
+ ○ Compiling /api/jobs ...
+ ✓ Compiled /api/jobs in 725ms (428 modules)
+ GET /api/jobs 200 in 1543ms
+ ○ Compiling /jobs ...
+ ✓ Compiled /jobs in 5.4s (742 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /admin/users 200 in 7032ms
+ GET /api/jobs 200 in 6667ms
+ GET /dashboard 200 in 7407ms
+ GET /jobs 200 in 7457ms
+ GET /dispatch 200 in 7460ms
+ GET /settings 200 in 7460ms
+ GET /technician 200 in 254ms
+ ○ Compiling /api/dispatch/[action] ...
+ ✓ Compiled /api/customers in 3.1s (444 modules)
+ GET /api/access 200 in 4619ms
+ ✓ Compiled /technician/map in 4ms (450 modules)
+ GET /api/access 200 in 5512ms
+ ✓ Compiled in 1690ms (757 modules)
+ GET /api/access 200 in 2371ms
+ GET /api/access 200 in 7299ms
+ GET /team 200 in 7501ms
+ GET /api/jobs 200 in 7429ms
+ GET /technician/map 200 in 5540ms
+ GET / 200 in 331ms
+ GET /login 200 in 108ms
+ POST /api/auth/login 200 in 972ms
+ GET /dashboard 200 in 704ms
+ GET /api/access 200 in 264ms
+ GET /api/access 200 in 226ms
+ GET /dashboard 200 in 383ms
+ GET /api/access 200 in 220ms
+ GET /api/access 200 in 75ms
+ GET /team 200 in 227ms
+ ○ Compiling /api/users ...
+ ✓ Compiled /api/users in 985ms (428 modules)
+ ✓ Compiled (430 modules)
+ GET /api/access 200 in 2192ms
+ GET /api/users 200 in 2374ms
+ GET /api/company 200 in 2377ms
+ GET /profile 200 in 2454ms
+ GET /api/access 200 in 219ms
+ GET /admin/users 200 in 188ms
+ ○ Compiling /api/admin/users ...
+ ✓ Compiled /api/admin/users in 552ms (433 modules)
+ GET /api/access 200 in 1667ms
+ GET /api/admin/users?page=1&limit=4 200 in 1674ms
+ GET /team 200 in 1569ms
+ GET /api/users 400 in 491ms
+ GET /api/access 200 in 497ms
+ GET /api/company 200 in 525ms
+ GET /api/access 200 in 332ms
+ GET /api/users 400 in 360ms
+ GET /api/company 200 in 369ms
+ GET /api/users 400 in 272ms
+ GET /login 200 in 200ms
+ POST /api/auth/login 200 in 527ms
+ GET /dashboard 200 in 455ms
+ GET /api/access 200 in 280ms
+ GET /api/access 200 in 230ms
+ ○ Compiling /jobs ...
+ ✓ Compiled /jobs in 882ms (438 modules)
+ GET /jobs 200 in 1216ms
+ ○ Compiling /api/jobs ...
+ ✓ Compiled /api/jobs in 853ms (440 modules)
+ ✓ Compiled (442 modules)
+ GET /api/customers 200 in 2319ms
+ GET /api/access 200 in 2059ms
+ GET /api/jobs 200 in 2120ms
+ GET /api/access 200 in 288ms
+ GET /api/jobs 200 in 347ms
+ POST /api/customers 201 in 548ms
+ POST /api/jobs 201 in 391ms
+ GET /jobs 200 in 194ms
+ GET /api/jobs 200 in 161ms
+ GET /api/access 200 in 161ms
+ GET /login 200 in 92ms
+ POST /api/auth/login 200 in 520ms
+ GET /dashboard 200 in 369ms
+ GET /api/access 200 in 213ms
+ GET /api/access 200 in 202ms
+ ✓ Compiled /dispatch in 356ms (446 modules)
+ GET /dispatch 200 in 624ms
+ ✓ Compiled /api/dispatch/[action] in 396ms (448 modules)
+ ✓ Compiled (450 modules)
+ GET /api/access 200 in 1174ms
+ GET /api/access 200 in 233ms
+ GET /api/dispatch/conflicts 200 in 1422ms
+ GET /api/dispatch/calendar 200 in 1459ms
+ POST /api/dispatch/auto-assign 200 in 474ms
+ GET /api/dispatch/calendar 200 in 393ms
+ GET /api/dispatch/conflicts 200 in 394ms
+ GET /login 200 in 132ms
+ POST /api/auth/login 200 in 375ms
+ GET /dashboard 200 in 326ms
+ GET /api/access 200 in 199ms
+ GET /api/access 200 in 186ms
+ GET /admin/users 200 in 132ms
+ GET /api/access 200 in 266ms
+ GET /api/admin/users?page=1&limit=4 200 in 385ms
+ GET /api/access 200 in 277ms
+ GET /api/admin/users?page=1&limit=4 200 in 280ms
+ GET /login 200 in 141ms
+ POST /api/auth/login 200 in 660ms
+ GET /dashboard 200 in 509ms
+ GET /api/access 200 in 264ms
+ GET /api/access 200 in 221ms
+ ○ Compiling /settings ...
+ ✓ Compiled /settings in 934ms (428 modules)
+ GET /settings 200 in 1269ms
+ GET /api/access 200 in 307ms
+ GET /api/access 200 in 145ms
+ ○ Compiling /api/users/[id] ...
+ ✓ Compiled /api/users/[id] in 709ms (430 modules)
+ GET /login 200 in 153ms
+ POST /api/auth/login 200 in 591ms
+ GET /dashboard 200 in 305ms
+ GET /api/access 200 in 306ms
+ GET /api/access 200 in 413ms
+ ○ Compiling /api/jobs ...
+ ✓ Compiled /api/jobs in 688ms (432 modules)
+ GET /api/jobs 200 in 1191ms
+ GET /api/jobs 200 in 314ms
+ GET /technician 200 in 218ms
+ GET /api/access 200 in 465ms
+ GET /api/jobs 200 in 544ms
+ ○ Compiling /technician/map ...
+ ✓ Compiled /technician/map in 851ms (436 modules)
+ ✓ Compiled in 1ms (436 modules)
+ ✓ Compiled in 1ms (436 modules)
+ GET /api/jobs 200 in 1967ms
+ GET /api/access 200 in 2791ms
+ GET /technician/map 200 in 3295ms
+ ○ Compiling /technician/equipment ...
+ GET /api/access 200 in 652ms
+ ✓ Compiled /technician/equipment in 1259ms (438 modules)
+ ✓ Compiled in 1140ms (305 modules)
+ GET /api/gps/history 200 in 3669ms
+ GET /api/access 200 in 2812ms
+ GET /technician/equipment 200 in 3588ms
+ ○ Compiling /technician/schedule ...
+ ✓ Compiled /technician/schedule in 2.5s (753 modules)
+ GET /api/access 200 in 3075ms
+ GET /technician/schedule 200 in 3317ms
+ ○ Compiling /technician/profile ...
+ GET /api/access 200 in 897ms
+ GET /api/jobs 200 in 1028ms
+ ✓ Compiled /technician/profile in 3s (759 modules)
+ GET /api/jobs 200 in 2639ms
+ GET /api/access 200 in 2644ms
+ GET /technician/profile 200 in 3789ms
+ GET /api/access 200 in 426ms
+ ○ Compiling /technician/earnings ...
+ ✓ Compiled /api/users/me in 2.5s (767 modules)
+ GET /api/users/me 200 in 2443ms
+ GET /api/access 200 in 2446ms
+ GET /technician/earnings 200 in 3236ms
+ ○ Compiling /technician/customers ...
+ ✓ Compiled /technician/customers in 917ms (458 modules)
+ ✓ Compiled in 979ms (313 modules)
+ GET /api/reports/payroll 200 in 2841ms
+ GET /api/access 200 in 2876ms
+ GET /api/reports/commission 200 in 2844ms
+ GET /technician/customers 200 in 2748ms
+ GET /api/access 200 in 289ms
+ ○ Compiling /api/customers ...
+ ✓ Compiled /api/customers in 1016ms (464 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 1337ms (460 modules)
+ GET / 200 in 1754ms
+ GET /login 200 in 130ms
+ POST /api/auth/login 200 in 758ms
+ GET /dashboard 200 in 713ms
+ GET /api/access 200 in 292ms
+ GET /api/access 200 in 270ms
+ GET /dashboard 200 in 453ms
+ GET /api/access 200 in 504ms
+ ○ Compiling /team ...
+ ✓ Compiled /team in 1347ms (461 modules)
+ GET /api/access 200 in 2168ms
+ GET /team 200 in 2787ms
+ ○ Compiling /api/company ...
+ ✓ Compiled /api/company in 1600ms (463 modules)
+ ✓ Compiled (465 modules)
+ GET /api/access 200 in 3107ms
+ GET /api/users 200 in 3238ms
+ GET /api/company 200 in 3234ms
+ GET /profile 200 in 3084ms
+ GET /api/access 200 in 291ms
+ GET /admin/users 200 in 243ms
+ ○ Compiling /api/admin/users ...
+ ✓ Compiled /api/admin/users in 1798ms (468 modules)
+ GET /api/access 200 in 3698ms
+ GET /api/admin/users?page=1&limit=4 200 in 3703ms
+ GET /team 200 in 3588ms
+ GET /api/access 200 in 424ms
+ GET /api/users 400 in 519ms
+ GET /api/company 200 in 540ms
+ GET /api/access 200 in 403ms
+ GET /api/users 400 in 393ms
+ GET /api/company 200 in 418ms
+ GET /api/users 400 in 323ms
+ GET /login 200 in 138ms
+ POST /api/auth/login 200 in 660ms
+ GET /dashboard 200 in 531ms
+ GET /api/access 200 in 270ms
+ GET /api/access 200 in 269ms
+ GET /jobs 200 in 256ms
+ GET /api/customers 200 in 408ms
+ GET /api/jobs 200 in 507ms
+ GET /api/access 200 in 525ms
+ GET /api/access 200 in 357ms
+ GET /api/jobs 200 in 430ms
+ POST /api/jobs 201 in 404ms
+ GET /jobs 200 in 208ms
+ GET /api/jobs 200 in 120ms
+ GET /login 200 in 112ms
+ POST /api/auth/login 200 in 513ms
+ GET /dashboard 200 in 441ms
+ GET /api/access 200 in 321ms
+ GET /api/access 200 in 263ms
+ ○ Compiling /dispatch ...
+ ✓ Compiled /dispatch in 894ms (446 modules)
+ GET /dispatch 200 in 1276ms
+ ○ Compiling /api/dispatch/[action] ...
+ ✓ Compiled /api/dispatch/[action] in 733ms (448 modules)
+ ✓ Compiled (450 modules)
+ GET /api/access 200 in 1896ms
+ GET /api/dispatch/conflicts 200 in 2190ms
+ GET /api/access 200 in 305ms
+ GET /api/dispatch/calendar 200 in 2384ms
+ POST /api/dispatch/auto-assign 200 in 887ms
+ GET /api/dispatch/conflicts 200 in 451ms
+ GET /api/dispatch/calendar 200 in 381ms
+ GET /login 200 in 179ms
+ POST /api/auth/login 200 in 535ms
+ GET /dashboard 200 in 435ms
+ GET /api/access 200 in 324ms
+ GET /api/access 200 in 419ms
+ GET /admin/users 200 in 262ms
+ GET /api/access 200 in 424ms
+ GET /api/admin/users?page=1&limit=4 200 in 560ms
+ GET /api/access 200 in 386ms
+ GET /api/admin/users?page=1&limit=4 200 in 343ms
+ GET /login 200 in 105ms
+ POST /api/auth/login 200 in 605ms
+ GET /dashboard 200 in 1234ms
+ GET /api/access 200 in 382ms
+ GET /api/access 200 in 326ms
+ ○ Compiling /settings ...
+ ✓ Compiled /settings in 686ms (431 modules)
+ GET /settings 200 in 992ms
+ GET /api/access 200 in 379ms
+ GET /api/access 200 in 128ms
+ ○ Compiling /api/users/[id] ...
+ ✓ Compiled /api/users/[id] in 569ms (433 modules)
+ GET /login 200 in 140ms
+ POST /api/auth/login 200 in 642ms
+ GET /dashboard 200 in 259ms
+ GET /api/access 200 in 361ms
+ ✓ Compiled /api/jobs in 357ms (432 modules)
+ GET /api/access 200 in 927ms
+ GET /api/jobs 200 in 1111ms
+ GET /api/jobs 200 in 311ms
+ GET /technician 200 in 157ms
+ GET /api/access 200 in 281ms
+ GET /api/jobs 200 in 392ms
+ ○ Compiling /technician/map ...
+ ✓ Compiled /technician/map in 546ms (436 modules)
+ GET /api/jobs 200 in 893ms
+ GET /api/access 200 in 945ms
+ GET /technician/map 200 in 1243ms
+ ○ Compiling /technician/equipment ...
+ ✓ Compiled /technician/equipment in 689ms (438 modules)
+ ✓ Compiled (442 modules)
+ GET /api/access 200 in 1530ms
+ GET /api/gps/history 200 in 1559ms
+ GET /technician/equipment 200 in 1325ms
+ ○ Compiling /technician/schedule ...
+ ✓ Compiled /technician/schedule in 587ms (446 modules)
+ GET /api/access 200 in 1494ms
+ GET /technician/schedule 200 in 1609ms
+ GET /api/access 200 in 395ms
+ GET /api/jobs 200 in 432ms
+ ○ Compiling /technician/profile ...
+ ✓ Compiled /technician/profile in 665ms (450 modules)
+ GET /api/access 200 in 418ms
+ GET /api/jobs 200 in 417ms
+ GET /technician/profile 200 in 1111ms
+ GET /api/access 200 in 374ms
+ ○ Compiling /technician/earnings ...
+ ✓ Compiled /api/users/me in 940ms (454 modules)
+ ✓ Compiled (456 modules)
+ GET /api/access 200 in 2147ms
+ GET /api/users/me 200 in 2145ms
+ GET /technician/earnings 200 in 2780ms
+ ○ Compiling /technician/customers ...
+ ✓ Compiled /technician/customers in 754ms (458 modules)
+ ✓ Compiled (462 modules)
+ GET /api/access 200 in 2568ms
+ GET /api/reports/commission 200 in 2694ms
+ GET /api/reports/payroll 200 in 2686ms
+ GET /technician/customers 200 in 2898ms
+ ○ Compiling /api/customers ...
+ GET /api/access 200 in 1258ms
+ ✓ Compiled /api/customers in 2s (464 modules)
+ ✓ Compiled in 621ms (352 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 883ms (355 modules)
+ GET / 200 in 1457ms
+ ○ Compiling /login ...
+ ✓ Compiled /login in 584ms (362 modules)
+ GET /login 200 in 260ms
+ ○ Compiling /api/auth/login ...
+ ✓ Compiled /api/auth/login in 590ms (416 modules)
+ POST /api/auth/login 200 in 1838ms
+ ○ Compiling /dashboard ...
+ ✓ Compiled /dashboard in 1117ms (426 modules)
+ GET /dashboard 200 in 1960ms
+ ○ Compiling /api/access ...
+ ✓ Compiled /api/access in 751ms (430 modules)
+ GET /api/access 200 in 1254ms
+ GET /dashboard?_rsc=1jwkk 200 in 508ms
+ GET /api/access 200 in 299ms
+ GET /dashboard 200 in 554ms
+ GET /api/access 200 in 496ms
+ ○ Compiling /team ...
+ ✓ Compiled /team in 1160ms (431 modules)
+ GET /api/access 200 in 1909ms
+ GET /team 200 in 2449ms
+ ○ Compiling /profile ...
+ ✓ Compiled /profile in 1108ms (433 modules)
+ ✓ Compiled in 1ms (439 modules)
+ GET /api/access 200 in 2745ms
+ ✓ Compiled in 2ms (439 modules)
+ ✓ Compiled in 1ms (434 modules)
+ GET /api/users 200 in 4838ms
+ ✓ Compiled in 1ms (434 modules)
+ GET /api/access 200 in 2702ms
+ GET /api/company 200 in 5560ms
+ GET /team?_rsc=rkd57 200 in 4108ms
+ GET /profile 200 in 5502ms
+ ✓ Compiled in 1ms (434 modules)
+ GET /api/access 200 in 1097ms
+ ○ Compiling /api/users/[id] ...
+ ✓ Compiled /api/users/[id] in 2.4s (434 modules)
+ ✓ Compiled (436 modules)
+ GET /api/users/f18764c1-3f28-458f-867c-668e16cb2a8e 200 in 3931ms
+ GET /api/access 200 in 3986ms
+ GET /admin/users 200 in 4513ms
+ ○ Compiling /api/admin/users ...
+ ✓ Compiled /api/admin/users in 1039ms (435 modules)
+ GET /api/access 200 in 2329ms
+ GET /api/admin/users?page=1&limit=4 200 in 2506ms
+ GET /team 200 in 2317ms
+ GET /api/access 200 in 656ms
+ GET /api/company 200 in 715ms
+ GET /api/users 200 in 725ms
+ GET /api/access 200 in 477ms
+ GET /api/company 200 in 517ms
+ GET /api/users 200 in 530ms
+ GET /api/users 200 in 354ms
+ GET /api/admin/users?page=1&limit=200 200 in 379ms
+ GET / 200 in 267ms
+ GET /login 200 in 179ms
+ POST /api/auth/login 200 in 810ms
+ GET /dashboard 200 in 748ms
+ GET /api/access 200 in 351ms
+ GET /api/access 200 in 355ms
+ GET /dashboard 200 in 679ms
+ GET /api/access 200 in 430ms
+ GET /team 200 in 315ms
+ GET /api/users 200 in 566ms
+ GET /api/company 200 in 562ms
+ GET /api/access 200 in 562ms
+ GET /profile 200 in 550ms
+ GET /api/access 200 in 359ms
+ GET /admin/users 200 in 347ms
+ GET /api/admin/users?page=1&limit=4 200 in 482ms
+ GET /api/access 200 in 480ms
+ GET /team 200 in 545ms
+ GET /api/access 200 in 538ms
+ GET /api/users 200 in 577ms
+ GET /api/company 200 in 603ms
+ GET /api/access 200 in 597ms
+ GET /api/company 200 in 552ms
+ GET /api/users 200 in 710ms
+ GET /api/users 200 in 397ms
+ GET /api/admin/users?page=1&limit=200 200 in 756ms
+ GET /admin/users 200 in 359ms
+ GET /api/admin/users?page=1&limit=4 200 in 129ms
+ GET / 200 in 217ms
+ GET /login 200 in 173ms
+ POST /api/auth/login 200 in 875ms
+ GET /dashboard 200 in 699ms
+ GET /api/access 200 in 369ms
+ GET /api/access 200 in 348ms
+ GET /dashboard 200 in 501ms
+ GET /api/access 200 in 378ms
+ GET /team 200 in 312ms
+ GET /api/access 200 in 725ms
+ GET /api/company 200 in 728ms
+ GET /api/users 200 in 734ms
+ GET /profile 200 in 740ms
+ GET /api/access 200 in 373ms
+ GET /admin/users 200 in 311ms
+ GET /api/access 200 in 504ms
+ GET /api/admin/users?page=1&limit=4 200 in 508ms
+ GET /team 200 in 359ms
+ GET /api/access 200 in 499ms
+ GET /api/users 200 in 542ms
+ GET /api/company 200 in 664ms
+ GET /api/access 200 in 539ms
+ GET /api/users 200 in 664ms
+ GET /api/company 200 in 489ms
+ GET /api/users 200 in 382ms
+ GET /api/admin/users?page=1&limit=200 200 in 354ms
+ GET /admin/users 200 in 290ms
+ GET /api/access 200 in 453ms
+ GET /api/admin/users?page=1&limit=4 200 in 486ms
+ GET /api/access 200 in 457ms
+ GET /api/admin/users?page=1&limit=4 200 in 450ms
+ GET /login 200 in 176ms
+ POST /api/auth/login 200 in 532ms
+ GET /dashboard 200 in 1124ms
+ GET /api/access 200 in 331ms
+ GET /api/access 200 in 290ms
+ ○ Compiling /jobs ...
+ ✓ Compiled /jobs in 1409ms (434 modules)
+ GET /jobs 200 in 2025ms
+ ○ Compiling /api/jobs ...
+ ✓ Compiled /api/jobs in 1024ms (436 modules)
+ ✓ Compiled (438 modules)
+ GET /api/access 200 in 2342ms
+ GET /api/customers 200 in 2653ms
+ GET /api/jobs 200 in 2466ms
+ GET /api/access 200 in 459ms
+ GET /api/jobs 200 in 386ms
+ POST /api/jobs 201 in 449ms
+ GET /jobs 200 in 388ms
+ GET /api/jobs 200 in 143ms
+ GET / 200 in 214ms
+ GET /login 200 in 172ms
+ POST /api/auth/login 200 in 640ms
+ GET /dashboard 200 in 669ms
+ GET /api/access 200 in 351ms
+ GET /api/access 200 in 321ms
+ GET /dashboard 200 in 540ms
+ GET /api/access 200 in 475ms
+ GET /team 200 in 425ms
+ GET /api/access 200 in 660ms
+ GET /api/users 200 in 714ms
+ GET /api/company 200 in 722ms
+ GET /profile 200 in 634ms
+ GET /api/access 200 in 395ms
+ GET /admin/users 200 in 358ms
+ GET /api/admin/users?page=1&limit=4 200 in 574ms
+ GET /api/access 200 in 571ms
+ GET /team 200 in 423ms
+ GET /api/access 200 in 512ms
+ GET /api/company 200 in 561ms
+ GET /api/users 200 in 619ms
+ GET /api/access 200 in 575ms
+ GET /api/company 200 in 573ms
+ GET /api/users 200 in 512ms
+ GET /api/users 200 in 357ms
+ GET /api/admin/users?page=1&limit=200 200 in 402ms
+ GET /admin/users 200 in 284ms
+ GET /api/access 200 in 456ms
+ GET /api/admin/users?page=1&limit=4 200 in 561ms
+ GET /api/access 200 in 517ms
+ GET /api/admin/users?page=1&limit=4 200 in 423ms
+ GET /login 200 in 269ms
+ POST /api/auth/login 200 in 550ms
+ GET /dashboard 200 in 527ms
+ GET /api/access 200 in 287ms
+ GET /api/access 200 in 303ms
+ GET /jobs 200 in 230ms
+ GET /api/customers 200 in 446ms
+ GET /api/access 200 in 460ms
+ GET /api/jobs 200 in 625ms
+ GET /api/access 200 in 377ms
+ GET /api/jobs 200 in 449ms
+ POST /api/jobs 201 in 456ms
+ GET /jobs 200 in 281ms
+ GET /api/jobs 200 in 165ms
+ GET /api/access 200 in 162ms
+ GET / 200 in 235ms
+ GET /login 200 in 182ms
+ POST /api/auth/login 200 in 732ms
+ GET /dashboard 200 in 542ms
+ GET /api/access 200 in 314ms
+ GET /api/access 200 in 285ms
+ GET /dashboard 200 in 516ms
+ GET /api/access 200 in 349ms
+ GET /team 200 in 315ms
+ GET /api/users 200 in 599ms
+ GET /api/access 200 in 595ms
+ GET /api/company 200 in 598ms
+ GET /profile 200 in 463ms
+ GET /api/access 200 in 319ms
+ GET /admin/users 200 in 247ms
+ GET /api/access 200 in 445ms
+ GET /api/admin/users?page=1&limit=4 200 in 448ms
+ GET /team 200 in 354ms
+ GET /api/access 200 in 460ms
+ GET /api/users 200 in 565ms
+ GET /api/company 200 in 597ms
+ GET /api/access 200 in 463ms
+ GET /api/users 200 in 499ms
+ GET /api/company 200 in 514ms
+ GET /api/users 200 in 491ms
+ GET /api/admin/users?page=1&limit=200 200 in 394ms
+ GET /admin/users 200 in 308ms
+ GET /api/access 200 in 389ms
+ GET /api/admin/users?page=1&limit=4 200 in 482ms
+ GET /api/access 200 in 448ms
+ GET /api/admin/users?page=1&limit=4 200 in 365ms
+ GET /login 200 in 154ms
+ POST /api/auth/login 200 in 643ms
+ GET /dashboard 200 in 448ms
+ GET /api/access 200 in 312ms
+ GET /api/access 200 in 286ms
+ GET /jobs 200 in 258ms
+ GET /api/customers 200 in 485ms
+ GET /api/access 200 in 477ms
+ GET /api/jobs 200 in 603ms
+ GET /api/access 200 in 352ms
+ GET /api/jobs 200 in 389ms
+ POST /api/jobs 201 in 440ms
+ GET /jobs 200 in 257ms
+ GET / 200 in 188ms
+ GET /login 200 in 152ms
+ POST /api/auth/login 200 in 673ms
+ GET /dashboard 200 in 557ms
+ GET /api/access 200 in 318ms
+ GET /api/access 200 in 287ms
+ GET /dashboard 200 in 457ms
+ GET /api/access 200 in 329ms
+ GET /team 200 in 286ms
+ GET /api/company 200 in 548ms
+ GET /api/users 200 in 552ms
+ GET /api/access 200 in 548ms
+ GET /profile 200 in 422ms
+ GET /api/access 200 in 350ms
+ GET /admin/users 200 in 264ms
+ GET /api/admin/users?page=1&limit=4 200 in 416ms
+ GET /api/access 200 in 412ms
+ GET /team 200 in 437ms
+ GET /api/access 200 in 423ms
+ GET /api/company 200 in 468ms
+ GET /api/users 200 in 577ms
+ GET /api/access 200 in 491ms
+ GET /api/company 200 in 535ms
+ GET /api/users 200 in 439ms
+ GET /api/users 200 in 354ms
+ GET /api/admin/users?page=1&limit=200 200 in 322ms
+ GET /admin/users 200 in 253ms
+ GET /api/access 200 in 368ms
+ GET /api/admin/users?page=1&limit=4 200 in 468ms
+ GET /api/access 200 in 459ms
+ GET /api/admin/users?page=1&limit=4 200 in 369ms
+ GET /login 200 in 156ms
+ POST /api/auth/login 200 in 533ms
+ GET /dashboard 200 in 444ms
+ GET /api/access 200 in 293ms
+ GET /api/access 200 in 297ms
+ GET /jobs 200 in 233ms
+ GET /api/customers 200 in 425ms
+ GET /api/access 200 in 426ms
+ GET /api/jobs 200 in 587ms
+ GET /api/access 200 in 381ms
+ GET /api/jobs 200 in 487ms
+ POST /api/jobs 201 in 452ms
+ GET /jobs 200 in 253ms
+ GET /api/jobs 200 in 320ms
+ GET /login 200 in 239ms
+ POST /api/auth/login 200 in 453ms
+ GET /dashboard 200 in 464ms
+ GET /api/access 200 in 261ms
+ GET /api/access 200 in 265ms
+ ○ Compiling /dispatch ...
+ ✓ Compiled /dispatch in 1322ms (442 modules)
+ GET /dispatch 200 in 1900ms
+ ○ Compiling /api/dispatch/[action] ...
+ ✓ Compiled /api/dispatch/[action] in 994ms (444 modules)
+ ✓ Compiled (446 modules)
+ GET /api/access 200 in 2402ms
+ GET /api/dispatch/calendar 200 in 2761ms
+ GET /api/dispatch/conflicts 200 in 2727ms
+ GET /api/access 200 in 356ms
+ POST /api/dispatch/auto-assign 200 in 1599ms
+ GET /api/dispatch/conflicts 200 in 397ms
+ GET /api/dispatch/calendar 200 in 460ms
+ GET /login 200 in 284ms
+ POST /api/auth/login 200 in 487ms
+ GET /dashboard 200 in 493ms
+ GET /api/access 200 in 338ms
+ GET /api/access 200 in 309ms
+ GET /admin/users 200 in 241ms
+ GET /api/access 200 in 431ms
+ GET /api/admin/users?page=1&limit=4 200 in 544ms
+ GET /api/access 200 in 405ms
+ GET /api/admin/users?page=1&limit=4 200 in 399ms
+ GET / 200 in 215ms
+ GET /login 200 in 208ms
+ POST /api/auth/login 200 in 1123ms
+ GET /dashboard 200 in 984ms
+ GET /api/access 200 in 760ms
+ GET /api/access 200 in 496ms
+ GET /dashboard 200 in 660ms
+ GET /api/access 200 in 405ms
+ GET /api/access 200 in 501ms
+ GET /team 200 in 277ms
+ GET /api/company 200 in 477ms
+ GET /api/users 200 in 482ms
+ GET /api/access 200 in 487ms
+ GET /profile 200 in 903ms
+ GET /api/access 200 in 412ms
+ GET /admin/users 200 in 292ms
+ GET /api/admin/users?page=1&limit=4 200 in 460ms
+ GET /api/access 200 in 457ms
+ GET /team 200 in 576ms
+ GET /api/access 200 in 641ms
+ GET /api/company 200 in 929ms
+ GET /api/users 200 in 940ms
+ GET /api/access 200 in 465ms
+ GET /api/users 200 in 672ms
+ GET /api/company 200 in 701ms
+ GET /api/users 200 in 621ms
+ GET /api/admin/users?page=1&limit=200 200 in 774ms
+ GET /admin/users 200 in 446ms
+ GET /api/access 200 in 528ms
+ GET /api/admin/users?page=1&limit=4 200 in 666ms
+ GET /api/access 200 in 462ms
+ GET /api/admin/users?page=1&limit=4 200 in 856ms
+ GET /login 200 in 199ms
+ POST /api/auth/login 200 in 532ms
+ GET /dashboard 200 in 464ms
+ GET /api/access 200 in 435ms
+ GET /api/access 200 in 372ms
+ GET /jobs 200 in 268ms
+ GET /api/customers 200 in 827ms
+ GET /api/jobs 200 in 768ms
+ GET /api/access 200 in 987ms
+ GET /api/access 200 in 592ms
+ GET /api/jobs 200 in 818ms
+ POST /api/jobs 201 in 638ms
+ GET /jobs 200 in 333ms
+ GET /api/jobs 200 in 405ms
+ GET /login 200 in 246ms
+ POST /api/auth/login 200 in 514ms
+ GET /dashboard 200 in 476ms
+ GET /api/access 200 in 316ms
+ GET /api/access 200 in 280ms
+ GET /dispatch 200 in 265ms
+ GET /api/access 200 in 507ms
+ GET /api/dispatch/calendar 200 in 755ms
+ GET /api/dispatch/conflicts 200 in 761ms
+ GET /api/access 200 in 409ms
+ GET /api/dispatch/calendar 200 in 499ms
+ GET /api/dispatch/conflicts 200 in 362ms
+ GET / 200 in 185ms
+ GET /login 200 in 118ms
+ POST /api/auth/login 200 in 542ms
+ GET /dashboard 200 in 460ms
+ GET /api/access 200 in 271ms
+ GET /api/access 200 in 245ms
+ GET /dashboard 200 in 397ms
+ GET /api/access 200 in 246ms
+ GET /api/access 200 in 236ms
+ GET /team 200 in 188ms
+ GET /api/users 200 in 466ms
+ GET /api/access 200 in 492ms
+ GET /api/company 200 in 493ms
+ GET /profile 200 in 310ms
+ GET /api/access 200 in 230ms
+ GET /admin/users 200 in 181ms
+ GET /api/admin/users?page=1&limit=4 200 in 328ms
+ GET /api/access 200 in 326ms
+ GET /team 200 in 255ms
+ GET /api/access 200 in 665ms
+ GET /api/company 200 in 685ms
+ GET /api/users 200 in 778ms
+ GET /api/access 200 in 397ms
+ GET /api/company 200 in 404ms
+ GET /api/users 200 in 378ms
+ GET /api/users 200 in 291ms
+ GET /api/admin/users?page=1&limit=200 200 in 311ms
+ GET /admin/users 200 in 217ms
+ GET /api/access 200 in 302ms
+ GET /api/admin/users?page=1&limit=4 200 in 375ms
+ GET /api/access 200 in 363ms
+ GET /api/admin/users?page=1&limit=4 200 in 331ms
+ GET /login 200 in 132ms
+ POST /api/auth/login 200 in 472ms
+ GET /dashboard 200 in 368ms
+ GET /api/access 200 in 237ms
+ GET /api/access 200 in 250ms
+ GET /jobs 200 in 186ms
+ GET /api/access 200 in 350ms
+ GET /api/jobs 200 in 430ms
+ GET /api/customers 200 in 382ms
+ GET /api/access 200 in 302ms
+ GET /api/jobs 200 in 347ms
+ POST /api/jobs 201 in 348ms
+ GET /jobs 200 in 197ms
+ GET /api/jobs 200 in 343ms
+ GET /login 200 in 230ms
+ POST /api/auth/login 200 in 420ms
+ GET /dashboard 200 in 365ms
+ GET /api/access 200 in 251ms
+ GET /api/access 200 in 223ms
+ GET /dispatch 200 in 208ms
+ GET /api/access 200 in 423ms
+ GET /api/dispatch/conflicts 200 in 527ms
+ GET /api/dispatch/calendar 200 in 594ms
+ GET /api/access 200 in 383ms
+ GET /api/dispatch/conflicts 200 in 344ms
+ GET /api/dispatch/calendar 200 in 429ms
+ POST /api/dispatch/auto-assign 200 in 499ms
+ GET /login 200 in 179ms
+ POST /api/auth/login 200 in 430ms
+ GET /dashboard 200 in 393ms
+ GET /api/access 200 in 270ms
+ GET /api/access 200 in 233ms
+ GET /admin/users 200 in 174ms
+ GET /api/access 200 in 293ms
+ GET /api/admin/users?page=1&limit=4 200 in 362ms
+ GET /api/access 200 in 268ms
+ GET /api/admin/users?page=1&limit=4 200 in 364ms
+ POST /api/admin/users 400 in 346ms
+ GET / 200 in 135ms
+ GET /login 200 in 109ms
+ POST /api/auth/login 200 in 950ms
+ GET /dashboard 200 in 1356ms
+ GET /api/access 200 in 514ms
+ GET /api/access 200 in 325ms
+ GET /dashboard 200 in 688ms
+ GET /api/access 200 in 356ms
+ GET /api/access 200 in 249ms
+ GET /team 200 in 161ms
+ GET /api/access 200 in 348ms
+ GET /api/users 200 in 351ms
+ GET /api/company 200 in 349ms
+ GET /profile 200 in 341ms
+ GET /api/access 200 in 336ms
+ GET /admin/users 200 in 225ms
+ GET /api/access 200 in 309ms
+ GET /api/admin/users?page=1&limit=4 200 in 312ms
+ GET /team 200 in 237ms
+ GET /api/users 200 in 409ms
+ GET /api/access 200 in 436ms
+ GET /api/company 200 in 454ms
+ GET /api/users 200 in 405ms
+ GET /api/access 200 in 380ms
+ GET /api/company 200 in 426ms
+ GET /api/users 200 in 311ms
+ GET /api/admin/users?page=1&limit=200 200 in 312ms
+ GET /admin/users 200 in 212ms
+ GET /api/access 200 in 383ms
+ GET /api/admin/users?page=1&limit=4 200 in 437ms
+ GET /api/access 200 in 471ms
+ GET /api/admin/users?page=1&limit=4 200 in 396ms
+ GET /login 200 in 141ms
+ POST /api/auth/login 200 in 614ms
+ GET /dashboard 200 in 469ms
+ GET /api/access 200 in 310ms
+ GET /api/access 200 in 317ms
+ GET /jobs 200 in 240ms
+ GET /api/customers 200 in 421ms
+ GET /api/access 200 in 445ms
+ GET /api/jobs 200 in 550ms
+ GET /api/access 200 in 348ms
+ GET /api/jobs 200 in 401ms
+ POST /api/jobs 201 in 514ms
+ GET /jobs 200 in 345ms
+ GET /api/jobs 200 in 351ms
+ GET /login 200 in 220ms
+ POST /api/auth/login 200 in 445ms
+ GET /dashboard 200 in 498ms
+ GET /api/access 200 in 283ms
+ GET /api/access 200 in 298ms
+ GET /dispatch 200 in 308ms
+ GET /api/access 200 in 487ms
+ GET /api/dispatch/conflicts 200 in 616ms
+ GET /api/dispatch/calendar 200 in 700ms
+ GET /api/access 200 in 415ms
+ GET /api/dispatch/conflicts 200 in 450ms
+ GET /api/dispatch/calendar 200 in 558ms
+ POST /api/dispatch/auto-assign 200 in 497ms
+ GET /api/dispatch/calendar 200 in 201ms
+ GET /api/dispatch/conflicts 200 in 147ms
+ GET /login 200 in 276ms
+ POST /api/auth/login 200 in 530ms
+ GET /dashboard 200 in 461ms
+ GET /api/access 200 in 304ms
+ GET /api/access 200 in 271ms
+ GET /admin/users 200 in 229ms
+ GET /api/access 200 in 407ms
+ GET /api/admin/users?page=1&limit=4 200 in 567ms
+ GET /api/access 200 in 372ms
+ GET /api/admin/users?page=1&limit=4 200 in 382ms
+ POST /api/admin/users 400 in 369ms
+ GET /login 200 in 105ms
+ POST /api/auth/login 200 in 502ms
+ GET /dashboard 200 in 394ms
+ GET /api/access 200 in 257ms
+ GET /api/access 200 in 241ms
+ ○ Compiling /settings ...
+ ✓ Compiled /settings in 784ms (450 modules)
+ GET /settings 200 in 1213ms
+ GET /api/access 200 in 278ms
+ ○ Compiling /api/users/[id] ...
+ ✓ Compiled /api/users/[id] in 586ms (452 modules)
+ GET /api/access 200 in 1519ms
+ GET /api/access 200 in 226ms
+ GET /api/users/0b7d4782-eaa2-4c11-9ee3-93c0e83d1287 200 in 1804ms
+ GET /api/access 200 in 276ms
+ GET /api/users/0b7d4782-eaa2-4c11-9ee3-93c0e83d1287 200 in 301ms
+ GET /team 200 in 254ms
+ GET /api/access 200 in 344ms
+ GET /api/company 200 in 416ms
+ GET /api/users 200 in 487ms
+ GET /api/access 200 in 259ms
+ GET /api/company 200 in 376ms
+ GET /api/users 200 in 303ms
+ GET /api/users 200 in 285ms
+ GET /login 200 in 213ms
+ POST /api/auth/login 200 in 409ms
+ GET /dashboard 200 in 277ms
+ ○ Compiling /technician ...
+ ✓ Compiled /technician in 860ms (456 modules)
+ GET /api/access 200 in 1867ms
+ GET /api/access 200 in 285ms
+ GET /api/jobs 200 in 303ms
+ GET /api/jobs 200 in 285ms
+ GET /technician 200 in 179ms
+ GET /api/access 200 in 372ms
+ GET /api/jobs 200 in 545ms
+ ○ Compiling /technician/map ...
+ ✓ Compiled /technician/map in 933ms (460 modules)
+ GET /api/jobs 200 in 1390ms
+ GET /api/access 200 in 1474ms
+ GET /technician/map 200 in 1998ms
+ ○ Compiling /technician/equipment ...
+ ✓ Compiled /technician/equipment in 977ms (462 modules)
+ ✓ Compiled (466 modules)
+ GET /api/access 200 in 2373ms
+ GET /api/gps/history 200 in 2265ms
+ GET /technician/equipment 200 in 2088ms
+ GET /api/access 200 in 238ms
+ ○ Compiling /technician/schedule ...
+ ✓ Compiled /technician/schedule in 752ms (470 modules)
+ GET /api/access 200 in 1747ms
+ GET /technician/schedule 200 in 1915ms
+ GET /api/access 200 in 552ms
+ GET /api/jobs 200 in 709ms
+ ○ Compiling /technician/profile ...
+ ✓ Compiled /technician/profile in 1494ms (474 modules)
+ GET /api/access 200 in 2659ms
+ GET /api/jobs 200 in 2597ms
+ GET /technician/profile 200 in 3241ms
+ GET /api/access 200 in 524ms
+ ○ Compiling /technician/earnings ...
+ ✓ Compiled /api/users/me in 1775ms (478 modules)
+ ✓ Compiled (480 modules)
+ GET /api/access 200 in 3109ms
+ GET /api/users/me 200 in 3106ms
+ GET /technician/earnings 200 in 3975ms
+ ○ Compiling /technician/customers ...
+ ✓ Compiled /technician/customers in 1527ms (482 modules)
+ ✓ Compiled (486 modules)
+ GET /api/reports/commission 200 in 3674ms
+ GET /api/access 200 in 3726ms
+ GET /api/reports/payroll 200 in 3674ms
+ GET /technician/customers 200 in 3666ms
+ GET /api/customers 200 in 201ms
+ GET /api/access 200 in 198ms
+   Reload env: .env.local
+ ✓ Compiled in 1328ms (739 modules)

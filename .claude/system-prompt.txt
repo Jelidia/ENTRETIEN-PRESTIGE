@@ -125,5 +125,5 @@ Let me investigate and fix that... [manually debugs]
 
 ### Reference Files
 - CLAUDE.md (your architecture)
-- ENTRETIEN_PRESTIGE_FINAL_SPEC-1.md (requirements)
-- CODE_ANALYSIS_REPORT.md (current status)
+- ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md (requirements)
+- AUDIT_RESULTS.md (current status)

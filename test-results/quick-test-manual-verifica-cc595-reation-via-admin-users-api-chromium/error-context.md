@@ -1,0 +1,107 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - alert [ref=e2]
+  - generic [ref=e4]:
+    - main [ref=e5]:
+      - generic [ref=e6]:
+        - heading "Gestion des utilisateurs" [level=1] [ref=e7]
+        - button "+ Créer un utilisateur" [ref=e8] [cursor=pointer]
+      - generic [ref=e9]: Invalid API key
+      - table [ref=e11]:
+        - rowgroup [ref=e12]:
+          - row "Email Nom complet Rôle Statut Actions" [ref=e13]:
+            - columnheader "Email" [ref=e14]
+            - columnheader "Nom complet" [ref=e15]
+            - columnheader "Rôle" [ref=e16]
+            - columnheader "Statut" [ref=e17]
+            - columnheader "Actions" [ref=e18]
+        - rowgroup [ref=e19]:
+          - row "jelidiadam12+1@gmail.com Technician Demo Technicien Actif Modifier Supprimer" [ref=e20]:
+            - cell "jelidiadam12+1@gmail.com" [ref=e21]
+            - cell "Technician Demo" [ref=e22]
+            - cell "Technicien" [ref=e23]
+            - cell "Actif" [ref=e24]
+            - cell "Modifier Supprimer" [ref=e25]:
+              - button "Modifier" [ref=e26] [cursor=pointer]
+              - button "Supprimer" [ref=e27]
+          - row "jelidiadam12+2@gmail.com Sales Rep Demo Représentant commercial Actif Modifier Supprimer" [ref=e28]:
+            - cell "jelidiadam12+2@gmail.com" [ref=e29]
+            - cell "Sales Rep Demo" [ref=e30]
+            - cell "Représentant commercial" [ref=e31]
+            - cell "Actif" [ref=e32]
+            - cell "Modifier Supprimer" [ref=e33]:
+              - button "Modifier" [ref=e34] [cursor=pointer]
+              - button "Supprimer" [ref=e35]
+          - row "youssef.takhi@hotmail.com Youssef Takhi Responsable Actif Modifier Supprimer" [ref=e36]:
+            - cell "youssef.takhi@hotmail.com" [ref=e37]
+            - cell "Youssef Takhi" [ref=e38]
+            - cell "Responsable" [ref=e39]
+            - cell "Actif" [ref=e40]
+            - cell "Modifier Supprimer" [ref=e41]:
+              - button "Modifier" [ref=e42] [cursor=pointer]
+              - button "Supprimer" [ref=e43]
+          - row "jelidiadam12@gmail.com Adam Jelidi Administrateur Actif Modifier Supprimer" [ref=e44]:
+            - cell "jelidiadam12@gmail.com" [ref=e45]
+            - cell "Adam Jelidi" [ref=e46]
+            - cell "Administrateur" [ref=e47]
+            - cell "Actif" [ref=e48]
+            - cell "Modifier Supprimer" [ref=e49]:
+              - button "Modifier" [ref=e50] [cursor=pointer]
+              - button "Supprimer" [ref=e51]
+      - generic [ref=e52]:
+        - paragraph [ref=e53]: 1 à 4 de 4 utilisateurs
+        - generic [ref=e54]:
+          - button "← Page précédente" [disabled] [ref=e55] [cursor=pointer]
+          - button "Page suivante →" [disabled] [ref=e56] [cursor=pointer]
+      - generic [ref=e58]:
+        - heading "Nouvel utilisateur" [level=2] [ref=e59]
+        - generic [ref=e60]:
+          - generic [ref=e61]:
+            - generic [ref=e62]: Email
+            - textbox [ref=e63]: qa.user+1770016961995@example.com
+          - generic [ref=e64]:
+            - generic [ref=e65]: Mot de passe
+            - textbox [ref=e66]: Prestige2026!
+            - generic [ref=e67]: Min 8 caractères, 1 majuscule, 1 chiffre, 1 caractère spécial
+          - generic [ref=e68]:
+            - generic [ref=e69]: Nom complet
+            - textbox [ref=e70]: QA User
+          - generic [ref=e71]:
+            - generic [ref=e72]: Rôle
+            - combobox [ref=e73]:
+              - option "Administrateur"
+              - option "Responsable"
+              - option "Représentant commercial"
+              - option "Technicien" [selected]
+          - generic [ref=e74]:
+            - generic [ref=e75]: Statut
+            - combobox [ref=e76]:
+              - option "Actif" [selected]
+              - option "Inactif"
+          - generic [ref=e77]:
+            - button "Créer" [active] [ref=e78] [cursor=pointer]
+            - button "Annuler" [ref=e79] [cursor=pointer]
+    - navigation "Primary navigation" [ref=e80]:
+      - link "Home" [ref=e81] [cursor=pointer]:
+        - /url: /dashboard
+        - img [ref=e82]
+        - generic [ref=e84]: Home
+      - link "Schedule" [ref=e85] [cursor=pointer]:
+        - /url: /dispatch
+        - img [ref=e86]
+        - generic [ref=e89]: Schedule
+      - link "Customers" [ref=e90] [cursor=pointer]:
+        - /url: /customers
+        - img [ref=e91]
+        - generic [ref=e95]: Customers
+      - link "Team" [ref=e96] [cursor=pointer]:
+        - /url: /team
+        - img [ref=e97]
+        - generic [ref=e102]: Team
+      - link "Settings" [ref=e103] [cursor=pointer]:
+        - /url: /settings
+        - img [ref=e104]
+        - generic [ref=e107]: Settings
+```

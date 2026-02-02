@@ -1,0 +1,645 @@
+diff --git a/.claude-plugin/plugin.json b/.claude-plugin/plugin.json
+index 5e6bc71..e605957 100644
+--- a/.claude-plugin/plugin.json
++++ b/.claude-plugin/plugin.json
+@@ -3,7 +3,7 @@
+   "version": "1.0.0",
+   "description": "Complete Claude Code development environment for Entretien Prestige - Quebec cleaning company ERP system",
+   "author": "Entretien Prestige Development Team",
+-  "repository": "https://github.com/your-org/entretien-prestige",
++  "repository": "https://github.com/Jelidia/ENTRETIEN-PRESTIGE",
+   "license": "UNLICENSED",
+   "private": true,
+   "keywords": [
+@@ -174,14 +174,16 @@
+   "context": {
+     "alwaysInclude": [
+       "CLAUDE.md",
+-      "ENTRETIEN_PRESTIGE_FINAL_SPEC-1.md",
+-      "READY_TO_DEPLOY.md"
++      "ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md",
++      "COMMIT_READY.md"
+     ],
+     "documentation": [
+       "README.md",
+-      "AGENTS_GUIDE.md",
+-      "SKILLS_GUIDE.md",
+-      "SQL_MIGRATION_GUIDE.md"
++      "AGENTS.md",
++      ".claude/AGENTS_GUIDE.md",
++      ".claude/SKILLS_GUIDE.md",
++      "DATABASE_SETUP.md",
++      "TROUBLESHOOTING.md"
+     ]
+   },
+   "scripts": {
+diff --git a/.claude/agents/prompt-director.md b/.claude/agents/prompt-director.md
+new file mode 100644
+index 0000000..3104d23
+--- /dev/null
++++ b/.claude/agents/prompt-director.md
+@@ -0,0 +1,41 @@
++---
++name: prompt-director
++description: Rewrites every user request into a high-quality task prompt for this repo, then executes or delegates.
++model: sonnet
++permissionMode: restricted
++tools:
++  - Read
++  - Grep
++  - Glob
++  - Task
++  - Edit
++  - Write
++  - Bash
++skills:
++  - agent-browser
++  - spec-enforcer
++context:
++  - AGENTS.md
++  - CLAUDE.md
++  - ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md
++---
++
++You are the **Prompt Director** for Entretien Prestige.
++
++For EVERY user message:
++1) Produce a **Prompt Optimisé** (same language as the user) with:
++   - Goal
++   - Context (repo constraints)
++   - Plan (files + steps)
++   - Validation (exact commands)
++   - Definition of done
++2) Then:
++   - If the user says "prompt-only", stop.
++   - Else, either execute the task directly, or delegate to a specialist agent (feature-builder, bug-hunter, database-architect, code-reviewer) using Task.
++
++Hard constraints to keep in mind:
++- Mobile-first max width 640px + bottom nav
++- Quebec French UI strings
++- Every API route authenticates + company_id scoping
++- Zod schemas go in lib/validators.ts
++- Prefer Supabase user client to enforce RLS
+diff --git a/.claude/settings.json b/.claude/settings.json
+index 12881e1..c025292 100644
+--- a/.claude/settings.json
++++ b/.claude/settings.json
+@@ -36,7 +36,7 @@
+   "context": {
+     "alwaysInclude": [
+       "CLAUDE.md",
+-      "ENTRETIEN_PRESTIGE_FINAL_SPEC-1.md"
++      "ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md"
+     ],
+     "maxTokens": 50000
+   }
+diff --git a/.claude/system-prompt.txt b/.claude/system-prompt.txt
+index 81e0b38..19bf7ff 100644
+--- a/.claude/system-prompt.txt
++++ b/.claude/system-prompt.txt
+@@ -125,5 +125,5 @@ Let me investigate and fix that... [manually debugs]
+ 
+ ### Reference Files
+ - CLAUDE.md (your architecture)
+-- ENTRETIEN_PRESTIGE_FINAL_SPEC-1.md (requirements)
+-- CODE_ANALYSIS_REPORT.md (current status)
++- ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md (requirements)
++- AUDIT_RESULTS.md (current status)
+diff --git a/.opencode/agents/ep.md b/.opencode/agents/ep.md
+new file mode 100644
+index 0000000..8093b48
+--- /dev/null
++++ b/.opencode/agents/ep.md
+@@ -0,0 +1,78 @@
++---
++description: Entretien Prestige (default) — upgrades every user request into an AI-optimized prompt, then executes it safely in this repo.
++mode: primary
++model: opencode/gpt-5.1-codex
++temperature: 0.2
++permission:
++  edit: ask
++  bash: ask
++  webfetch: ask
++  task: allow
++---
++
++You are the default coding agent for the **Entretien Prestige** repo.
++
++## Core behavior
++
++### 1) Prompt Upgrade (EVERY message)
++Before you do anything else, rewrite the user's request into an **AI-optimized prompt** that is:
++- Specific (what / where / constraints)
++- Testable (clear definition of done)
++- Minimal (smallest change that solves it)
++- Repo-aware (uses the existing patterns/files)
++
++Output it as:
++
++**Optimized prompt**
++- Goal
++- Context (relevant repo constraints)
++- Plan (files + steps)
++- Validation (exact commands)
++- Definition of done
++
++Then:
++- If the user says **"prompt-only"**, stop after the optimized prompt.
++- Otherwise, proceed and execute the optimized prompt.
++
++### 2) Execute safely
++- Inspect before editing: search for existing patterns and reuse them.
++- Keep diffs small. Prefer editing existing files over adding new abstractions.
++- Never edit build artifacts (`.next/`, `coverage/`, `test-results/`, `node_modules/`).
++- Never print secrets (env vars, service role keys).
++
++## Hard project constraints (must follow)
++
++### UI
++- Mobile-first only, max width 640px.
++- UI strings must be **Quebec French** (code identifiers remain English).
++- Role-based UX: bottom navigation differs by role.
++
++### API + Security + Data
++- Every `app/api/**/route.ts` must authenticate (`requireUser/requireRole/requirePermission`).
++- Multi-tenant always: scope every query by `company_id`.
++- Prefer `createUserClient(accessToken)` (RLS enforced).
++- Use `createAdminClient()` only when required and still scope by `company_id`.
++- All request validation schemas live in `lib/validators.ts` (never inline schemas).
++- For retryable write endpoints, use idempotency helpers (`lib/idempotency.ts`).
++- For sensitive actions, log via `lib/auditLog.ts`.
++
++### Conventions
++- Prefer `@/…` imports.
++- Keep business logic in `lib/`, UI in `components/`.
++
++## Default verification
++Choose what fits the change:
++- `npm run typecheck`
++- `npm run lint`
++- `npm test`
++- `npm run test:e2e`
++
++Also consider repo scripts for auth/RLS issues:
++- `node scripts/check-rls-status.ts`
++- `node scripts/diagnose-rls.ts`
++- `node scripts/test-login-flow.ts`
++
++## Output expectations
++- Start with the **Optimized prompt**.
++- Then work.
++- Finish with a concise summary: files changed + commands run + next manual checks.
+diff --git a/.opencode/agents/review.md b/.opencode/agents/review.md
+new file mode 100644
+index 0000000..1c2a054
+--- /dev/null
++++ b/.opencode/agents/review.md
+@@ -0,0 +1,21 @@
++---
++description: Review-only agent (security, RLS, spec, and tests). No file edits.
++mode: subagent
++model: opencode/gpt-5.1-codex
++temperature: 0.2
++permission:
++  edit: deny
++  bash: ask
++  webfetch: deny
++---
++
++You are a **review-only** subagent.
++
++Goals:
++- Review changes for: security, RLS/multi-tenancy, validation, UI French, and repo conventions.
++- Point out risks and missing tests.
++
++Rules:
++- Do **not** edit files.
++- Only suggest exact file/line-level fixes.
++- If you need more context, request specific files.
+diff --git a/.opencode/commands/improve.md b/.opencode/commands/improve.md
+new file mode 100644
+index 0000000..8b019e9
+--- /dev/null
++++ b/.opencode/commands/improve.md
+@@ -0,0 +1,18 @@
++---
++description: Rewrite a raw request into an AI-optimized prompt for this repo. Usage: /improve <request>
++agent: ep
++---
++
++Rewrite the user request below into an **AI-optimized prompt** for this repository.
++
++User request:
++"""
++$ARGUMENTS
++"""
++
++Output ONLY the optimized prompt, following:
++- Goal
++- Context (repo constraints)
++- Plan (files + steps)
++- Validation (exact commands)
++- Definition of done
+diff --git a/.opencode/commands/lint.md b/.opencode/commands/lint.md
+new file mode 100644
+index 0000000..4c3df68
+--- /dev/null
++++ b/.opencode/commands/lint.md
+@@ -0,0 +1,10 @@
++---
++description: Run eslint (Next.js lint) and fix issues.
++agent: ep
++---
++
++!npm run lint
++
++- Summarize lint issues by type.
++- Fix them with minimal diffs.
++- Re-run lint at the end.
+diff --git a/.opencode/commands/review.md b/.opencode/commands/review.md
+new file mode 100644
+index 0000000..c927b4c
+--- /dev/null
++++ b/.opencode/commands/review.md
+@@ -0,0 +1,20 @@
++---
++description: Review current git diff for security/RLS/validation/spec issues (no edits).
++agent: review
++subtask: true
++---
++
++Current git diff:
++!git diff
++
++Please review:
++- Security/auth on API routes
++- RLS + company_id scoping
++- Zod validation (from lib/validators.ts)
++- Quebec French UI strings
++- Repo conventions
++
++Output:
++- Findings grouped by severity
++- Concrete file/line suggestions
++- A short checklist of what to validate manually
+diff --git a/.opencode/commands/rls-check.md b/.opencode/commands/rls-check.md
+new file mode 100644
+index 0000000..d0e49f8
+--- /dev/null
++++ b/.opencode/commands/rls-check.md
+@@ -0,0 +1,9 @@
++---
++description: Run Supabase RLS/policy diagnostics script and interpret the output.
++agent: ep
++---
++
++!node scripts/check-rls-status.ts
++
++- Explain what the output means (RLS/policies/table access).
++- If something looks wrong, propose the safest next diagnostic step.
+diff --git a/.opencode/commands/test.md b/.opencode/commands/test.md
+new file mode 100644
+index 0000000..613f9a1
+--- /dev/null
++++ b/.opencode/commands/test.md
+@@ -0,0 +1,11 @@
++---
++description: Run unit tests (Vitest) and fix failures.
++agent: ep
++---
++
++!npm test
++
++- Summarize failing tests.
++- Fix the underlying issues (minimal diffs).
++- Add/adjust tests if needed.
++- Re-run `npm test` until green.
+diff --git a/.opencode/commands/typecheck.md b/.opencode/commands/typecheck.md
+new file mode 100644
+index 0000000..7c39c09
+--- /dev/null
++++ b/.opencode/commands/typecheck.md
+@@ -0,0 +1,11 @@
++---
++description: Run TypeScript typecheck and summarize errors + fix plan.
++agent: ep
++---
++
++!npm run typecheck
++
++- Summarize the errors (group by root cause).
++- Propose the minimal set of fixes and which files to touch.
++- If fixes are obvious, implement them.
++- Re-run typecheck at the end.
+diff --git a/AGENTS.md b/AGENTS.md
+index 350d60e..375c918 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -1,151 +1,113 @@
+-# AGENTS.md
++# AGENTS.md — Entretien Prestige
+ 
+-Guidance for agentic coding assistants working in this repo.
++This file is the **high‑signal, always‑on** project context for coding agents.
+ 
+-Read `CLAUDE.md` first. It is the authoritative guide for business rules, architecture, and production blockers. If you are using Claude Code, follow the skills/agents decision trees described there.
++- Keep it **short and accurate** (agents will see it often).
++- Put deep details in other docs and point to them.
+ 
+----
++If you need deeper context, prefer **targeted reads** (don’t paste huge files by default).
+ 
+ ## Repo snapshot
+-- Product: Entretien Prestige (mobile-first field-service ERP for a Quebec cleaning company)
+-- Stack: Next.js 14 App Router, TypeScript, Tailwind, Supabase (Postgres + RLS)
+-- Language: French for UI/SMS/customer-facing content; English for code/logs
+-- UI constraints: max width 640px, bottom nav always, no sidebar, exactly 5 tabs per role
+-- Status: not production-ready (see `ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md`)
+ 
+----
++**Product:** Quebec cleaning company ERP
++**Stack:** Next.js 14 (App Router) + TypeScript + Supabase (Postgres + RLS) + Tailwind
++**UI language:** Quebec French (code in English)
++
++### Key directories
++
++- `app/` — Next.js routes (App Router)
++  - `app/(app)/` protected routes
++  - `app/(auth)/` login
++  - `app/api/` API routes
++- `components/` — UI components
++- `lib/` — shared server/client logic
++  - `lib/auth.ts` — `requireUser/requireRole/requirePermission`
++  - `lib/supabaseServer.ts` — `createUserClient/createAdminClient`
++  - `lib/validators.ts` — **ALL Zod schemas live here**
++- `scripts/` — operational scripts (RLS/policies, reseed, verify users)
++- `supabase/` — schema, migrations, RLS policies (tracked)
++
++## Non‑negotiables (project rules)
++
++### UI/UX
++
++1. **Mobile-first only**: max width `640px`, bottom navigation.
++2. **French UI**: Quebec French strings for labels, errors, SMS/email templates.
++3. Role-based UX: 5 bottom nav tabs per role.
++
++### API + Security + Multi‑tenant
++
++1. **Every API route must authenticate** (`requireUser/requireRole/requirePermission`).
++2. **Multi‑tenant always**: scope reads/writes by `company_id`.
++3. Prefer `createUserClient(accessToken)` so RLS protects data.
++4. Use `createAdminClient()` only when required (admin-only flows) **and still scope by `company_id`**.
++5. Validate external input with **Zod schemas from `lib/validators.ts`** (never inline schemas).
++
++### Operational patterns (don’t reinvent)
++
++- **Idempotency**: write endpoints that can be retried should use the helpers in `lib/idempotency.ts`.
++- **Audit logging**: sensitive actions should log via `lib/auditLog.ts`.
++- **Rate limiting**: currently disabled (see `lib/rateLimit.ts` + `RATE_LIMIT_DISABLED.md`). Don’t accidentally remove/ignore this in “cleanup” work.
++
++### Code conventions
++
++- Use path aliases: prefer `@/…` imports over long relative paths.
++- Keep server-side logic in `lib/` and UI in `components/`.
++
++### Quality gates
++
++- Prefer small, focused diffs.
++- Don’t touch build artifacts: `.next/`, `node_modules/`, `coverage/`, `test-results/`.
++- Don’t commit secrets (`.env*`, `.mcp.json`, service keys).
++
++## How to work in this repo (agent workflow)
++
++1. **Restate the goal** and any assumptions.
++2. **Locate existing patterns** before writing new code (search similar routes/components).
++3. **Plan the smallest change**: list files to touch.
++4. Implement.
++5. **Run checks** (choose what fits the change):
++   - `npm run typecheck`
++   - `npm run lint`
++   - `npm test` (Vitest)
++   - `npm run test:e2e` (Playwright)
++6. Summarize: what changed, why, files touched, commands run.
++
++## Common commands
+ 
+-## Commands
+-### Install / run
+ ```bash
+ npm install
+ npm run dev
+-npm run build
+-npm run start
+ npm run lint
+ npm run typecheck
++npm test
++npm run test:e2e
+ ```
+ 
+-### Unit/integration tests (Vitest)
+-```bash
+-npm test                 # vitest run --coverage
+-npm run test:watch       # vitest
+-npx vitest run auth      # match test name pattern
+-npx vitest run --grep "login"
+-npx vitest run tests/technicianDashboard.test.tsx
+-```
++## Repo-specific diagnostics (useful before blaming RLS/auth)
+ 
+-### E2E tests (Playwright)
+ ```bash
+-npm run test:e2e
+-npx playwright test tests/e2e/smoke.spec.ts
+-npx playwright test --grep "smoke"
++node scripts/check-rls-status.ts
++node scripts/diagnose-rls.ts
++node scripts/test-login-flow.ts
++node scripts/verify-users-exist.ts
+ ```
+-Notes: Prefer targeted tests first; run full suite only for broad changes or on request. Coverage thresholds are 100% (see `vitest.config.ts`); `coverage.all` is false by default, so untouched files may not count toward coverage.
+-
+----
+-
+-## Code style & conventions
+-### TypeScript
+-- Strict mode is on; avoid `any` (use `unknown` + type guards).
+-- Prefer named exports.
+-- Use type-only imports where possible.
+-- Avoid unsafe assertions unless required.
+-
+-### Imports
+-- Use `@/` alias for repo-root imports (see `tsconfig.json`).
+-- Avoid deep `../../` when `@/` works.
+-- Order imports: external → internal (`@/`) → relative.
+-
+-### Formatting
+-- No dedicated formatter config; follow existing file style and ESLint guidance.
+-- Keep JSX/Tailwind class ordering consistent with nearby code.
+-
+-### Naming
+-- Components/types: `PascalCase`.
+-- Hooks: `useSomething`.
+-- Functions/vars: `camelCase`.
+-- Constants: `UPPER_SNAKE_CASE`.
+-- API folders/route segments: `kebab-case`.
+-- Zod schemas: `camelCaseSchema` (e.g. `loginSchema`).
+-
+-### Error handling
+-- Response shape: success `{ success: true, data }`, error `{ error: "Message", details?: technicalDetails }`.
+-- Do not return raw DB errors to clients; log server-side with context.
+-- Fail closed on missing required env vars or integrations (no silent fallbacks).
+-
+-### Localization
+-- Customer-facing strings and UI labels: French (Quebec).
+-- Technical logs/comments: English ok.
+-
+----
+-
+-## API route requirements (non-public)
+-- Authenticate: `requireUser`, `requireRole`, or `requirePermission`.
+-- Validate input with Zod in `lib/validators.ts` (no inline schemas in routes).
+-- Prefer the RLS client (`createUserClient(accessToken)`).
+-- Enforce multi-tenancy in every query (`company_id` scoping).
+-- Use consistent response shapes and status codes.
+-
+----
+-
+-## Data access rules
+-- Use Supabase client directly (no ORM).
+-- Prefer explicit column lists over `select("*")`.
+-- Use `.single()` when exactly one row is expected; `.maybeSingle()` when optional.
+-- If a table has `deleted_at`, exclude soft-deleted rows in queries.
+-- Treat webhook/third-party payloads as hostile; verify signatures and be idempotent.
+-
+----
+-
+-## UI/UX constraints
+-- Mobile-first layout; max width 640px and centered on desktop.
+-- `BottomNavMobile` always present; exactly 5 tabs per role.
+-- No sidebar and no horizontal scrolling.
+-- Prefer pagination or bottom sheets over long lists.
+-- Reuse shared components where possible (e.g. `BottomNavMobile`, `Pagination`, `BottomSheet`).
+-
+----
+-
+-## Testing guidelines
+-- Add tests for new business logic (`lib/`), API routes, and critical UI.
+-- If you fix a bug, add a regression test.
+-- Prefer the smallest relevant test run while iterating.
+-
+----
+-
+-## Database migrations
+-- Migrations live in `supabase/migrations/`.
+-- Create `YYYYMMDD_description.sql` files; apply via Supabase SQL editor or local workflow.
+-- Validate RLS policies and indexes for any schema changes.
+-
+----
+-
+-## Environment variables
+-Required:
+-- `NEXT_PUBLIC_SUPABASE_URL`
+-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+-- `SUPABASE_SERVICE_ROLE_KEY`
+-- `APP_ENCRYPTION_KEY` (must be required in production; fail closed)
+-- `NEXT_PUBLIC_BASE_URL`
+-
+-Optional integrations:
+-- `TWILIO_*`, `STRIPE_*`, `RESEND_*`, `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`
+-
+-Rules:
+-- Never commit secrets.
+-- Only `NEXT_PUBLIC_*` values may be exposed to the client.
+-
+----
+-
+-## Where to look first
+-- `CLAUDE.md` — architecture + non-negotiable rules (authoritative)
+-- `ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` — production readiness
+-- `ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md` — requirements/spec
+-- `CRITICAL_FIXES_README.md` — immediate fixes overview
+-- `TROUBLESHOOTING.md` — database issues and fixes
+-
+----
+-
+-## Cursor/Copilot rules
+-No `.cursor/rules/`, `.cursorrules`, or `.github/copilot-instructions.md` were found at last scan. If you add one, keep it consistent with `CLAUDE.md`.
++
++## “If you only read 3 docs”
++
++1. `README.md` — setup + high-level rules + known issues
++2. `ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md` — full product specification
++3. `TROUBLESHOOTING.md` — debugging playbook
++
++`CLAUDE.md` is a deeper operational playbook (agents/skills, checklists).
++
++## OpenCode quality-of-life
++
++This repo includes OpenCode config (`opencode.json`) plus a few custom commands:
++
++- `/improve <request>` — rewrite a raw request into an AI-optimized prompt
++- `/typecheck` — run `npm run typecheck`
++- `/lint` — run `npm run lint`
++- `/test` — run `npm test`
++- `/rls-check` — run `node scripts/check-rls-status.ts`
++- `/review` — run a read-only review of the current `git diff`
+diff --git a/CLAUDE.md b/CLAUDE.md
+index 70bc124..86e7dff 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -34,7 +34,7 @@ YES → DELEGATE TO AN AGENT IMMEDIATELY ✅
+ NO  → Manual change is acceptable (but still prefer a skill)
+ ```
+ 
+-**Agents available in this repo:** `feature-builder`, `database-architect`, `qa-engineer`, `bug-hunter`, `deploy-manager`, `code-reviewer`
++**Agents available in this repo:** `prompt-director`, `feature-builder`, `database-architect`, `qa-engineer`, `bug-hunter`, `deploy-manager`, `code-reviewer`
+ 
+ ---
+ 
+diff --git a/opencode.json b/opencode.json
+new file mode 100644
+index 0000000..c6ed83d
+--- /dev/null
++++ b/opencode.json
+@@ -0,0 +1,41 @@
++{
++  "$schema": "https://opencode.ai/config.json",
++  "default_agent": "ep",
++  "permission": {
++    "read": "allow",
++    "glob": "allow",
++    "grep": "allow",
++    "list": "allow",
++    "task": "allow",
++
++    "edit": "ask",
++    "webfetch": "ask",
++
++    "bash": {
++      "*": "ask",
++
++      "npm *": "allow",
++      "npx *": "allow",
++
++      "node scripts/check-rls-status.ts*": "allow",
++      "node scripts/diagnose-rls.ts*": "allow",
++      "node scripts/test-login-flow.ts*": "allow",
++      "node scripts/verify-users-exist.ts*": "allow",
++
++      "git status*": "allow",
++      "git diff*": "allow",
++      "git log*": "allow",
++      "git show*": "allow",
++      "git rev-parse*": "allow",
++      "git branch*": "allow",
++
++      "git checkout *": "ask",
++      "git commit *": "ask",
++      "git push *": "deny",
++
++      "rm *": "deny",
++      "sudo *": "deny",
++      "chmod 777 *": "deny"
++    }
++  }
++}

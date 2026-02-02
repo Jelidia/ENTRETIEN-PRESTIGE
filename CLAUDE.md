@@ -34,7 +34,7 @@ YES → DELEGATE TO AN AGENT IMMEDIATELY ✅
 NO  → Manual change is acceptable (but still prefer a skill)
 ```
 
-**Agents available in this repo:** `feature-builder`, `database-architect`, `qa-engineer`, `bug-hunter`, `deploy-manager`, `code-reviewer`
+**Agents available in this repo:** `prompt-director`, `feature-builder`, `database-architect`, `qa-engineer`, `bug-hunter`, `deploy-manager`, `code-reviewer`
 
 ---
 

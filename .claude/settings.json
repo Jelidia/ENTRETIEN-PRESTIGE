@@ -36,7 +36,7 @@
   "context": {
     "alwaysInclude": [
       "CLAUDE.md",
-      "ENTRETIEN_PRESTIGE_FINAL_SPEC-1.md"
+      "ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md"
     ],
     "maxTokens": 50000
   }

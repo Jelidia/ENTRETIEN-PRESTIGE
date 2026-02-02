@@ -33,6 +33,8 @@ export async function GET(request: Request) {
   );
 
   const data = {
+    userId: profile.user_id,
+    companyId: profile.company_id,
     permissions,
     rolePermissions: company?.role_permissions ?? {},
     userPermissions: profile.access_permissions ?? {},

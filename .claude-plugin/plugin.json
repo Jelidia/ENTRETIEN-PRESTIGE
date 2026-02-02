@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Complete Claude Code development environment for Entretien Prestige - Quebec cleaning company ERP system",
   "author": "Entretien Prestige Development Team",
-  "repository": "https://github.com/your-org/entretien-prestige",
+  "repository": "https://github.com/Jelidia/ENTRETIEN-PRESTIGE",
   "license": "UNLICENSED",
   "private": true,
   "keywords": [
@@ -174,14 +174,16 @@
   "context": {
     "alwaysInclude": [
       "CLAUDE.md",
-      "ENTRETIEN_PRESTIGE_FINAL_SPEC-1.md",
-      "READY_TO_DEPLOY.md"
+      "ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md",
+      "COMMIT_READY.md"
     ],
     "documentation": [
       "README.md",
-      "AGENTS_GUIDE.md",
-      "SKILLS_GUIDE.md",
-      "SQL_MIGRATION_GUIDE.md"
+      "AGENTS.md",
+      ".claude/AGENTS_GUIDE.md",
+      ".claude/SKILLS_GUIDE.md",
+      "DATABASE_SETUP.md",
+      "TROUBLESHOOTING.md"
     ]
   },
   "scripts": {

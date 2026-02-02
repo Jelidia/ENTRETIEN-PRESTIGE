@@ -14,9 +14,11 @@ export async function GET(request: Request) {
     return auth.response;
   }
   const { profile } = auth;
-
-  // Use service role client to bypass RLS (admin/manager querying all users)
-  const client = createAdminClient();
+  const token = getAccessTokenFromRequest(request);
+  if (!token) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const client = createUserClient(token);
   const { data, error } = await client
     .from("users")
     .select("user_id, full_name, email, phone, role, status, created_at, access_permissions")
@@ -25,6 +27,11 @@ export async function GET(request: Request) {
     .limit(200);
 
   if (error) {
+    console.error("Failed to load users", {
+      userId: profile.user_id,
+      companyId: profile.company_id,
+      error,
+    });
     return NextResponse.json({ error: "Unable to load users" }, { status: 400 });
   }
 
