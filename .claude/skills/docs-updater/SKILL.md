@@ -1,6 +1,6 @@
 ---
 name: docs-updater
-description: Update CLAUDE.md, README.md, and ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md after completing features. Keeps documentation synchronized with codebase changes.
+description: Update docs/ai/claude/CLAUDE.md, README.md, and docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md after completing features. Keeps documentation synchronized with codebase changes.
 argument-hint: "What changed (e.g., 'Update docs: added loyalty points redemption feature')"
 user-invocable: true
 disable-model-invocation: false
@@ -28,8 +28,8 @@ After completing features, fixing bugs, or making significant changes to the cod
 ## What it does
 1. Reads current documentation files
 2. Updates relevant sections with completed work
-3. Increments progress percentages in ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
-4. Adds new API endpoints to CLAUDE.md
+3. Increments progress percentages in docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
+4. Adds new API endpoints to docs/ai/claude/CLAUDE.md
 5. Updates feature status from ⚠️ to ✅
 6. Maintains consistent formatting
 
@@ -44,7 +44,7 @@ After completing features, fixing bugs, or making significant changes to the cod
 
 ## Files to update
 
-### CLAUDE.md
+### docs/ai/claude/CLAUDE.md
 - Architecture section (new routes, components)
 - API endpoint list
 - Critical Files section
@@ -55,7 +55,7 @@ After completing features, fixing bugs, or making significant changes to the cod
 - Setup instructions
 - New environment variables
 
-### ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
+### docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
 - Progress percentage (~XX% complete)
 - Feature completion status
 - New completed items marked ✅

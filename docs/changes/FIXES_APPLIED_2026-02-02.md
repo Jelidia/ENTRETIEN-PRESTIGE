@@ -109,7 +109,7 @@
 4. **Test Admin Users** page renders correctly
 5. **Test Profile** page renders correctly
 6. **Test remaining workflows** (job creation, dispatch, team member creation)
-7. **Update COMPREHENSIVE_FIX_STATUS.md** with results
+7. **Update docs/status/COMPREHENSIVE_FIX_STATUS.md** with results
 
 ---
 

@@ -83,7 +83,7 @@ Or be more direct:
 - React components with forms
 - Database migration (if needed)
 - Targeted tests for changed logic
-- Updated CLAUDE.md and ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
+- Updated docs/ai/claude/CLAUDE.md and docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
 
 **Typical Duration:** 15-30 minutes
 
@@ -213,7 +213,7 @@ Or be more direct:
 4. ✅ Reviews RLS policies
 5. ✅ Validates rate limiting config
 6. ✅ Generates deployment checklist
-7. ✅ Updates ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
+7. ✅ Updates docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
 
 **Example:**
 ```
@@ -223,7 +223,7 @@ Or be more direct:
 **Expected Output:**
 - Deployment readiness report
 - List of blockers (if any)
-- Updated ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
+- Updated docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
 - Deployment checklist
 - Migration execution order
 - Environment variable checklist
@@ -438,6 +438,6 @@ Consider creating a new agent when:
 ## 📚 Related Documentation
 
 - **SKILLS_GUIDE.md** - Quick code generation tools
-- **CLAUDE.md** - Project architecture and patterns
-- **ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md** - Current deployment status
-- **ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md** - Complete requirements
+- **docs/ai/claude/CLAUDE.md** - Project architecture and patterns
+- **docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md** - Current deployment status
+- **docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md** - Complete requirements

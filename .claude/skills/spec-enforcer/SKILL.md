@@ -1,6 +1,6 @@
 ---
 name: spec-enforcer
-description: Verify code matches ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md requirements. Use before completing features or deploying.
+description: Verify code matches docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md requirements. Use before completing features or deploying.
 argument-hint: "What to verify (e.g., 'Verify that photo upload matches spec')"
 user-invocable: true
 disable-model-invocation: false
@@ -19,7 +19,7 @@ hooks:
 ---
 
 # spec-enforcer Skill
-## Verify code matches ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md
+## Verify code matches docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md
 
 ## When to use
 Before completing a feature, before deploying
@@ -28,7 +28,7 @@ Before completing a feature, before deploying
 `/spec-enforcer Verify that photo upload matches spec`
 
 ## What it does
-1. Reads ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md
+1. Reads docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md
 2. Checks your implementation
 3. Lists what matches (✅), what's missing (⚠️), what's wrong (❌)
 4. Suggests fixes if needed

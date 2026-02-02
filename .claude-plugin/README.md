@@ -93,7 +93,7 @@ Use the bug-hunter agent to investigate why the sales dashboard shows 0 for reve
 - Verifies environment variables
 - Checks database migrations
 - Reviews RLS policies
-- Updates ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
+- Updates docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
 
 **Example:**
 ```
@@ -294,18 +294,18 @@ Prefer targeted runs while iterating; reserve full-suite runs for broad changes 
 ## 📖 Documentation
 
 ### Core Documentation
-- **CLAUDE.md** - Complete architecture and patterns guide
-- **ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md** - Full project specification
-- **ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md** - Deployment readiness status
+- **docs/ai/claude/CLAUDE.md** - Complete architecture and patterns guide
+- **docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md** - Full project specification
+- **docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md** - Deployment readiness status
 
 ### Guides
 - **AGENTS_GUIDE.md** - Detailed agent documentation
 - **SKILLS_GUIDE.md** - Complete skills reference
-- **TROUBLESHOOTING.md** - Database migration troubleshooting
+- **docs/ops/TROUBLESHOOTING.md** - Database migration troubleshooting
 
 ### Quick References
 - **README.md** - Quick start for developers
-- **AGENTS.md** - AI assistant quick reference
+- **.claude/README.md** - Claude Code quick reference
 
 ## 🔧 Configuration
 

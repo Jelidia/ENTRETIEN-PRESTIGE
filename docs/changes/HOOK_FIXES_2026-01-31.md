@@ -144,12 +144,12 @@ exit 0
 ```bash
 echo "👋 Welcome to Entretien Prestige Development"
 # ... 33 lines of output ...
-echo "📖 Key Docs: CLAUDE.md"
+echo "📖 Key Docs: docs/ai/claude/CLAUDE.md"
 ```
 
 **After:**
 ```bash
-# Silent mode - info is in CLAUDE.md
+# Silent mode - info is in docs/ai/claude/CLAUDE.md
 exit 0
 ```
 

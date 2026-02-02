@@ -177,11 +177,11 @@ From previous analysis, these features might be incomplete:
 
 After testing, update these files:
 
-1. **BUTTON_AUDIT_REPORT.md**
+1. **docs/audit/BUTTON_AUDIT_REPORT.md**
    - Update status column for each tested button
    - Add notes about bugs found
 
-2. **COMPREHENSIVE_FIX_STATUS.md**
+2. **docs/status/COMPREHENSIVE_FIX_STATUS.md**
    - Update "Pages Requiring Detailed Audit" section
    - Check off completed items
 

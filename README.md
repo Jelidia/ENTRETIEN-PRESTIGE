@@ -4,7 +4,7 @@
 
 Full-stack operations platform for Quebec cleaning company with dispatch, CRM, billing, SMS automation, sales pipeline, and commission tracking.
 
-**Status:** ~70-75% complete, foundation solid, APIs working, UI has critical gaps (see `ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md`)
+**Status:** ~70-75% complete, foundation solid, APIs working, UI has critical gaps (see `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md`)
 
 **Claude Code Integration:** Full development environment with 6 agents, 10 skills, comprehensive hooks, and MCP integration
 
@@ -119,7 +119,7 @@ SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';
 SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public';
 ```
 
-**Troubleshooting:** See `TROUBLESHOOTING.md` if errors occur.
+**Troubleshooting:** See `docs/ops/TROUBLESHOOTING.md` if errors occur.
 
 ### 4. Start Development Server
 
@@ -539,7 +539,7 @@ NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=
 - [ ] Verify mobile layout (640px max width)
 - [ ] Check browser console for errors
 
-See `ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` for detailed deployment status and checklist.
+See `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` for detailed deployment status and checklist.
 
 ---
 
@@ -547,18 +547,18 @@ See `ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` for detailed deploym
 
 ### For Developers
 
-- **CLAUDE.md** - Complete architecture guide with code examples (read this first!)
-- **AGENTS.md** - Quick reference for AI coding assistants (ChatGPT, Codex, Copilot)
+- **docs/ai/claude/CLAUDE.md** - Complete architecture guide with code examples (read this first!)
+- **docs/ai/agents/AGENTS.md** - OpenCode/Codex quick reference for AI coding assistants
 - **README.md** - This file (setup and overview)
 
 ### For Deployment
 
-- **ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md** - Implementation status and deployment checklist
-- **TROUBLESHOOTING.md** - Database migration troubleshooting
+- **docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md** - Implementation status and deployment checklist
+- **docs/ops/TROUBLESHOOTING.md** - Database migration troubleshooting
 
 ### For Business
 
-- **ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md** - Complete project specification (48+ requirements)
+- **docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md** - Complete project specification (48+ requirements)
 
 ### API Documentation
 
@@ -579,7 +579,7 @@ See `ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` for detailed deploym
 - `GET /api/sms/inbox` - Fetch inbox threads
 - `POST /api/sms/inbox/[threadId]/read` - Mark conversation as read
 
-**See `CLAUDE.md` for complete API patterns and examples.**
+**See `docs/ai/claude/CLAUDE.md` for complete API patterns and examples.**
 
 ---
 
@@ -676,7 +676,7 @@ SELECT company_id FROM jobs WHERE job_id = 'yyy';
 
 **"Column access_permissions does not exist"**
 - Apply `supabase/migrations/*.sql` in order (starting with `20260129080548_remote_schema.sql`).
-- See `TROUBLESHOOTING.md` for details.
+- See `docs/ops/TROUBLESHOOTING.md` for details.
 
 ### Rate Limit Errors in Development
 
@@ -699,18 +699,18 @@ SELECT company_id FROM jobs WHERE job_id = 'yyy';
 **Location:** Grand Montréal, Quebec, Canada
 **Version:** 1.0 (In Development - 70-75% Complete)
 **Specification:** Version 2.0 - Final (January 27, 2026)
-**Status:** NOT READY FOR PRODUCTION (critical bugs found - see `ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md`)
+**Status:** NOT READY FOR PRODUCTION (critical bugs found - see `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md`)
 
 **For technical questions:**
-- See `CLAUDE.md` - Complete architecture
-- See `AGENTS.md` - Quick reference
-- See `TROUBLESHOOTING.md` - Database issues
+- See `docs/ai/claude/CLAUDE.md` - Complete architecture
+- See `docs/ai/agents/AGENTS.md` - OpenCode/Codex quick reference
+- See `docs/ops/TROUBLESHOOTING.md` - Database issues
 
 **For business requirements:**
-- See `ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md` - Full specification
+- See `docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md` - Full specification
 
 **For deployment:**
-- See `ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` - Status and checklist
+- See `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` - Status and checklist
 
 ---
 

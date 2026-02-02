@@ -872,12 +872,12 @@ Include:
 
 ### Documentation Locations
 
-- **Project docs:** `/CLAUDE.md`, `/README.md`
-- **Spec:** `/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md`
+- **Project docs:** `docs/ai/claude/CLAUDE.md`, `README.md`
+- **Spec:** `docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md`
 - **Agents:** `/.claude/AGENTS_GUIDE.md`
 - **Skills:** `/.claude/SKILLS_GUIDE.md`
 - **Migrations:** `/supabase/migrations/`
-- **Deployment:** `/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md`
+- **Deployment:** `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md`
 
 ### Community Support
 

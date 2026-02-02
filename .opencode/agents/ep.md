@@ -1,7 +1,7 @@
 ---
 description: Entretien Prestige (default) — upgrades every user request into an AI-optimized prompt, then executes it safely in this repo.
 mode: primary
-model: opencode/gpt-5.1-codex
+model: openai/gpt-5.2-codex
 temperature: 0.2
 permission:
   edit: ask

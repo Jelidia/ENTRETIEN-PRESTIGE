@@ -37,7 +37,7 @@ Creating pages (app/*/page.tsx) or components
 
 ## What it does
 1. Reads system-prompt (640px mobile-first rule)
-2. Checks AGENTS.md (French labels, BottomNavMobile)
+2. Checks docs/ai/claude/CLAUDE.md (French labels, BottomNavMobile)
 3. Preserves BottomNavMobile and 5-tab constraint when touching navigation
 4. Generates complete component
 5. Tailwind CSS only

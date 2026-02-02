@@ -127,7 +127,7 @@ Example findings:
 ### Spec Compliance
 Priority: HIGH
 
-Check against ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md:
+Check against docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md:
 - Required fields present
 - Business rules implemented correctly
 - French labels used

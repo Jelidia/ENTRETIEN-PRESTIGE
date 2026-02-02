@@ -166,9 +166,9 @@ This directory contains all Claude Code automation configurations for the projec
 5. Try a simple agent - "Use bug-hunter to check for missing RLS policies"
 
 ### Project Context:
-- `../CLAUDE.md` - Project architecture
-- `../ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` - Current status
-- `../ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md` - Requirements
+- `../docs/ai/claude/CLAUDE.md` - Project architecture
+- `../docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` - Current status
+- `../docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md` - Requirements
 
 ---
 
@@ -272,7 +272,7 @@ Potential new skills/agents:
 For issues or questions:
 1. Check `SKILLS_GUIDE.md` or `AGENTS_GUIDE.md`
 2. Review examples in this README
-3. Check project docs (`../CLAUDE.md`)
+3. Check project docs (`../docs/ai/claude/CLAUDE.md`)
 4. Ask Claude Code directly
 
 ---

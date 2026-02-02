@@ -656,4 +656,3 @@ Call log:
 **Message:** Found 0 calendar events
 
 ---
-

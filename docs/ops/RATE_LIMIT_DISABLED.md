@@ -33,7 +33,7 @@ This prevented testing from completing successfully.
    ```
 4. **Uncomment** the original code block (marked with `/* ORIGINAL CODE - RE-ENABLE FOR PRODUCTION: */`)
 5. **Remove** the warning comments at the top of the function
-6. **Delete** this file (`RATE_LIMIT_DISABLED.md`)
+6. **Delete** this file (`docs/ops/RATE_LIMIT_DISABLED.md`)
 7. Test that rate limiting works:
    ```bash
    # Try to login 6 times quickly - should get rate limited
@@ -47,7 +47,7 @@ Before production deployment, verify:
 - [ ] Login endpoint rate limits working (test with 6+ rapid attempts)
 - [ ] API endpoint rate limits working
 - [ ] Middleware rate limits working
-- [ ] This file (`RATE_LIMIT_DISABLED.md`) deleted
+- [ ] This file (`docs/ops/RATE_LIMIT_DISABLED.md`) deleted
 
 ## Current Rate Limits (When Re-enabled)
 

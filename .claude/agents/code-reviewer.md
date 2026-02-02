@@ -20,8 +20,8 @@ hooks:
     condition: path.includes('app/api/')
     message: "Checking API route for auth, validation, and RLS compliance..."
 context:
-  - ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md
-  - CLAUDE.md
+  - docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md
+  - docs/ai/claude/CLAUDE.md
   - lib/auth.ts
   - lib/validators.ts
   - middleware.ts
@@ -41,7 +41,7 @@ context:
 - Security audit
 
 **What it does:**
-1. Reads ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md
+1. Reads docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md
 2. Reviews code against spec requirements
 3. Checks for pattern consistency
 4. Verifies security (RLS, auth, validation)

@@ -123,10 +123,10 @@ npm run dev
 
 ## Docs to Read
 
-1. `CLAUDE.md` - Full project guidelines
-2. `FIXES_APPLIED_2026-02-02.md` - Today's fixes
-3. `MANUAL_TEST_CHECKLIST.md` - Testing steps
-4. `COMPREHENSIVE_FIX_STATUS.md` - Overall status
+1. `docs/ai/agents/AGENTS.md` - OpenCode/Codex agent context
+2. `docs/changes/FIXES_APPLIED_2026-02-02.md` - Today's fixes
+3. `docs/testing/MANUAL_TEST_CHECKLIST.md` - Testing steps
+4. `docs/status/COMPREHENSIVE_FIX_STATUS.md` - Overall status
 
 ---
 

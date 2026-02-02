@@ -66,9 +66,9 @@ This project is **not production-ready yet**. Several flows are incomplete or br
 
 ### Where the “source of truth” lives
 
-1. **Specification:** `ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md`
-2. **Deployment readiness:** `ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md`
-3. **Master backlog (production-ready checklist):** `ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md`
+1. **Specification:** `docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md`
+2. **Deployment readiness:** `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md`
+3. **Master backlog (production-ready checklist):** `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md`
 4. **DB schema & migrations:** `supabase/schema.sql`, `supabase/migrations/*`
 5. **API auth patterns:** `lib/auth.ts`, `lib/session.ts`, `middleware.ts`
 6. **Validation:** `lib/validators.ts` (single source of truth)
@@ -328,7 +328,7 @@ Examples (Claude Code slash commands):
 /ui-builder Build technician job checklist screen (mobile-first, French labels)
 /migration-builder Add table job_checklists with RLS and indexes
 /rls-policy-builder Add RLS for invoices with company_id isolation
-/docs-updater Update ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md after implementing Stripe webhook idempotency
+/docs-updater Update docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md after implementing Stripe webhook idempotency
 /spec-enforcer Verify current implementation vs spec sections 1–10
 ```
 
@@ -365,7 +365,7 @@ Template lives in `.env.example`.
 
 ## Deployment notes
 
-Follow `ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` for readiness status and blockers.
+Follow `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` for readiness status and blockers.
 
 Minimum production checks:
 - `npm run build` succeeds
@@ -381,11 +381,11 @@ Minimum production checks:
 
 ## Documentation index
 
-- `ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md` — requirements/spec
-- `ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` — production-readiness checklist
-- `ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` — full backlog to reach production
+- `docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md` — requirements/spec
+- `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` — production-readiness checklist
+- `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` — full backlog to reach production
 - `CRITICAL_FIXES_README.md` — immediate fixes overview
-- `TROUBLESHOOTING.md` — known issues & debugging
+- `docs/ops/TROUBLESHOOTING.md` — known issues & debugging
 - `.claude/AGENTS_GUIDE.md`, `.claude/SKILLS_GUIDE.md` — Claude Code configuration
 
 ---

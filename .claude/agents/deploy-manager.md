@@ -24,11 +24,11 @@ hooks:
     condition: "command.includes('npm test')"
     script: ".claude/hooks/check-coverage.sh"
 context:
-  - ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
+  - docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
   - .env.example
   - supabase/migrations/*.sql
   - middleware.ts
-  - CLAUDE.md
+  - docs/ai/claude/CLAUDE.md
 ---
 
 # Deploy Manager Agent
@@ -51,7 +51,7 @@ context:
 4. Reviews RLS policies
 5. Validates rate limiting configuration
 6. Generates deployment checklist
-7. Updates ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
+7. Updates docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
 
 **Example usage:**
 ```bash
@@ -67,12 +67,12 @@ context:
 - Verifies all migrations are documented
 - Checks RLS policies exist on all tables
 - Reviews rate limiting rules
-- Updates ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md with current status
+- Updates docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md with current status
 
 **Expected output:**
 - Deployment readiness report
 - List of blockers (if any)
-- Updated ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
+- Updated docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
 - Deployment checklist
 - Migration execution order
 - Environment variable checklist
@@ -92,4 +92,4 @@ context:
 - ✅ Environment variables documented
 - ✅ Rate limiting configured
 - ✅ No TODOs or FIXME comments in critical code
-- ✅ ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md is up to date
+- ✅ docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md is up to date

@@ -564,11 +564,11 @@ Based on audit findings, prioritize and fix:
 
 ## 📝 Documentation Index
 
-- `ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md` — Requirements/spec
-- `ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` — Production-readiness checklist
+- `docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md` — Requirements/spec
+- `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` — Production-readiness checklist
 - `CRITICAL_FIXES_README.md` — Immediate fixes overview
-- `TROUBLESHOOTING.md` — Known issues & debugging
-- `COMPREHENSIVE_FIX_STATUS.md` — This document (testing status)
+- `docs/ops/TROUBLESHOOTING.md` — Known issues & debugging
+- `docs/status/COMPREHENSIVE_FIX_STATUS.md` — This document (testing status)
 - `.claude/AGENTS_GUIDE.md` — Claude Code agents guide
 - `.claude/SKILLS_GUIDE.md` — Claude Code skills guide
 

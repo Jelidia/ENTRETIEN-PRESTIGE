@@ -7,7 +7,7 @@
 1. **Rate Limiting Disabled** (temporary)
    - File: `lib/rateLimit.ts`
    - Original code preserved in comments
-   - See `RATE_LIMIT_DISABLED.md` for re-enablement
+- See `docs/ops/RATE_LIMIT_DISABLED.md` for re-enablement
 
 2. **RLS Policy Fixed** (with helper functions)
    - Created `get_user_role()` and `get_user_company_id()` functions
@@ -113,11 +113,11 @@ users_read_company_admin_manager
 
 ```
 lib/rateLimit.ts                                         [MODIFIED - disabled]
-RATE_LIMIT_DISABLED.md                                   [CREATED]
-ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md   [MODIFIED - warning]
-TEST_RESULTS_SUMMARY.md                                  [CREATED]
-TESTING_CHANGES_APPLIED.md                               [CREATED]
-FINAL_STATUS_AND_NEXT_STEPS.md                           [CREATED - this file]
+docs/ops/RATE_LIMIT_DISABLED.md                           [CREATED]
+docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md   [MODIFIED - warning]
+docs/testing/TEST_RESULTS_SUMMARY.md                      [CREATED]
+docs/testing/TESTING_CHANGES_APPLIED.md                   [CREATED]
+docs/status/FINAL_STATUS_AND_NEXT_STEPS.md                [CREATED - this file]
 components/LogoutButton.tsx                              [CREATED]
 components/TopBar.tsx                                    [MODIFIED - logout button]
 app/(app)/team/page.tsx                                  [MODIFIED - role redirect]
@@ -166,12 +166,12 @@ tests/e2e/*.spec.ts                                      [CREATED - test suites]
 
 **CRITICAL CHECKLIST:**
 
-- [ ] Re-enable rate limiting (see `RATE_LIMIT_DISABLED.md`)
+- [ ] Re-enable rate limiting (see `docs/ops/RATE_LIMIT_DISABLED.md`)
 - [ ] Test rate limiting works (try 6 rapid logins)
 - [ ] Verify team page shows all company users
 - [ ] Run full Playwright test suite
-- [ ] Delete `RATE_LIMIT_DISABLED.md`
-- [ ] Remove warning from `ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md`
+- [ ] Delete `docs/ops/RATE_LIMIT_DISABLED.md`
+- [ ] Remove warning from `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md`
 - [ ] Test all 4 user roles can login and see correct pages
 - [ ] Verify logout button works for all roles
 

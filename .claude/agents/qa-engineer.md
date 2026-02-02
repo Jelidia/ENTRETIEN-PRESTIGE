@@ -17,7 +17,7 @@ hooks:
 context:
   - vitest.config.ts
   - tests/**/*.test.ts
-  - CLAUDE.md
+  - docs/ai/claude/CLAUDE.md
 ---
 
 # QA Engineer Agent

@@ -17,7 +17,7 @@ The `rateLimit()` function now returns `{ allowed: true }` immediately, bypassin
 - Can run unlimited login attempts for Playwright tests
 - Can test all API endpoints without hitting limits
 
-⚠️ **CRITICAL:** Must re-enable before production! See `RATE_LIMIT_DISABLED.md` for instructions.
+⚠️ **CRITICAL:** Must re-enable before production! See `docs/ops/RATE_LIMIT_DISABLED.md` for instructions.
 
 ### 2. ✅ RLS Policy Fixed for Team Page
 
@@ -41,10 +41,10 @@ All have `company_id: f8e665f6-4bff-4ce3-b787-880bd506a8e7`
 ### 3. ✅ Documentation Updated
 
 **Files Created/Modified:**
-- `RATE_LIMIT_DISABLED.md` - Instructions for re-enabling rate limiting
-- `ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` - Added warning about rate limiting
-- `TEST_RESULTS_SUMMARY.md` - Complete test results and findings
-- `TESTING_CHANGES_APPLIED.md` - This file
+- `docs/ops/RATE_LIMIT_DISABLED.md` - Instructions for re-enabling rate limiting
+- `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` - Added warning about rate limiting
+- `docs/testing/TEST_RESULTS_SUMMARY.md` - Complete test results and findings
+- `docs/testing/TESTING_CHANGES_APPLIED.md` - This file
 
 ## Next Steps
 
@@ -74,7 +74,7 @@ npx playwright test tests/e2e/full-site-test.spec.ts --reporter=list
 
 ### Before Production Deployment:
 
-1. **Re-enable rate limiting** (see `RATE_LIMIT_DISABLED.md`):
+1. **Re-enable rate limiting** (see `docs/ops/RATE_LIMIT_DISABLED.md`):
    - Uncomment original code in `lib/rateLimit.ts`
    - Delete temporary return statement
    - Test rate limiting works
@@ -82,18 +82,18 @@ npx playwright test tests/e2e/full-site-test.spec.ts --reporter=list
 2. **Verify checklist:**
    - [ ] Rate limiting re-enabled
    - [ ] Test rapid login attempts (should get 429 after 5 attempts)
-   - [ ] Delete `RATE_LIMIT_DISABLED.md`
-   - [ ] Remove warning from `ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md`
+    - [ ] Delete `docs/ops/RATE_LIMIT_DISABLED.md`
+    - [ ] Remove warning from `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md`
 
 ## Files Modified
 
 ```
 lib/rateLimit.ts                                          [MODIFIED - rate limiting disabled]
 supabase/migrations/[timestamp]_allow_admin_manager.sql   [CREATED - RLS policy]
-RATE_LIMIT_DISABLED.md                                    [CREATED - restoration guide]
-ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md    [MODIFIED - added warning]
-TEST_RESULTS_SUMMARY.md                                   [CREATED - test results]
-TESTING_CHANGES_APPLIED.md                                [CREATED - this file]
+docs/ops/RATE_LIMIT_DISABLED.md                            [CREATED - restoration guide]
+docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md    [MODIFIED - added warning]
+docs/testing/TEST_RESULTS_SUMMARY.md                       [CREATED - test results]
+docs/testing/TESTING_CHANGES_APPLIED.md                    [CREATED - this file]
 ```
 
 ## Previous Fixes (Already Applied)

@@ -15,9 +15,8 @@ skills:
   - agent-browser
   - spec-enforcer
 context:
-  - AGENTS.md
-  - CLAUDE.md
-  - ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md
+  - docs/ai/claude/CLAUDE.md
+  - docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md
 ---
 
 You are the **Prompt Director** for Entretien Prestige.

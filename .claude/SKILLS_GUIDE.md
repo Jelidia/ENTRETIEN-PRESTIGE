@@ -233,7 +233,7 @@ This document lists all available skills for the Entretien Prestige project and 
 ---
 
 ### 10. docs-updater
-**Update CLAUDE.md, README.md, ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md after changes**
+**Update docs/ai/claude/CLAUDE.md, README.md, docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md after changes**
 
 **Features:**
 - Updates "Current Status" date
@@ -339,7 +339,7 @@ All skills are located in:
 ## 📊 Skill Usage Statistics
 
 Skills automatically track usage and maintain consistency across the codebase by:
-- Reading project context (CLAUDE.md, spec)
+- Reading project context (docs/ai/claude/CLAUDE.md, docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md)
 - Following established patterns
 - Generating code that matches existing style
 - Ensuring all features work together

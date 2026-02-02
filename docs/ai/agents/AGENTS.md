@@ -1,4 +1,4 @@
-# AGENTS.md — Entretien Prestige
+# AGENTS.md — Entretien Prestige (OpenCode/Codex)
 
 This file is the **high‑signal, always‑on** project context for coding agents.
 
@@ -47,7 +47,7 @@ If you need deeper context, prefer **targeted reads** (don’t paste huge files 
 
 - **Idempotency**: write endpoints that can be retried should use the helpers in `lib/idempotency.ts`.
 - **Audit logging**: sensitive actions should log via `lib/auditLog.ts`.
-- **Rate limiting**: currently disabled (see `lib/rateLimit.ts` + `RATE_LIMIT_DISABLED.md`). Don’t accidentally remove/ignore this in “cleanup” work.
+- **Rate limiting**: currently disabled (see `lib/rateLimit.ts` + `docs/ops/RATE_LIMIT_DISABLED.md`). Don’t accidentally remove/ignore this in “cleanup” work.
 
 ### Code conventions
 
@@ -96,12 +96,12 @@ node scripts/verify-users-exist.ts
 ## “If you only read 3 docs”
 
 1. `README.md` — setup + high-level rules + known issues
-2. `ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md` — full product specification
-3. `TROUBLESHOOTING.md` — debugging playbook
+2. `docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md` — full product specification
+3. `docs/ops/TROUBLESHOOTING.md` — debugging playbook
 
-`CLAUDE.md` is a deeper operational playbook (agents/skills, checklists).
+OpenCode handoff: `docs/ai/codex/OPENCODE_HANDOFF_PROMPT.md` (current status + next steps).
 
-## OpenCode quality-of-life
+## OpenCode/Codex quality-of-life
 
 This repo includes OpenCode config (`opencode.json`) plus a few custom commands:
 

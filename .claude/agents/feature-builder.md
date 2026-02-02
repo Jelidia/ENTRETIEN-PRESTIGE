@@ -21,9 +21,9 @@ skills:
   - spec-enforcer
 hooks:
 context:
-  - ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md
-  - CLAUDE.md
-  - ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
+  - docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md
+  - docs/ai/claude/CLAUDE.md
+  - docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
 ---
 
 # Feature Builder Agent
@@ -33,7 +33,7 @@ context:
 **Agent Type:** general-purpose
 
 **When to use:**
-- Implementing new features from ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md
+- Implementing new features from docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md
 - Creating complete workflows (API + UI + tests)
 - Multi-step implementations requiring coordination
 
@@ -54,7 +54,7 @@ context:
 ```
 
 **Capabilities:**
-- Reads spec, CLAUDE.md, codebase patterns
+- Reads spec, docs/ai/claude/CLAUDE.md, codebase patterns
 - Creates multiple files (routes, components, migrations, tests)
 - Uses existing skills (api-builder, ui-builder, test-generator, etc.)
 - Verifies compliance before completion

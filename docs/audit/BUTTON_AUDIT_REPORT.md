@@ -372,7 +372,7 @@
 
 ## 🚨 Known Issues (Pre-Audit)
 
-From COMPREHENSIVE_FIX_STATUS.md:
+From docs/status/COMPREHENSIVE_FIX_STATUS.md:
 
 1. **Job Photo Upload** - Path/storage inconsistencies
 2. **Invoice PDF Generation** - Multi-page, taxes, line items incomplete
@@ -418,8 +418,8 @@ From COMPREHENSIVE_FIX_STATUS.md:
 
 For questions about this audit report:
 - **Auditor:** Comprehensive Testing Suite
-- **Document:** BUTTON_AUDIT_REPORT.md
-- **Related:** COMPREHENSIVE_FIX_STATUS.md
+- **Document:** docs/audit/BUTTON_AUDIT_REPORT.md
+- **Related:** docs/status/COMPREHENSIVE_FIX_STATUS.md
 
 ---
 

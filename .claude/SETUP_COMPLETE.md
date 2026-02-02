@@ -46,8 +46,8 @@ All skills, agents, and documentation have been created and configured for the p
 1. ✅ `.claude/README.md` - Master index
 2. ✅ `.claude/SKILLS_GUIDE.md` - Skills reference (10 skills)
 3. ✅ `.claude/AGENTS_GUIDE.md` - Agents reference (6 agents)
-4. ✅ `CLAUDE.md` - Updated with skills/agents section
-5. ✅ `ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` - Updated to 90% complete
+4. ✅ `docs/ai/claude/CLAUDE.md` - Updated with skills/agents section
+5. ✅ `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` - Updated to 90% complete
 
 ---
 
@@ -293,8 +293,8 @@ All skills and agents are configured and ready. Start by:
 - **Skills documentation:** `.claude/SKILLS_GUIDE.md`
 - **Agents documentation:** `.claude/AGENTS_GUIDE.md`
 - **Master index:** `.claude/README.md`
-- **Project docs:** `CLAUDE.md`
-- **Deployment status:** `ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md`
+- **Project docs:** `docs/ai/claude/CLAUDE.md`
+- **Deployment status:** `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md`
 
 ---
 

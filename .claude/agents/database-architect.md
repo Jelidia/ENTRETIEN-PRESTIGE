@@ -26,7 +26,7 @@ hooks:
 context:
   - supabase/schema.sql
   - supabase/migrations/*.sql
-  - CLAUDE.md
+  - docs/ai/claude/CLAUDE.md
 ---
 
 # Database Architect Agent

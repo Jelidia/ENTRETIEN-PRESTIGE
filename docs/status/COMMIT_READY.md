@@ -11,10 +11,10 @@
 ✅ **Fixed page scrolling bug** - Added `overflow-y: auto` to `.app-body` CSS
 
 ### Documentation Created
-✅ **COMPREHENSIVE_FIX_STATUS.md** - Complete testing roadmap (27 pages inventoried)
-✅ **BUTTON_AUDIT_REPORT.md** - Framework to audit 180+ interactive elements
-✅ **TESTING_QUICKSTART.md** - Step-by-step manual testing guide
-✅ **COMMIT_READY.md** - This file
+✅ **docs/status/COMPREHENSIVE_FIX_STATUS.md** - Complete testing roadmap (27 pages inventoried)
+✅ **docs/audit/BUTTON_AUDIT_REPORT.md** - Framework to audit 180+ interactive elements
+✅ **docs/testing/TESTING_QUICKSTART.md** - Step-by-step manual testing guide
+✅ **docs/status/COMMIT_READY.md** - This file
 
 ### Testing Infrastructure
 ✅ **Playwright E2E tests** - 20 automated tests created
@@ -29,10 +29,10 @@
 - `app/globals.css` - Line 107: Added `overflow-y: auto` to fix scrolling
 
 ### Created:
-- `COMPREHENSIVE_FIX_STATUS.md`
-- `BUTTON_AUDIT_REPORT.md`
-- `TESTING_QUICKSTART.md`
-- `COMMIT_READY.md`
+- `docs/status/COMPREHENSIVE_FIX_STATUS.md`
+- `docs/audit/BUTTON_AUDIT_REPORT.md`
+- `docs/testing/TESTING_QUICKSTART.md`
+- `docs/status/COMMIT_READY.md`
 - `tests/e2e/comprehensive-site-test.spec.ts`
 - `tests/manual-comprehensive-test.ts`
 
@@ -68,9 +68,9 @@ TESTING INFRASTRUCTURE:
 - Document all test credentials
 
 DOCUMENTATION:
-- COMPREHENSIVE_FIX_STATUS.md - Complete project status
-- BUTTON_AUDIT_REPORT.md - Systematic audit framework
-- TESTING_QUICKSTART.md - Step-by-step testing guide
+- docs/status/COMPREHENSIVE_FIX_STATUS.md - Complete project status
+- docs/audit/BUTTON_AUDIT_REPORT.md - Systematic audit framework
+- docs/testing/TESTING_QUICKSTART.md - Step-by-step testing guide
 
 STATUS:
 - Phase 1 (Settings): ✅ Complete (10/10 tests passing)
@@ -80,7 +80,7 @@ STATUS:
 
 NEXT STEPS:
 - Run manual testing on all 27 pages
-- Document findings in BUTTON_AUDIT_REPORT.md
+- Document findings in docs/audit/BUTTON_AUDIT_REPORT.md
 - Fix P0 bugs (critical workflow blockers)
 - Expand French translations
 
@@ -191,7 +191,7 @@ This commit is ready because:
 **After this commit:**
 1. You manually test the scrolling fix
 2. You run the comprehensive test suite
-3. You document findings in BUTTON_AUDIT_REPORT.md
+3. You document findings in docs/audit/BUTTON_AUDIT_REPORT.md
 4. You identify P0 bugs to fix
 5. Next commit will fix those bugs
 
@@ -209,7 +209,7 @@ This commit is ready because:
 - **No functional changes** - Only bug fix + documentation
 - **Testing infrastructure is non-invasive** - Doesn't affect production code
 - **Mobile-first maintained** - All tests use 390px viewport
-- **Follows CLAUDE.md guidelines** - Skills/agents first, token-efficient
+- **Follows docs/ai/claude/CLAUDE.md guidelines** - Skills/agents first, token-efficient
 
 ---
 

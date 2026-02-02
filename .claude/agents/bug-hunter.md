@@ -21,8 +21,8 @@ hooks:
     condition: "git diff --name-only | wc -l > 5"
     message: "Bug fix should be minimal. You're changing too many files. Focus on root cause only."
 context:
-  - CLAUDE.md
-  - ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md
+  - docs/ai/claude/CLAUDE.md
+  - docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md
 ---
 
 # Bug Hunter Agent

@@ -1,7 +1,7 @@
 ---
 description: Review-only agent (security, RLS, spec, and tests). No file edits.
 mode: subagent
-model: opencode/gpt-5.1-codex
+model: openai/gpt-5.2-codex
 temperature: 0.2
 permission:
   edit: deny

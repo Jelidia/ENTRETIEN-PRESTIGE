@@ -34,7 +34,7 @@ Creating new endpoints (/api/sales/dashboard, /api/ratings/*, etc)
 
 ## What it does
 1. Reads system-prompt.txt (knows your rules)
-2. References CLAUDE.md (knows your architecture)
+2. References docs/ai/claude/CLAUDE.md (knows your architecture)
 3. Uses schemas from lib/validators.ts (no inline Zod)
 4. Generates endpoint with Auth → Validate → RLS Query → Respond
 5. Applies company_id filter (RLS)
