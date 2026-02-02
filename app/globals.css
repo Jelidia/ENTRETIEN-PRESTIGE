@@ -34,13 +34,11 @@ body {
   padding: 0;
   margin: 0;
   min-height: 100%;
+  min-height: 100dvh;
   scroll-behavior: smooth;
   /* Prevent horizontal scroll on mobile */
   overflow-x: hidden;
   max-width: 100vw;
-  /* Enable touch scrolling on mobile */
-  touch-action: manipulation;
-  -webkit-touch-callout: none;
 }
 
 body {
@@ -98,20 +96,15 @@ code {
 }
 
 .shell {
-  display: grid;
-  grid-template-columns: 1fr; /* MOBILE-FIRST: No sidebar column */
-  height: 100vh;
-  height: 100dvh;
-  overflow: hidden;
+  display: block;
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .app-body {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  overflow-x: hidden;
-  overflow-y: hidden;
+  display: block;
+  min-height: 100vh;
+  min-height: 100dvh;
   max-width: 100vw;
 }
 
@@ -195,62 +188,11 @@ code {
   margin: 0 auto;
   padding: 24px 20px calc(48px + var(--bottom-nav-height));
   width: 100%;
-  overflow-x: hidden;
-  min-height: 0;
-  flex: 1;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  /* Body scrolls, not this container */
+  min-height: auto;
 }
 
-/* Mobile/tablet: fall back to native body scrolling to avoid freezes */
-.device-mobile .shell,
-.device-tablet .shell {
-  height: auto;
-  min-height: 100dvh;
-  overflow: visible;
-}
-
-.device-mobile .app-body,
-.device-tablet .app-body {
-  height: auto;
-  min-height: 100dvh;
-  overflow: visible;
-}
-
-.device-mobile .content,
-.device-tablet .content {
-  overflow-y: visible;
-}
-
-/* iOS/Android touch scrolling fix - CRITICAL for single-finger scroll */
-.touch-device,
-.touch-device body {
-  touch-action: pan-x pan-y;
-  -webkit-overflow-scrolling: touch;
-}
-
-.os-ios,
-.os-ios body,
-.os-android,
-.os-android body {
-  touch-action: pan-x pan-y;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-}
-
-.os-ios .shell,
-.os-ios .app-body,
-.os-android .shell,
-.os-android .app-body {
-  touch-action: pan-y;
-  -webkit-overflow-scrolling: touch;
-}
-
-.os-ios .content,
-.os-android .content {
-  touch-action: pan-y;
-  -webkit-overflow-scrolling: touch;
-}
+/* Device-specific styles (if needed for future use) */
 
 .top-bar {
   display: flex;
@@ -1475,34 +1417,6 @@ code {
   * {
     animation-duration: 0.01s !important;
     transition-duration: 0.01s !important;
-  }
-}
-
-/* CRITICAL: Mobile touch scroll fix for iOS/Android - works before JS loads */
-@media (pointer: coarse), (hover: none) {
-  html, body {
-    touch-action: pan-x pan-y;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .shell {
-    height: auto !important;
-    min-height: 100dvh;
-    overflow: visible !important;
-    touch-action: pan-y;
-  }
-
-  .app-body {
-    height: auto !important;
-    min-height: 100dvh;
-    overflow: visible !important;
-    touch-action: pan-y;
-  }
-
-  .content {
-    overflow-y: visible !important;
-    touch-action: pan-y;
-    -webkit-overflow-scrolling: touch;
   }
 }
 
