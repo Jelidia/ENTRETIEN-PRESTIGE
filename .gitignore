@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js
+.next/
+out/
+build/
+
+# Environments & Secrets (CRITICAL)
+.env
+.env.local
+.env.*
+
+# Supabase
+# NOTE: Usually you want to keep 'migrations', but this ignores the WHOLE folder as requested.
+supabase/
+.mcp.json
+
+# Vercel
+.vercel/
+
+# System Files
+.DS_Store
+dist/
+coverage/

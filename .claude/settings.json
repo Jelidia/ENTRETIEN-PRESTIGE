@@ -1,0 +1,43 @@
+{
+  "hooks": {},
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(git *)",
+      "Bash(npx *)",
+      "Bash(ls *)",
+      "Bash(grep *)",
+      "Bash(tree *)",
+      "Bash(mkdir *)",
+      "Bash(cat *)",
+      "Read(*)",
+      "Write(*)",
+      "Edit(*)",
+      "Glob(*)",
+      "Grep(*)",
+      "Task(*)",
+      "Skill(*)"
+    ],
+    "deny": [
+      "Bash(rm -rf /)",
+      "Bash(sudo *)",
+      "Bash(chmod 777 *)"
+    ]
+  },
+  "outputStyles": {
+    "default": "production-ready",
+    "available": [
+      "production-ready",
+      "quebec-french",
+      "code-review"
+    ]
+  },
+  "context": {
+    "alwaysInclude": [
+      "CLAUDE.md",
+      "ENTRETIEN_PRESTIGE_FINAL_SPEC-1.md"
+    ],
+    "maxTokens": 50000
+  }
+}

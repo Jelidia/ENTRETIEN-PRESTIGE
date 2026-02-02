@@ -1,0 +1,131 @@
+{
+  "name": "entretien-prestige-dev",
+  "displayName": "Entretien Prestige Development Environment",
+  "version": "1.0.0",
+  "description": "Complete development environment for Entretien Prestige - a mobile-first ERP system for Quebec cleaning companies built with Next.js, TypeScript, and Supabase",
+  "longDescription": "This plugin provides a comprehensive development environment for the Entretien Prestige project, including specialized agents for feature development, database architecture, testing, bug fixing, deployment, and code review. It enforces Quebec French UI standards, mobile-first design (640px), 100% test coverage, and Row Level Security for multi-tenancy.\n\nIncludes 6 specialized agents, 10 custom skills, 3 output styles, comprehensive hooks system, and complete MCP/LSP integrations.",
+  "icon": "🧹",
+  "category": "development",
+  "tags": [
+    "next.js",
+    "typescript",
+    "supabase",
+    "erp",
+    "french",
+    "mobile-first",
+    "testing",
+    "enterprise"
+  ],
+  "author": {
+    "name": "Entretien Prestige Development Team",
+    "email": "dev@entretien-prestige.com",
+    "url": "https://entretien-prestige.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/entretien-prestige"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/entretien-prestige/issues"
+  },
+  "homepage": "https://github.com/your-org/entretien-prestige#readme",
+  "license": "UNLICENSED",
+  "visibility": "team",
+  "team": {
+    "organization": "entretien-prestige",
+    "members": [
+      "admin",
+      "developer",
+      "qa"
+    ]
+  },
+  "distribution": {
+    "type": "internal",
+    "registry": "team",
+    "autoUpdate": true,
+    "updateChannel": "stable"
+  },
+  "compatibility": {
+    "claudeVersion": ">=4.5.0",
+    "platforms": [
+      "win32",
+      "darwin",
+      "linux"
+    ],
+    "node": ">=18.0.0"
+  },
+  "installation": {
+    "preInstall": [
+      "npm install"
+    ],
+    "postInstall": [
+      "npm run build",
+      ".claude/hooks/project-setup.sh"
+    ]
+  },
+  "features": [
+    {
+      "name": "6 Specialized Agents",
+      "description": "Feature builder, database architect, QA engineer, bug hunter, deploy manager, code reviewer"
+    },
+    {
+      "name": "10 Custom Skills",
+      "description": "API builder, UI builder, test generator, migration builder, and more"
+    },
+    {
+      "name": "3 Output Styles",
+      "description": "Quebec French, production-ready, code review formats"
+    },
+    {
+      "name": "Comprehensive Hooks",
+      "description": "Pre/post tool use validation, session management, deployment checks"
+    },
+    {
+      "name": "MCP Integration",
+      "description": "Supabase and Git server integrations"
+    },
+    {
+      "name": "Quality Enforcement",
+      "description": "100% test coverage, RLS filtering, French UI, mobile-first"
+    }
+  ],
+  "screenshots": [
+    {
+      "title": "Feature Builder Agent",
+      "description": "End-to-end feature implementation from spec to deployment",
+      "path": "./docs/screenshots/feature-builder.png"
+    },
+    {
+      "title": "Quebec French Output Style",
+      "description": "Enforces proper Quebec French terminology and grammar",
+      "path": "./docs/screenshots/quebec-french.png"
+    }
+  ],
+  "documentation": {
+    "readme": "./README.md",
+    "changelog": "./CHANGELOG.md",
+    "guides": [
+      {
+        "title": "Getting Started",
+        "path": "./README.md"
+      },
+      {
+        "title": "Agents Guide",
+        "path": "./AGENTS_GUIDE.md"
+      },
+      {
+        "title": "Skills Guide",
+        "path": "./SKILLS_GUIDE.md"
+      },
+      {
+        "title": "SQL Migration Guide",
+        "path": "./SQL_MIGRATION_GUIDE.md"
+      }
+    ]
+  },
+  "support": {
+    "documentation": "https://github.com/your-org/entretien-prestige/wiki",
+    "issues": "https://github.com/your-org/entretien-prestige/issues",
+    "slack": "#entretien-prestige-dev"
+  }
+}

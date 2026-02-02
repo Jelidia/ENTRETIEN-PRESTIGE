@@ -1,0 +1,37 @@
+{
+  "mcpServers": {
+    "supabase-local": {
+      "command": "cmd",
+      "args": ["/c", "npx", "supabase-mcp-server"],
+      "env": {
+        "SUPABASE_URL": "YOUR_NEXT_PUBLIC_SUPABASE_URL",
+        "SUPABASE_SERVICE_KEY": "YOUR_SUPABASE_SERVICE_ROLE_KEY",
+        "PROJECT_ID": "entretien-prestige"
+      }
+    },
+    "git-integration": {
+      "command": "cmd",
+      "args": ["/c", "npx", "git-mcp-server"],
+      "env": {
+        "GIT_DIR": ".git",
+        "WORKING_DIR": "."
+      }
+    },
+    "file-search": {
+      "command": "cmd",
+      "args": ["/c", "npx", "ripgrep-mcp-server"],
+      "env": {
+        "SEARCH_PATH": ".",
+        "EXCLUDE_DIRS": "node_modules,.next,.git,coverage"
+      }
+    },
+    "testing": {
+      "command": "cmd",
+      "args": ["/c", "npx", "vitest-mcp-server"],
+      "env": {
+        "TEST_DIR": "./tests",
+        "CONFIG_FILE": "./vitest.config.ts"
+      }
+    }
+  }
+}

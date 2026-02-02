@@ -1,0 +1,65 @@
+
+> entretien-prestige@0.1.0 dev
+> next dev
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3000
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 4.4s
+ ○ Compiling / ...
+ ✓ Compiled / in 3.5s (512 modules)
+ GET / 200 in 4182ms
+ ✓ Compiled in 624ms (512 modules)
+ GET / 200 in 324ms
+ ○ Compiling /login ...
+ ✓ Compiled /login in 897ms (559 modules)
+ ⚠ The "images.domains" configuration is deprecated. Please use "images.remotePatterns" configuration instead.
+ GET /login 200 in 182ms
+ ✓ Compiled /middleware in 280ms (74 modules)
+ ○ Compiling /api/auth/login ...
+ ✓ Compiled /api/auth/login in 654ms (386 modules)
+ POST /api/auth/login 200 in 2118ms
+ ○ Compiling /dashboard ...
+ ✓ Compiled /dashboard in 988ms (690 modules)
+ GET /dashboard 200 in 2383ms
+ ✓ Compiled /api/access in 366ms (409 modules)
+ GET /api/access 200 in 764ms
+ GET /api/access 200 in 222ms
+ GET /dashboard 200 in 713ms
+ GET /api/access 200 in 284ms
+ GET /api/access 200 in 225ms
+ ○ Compiling /team ...
+ ✓ Compiled /team in 920ms (702 modules)
+ GET /team 200 in 1247ms
+ ○ Compiling /api/company ...
+ ✓ Compiled /api/company in 530ms (416 modules)
+ ✓ Compiled (418 modules)
+ GET /api/access 200 in 1419ms
+ GET /api/users 400 in 1443ms
+ GET /api/company 200 in 1493ms
+ GET /api/access 200 in 360ms
+ GET /api/users 400 in 413ms
+ GET /api/company 200 in 377ms
+ ○ Compiling /profile ...
+ ✓ Compiled /profile in 1108ms (712 modules)
+ GET /profile 200 in 1372ms
+ GET /api/access 200 in 255ms
+ GET /api/access 200 in 368ms
+ ○ Compiling /api/users/[id] ...
+ ✓ Compiled /api/users/[id] in 657ms (424 modules)
+ GET /api/access 200 in 428ms
+ GET /api/access 200 in 255ms
+ GET /api/users/undefined 400 in 2440ms
+ GET /api/users/undefined 400 in 298ms
+ ○ Compiling /admin/users ...
+ ✓ Compiled /admin/users in 1226ms (720 modules)
+ GET /admin/users 200 in 1522ms
+ ○ Compiling /api/admin/users ...
+ ✓ Compiled /api/admin/users in 2.1s (431 modules)
+ GET /api/access 200 in 3014ms
+ GET /api/admin/users?page=1&limit=4 200 in 3124ms
+ GET /api/access 200 in 317ms
+ GET /api/admin/users?page=1&limit=4 200 in 322ms
+ GET /team 200 in 273ms

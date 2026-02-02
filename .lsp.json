@@ -1,0 +1,255 @@
+{
+  "$schema": "https://json.schemastore.org/lsp.json",
+  "version": "1.0.0",
+  "name": "entretien-prestige-lsp",
+  "description": "Language Server Protocol configuration for Entretien Prestige",
+  "servers": {
+    "typescript": {
+      "language": ["typescript", "typescriptreact"],
+      "command": "npx",
+      "args": ["typescript-language-server", "--stdio"],
+      "enabled": true,
+      "initializationOptions": {
+        "preferences": {
+          "quotePreference": "double",
+          "importModuleSpecifierPreference": "non-relative",
+          "importModuleSpecifierEnding": "auto"
+        },
+        "tsserver": {
+          "path": "./node_modules/typescript/lib/tsserver.js",
+          "logVerbosity": "info",
+          "trace": "verbose"
+        }
+      },
+      "settings": {
+        "typescript": {
+          "format": {
+            "enable": true,
+            "insertSpaceAfterCommaDelimiter": true,
+            "insertSpaceAfterFunctionKeywordForAnonymousFunctions": true,
+            "insertSpaceAfterKeywordsInControlFlowStatements": true,
+            "insertSpaceBeforeFunctionParenthesis": false,
+            "placeOpenBraceOnNewLineForFunctions": false,
+            "semicolons": "insert"
+          },
+          "suggest": {
+            "autoImports": true,
+            "completeFunctionCalls": true,
+            "includeAutomaticOptionalChainCompletions": true
+          },
+          "inlayHints": {
+            "includeInlayParameterNameHints": "all",
+            "includeInlayFunctionParameterTypeHints": true,
+            "includeInlayVariableTypeHints": true
+          }
+        }
+      },
+      "features": {
+        "completion": true,
+        "hover": true,
+        "signatureHelp": true,
+        "definition": true,
+        "references": true,
+        "documentHighlight": true,
+        "documentSymbol": true,
+        "codeAction": true,
+        "codeLens": true,
+        "formatting": true,
+        "rangeFormatting": true,
+        "onTypeFormatting": true,
+        "rename": true,
+        "foldingRange": true,
+        "selectionRange": true,
+        "semanticTokens": true,
+        "inlayHint": true
+      }
+    },
+    "tailwindcss": {
+      "language": ["css", "scss", "typescriptreact", "typescript"],
+      "command": "npx",
+      "args": ["@tailwindcss/language-server", "--stdio"],
+      "enabled": true,
+      "initializationOptions": {
+        "userLanguages": {
+          "typescriptreact": "html",
+          "typescript": "html"
+        }
+      },
+      "settings": {
+        "tailwindCSS": {
+          "validate": true,
+          "lint": {
+            "cssConflict": "warning",
+            "invalidApply": "error",
+            "invalidScreen": "error",
+            "invalidVariant": "error",
+            "invalidConfigPath": "error",
+            "invalidTailwindDirective": "error",
+            "recommendedVariantOrder": "warning"
+          },
+          "classAttributes": ["class", "className", "classList"],
+          "experimental": {
+            "classRegex": [
+              "tw`([^`]*)",
+              "cn\\(([^)]*)\\)"
+            ]
+          },
+          "files": {
+            "exclude": [
+              "**/.git/**",
+              "**/node_modules/**",
+              "**/.next/**",
+              "**/dist/**",
+              "**/build/**"
+            ]
+          }
+        }
+      },
+      "features": {
+        "completion": true,
+        "hover": true,
+        "codeAction": true,
+        "colorProvider": true
+      }
+    },
+    "eslint": {
+      "language": ["typescript", "typescriptreact", "javascript", "javascriptreact"],
+      "command": "npx",
+      "args": ["vscode-eslint-language-server", "--stdio"],
+      "enabled": true,
+      "initializationOptions": {},
+      "settings": {
+        "eslint": {
+          "enable": true,
+          "packageManager": "npm",
+          "alwaysShowStatus": true,
+          "format": {
+            "enable": true
+          },
+          "lintTask": {
+            "enable": true
+          },
+          "run": "onType",
+          "validate": [
+            "typescript",
+            "typescriptreact"
+          ],
+          "workingDirectories": [
+            {
+              "mode": "auto"
+            }
+          ],
+          "codeAction": {
+            "disableRuleComment": {
+              "enable": true,
+              "location": "separateLine"
+            },
+            "showDocumentation": {
+              "enable": true
+            }
+          }
+        }
+      },
+      "features": {
+        "codeAction": true,
+        "diagnostics": true
+      }
+    },
+    "json": {
+      "language": ["json", "jsonc"],
+      "command": "npx",
+      "args": ["vscode-json-language-server", "--stdio"],
+      "enabled": true,
+      "settings": {
+        "json": {
+          "schemas": [
+            {
+              "fileMatch": ["package.json"],
+              "url": "https://json.schemastore.org/package.json"
+            },
+            {
+              "fileMatch": ["tsconfig.json", "tsconfig.*.json"],
+              "url": "https://json.schemastore.org/tsconfig.json"
+            },
+            {
+              "fileMatch": [".mcp.json"],
+              "url": "https://modelcontextprotocol.io/schema/mcp.json"
+            },
+            {
+              "fileMatch": [".claude/settings.json"],
+              "url": "https://claude.ai/schema/settings.json"
+            }
+          ],
+          "validate": {
+            "enable": true
+          },
+          "format": {
+            "enable": true
+          }
+        }
+      },
+      "features": {
+        "completion": true,
+        "hover": true,
+        "formatting": true,
+        "validation": true
+      }
+    },
+    "sql": {
+      "language": ["sql", "plpgsql"],
+      "command": "npx",
+      "args": ["sql-language-server", "--stdio"],
+      "enabled": true,
+      "settings": {
+        "sql": {
+          "dialect": "postgres",
+          "linter": {
+            "rules": {
+              "align-column-to-the-first": "error",
+              "column-new-line": "error",
+              "linebreak-after-clause-keyword": "error",
+              "reserved-word-case": ["error", "upper"],
+              "space-surrounding-operators": "error",
+              "where-clause-new-line": "error"
+            }
+          }
+        }
+      },
+      "features": {
+        "completion": true,
+        "hover": true,
+        "formatting": true
+      }
+    },
+    "markdown": {
+      "language": ["markdown"],
+      "command": "npx",
+      "args": ["unified-language-server", "--stdio"],
+      "enabled": true,
+      "settings": {
+        "markdown": {
+          "validate": true,
+          "lint": true
+        }
+      },
+      "features": {
+        "completion": true,
+        "diagnostics": true
+      }
+    }
+  },
+  "global": {
+    "trace": "verbose",
+    "logFile": "./.claude/logs/lsp.log",
+    "timeout": 10000
+  },
+  "workspace": {
+    "rootPath": "${PWD}",
+    "workspaceFolders": [
+      {
+        "uri": "file://${PWD}",
+        "name": "entretien-prestige"
+      }
+    ]
+  }
+}

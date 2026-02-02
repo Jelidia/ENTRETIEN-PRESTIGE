@@ -1,0 +1,325 @@
+
+> entretien-prestige@0.1.0 dev
+> next dev
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3000
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 4.6s
+ ○ Compiling / ...
+ ✓ Compiled / in 5.4s (541 modules)
+ GET / 200 in 5807ms
+ ✓ Compiled in 549ms (266 modules)
+ ○ Compiling /login ...
+ ✓ Compiled /login in 1177ms (547 modules)
+ GET /login 200 in 1438ms
+ GET /login 200 in 1510ms
+ ⚠ The "images.domains" configuration is deprecated. Please use "images.remotePatterns" configuration instead.
+ GET /login 200 in 64ms
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 748ms (74 modules)
+ ○ Compiling /api/auth/login ...
+ ✓ Compiled /api/auth/login in 533ms (376 modules)
+ POST /api/auth/login 200 in 1791ms
+ ✓ Compiled / in 164ms (378 modules)
+ GET / 200 in 383ms
+ GET /login 200 in 340ms
+ GET /login 200 in 460ms
+ GET /login 200 in 486ms
+ GET /login 200 in 407ms
+ GET /login 200 in 438ms
+ GET /login 200 in 442ms
+ GET /login 200 in 375ms
+ GET /login 200 in 405ms
+ POST /api/auth/login 401 in 379ms
+ POST /api/auth/login 401 in 1083ms
+ POST /api/auth/login 401 in 1102ms
+ POST /api/auth/login 401 in 428ms
+ POST /api/auth/login 401 in 1310ms
+ POST /api/auth/login 401 in 537ms
+ POST /api/auth/login 401 in 183ms
+ GET /login 200 in 114ms
+ GET /login 200 in 120ms
+ GET /login 200 in 395ms
+ GET /login 200 in 872ms
+ GET /login 200 in 788ms
+ GET /login 200 in 640ms
+ POST /api/auth/login 401 in 497ms
+ POST /api/auth/login 401 in 555ms
+ POST /api/auth/login 401 in 248ms
+ POST /api/auth/login 401 in 468ms
+ POST /api/auth/login 401 in 611ms
+ POST /api/auth/login 401 in 272ms
+ GET /login 200 in 59ms
+ POST /api/auth/login 401 in 317ms
+ GET /login 200 in 73ms
+ GET /login 200 in 65ms
+ POST /api/auth/login 401 in 344ms
+ GET /login 200 in 84ms
+ GET /login 200 in 144ms
+ GET /login 200 in 223ms
+ POST /api/auth/login 401 in 343ms
+ POST /api/auth/login 401 in 254ms
+ POST /api/auth/login 401 in 199ms
+ POST /api/auth/login 401 in 235ms
+ GET /login 200 in 83ms
+ POST /api/auth/login 200 in 1350ms
+ ○ Compiling /dashboard ...
+ ✓ Compiled /dashboard in 1170ms (683 modules)
+ GET /login 200 in 92ms
+ POST /api/auth/login 200 in 1062ms
+ GET /dashboard 200 in 1464ms
+ ○ Compiling /api/access ...
+ ✓ Compiled /api/access in 659ms (404 modules)
+ GET /api/access 200 in 1262ms
+ GET /dashboard 200 in 1073ms
+ GET /api/access 200 in 324ms
+ GET /api/access 200 in 280ms
+ ○ Compiling /dispatch ...
+ ✓ Compiled /dispatch in 1171ms (693 modules)
+ GET /dispatch 200 in 1484ms
+ ✓ Compiled /api/dispatch/[action] in 459ms (410 modules)
+ ✓ Compiled (412 modules)
+ GET /api/access 200 in 1328ms
+ GET /api/dispatch/calendar 200 in 1436ms
+ GET /api/access 200 in 371ms
+ GET /api/dispatch/calendar 200 in 441ms
+ GET /api/dispatch/conflicts 200 in 2183ms
+ GET /api/dispatch/conflicts 200 in 290ms
+ ○ Compiling /customers ...
+ ✓ Compiled /customers in 917ms (705 modules)
+ GET /customers 200 in 1140ms
+ ✓ Compiled /api/customers in 371ms (419 modules)
+ GET /api/access 200 in 1211ms
+ GET /api/customers 200 in 1360ms
+ GET /api/access 200 in 278ms
+ GET /api/customers 200 in 453ms
+ ○ Compiling /api/sms/[action] ...
+ ✓ Compiled /api/sms/[action] in 558ms (421 modules)
+ GET /api/sms/list 200 in 1846ms
+ GET /api/sms/list 200 in 426ms
+ ○ Compiling /jobs ...
+ ✓ Compiled /jobs in 842ms (717 modules)
+ GET /jobs 200 in 1086ms
+ ✓ Compiled /api/jobs in 474ms (428 modules)
+ GET /api/access 200 in 1190ms
+ GET /api/jobs 200 in 1306ms
+ GET /api/access 200 in 253ms
+ GET /api/jobs 200 in 350ms
+ ○ Compiling /invoices ...
+ ✓ Compiled /invoices in 833ms (727 modules)
+ GET /invoices 200 in 1069ms
+ ○ Compiling /api/invoices ...
+ ✓ Compiled /api/invoices in 537ms (435 modules)
+ GET /api/access 200 in 1335ms
+ GET /api/invoices 200 in 1487ms
+ GET /api/access 200 in 275ms
+ GET /api/invoices 200 in 310ms
+ ○ Compiling /reports ...
+ ✓ Compiled /reports in 894ms (735 modules)
+ GET /reports 200 in 1143ms
+ ○ Compiling /api/reports/[type] ...
+ ✓ Compiled /api/reports/[type] in 511ms (441 modules)
+ GET /api/access 200 in 1308ms
+ GET /api/access 200 in 264ms
+ GET /api/reports/payroll 200 in 2348ms
+ GET /api/reports/commission 200 in 2396ms
+ GET /api/reports/audit-log 200 in 2401ms
+ GET /api/reports/payroll 200 in 357ms
+ GET /api/reports/audit-log 200 in 342ms
+ GET /api/reports/commission 200 in 381ms
+ ○ Compiling /team ...
+ ✓ Compiled /team in 881ms (745 modules)
+ GET /team 200 in 1116ms
+ ○ Compiling /api/company ...
+ ✓ Compiled /api/company in 656ms (448 modules)
+ ✓ Compiled (450 modules)
+ GET /api/access 200 in 1517ms
+ GET /api/users 200 in 1840ms
+ GET /api/access 200 in 296ms
+ GET /api/company 200 in 1870ms
+ GET /api/company 200 in 323ms
+ GET /api/users 200 in 365ms
+ ○ Compiling /settings ...
+ ✓ Compiled /settings in 1071ms (755 modules)
+ GET /settings 200 in 1281ms
+ GET /api/access 200 in 517ms
+ ○ Compiling /api/users/[id] ...
+ ✓ Compiled /api/users/[id] in 639ms (456 modules)
+ GET /api/access 200 in 1534ms
+ GET /api/access 200 in 251ms
+ GET /api/access 200 in 217ms
+ GET /api/users/undefined 400 in 2614ms
+ GET /api/users/undefined 400 in 335ms
+ ○ Compiling /sales/dashboard ...
+ ✓ Compiled /sales/dashboard in 967ms (763 modules)
+ GET /sales/dashboard 200 in 1199ms
+ ○ Compiling /api/sales/dashboard ...
+ ✓ Compiled /api/sales/dashboard in 959ms (464 modules)
+ GET /api/access 200 in 1849ms
+Leaderboard query failed (non-critical): {
+  code: '42501',
+  details: null,
+  hint: null,
+  message: 'permission denied for table leaderboard'
+}
+ GET /api/sales/dashboard 200 in 2205ms
+ GET /api/access 200 in 325ms
+Leaderboard query failed (non-critical): {
+  code: '42501',
+  details: null,
+  hint: null,
+  message: 'permission denied for table leaderboard'
+}
+ GET /api/sales/dashboard 200 in 405ms
+ ○ Compiling /sales/leads ...
+ ✓ Compiled /sales/leads in 1180ms (777 modules)
+ GET /sales/leads 200 in 1497ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 1518ms (778 modules)
+ GET /api/leads 404 in 1747ms
+ GET /api/access 200 in 1865ms
+ GET /api/leads 404 in 99ms
+ GET /api/access 200 in 236ms
+ ○ Compiling /sales/settings ...
+ ✓ Compiled /sales/settings in 959ms (758 modules)
+ GET /sales/settings 200 in 1250ms
+ ○ Compiling /api/users/me ...
+ ✓ Compiled /api/users/me in 719ms (451 modules)
+ GET /api/access 200 in 1784ms
+ GET /api/users/me 200 in 1825ms
+ GET /api/users/me 200 in 253ms
+ GET /api/access 200 in 408ms
+ GET /api/reports/territories 200 in 418ms
+ GET /api/reports/territories 200 in 767ms
+ ○ Compiling /sales/schedule ...
+ ✓ Compiled /sales/schedule in 1528ms (758 modules)
+ GET /sales/schedule 200 in 1844ms
+ GET /api/access 200 in 355ms
+ GET /api/jobs 200 in 456ms
+ GET /api/access 200 in 269ms
+ GET /api/jobs 200 in 336ms
+ ○ Compiling /sales/earnings ...
+ ✓ Compiled /sales/earnings in 989ms (764 modules)
+ GET /sales/earnings 200 in 1222ms
+ GET /api/users/me 200 in 318ms
+ GET /api/access 200 in 345ms
+ GET /api/users/me 200 in 298ms
+ GET /api/reports/commission 200 in 526ms
+ GET /api/access 200 in 520ms
+ GET /api/reports/payroll 200 in 536ms
+ GET /api/reports/commission 200 in 341ms
+ GET /api/reports/payroll 200 in 370ms
+ ○ Compiling /admin/users ...
+ ✓ Compiled /admin/users in 1393ms (770 modules)
+ GET /admin/users 200 in 1655ms
+ ○ Compiling /api/admin/users ...
+ ✓ Compiled /api/admin/users in 914ms (443 modules)
+ GET /api/access 200 in 1974ms
+ GET /api/admin/users?page=1&limit=4 200 in 2306ms
+ GET /api/access 200 in 326ms
+ GET /api/admin/users?page=1&limit=4 200 in 356ms
+ ○ Compiling /admin/manage ...
+ ✓ Compiled /admin/manage in 1588ms (766 modules)
+ GET /admin/manage 200 in 1920ms
+ GET /api/access 200 in 496ms
+ GET /api/users 200 in 599ms
+ GET /api/company 200 in 611ms
+ GET /api/access 200 in 374ms
+ GET /api/company 200 in 409ms
+ GET /api/users 200 in 431ms
+ ○ Compiling /operations ...
+ ✓ Compiled /operations in 1440ms (772 modules)
+ GET /operations 200 in 1731ms
+ GET /api/access 200 in 356ms
+ GET /api/reports/incidents 200 in 541ms
+ GET /api/reports/quality-issues 200 in 597ms
+ GET /api/reports/checklists 200 in 649ms
+ GET /api/access 200 in 338ms
+ GET /api/reports/incidents 200 in 517ms
+ GET /api/reports/checklists 200 in 349ms
+ GET /api/reports/quality-issues 200 in 430ms
+ ○ Compiling /notifications ...
+ ✓ Compiled /notifications in 1317ms (766 modules)
+ GET /notifications 200 in 1562ms
+ ○ Compiling /api/notifications ...
+ ✓ Compiled /api/notifications in 866ms (446 modules)
+ GET /api/access 200 in 1893ms
+ GET /api/notifications 200 in 2199ms
+ GET /api/access 200 in 320ms
+ GET /api/notifications 200 in 338ms
+ ○ Compiling /inbox ...
+ ✓ Compiled /inbox in 1498ms (774 modules)
+ GET /inbox 200 in 1811ms
+ ○ Compiling /api/sms/inbox ...
+ ✓ Compiled /api/sms/inbox in 771ms (442 modules)
+ GET /api/access 200 in 1868ms
+ GET /api/sms/inbox 200 in 2057ms
+ GET /api/access 200 in 284ms
+ GET /api/sms/inbox 200 in 285ms
+ ○ Compiling /profile ...
+ ✓ Compiled /profile in 1379ms (772 modules)
+ GET /profile 200 in 1623ms
+ GET /api/access 200 in 265ms
+ ○ Compiling /api/users/[id] ...
+ ✓ Compiled /api/users/[id] in 917ms (441 modules)
+ GET /api/access 200 in 1970ms
+ GET /api/access 200 in 260ms
+ GET /api/users/undefined 400 in 2257ms
+ GET /api/access 200 in 312ms
+ GET /api/users/undefined 400 in 341ms
+ ○ Compiling /customers ...
+ ✓ Compiled /customers in 789ms (446 modules)
+ GET /customers 200 in 1142ms
+ ○ Compiling /api/customers ...
+ ✓ Compiled /api/customers in 895ms (446 modules)
+ GET /api/access 200 in 1978ms
+ GET /api/access 200 in 276ms
+ GET /api/customers 200 in 2306ms
+ ○ Compiling /api/sms/[action] ...
+ GET /api/customers 200 in 625ms
+ ✓ Compiled /api/sms/[action] in 763ms (448 modules)
+ GET /api/sms/list 200 in 1253ms
+ GET /api/sms/list 200 in 346ms
+ GET /sales/leads 200 in 208ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 740ms (450 modules)
+ GET /api/leads 404 in 1772ms
+ GET /api/access 200 in 1798ms
+ GET /api/leads 404 in 125ms
+ GET /api/access 200 in 284ms
+ ○ Compiling /jobs ...
+ ✓ Compiled /jobs in 1416ms (422 modules)
+ GET /jobs 200 in 1898ms
+ ○ Compiling /api/jobs ...
+ ✓ Compiled /api/jobs in 668ms (424 modules)
+ GET /api/access 200 in 1557ms
+ GET /api/jobs 200 in 1728ms
+ GET /api/access 200 in 339ms
+ GET /api/jobs 200 in 349ms
+ ○ Compiling /dispatch ...
+ ✓ Compiled /dispatch in 523ms (422 modules)
+ GET /dispatch 200 in 830ms
+ ○ Compiling /api/dispatch/[action] ...
+ ✓ Compiled /api/dispatch/[action] in 756ms (424 modules)
+ ✓ Compiled (426 modules)
+ GET /api/access 200 in 1741ms
+ GET /api/access 200 in 273ms
+ GET /api/dispatch/conflicts 200 in 2040ms
+ GET /api/dispatch/calendar 200 in 2087ms
+ GET /api/dispatch/conflicts 200 in 360ms
+ GET /api/dispatch/calendar 200 in 413ms
+ ✓ Compiled in 1218ms (731 modules)
+ ✓ Compiled in 1181ms (729 modules)
+ ✓ Compiled in 810ms (678 modules)
+ ✓ Compiled in 660ms (678 modules)
+ ✓ Compiled in 752ms (680 modules)
+ ✓ Compiled in 816ms (353 modules)
+ GET /dispatch?_rsc=t8cfq 200 in 955ms
+ ✓ Compiled in 1228ms (685 modules)
+ GET /dispatch?_rsc=t8cfq 200 in 271ms
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ✓ Compiled in 1047ms (699 modules)
+ GET /dispatch 200 in 1109ms

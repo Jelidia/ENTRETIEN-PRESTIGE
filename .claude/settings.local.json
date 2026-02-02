@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(ls:*)",
+      "Bash(grep:*)",
+      "Bash(tree:*)",
+      "Bash(npm install)",
+      "Bash(npm run lint)",
+      "Bash(if exist \"supabase\\\\migrations\\\\20260131170659_remote_schema.sql\" del \"supabase\\\\migrations\\\\20260131170659_remote_schema.sql\")",
+      "Bash(curl -X POST https://entretien-prestige.vercel.app/api/admin/seed-users -H \"Content-Type: application/json\" -d '{\"\"secret\"\": \"\"DELETE_ME_AFTER_SEEDING_2026\"\"}')",
+      "Bash(npm test:*)",
+      "mcp__supabase__execute_sql",
+      "Bash(timeout /t 5)",
+      "Bash(timeout /t 6)",
+      "Bash(curl:*)",
+      "Bash(node:*)",
+      "Bash(tee:*)",
+      "mcp__supabase__list_projects",
+      "mcp__supabase__apply_migration",
+      "Bash(findstr:*)",
+      "mcp__supabase__list_migrations",
+      "Bash(timeout 30 bash -c 'until curl -s http://localhost:3000 > /dev/null 2>&1; do sleep 2; done && echo \"\"Server ready\"\"')",
+      "Bash(test:*)",
+      "Bash(agent-browser snapshot:*)",
+      "Bash(timeout /t 1)",
+      "Bash(agent-browser open:*)",
+      "Bash(taskkill:*)",
+      "Bash(agent-browser close:*)",
+      "Bash(find:*)",
+      "Bash(tail:*)"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "supabase-local",
+    "git-integration",
+    "file-search",
+    "testing"
+  ]
+}
