@@ -2,7 +2,6 @@ import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { Inter, Poppins, IBM_Plex_Mono } from "next/font/google";
 import { LanguageProvider } from "@/contexts/LanguageContext";
-import { DeviceProvider } from "@/contexts/DeviceContext";
 
 const display = Poppins({
   subsets: ["latin"],
@@ -40,9 +39,7 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body className={`${display.variable} ${body.variable} ${mono.variable}`}>
-        <DeviceProvider>
-          <LanguageProvider>{children}</LanguageProvider>
-        </DeviceProvider>
+        <LanguageProvider>{children}</LanguageProvider>
       </body>
     </html>
   );
