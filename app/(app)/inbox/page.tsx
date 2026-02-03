@@ -107,7 +107,7 @@ export default function InboxPage() {
           {loading && <p>Chargement...</p>}
 
           {!loading && threads.length === 0 && (
-            <p className="card-meta">Aucune conversation pour l'instant</p>
+            <p className="card-meta">Aucune conversation pour l&apos;instant</p>
           )}
 
           <div className="list">

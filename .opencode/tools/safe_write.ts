@@ -2,7 +2,7 @@
 import * as fs from "fs";
 import * as path from "path";
 
-export default async function safe_write(args: { file: string; content: string }) {
+async function safe_write(args: { file: string; content: string }) {
   const filePath = path.normalize(args.file);
   const dir = path.dirname(filePath);
   fs.mkdirSync(dir, { recursive: true });
@@ -11,3 +11,8 @@ export default async function safe_write(args: { file: string; content: string }
   fs.renameSync(tmp, filePath);
   return { ok: true, file: filePath };
 }
+
+const tool = safe_write as typeof safe_write & { execute?: typeof safe_write };
+tool.execute = safe_write;
+
+export default tool;

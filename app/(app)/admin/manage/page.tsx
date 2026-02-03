@@ -283,14 +283,14 @@ export default function AdminManagePage() {
 
           <div style={{ marginTop: 24, display: "grid", gap: 12 }}>
             <button className="button-secondary" type="button" onClick={handleSetup2fa}>
-              Generer la configuration d'authentification
+              Generer la configuration d&apos;authentification
             </button>
             <button className="button-ghost" type="button" onClick={handleDisable2fa}>
               Desactiver la double verification
             </button>
             {otpAuth ? (
               <div className="card" style={{ padding: 12 }}>
-                <div className="card-meta">Scannez avec votre application d'authentification :</div>
+                <div className="card-meta">Scannez avec votre application d&apos;authentification :</div>
                 <code style={{ fontSize: 12, wordBreak: "break-all" }}>{otpAuth}</code>
               </div>
             ) : null}
@@ -299,7 +299,7 @@ export default function AdminManagePage() {
         </div>
           <div className="card">
             <h3 className="card-title">Regles de notification</h3>
-            <div className="card-meta">Controlez comment l'equipe recoit les mises a jour.</div>
+            <div className="card-meta">Controlez comment l&apos;equipe recoit les mises a jour.</div>
             <NotificationSettingsForm />
           </div>
         </div>
@@ -317,8 +317,8 @@ export default function AdminManagePage() {
         <div className="card">
           <div className="card-header">
             <div>
-              <h3 className="card-title">Controle d'acces par role</h3>
-              <div className="card-meta">Definir le niveau d'acces par role.</div>
+              <h3 className="card-title">Controle d&apos;acces par role</h3>
+              <div className="card-meta">Definir le niveau d&apos;acces par role.</div>
             </div>
           </div>
           <div className="table-desktop">
@@ -386,7 +386,7 @@ export default function AdminManagePage() {
             </div>
           </div>
           <div className="form-row">
-            <label className="label" htmlFor="overrideUser">Membre de l'equipe</label>
+            <label className="label" htmlFor="overrideUser">Membre de l&apos;equipe</label>
             <select
               id="overrideUser"
               className="select"

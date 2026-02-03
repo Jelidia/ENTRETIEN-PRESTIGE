@@ -4,7 +4,7 @@ This setup matches OpenCode’s documented conventions for **agents** (primary +
 # OpenCode Bootstrap — Entretien Prestige (Codex 5.2)
 
 Use this doc once to get your repo fully configured with:
-- a primary agent (`ULTRA`)
+- a primary agent (`ep`)
 - subagents (`scout`, `security`, `qa`, `ui`)
 - skills (lazy-loaded, low-token)
 - helpful commands

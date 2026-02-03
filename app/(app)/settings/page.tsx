@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import TopBar from "@/components/TopBar";
@@ -60,44 +60,7 @@ export default function SettingsPage() {
   // Logout modal
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  useEffect(() => {
-    loadUser();
-  }, []);
-
-  useEffect(() => {
-    // Calculate password strength
-    const pw = passwordForm.newPassword;
-    if (pw.length < 8) {
-      setPasswordStrength("weak");
-    } else if (pw.length >= 12 && /[A-Z]/.test(pw) && /[0-9]/.test(pw) && /[!@#$%^&*]/.test(pw)) {
-      setPasswordStrength("strong");
-    } else {
-      setPasswordStrength("medium");
-    }
-  }, [passwordForm.newPassword]);
-
-  async function loadUser() {
-    try {
-      const res = await fetch("/api/access");
-      if (!res.ok) throw new Error("Failed to load user");
-      const data = await res.json();
-
-      // Get full user data
-      const userRes = await fetch(`/api/users/${data.userId}`);
-      if (userRes.ok) {
-        const userData = await userRes.json();
-        setUser(userData.data);
-        setEditName(userData.data.full_name);
-        setEditEmail(userData.data.email);
-        setEditPhone(userData.data.phone || "");
-        await refreshDocumentUrls(userData.data);
-      }
-    } catch (err) {
-      setError(t("error.unknown"));
-    }
-  }
-
-  async function refreshDocumentUrls(nextUser: User) {
+  const refreshDocumentUrls = useCallback(async (nextUser: User) => {
     const types: Array<{ type: "contract" | "id_photo" | "profile_photo"; hasValue: boolean }> = [
       { type: "contract", hasValue: Boolean(nextUser.contract_document_url) },
       { type: "id_photo", hasValue: Boolean(nextUser.id_document_front_url) },
@@ -126,7 +89,44 @@ export default function SettingsPage() {
       });
       return next;
     });
-  }
+  }, []);
+
+  const loadUser = useCallback(async () => {
+    try {
+      const res = await fetch("/api/access");
+      if (!res.ok) throw new Error("Failed to load user");
+      const data = await res.json();
+
+      // Get full user data
+      const userRes = await fetch(`/api/users/${data.userId}`);
+      if (userRes.ok) {
+        const userData = await userRes.json();
+        setUser(userData.data);
+        setEditName(userData.data.full_name);
+        setEditEmail(userData.data.email);
+        setEditPhone(userData.data.phone || "");
+        await refreshDocumentUrls(userData.data);
+      }
+    } catch (err) {
+      setError(t("error.unknown"));
+    }
+  }, [refreshDocumentUrls, t]);
+
+  useEffect(() => {
+    void loadUser();
+  }, [loadUser]);
+
+  useEffect(() => {
+    // Calculate password strength
+    const pw = passwordForm.newPassword;
+    if (pw.length < 8) {
+      setPasswordStrength("weak");
+    } else if (pw.length >= 12 && /[A-Z]/.test(pw) && /[0-9]/.test(pw) && /[!@#$%^&*]/.test(pw)) {
+      setPasswordStrength("strong");
+    } else {
+      setPasswordStrength("medium");
+    }
+  }, [passwordForm.newPassword]);
 
   async function handleFileUpload(type: "contract" | "id_photo" | "profile_photo", file: File) {
     setUploading(true);

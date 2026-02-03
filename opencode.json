@@ -12,6 +12,10 @@
     }
   },
   "theme": "tokyonight",
+  "plugins": [
+    "./.opencode/plugins/compaction",
+    "./.opencode/plugins/env-protect"
+  ],
   "mcp": {
     "github_mcp": { "enabled": false },
     "docs_mcp": { "enabled": false }
