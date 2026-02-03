@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import AppShell from "@/components/AppShell";
+import { resolvePermissions } from "@/lib/permissions";
 import { getAccessTokenFromCookies } from "@/lib/session";
 import { createUserClient } from "@/lib/supabaseServer";
 
@@ -16,5 +17,31 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (error || !data?.user) {
     redirect(`/login?redirect=${encodeURIComponent(pathname)}&message=session-expired`);
   }
-  return <AppShell>{children}</AppShell>;
+  let initialRole: string | null = null;
+  let initialPermissions = null;
+  const { data: profile } = await client
+    .from("users")
+    .select("user_id, company_id, role, access_permissions")
+    .eq("user_id", data.user.id)
+    .maybeSingle();
+
+  if (profile) {
+    initialRole = profile.role;
+    const { data: company } = await client
+      .from("companies")
+      .select("role_permissions")
+      .eq("company_id", profile.company_id)
+      .single();
+    initialPermissions = resolvePermissions(
+      profile.role,
+      company?.role_permissions ?? null,
+      profile.access_permissions ?? null
+    );
+  }
+
+  return (
+    <AppShell initialRole={initialRole} initialPermissions={initialPermissions}>
+      {children}
+    </AppShell>
+  );
 }

@@ -498,7 +498,9 @@ describe("calculatePrice", () => {
 2. **Set environment variables** in Vercel dashboard (see `.env.example`)
 3. **Deploy** - Automatic on push to `main` branch
 
-### Environment Variables
+### Production Deployment Checklist
+
+#### Environment Variables
 
 **Required:**
 ```bash
@@ -507,21 +509,64 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 APP_ENCRYPTION_KEY=
 NEXT_PUBLIC_BASE_URL=
+FEATURE_SMS=true|false
+FEATURE_PAYMENTS=true|false
+FEATURE_EMAIL=true|false
+NEXT_PUBLIC_COMPANY_EMAIL=
 ```
 
-**Optional (configure as needed):**
+Generate APP_ENCRYPTION_KEY:
 ```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+```
+
+**Optional (integrations and extras):**
+```bash
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=
+GOOGLE_MAPS_API_KEY=
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
 TWILIO_ACCOUNT_SID=
 TWILIO_AUTH_TOKEN=
 TWILIO_FROM_NUMBER=
-STRIPE_SECRET_KEY=
-STRIPE_WEBHOOK_SECRET=
 RESEND_API_KEY=
 RESEND_FROM_EMAIL=
-NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=
+ERROR_TRACKING_ENDPOINT=
 ```
 
-### Pre-Deploy Checklist
+#### Supabase Setup
+
+- Create a Supabase project and database.
+- Apply migrations in order from `supabase/migrations/*.sql` (see `.env.example` and setup above).
+- Confirm RLS is enabled on all tenant tables and policies align with `docs/rls/*`.
+- Verify helper functions exist: `get_user_role`, `get_user_company_id`.
+- Create private storage buckets: `documents`, `user-documents`.
+
+#### Integrations and Webhooks
+
+**Stripe**
+- Webhook endpoint: `https://<domain>/api/payments/callback`
+- Subscribe to: `payment_intent.succeeded`
+
+**Twilio**
+- Inbound webhook: `https://<domain>/api/sms/webhook` (POST)
+
+**Resend**
+- Enable email sending via `POST /api/email/send` when `FEATURE_EMAIL=true`
+
+#### Scheduler / Cron
+
+- Choose a scheduler platform (Supabase scheduled jobs, GitHub Actions, or cloud cron).
+- Add jobs for invoice reminders and daily summaries once endpoints are implemented.
+- Record job names and trigger URLs in your deployment runbook.
+
+#### Monitoring and Backups
+
+- Set `ERROR_TRACKING_ENDPOINT` for production error collection.
+- Enable platform logs and alerting for 4xx/5xx spikes.
+- Enable Supabase automated backups and test restore quarterly.
+
+#### Pre-Deploy Checklist
 
 - [ ] Run database migrations in Supabase
 - [ ] Set all environment variables in Vercel
@@ -530,16 +575,18 @@ NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=
 - [ ] Type check: `npm run typecheck`
 - [ ] Lint: `npm run lint`
 
-### Post-Deploy Verification
+#### Post-Deploy Verification
 
 - [ ] Test login with each role
 - [ ] Verify 5-tab navigation per role
-- [ ] Check rate limiting (trigger 429 error)
-- [ ] Test SMS sending (if configured)
+- [ ] Verify `/api/health` returns 200
+- [ ] Test SMS sending (if enabled)
+- [ ] Test email sending (if enabled)
+- [ ] Trigger a Stripe test payment (if enabled)
 - [ ] Verify mobile layout (640px max width)
 - [ ] Check browser console for errors
 
-See `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` for detailed deployment status and checklist.
+See `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` for deployment status and remaining work.
 
 ---
 
@@ -547,8 +594,8 @@ See `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` for detail
 
 ### For Developers
 
-- **docs/ai/claude/CLAUDE.md** - Complete architecture guide with code examples (read this first!)
-- **docs/ai/codex/AGENTS.md** - OpenCode/Codex quick reference for AI coding assistants
+- **docs/ai/codex/AGENTS.md** - Primary agent guidance (read this first)
+- **docs/ai/claude/CLAUDE.md** - Legacy Claude Code guide (deprecated)
 - **README.md** - This file (setup and overview)
 
 ### For Deployment
@@ -579,7 +626,7 @@ See `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` for detail
 - `GET /api/sms/inbox` - Fetch inbox threads
 - `POST /api/sms/inbox/[threadId]/read` - Mark conversation as read
 
-**See `docs/ai/claude/CLAUDE.md` for complete API patterns and examples.**
+**See `docs/ai/codex/AGENTS.md` for current API patterns and repo rules.**
 
 ---
 
@@ -702,8 +749,8 @@ SELECT company_id FROM jobs WHERE job_id = 'yyy';
 **Status:** NOT READY FOR PRODUCTION (critical bugs found - see `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md`)
 
 **For technical questions:**
-- See `docs/ai/claude/CLAUDE.md` - Complete architecture
-- See `docs/ai/codex/AGENTS.md` - OpenCode/Codex quick reference
+- See `docs/ai/codex/AGENTS.md` - Primary agent guidance
+- See `docs/ai/claude/CLAUDE.md` - Legacy Claude Code guide (deprecated)
 - See `docs/ops/TROUBLESHOOTING.md` - Database issues
 
 **For business requirements:**

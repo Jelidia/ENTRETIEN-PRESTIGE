@@ -93,15 +93,16 @@ code {
 }
 
 .shell {
-  height: 100vh;
-  overflow: hidden;
+  height: 100svh;
+  height: 100dvh;
+  overflow-x: hidden;
 }
 
 .app-body {
-  height: 100vh;
+  height: 100svh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
 
 /* SPEC: NO left sidebar ever - mobile-first only */
@@ -446,7 +447,8 @@ code {
   display: grid;
   grid-template-columns: 1fr 1.5fr;
   gap: 20px;
-  height: calc(100vh - 200px);
+  height: calc(100svh - 200px);
+  height: calc(100dvh - 200px);
 }
 
 .dispatch-tech-select {
@@ -729,7 +731,8 @@ code {
 }
 
 .auth-shell {
-  min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
   display: grid;
   place-items: center;
   padding: 32px 16px;
@@ -819,6 +822,17 @@ code {
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   box-shadow: 0 -16px 40px rgba(15, 23, 42, 0.12);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .bottom-nav,
+  .auth-card {
+    background: var(--surface);
+  }
+
+  .quick-create-backdrop {
+    background: rgba(15, 23, 42, 0.6);
+  }
 }
 
 .bottom-nav-item {

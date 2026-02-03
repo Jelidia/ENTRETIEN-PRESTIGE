@@ -4,6 +4,17 @@ import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { emptyQuerySchema } from "@/lib/validators";
 
+type SmsThreadSummary = {
+  thread_id: string;
+  customer_id: string | null;
+  customer_name: string;
+  customer_phone: string | null;
+  last_message: string;
+  last_message_at: string;
+  unread_count: number;
+  messages: unknown[];
+};
+
 // Get SMS inbox threads (role-based filtering)
 export async function GET(request: Request) {
   const auth = await requireUser(request);
@@ -93,7 +104,7 @@ export async function GET(request: Request) {
   }
 
   // Group messages by thread_id
-  const threadsMap = new Map<string, any>();
+  const threadsMap = new Map<string, SmsThreadSummary>();
 
   for (const msg of messages || []) {
     const threadId = msg.thread_id;
@@ -119,6 +130,9 @@ export async function GET(request: Request) {
     }
 
     const thread = threadsMap.get(threadId);
+    if (!thread) {
+      continue;
+    }
 
     // Update unread count
     if (msg.direction === "inbound" && !msg.is_read) {

@@ -191,8 +191,9 @@ async function seedUsers() {
       }
 
       console.log(`   ✅ Complete!\n`);
-    } catch (error: any) {
-      console.error(`   ❌ Error:`, error.message, "\n");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(`   ❌ Error:`, message, "\n");
     }
   }
 
@@ -229,7 +230,8 @@ async function seedUsers() {
 
 seedUsers()
   .then(() => process.exit(0))
-  .catch((error) => {
-    console.error("❌ Fatal error:", error);
+  .catch((error: unknown) => {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("❌ Fatal error:", message);
     process.exit(1);
   });

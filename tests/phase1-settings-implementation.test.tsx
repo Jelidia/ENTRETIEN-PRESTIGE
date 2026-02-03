@@ -20,7 +20,8 @@ vi.mock("next/navigation", () => ({
 }));
 
 // Mock fetch
-global.fetch = vi.fn();
+const mockFetch = vi.fn();
+global.fetch = mockFetch;
 
 const mockUser = {
   user_id: "123",
@@ -61,7 +62,7 @@ describe("Phase 1: Settings Page Rebuild", () => {
   });
 
   it("should render settings page with correct tabs", async () => {
-    (global.fetch as any).mockImplementation((url: string) => {
+    mockFetch.mockImplementation((url: RequestInfo | URL) => {
       if (url.includes("/api/access")) {
         return Promise.resolve({
           ok: true,
@@ -94,7 +95,7 @@ describe("Phase 1: Settings Page Rebuild", () => {
   });
 
   it("should show profile information correctly", async () => {
-    (global.fetch as any).mockImplementation((url: string) => {
+    mockFetch.mockImplementation((url: RequestInfo | URL) => {
       if (url.includes("/api/access")) {
         return Promise.resolve({
           ok: true,
@@ -124,7 +125,7 @@ describe("Phase 1: Settings Page Rebuild", () => {
   });
 
   it("should allow editing name via modal", async () => {
-    (global.fetch as any).mockImplementation((url: string) => {
+    mockFetch.mockImplementation((url: RequestInfo | URL) => {
       if (url.includes("/api/access")) {
         return Promise.resolve({
           ok: true,
@@ -167,7 +168,7 @@ describe("Phase 1: Settings Page Rebuild", () => {
   });
 
   it("should switch language correctly", async () => {
-    (global.fetch as any).mockImplementation((url: string) => {
+    mockFetch.mockImplementation((url: RequestInfo | URL) => {
       if (url.includes("/api/access")) {
         return Promise.resolve({
           ok: true,
@@ -209,7 +210,7 @@ describe("Phase 1: Settings Page Rebuild", () => {
   });
 
   it("should NOT show documents tab for admin users", async () => {
-    (global.fetch as any).mockImplementation((url: string) => {
+    mockFetch.mockImplementation((url: RequestInfo | URL) => {
       if (url.includes("/api/access")) {
         return Promise.resolve({
           ok: true,
@@ -243,7 +244,7 @@ describe("Phase 1: Settings Page Rebuild", () => {
     const techUser = { ...mockUser, role: "technician" };
     const techAccess = { ...mockAccessResponse, role: "technician" };
 
-    (global.fetch as any).mockImplementation((url: string) => {
+    mockFetch.mockImplementation((url: RequestInfo | URL) => {
       if (url.includes("/api/access")) {
         return Promise.resolve({
           ok: true,
@@ -292,7 +293,7 @@ describe("Phase 1: Sales Settings Page", () => {
       day_of_week: "monday",
     };
 
-    (global.fetch as any).mockImplementation((url: string) => {
+    mockFetch.mockImplementation((url: RequestInfo | URL) => {
       if (url.includes("/api/users/me")) {
         return Promise.resolve({
           ok: true,
@@ -333,7 +334,7 @@ describe("Phase 1: Sales Settings Page", () => {
       day_of_week: "monday",
     };
 
-    (global.fetch as any).mockImplementation((url: string, options: any) => {
+    mockFetch.mockImplementation((url: RequestInfo | URL, options?: RequestInit) => {
       if (url.includes("/api/users/me")) {
         return Promise.resolve({
           ok: true,
@@ -407,7 +408,7 @@ describe("Phase 1: Team Page Permissions Modal", () => {
       },
     };
 
-    (global.fetch as any).mockImplementation((url: string) => {
+    mockFetch.mockImplementation((url: RequestInfo | URL) => {
       if (url.includes("/api/users") && !url.includes("/api/users/")) {
         return Promise.resolve({
           ok: true,

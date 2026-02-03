@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getRequestIp, rateLimit } from "./lib/rateLimit";
 import { REQUEST_ID_HEADER, generateRequestId } from "./lib/requestId";
+import { logger } from "./lib/logger";
 
 const ORIGINAL_PATH_HEADER = "x-original-path";
 
@@ -11,17 +12,34 @@ export function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set(REQUEST_ID_HEADER, requestId);
   requestHeaders.set(ORIGINAL_PATH_HEADER, pathname);
+  const ip = getRequestIp(request);
+
+  logger.info("request_received", {
+    request_id: requestId,
+    route: pathname,
+    method: request.method,
+    ip,
+    user_agent: request.headers.get("user-agent") ?? null,
+  });
 
   // Handle API routes - rate limiting only
   if (pathname.startsWith("/api/")) {
     const rule = resolveApiLimit(pathname, request.method);
-    const ip = getRequestIp(request);
     const normalized = normalizePath(pathname);
     const key = `api:${ip}:${request.method}:${normalized}`;
     const result = rateLimit(key, rule.limit, rule.windowMs);
 
     if (!result.allowed) {
       const retryAfter = Math.max(1, Math.ceil((result.resetAt - Date.now()) / 1000));
+      logger.warn("rate_limit_exceeded", {
+        request_id: requestId,
+        route: pathname,
+        method: request.method,
+        ip,
+        limit: rule.limit,
+        window_ms: rule.windowMs,
+        retry_after: retryAfter,
+      });
       return new NextResponse(JSON.stringify({ error: "Rate limit exceeded" }), {
         status: 429,
         headers: {

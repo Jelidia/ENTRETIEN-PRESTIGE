@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import clsx from "clsx";
 
 type BottomSheetProps = {
@@ -21,6 +21,14 @@ export default function BottomSheet({
   const sheetRef = useRef<HTMLDivElement>(null);
   const startY = useRef(0);
   const currentY = useRef(0);
+  const titleId = useId();
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Escape") {
+      event.stopPropagation();
+      onClose();
+    }
+  };
 
   useEffect(() => {
     if (!isOpen) return;
@@ -63,6 +71,12 @@ export default function BottomSheet({
     }
   }, [isOpen, onClose]);
 
+  useEffect(() => {
+    if (isOpen) {
+      sheetRef.current?.focus();
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
@@ -71,6 +85,7 @@ export default function BottomSheet({
       <div
         className="bottom-sheet-backdrop"
         onClick={onClose}
+        aria-hidden="true"
         style={{
           position: "fixed",
           inset: 0,
@@ -84,6 +99,12 @@ export default function BottomSheet({
       <div
         ref={sheetRef}
         className={clsx("bottom-sheet", isOpen && "bottom-sheet-open")}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        aria-label={title ? undefined : "Fenetre de dialogue"}
+        tabIndex={-1}
+        onKeyDown={handleKeyDown}
         style={{
           position: "fixed",
           bottom: 0,
@@ -122,13 +143,15 @@ export default function BottomSheet({
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h2 className="card-title" style={{ margin: 0 }}>
+              <h2 id={titleId} className="card-title" style={{ margin: 0 }}>
                 {title}
               </h2>
               <button
+                type="button"
                 onClick={onClose}
                 className="button-ghost"
                 style={{ padding: "8px", minWidth: "auto" }}
+                aria-label="Fermer"
               >
                 ✕
               </button>

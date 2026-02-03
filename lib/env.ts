@@ -5,8 +5,12 @@ type EnvCheck = {
 
 const validatedEnvKeys: EnvCheck[] = [
   { key: "APP_ENCRYPTION_KEY", required: true },
+  { key: "NEXT_PUBLIC_SUPABASE_URL", required: true },
+  { key: "NEXT_PUBLIC_SUPABASE_ANON_KEY", required: true },
+  { key: "SUPABASE_SERVICE_ROLE_KEY", required: true },
+  { key: "NEXT_PUBLIC_BASE_URL", required: true },
   { key: "STRIPE_SECRET_KEY", required: false },
-  { key: "SUPABASE_URL", required: false },
+  { key: "STRIPE_WEBHOOK_SECRET", required: false },
   { key: "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY", required: false },
   { key: "NEXT_PUBLIC_COMPANY_EMAIL", required: false },
 ];
@@ -55,6 +59,16 @@ export function validateEnv() {
   const missing = validatedEnvKeys
     .filter((entry) => !process.env[entry.key])
     .map((entry) => entry.key);
+
+  const missingRequired = isProd()
+    ? validatedEnvKeys
+        .filter((entry) => entry.required && !process.env[entry.key])
+        .map((entry) => entry.key)
+    : [];
+
+  if (missingRequired.length) {
+    throw new Error(`Missing required env vars: ${missingRequired.join(", ")}`);
+  }
 
   if (missing.length && process.env.NODE_ENV !== "test") {
     logger.warn("Missing env vars", { missing });

@@ -8,9 +8,10 @@ import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 import { logger } from "@/lib/logger";
+import { getRequestContext } from "@/lib/requestId";
 
-function emailUnavailable(error: unknown) {
-  logger.error("Email is unavailable", { error });
+function emailUnavailable(error: unknown, requestContext: Record<string, unknown>) {
+  logger.error("Email is unavailable", { ...requestContext, error });
   return NextResponse.json({ error: "Email is unavailable" }, { status: 503 });
 }
 
@@ -24,6 +25,12 @@ export async function POST(
   }
   const { profile } = auth;
   const ip = getRequestIp(request);
+  const requestContext = getRequestContext(request, {
+    action: params.action,
+    ip,
+    user_id: profile.user_id,
+    company_id: profile.company_id,
+  });
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
 
@@ -51,7 +58,7 @@ export async function POST(
   try {
     await sendEmail(parsed.data.to, parsed.data.subject, parsed.data.html);
   } catch (error) {
-    return emailUnavailable(error);
+    return emailUnavailable(error, requestContext);
   }
   await logAudit(client, profile.user_id, "email_send", "customer", null, "success", {
     ipAddress: ip,

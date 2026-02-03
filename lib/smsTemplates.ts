@@ -2,7 +2,7 @@
 
 export type SMSTemplate = {
   key: string;
-  getMessage: (data: any) => string;
+  getMessage: (data: Record<string, unknown>) => string;
 };
 
 export const smsTemplates = {

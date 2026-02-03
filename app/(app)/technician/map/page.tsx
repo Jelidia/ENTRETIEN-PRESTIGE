@@ -9,14 +9,55 @@ type GpsRow = {
   timestamp: string;
 };
 
+type MapCenter = { lat: number; lng: number };
+
+type GoogleMapInstance = {
+  setCenter: (center: MapCenter) => void;
+};
+
+type GoogleMarkerInstance = {
+  setMap: (map: GoogleMapInstance | null) => void;
+};
+
+type GooglePolylineInstance = {
+  setMap: (map: GoogleMapInstance | null) => void;
+};
+
+type GoogleMapsApi = {
+  maps?: {
+    Map: new (
+      element: HTMLDivElement | null,
+      options: {
+        center: MapCenter;
+        zoom: number;
+        mapTypeControl: boolean;
+        fullscreenControl: boolean;
+        streetViewControl: boolean;
+      }
+    ) => GoogleMapInstance;
+    Marker: new (options: {
+      position: MapCenter;
+      map: GoogleMapInstance | null;
+      label?: string;
+    }) => GoogleMarkerInstance;
+    Polyline: new (options: {
+      path: MapCenter[];
+      map: GoogleMapInstance | null;
+      strokeColor: string;
+      strokeOpacity: number;
+      strokeWeight: number;
+    }) => GooglePolylineInstance;
+  };
+};
+
 export default function TechnicianMapPage() {
   const [points, setPoints] = useState<GpsRow[]>([]);
   const [status, setStatus] = useState("");
   const [mapReady, setMapReady] = useState(false);
   const mapRef = useRef<HTMLDivElement | null>(null);
-  const mapInstance = useRef<any>(null);
-  const markers = useRef<any[]>([]);
-  const polyline = useRef<any>(null);
+  const mapInstance = useRef<GoogleMapInstance | null>(null);
+  const markers = useRef<GoogleMarkerInstance[]>([]);
+  const polyline = useRef<GooglePolylineInstance | null>(null);
   const mapsKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
 
   const loadPoints = useCallback(async () => {
@@ -54,12 +95,13 @@ export default function TechnicianMapPage() {
   }, [loadPoints]);
 
   const getGoogle = useCallback(() => {
-    return (window as any).google;
+    return (window as unknown as { google?: GoogleMapsApi }).google ?? null;
   }, []);
 
   const loadGoogleMaps = useCallback((key: string) => {
     return new Promise<void>((resolve, reject) => {
-      if (getGoogle()?.maps) {
+      const google = getGoogle();
+      if (google?.maps) {
         resolve();
         return;
       }

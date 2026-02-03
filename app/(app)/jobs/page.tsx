@@ -88,12 +88,21 @@ export default function JobsPage() {
     void loadJobs();
   }
 
+  function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+  }
+
   async function submitUpsell(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setUpsellStatus("");
-    let upsells: any[] = [];
+    let upsells: Record<string, unknown>[] = [];
     try {
-      upsells = JSON.parse(upsellForm.upsells);
+      const parsed = JSON.parse(upsellForm.upsells) as unknown;
+      if (!Array.isArray(parsed) || !parsed.every(isRecord)) {
+        setUpsellStatus("Upsells JSON is invalid.");
+        return;
+      }
+      upsells = parsed;
     } catch (error) {
       setUpsellStatus("Upsells JSON is invalid.");
       return;

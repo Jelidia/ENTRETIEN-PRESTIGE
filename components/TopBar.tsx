@@ -26,6 +26,7 @@ export default function TopBar({ title, subtitle, actions, showLogout = true }: 
               width={140}
               height={40}
               priority
+              sizes="44px"
               onError={() => setLogoError(true)}
               style={{ objectFit: "contain" }}
             />

@@ -60,10 +60,11 @@ async function testLogin(email: string, password: string): Promise<LoginResponse
       success: response.ok,
       ...data,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
     return {
       success: false,
-      error: error.message,
+      error: message,
     };
   }
 }
@@ -86,8 +87,9 @@ async function testDashboard(role: string, accessToken: string, endpoint: string
     const data = await response.json();
     console.log(`   ✅ Dashboard API working (${Object.keys(data).length} data keys)`);
     return true;
-  } catch (error: any) {
-    console.log(`   ❌ Dashboard API error: ${error.message}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.log(`   ❌ Dashboard API error: ${message}`);
     return false;
   }
 }

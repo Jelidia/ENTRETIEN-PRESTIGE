@@ -26,6 +26,17 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
+type ProfileRow = {
+  email?: string | null;
+  role?: string | null;
+  full_name?: string | null;
+};
+
+type AuthUserRow = {
+  email?: string | null;
+  id: string;
+};
+
 async function verifyUsers() {
   console.log("🔍 Checking users in database...\n");
 
@@ -40,8 +51,9 @@ async function verifyUsers() {
     return;
   }
 
-  console.log(`Found ${profiles?.length || 0} users in public.users table:`);
-  profiles?.forEach((user: any) => {
+  const profileRows = (profiles ?? []) as ProfileRow[];
+  console.log(`Found ${profileRows.length || 0} users in public.users table:`);
+  profileRows.forEach((user) => {
     console.log(`  - ${user.email} (${user.role}) - ${user.full_name}`);
   });
 
@@ -55,33 +67,34 @@ async function verifyUsers() {
     return;
   }
 
-  console.log(`Found ${authUsers.users?.length || 0} users in auth.users:`);
-  authUsers.users?.forEach((user: any) => {
+  const authUsersList = (authUsers.users ?? []) as AuthUserRow[];
+  console.log(`Found ${authUsersList.length || 0} users in auth.users:`);
+  authUsersList.forEach((user) => {
     console.log(`  - ${user.email} (ID: ${user.id.substring(0, 8)}...)`);
   });
 
   // Cross-reference
   console.log("\n✅ Users with matching Auth + Profile:");
-  const profileEmails = new Set(profiles?.map((p: any) => p.email) || []);
-  const authEmails = new Set(authUsers.users?.map((u: any) => u.email) || []);
+  const profileEmails = new Set(profileRows.map((p) => p.email).filter(Boolean));
+  const authEmails = new Set(authUsersList.map((u) => u.email).filter(Boolean));
 
-  const matched = profiles?.filter((p: any) => authEmails.has(p.email)) || [];
-  matched.forEach((user: any) => {
+  const matched = profileRows.filter((p) => (p.email ? authEmails.has(p.email) : false));
+  matched.forEach((user) => {
     console.log(`  ✅ ${user.email} (${user.role})`);
   });
 
-  const profilesOnly = profiles?.filter((p: any) => !authEmails.has(p.email)) || [];
+  const profilesOnly = profileRows.filter((p) => (p.email ? !authEmails.has(p.email) : true));
   if (profilesOnly.length > 0) {
     console.log("\n⚠️  Users with profile but NO auth:");
-    profilesOnly.forEach((user: any) => {
+    profilesOnly.forEach((user) => {
       console.log(`  ⚠️  ${user.email} (${user.role})`);
     });
   }
 
-  const authOnly = authUsers.users?.filter((u: any) => !profileEmails.has(u.email)) || [];
+  const authOnly = authUsersList.filter((u) => (u.email ? !profileEmails.has(u.email) : true));
   if (authOnly.length > 0) {
     console.log("\n⚠️  Users with auth but NO profile:");
-    authOnly.forEach((user: any) => {
+    authOnly.forEach((user) => {
       console.log(`  ⚠️  ${user.email}`);
     });
   }
@@ -89,7 +102,8 @@ async function verifyUsers() {
 
 verifyUsers()
   .then(() => process.exit(0))
-  .catch((error) => {
-    console.error("Fatal error:", error);
+  .catch((error: unknown) => {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Fatal error:", message);
     process.exit(1);
   });

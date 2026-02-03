@@ -1,4 +1,5 @@
 import { hashCode } from "@/lib/crypto";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { getRequestIp } from "@/lib/rateLimit";
 import { logger } from "@/lib/logger";
 import { getRequestContext } from "@/lib/requestId";
@@ -9,9 +10,7 @@ type IdempotencyState =
   | { action: "conflict" }
   | { action: "in_progress" };
 
-type IdempotencyClient = {
-  from: (table: string) => any;
-};
+type IdempotencyClient = Pick<SupabaseClient, "from">;
 
 function getHeaderValue(request: Request) {
   return (

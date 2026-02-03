@@ -1,6 +1,7 @@
 # CLAUDE.md
 
-Guidance for Claude Code (claude.ai/code) when working in this repository.
+Deprecated. This legacy Claude Code guide is not maintained.
+Use `docs/ai/codex/AGENTS.md` for current guidance.
 
 ---
 
@@ -22,7 +23,7 @@ YES → INVOKE THE SKILL IMMEDIATELY ✅
 NO  → Continue to Decision Tree 2
 ```
 
-**Skills available in this repo:** `api-builder`, `bug-fixer`, `spec-enforcer`, `test-generator`, `ui-builder`, `migration-builder`, `french-ui-helper`, `rls-policy-builder`, `supabase-query-builder`, `docs-updater`
+**Skills available in this repo:** `spec-enforcer`, `french-ui-helper`, `docs-updater`, `agent-browser`, `ui-fr-ca`, `testing-selection`, `task-coordination`, `rls-audit`, `api-route-safety`
 
 #### Decision Tree 2 — Is this complex / multi-step?
 
@@ -34,7 +35,7 @@ YES → DELEGATE TO AN AGENT IMMEDIATELY ✅
 NO  → Manual change is acceptable (but still prefer a skill)
 ```
 
-**Agents available in this repo:** `prompt-director`, `feature-builder`, `database-architect`, `qa-engineer`, `bug-hunter`, `deploy-manager`, `code-reviewer`
+**Agents available in this repo:** `general`, `explore`, `qa`, `review`, `scout`, `security`, `ui`
 
 ---
 
@@ -315,30 +316,10 @@ This is a *non-exhaustive* map; see the master backlog for the full list.
 
 ---
 
-## Skills & agents reference (how to invoke)
+## Skills and agents (current)
 
-### Skills
-Use these first when possible (they enforce repo patterns).
-
-Examples (Claude Code slash commands):
-```bash
-/api-builder Create POST /api/customers/:id/blacklist with Zod + RLS
-/bug-fixer Fix job photo upload 500 error and missing storage path validation
-/test-generator Add tests for lib/crypto.ts (encrypt/decrypt) with 100% coverage
-/ui-builder Build technician job checklist screen (mobile-first, French labels)
-/migration-builder Add table job_checklists with RLS and indexes
-/rls-policy-builder Add RLS for invoices with company_id isolation
-/docs-updater Update docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md after implementing Stripe webhook idempotency
-/spec-enforcer Verify current implementation vs spec sections 1–10
-```
-
-### Agents
-Use these for multi-step features and production prep.
-
-Examples:
-- “Use the **feature-builder** agent to implement the full job photo workflow (API + UI + tests + docs).”
-- “Use the **deploy-manager** agent to prepare the repo for production (CI, env validation, security checklist).”
-- “Use the **bug-hunter** agent to find all auth bypass and redirect vulnerabilities.”
+Use the available skills listed near the top of this file when they match the task.
+For multi-step work, use Task subagents: general, explore, qa, review, scout, security, ui.
 
 ---
 
@@ -381,11 +362,11 @@ Minimum production checks:
 
 ## Documentation index
 
+- `docs/ai/codex/AGENTS.md` — primary agent guidance
 - `docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md` — requirements/spec
-- `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` — production-readiness checklist
-- `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` — full backlog to reach production
+- `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` — production-readiness checklist and backlog
 - `CRITICAL_FIXES_README.md` — immediate fixes overview
-- `docs/ops/TROUBLESHOOTING.md` — known issues & debugging
-- `.claude/AGENTS_GUIDE.md`, `.claude/SKILLS_GUIDE.md` — Claude Code configuration
+- `docs/ops/TROUBLESHOOTING.md` — known issues and debugging
+- `.claude/AGENTS_GUIDE.md`, `.claude/SKILLS_GUIDE.md` — legacy Claude Code configuration
 
 ---

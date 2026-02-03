@@ -34,6 +34,8 @@ export default function Accordion({ items, allowMultiple = false }: AccordionPro
     <div className="accordion">
       {items.map((item) => {
         const isOpen = openItems.includes(item.id);
+        const headerId = `accordion-header-${item.id}`;
+        const panelId = `accordion-panel-${item.id}`;
 
         return (
           <div
@@ -48,6 +50,10 @@ export default function Accordion({ items, allowMultiple = false }: AccordionPro
           >
             {/* Header */}
             <button
+              type="button"
+              id={headerId}
+              aria-expanded={isOpen}
+              aria-controls={panelId}
               onClick={() => toggleItem(item.id)}
               className={clsx("accordion-header")}
               style={{
@@ -86,6 +92,10 @@ export default function Accordion({ items, allowMultiple = false }: AccordionPro
 
             {/* Content */}
             <div
+              id={panelId}
+              role="region"
+              aria-labelledby={headerId}
+              aria-hidden={!isOpen}
               className={clsx("accordion-content")}
               style={{
                 maxHeight: isOpen ? "1000px" : "0",

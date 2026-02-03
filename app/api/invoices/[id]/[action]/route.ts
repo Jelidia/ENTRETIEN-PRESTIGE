@@ -10,14 +10,54 @@ import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 import { logger } from "@/lib/logger";
+import { getRequestContext } from "@/lib/requestId";
 
-function emailUnavailable(error: unknown) {
-  logger.error("Email is unavailable", { error });
+type InvoiceCompany = {
+  name?: string | null;
+  legal_name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  province?: string | null;
+  postal_code?: string | null;
+  gst_number?: string | null;
+  qst_number?: string | null;
+};
+
+type InvoiceCustomer = {
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  province?: string | null;
+  postal_code?: string | null;
+};
+
+type InvoiceRecord = {
+  invoice_id: string;
+  invoice_number: string;
+  issued_date?: string | null;
+  due_date?: string | null;
+  total_amount?: number | null;
+  subtotal?: number | null;
+  notes?: string | null;
+  companies?: InvoiceCompany | InvoiceCompany[] | null;
+  customers?: InvoiceCustomer | InvoiceCustomer[] | null;
+};
+
+const pickFirst = <T,>(value: T | T[] | null | undefined) =>
+  Array.isArray(value) ? value[0] ?? null : value ?? null;
+
+function emailUnavailable(error: unknown, requestContext: Record<string, unknown>) {
+  logger.error("Email is unavailable", { ...requestContext, error });
   return NextResponse.json({ error: "Email is unavailable" }, { status: 503 });
 }
 
-function smsUnavailable(error: unknown) {
-  logger.error("SMS is unavailable", { error });
+function smsUnavailable(error: unknown, requestContext: Record<string, unknown>) {
+  logger.error("SMS is unavailable", { ...requestContext, error });
   return NextResponse.json({ error: "SMS is unavailable" }, { status: 503 });
 }
 
@@ -29,12 +69,19 @@ export async function POST(
   if ("response" in auth) {
     return auth.response;
   }
-  const { user } = auth;
+  const { user, profile } = auth;
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
   const action = params.action;
   const body = await request.json().catch(() => null);
   const ip = getRequestIp(request);
+  const requestContext = getRequestContext(request, {
+    action,
+    invoice_id: params.id,
+    ip,
+    user_id: user.id,
+    company_id: profile.company_id,
+  });
 
   if (action === "send") {
     const parsed = invoiceSendSchema.safeParse(body);
@@ -60,13 +107,13 @@ export async function POST(
       try {
         await sendInvoiceEmail(parsed.data.to, parsed.data.subject, parsed.data.body);
       } catch (error) {
-        return emailUnavailable(error);
+        return emailUnavailable(error, requestContext);
       }
     } else {
       try {
         await sendSms(parsed.data.to, parsed.data.body);
       } catch (error) {
-        return smsUnavailable(error);
+        return smsUnavailable(error, requestContext);
       }
     }
 
@@ -167,36 +214,41 @@ export async function POST(
       return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
     }
 
+    const invoiceRecord = data as InvoiceRecord;
+    const company = pickFirst(invoiceRecord.companies);
+    const customer = pickFirst(invoiceRecord.customers);
+    const customerName = `${customer?.first_name ?? ""} ${customer?.last_name ?? ""}`.trim();
+
     const pdfBytes = await generateInvoicePdf({
-      invoiceNumber: data.invoice_number,
-      invoiceDate: data.issued_date
-        ? data.issued_date.split("T")[0]
+      invoiceNumber: invoiceRecord.invoice_number,
+      invoiceDate: invoiceRecord.issued_date
+        ? invoiceRecord.issued_date.split("T")[0]
         : new Date().toISOString().split("T")[0],
-      dueDate: data.due_date,
-      totalAmount: data.total_amount ?? 0,
-      subtotal: data.subtotal ?? 0,
-      notes: data.notes,
+      dueDate: invoiceRecord.due_date,
+      totalAmount: invoiceRecord.total_amount ?? 0,
+      subtotal: invoiceRecord.subtotal ?? 0,
+      notes: invoiceRecord.notes,
       company: {
-        name: (data.companies as any)?.[0]?.name || (data.companies as any)?.name || "Entretien Prestige",
-        address: (data.companies as any)?.[0]?.address || (data.companies as any)?.address,
-        city: (data.companies as any)?.[0]?.city || (data.companies as any)?.city,
-        province: (data.companies as any)?.[0]?.province || (data.companies as any)?.province,
-        postal_code: (data.companies as any)?.[0]?.postal_code || (data.companies as any)?.postal_code,
-        phone: (data.companies as any)?.[0]?.phone || (data.companies as any)?.phone,
-        email: (data.companies as any)?.[0]?.email || (data.companies as any)?.email,
-        gst_number: (data.companies as any)?.[0]?.gst_number || (data.companies as any)?.gst_number,
-        qst_number: (data.companies as any)?.[0]?.qst_number || (data.companies as any)?.qst_number,
+        name: company?.name ?? "Entretien Prestige",
+        address: company?.address,
+        city: company?.city,
+        province: company?.province,
+        postal_code: company?.postal_code,
+        phone: company?.phone,
+        email: company?.email,
+        gst_number: company?.gst_number,
+        qst_number: company?.qst_number,
       },
       customer: {
-        name: `${(data.customers as any)?.[0]?.first_name || (data.customers as any)?.first_name || ""} ${(data.customers as any)?.[0]?.last_name || (data.customers as any)?.last_name || ""}`.trim(),
-        address: (data.customers as any)?.[0]?.address || (data.customers as any)?.address,
-        city: (data.customers as any)?.[0]?.city || (data.customers as any)?.city,
-        province: (data.customers as any)?.[0]?.province || (data.customers as any)?.province,
-        postal_code: (data.customers as any)?.[0]?.postal_code || (data.customers as any)?.postal_code,
-        phone: (data.customers as any)?.[0]?.phone || (data.customers as any)?.phone,
-        email: (data.customers as any)?.[0]?.email || (data.customers as any)?.email,
+        name: customerName,
+        address: customer?.address,
+        city: customer?.city,
+        province: customer?.province,
+        postal_code: customer?.postal_code,
+        phone: customer?.phone,
+        email: customer?.email,
       },
-      lineItems: [], // Line items would need to be fetched from invoice_line_items table
+      lineItems: [],
     });
 
     const body = Buffer.from(pdfBytes);
@@ -264,34 +316,39 @@ export async function GET(
     return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
   }
 
+  const invoiceRecord = data as InvoiceRecord;
+  const company = pickFirst(invoiceRecord.companies);
+  const customer = pickFirst(invoiceRecord.customers);
+  const customerName = `${customer?.first_name ?? ""} ${customer?.last_name ?? ""}`.trim();
+
   const pdfBytes = await generateInvoicePdf({
-    invoiceNumber: data.invoice_number,
-    invoiceDate: data.issued_date
-      ? data.issued_date.split("T")[0]
+    invoiceNumber: invoiceRecord.invoice_number,
+    invoiceDate: invoiceRecord.issued_date
+      ? invoiceRecord.issued_date.split("T")[0]
       : new Date().toISOString().split("T")[0],
-    dueDate: data.due_date,
-    totalAmount: data.total_amount ?? 0,
-    subtotal: data.subtotal ?? 0,
-    notes: data.notes,
+    dueDate: invoiceRecord.due_date,
+    totalAmount: invoiceRecord.total_amount ?? 0,
+    subtotal: invoiceRecord.subtotal ?? 0,
+    notes: invoiceRecord.notes,
     company: {
-      name: (data.companies as any)?.[0]?.name || (data.companies as any)?.name || "Entretien Prestige",
-      address: (data.companies as any)?.[0]?.address || (data.companies as any)?.address,
-      city: (data.companies as any)?.[0]?.city || (data.companies as any)?.city,
-      province: (data.companies as any)?.[0]?.province || (data.companies as any)?.province,
-      postal_code: (data.companies as any)?.[0]?.postal_code || (data.companies as any)?.postal_code,
-      phone: (data.companies as any)?.[0]?.phone || (data.companies as any)?.phone,
-      email: (data.companies as any)?.[0]?.email || (data.companies as any)?.email,
-      gst_number: (data.companies as any)?.[0]?.gst_number || (data.companies as any)?.gst_number,
-      qst_number: (data.companies as any)?.[0]?.qst_number || (data.companies as any)?.qst_number,
+      name: company?.name ?? "Entretien Prestige",
+      address: company?.address,
+      city: company?.city,
+      province: company?.province,
+      postal_code: company?.postal_code,
+      phone: company?.phone,
+      email: company?.email,
+      gst_number: company?.gst_number,
+      qst_number: company?.qst_number,
     },
     customer: {
-      name: `${(data.customers as any)?.[0]?.first_name || (data.customers as any)?.first_name || ""} ${(data.customers as any)?.[0]?.last_name || (data.customers as any)?.last_name || ""}`.trim(),
-      address: (data.customers as any)?.[0]?.address || (data.customers as any)?.address,
-      city: (data.customers as any)?.[0]?.city || (data.customers as any)?.city,
-      province: (data.customers as any)?.[0]?.province || (data.customers as any)?.province,
-      postal_code: (data.customers as any)?.[0]?.postal_code || (data.customers as any)?.postal_code,
-      phone: (data.customers as any)?.[0]?.phone || (data.customers as any)?.phone,
-      email: (data.customers as any)?.[0]?.email || (data.customers as any)?.email,
+      name: customerName,
+      address: customer?.address,
+      city: customer?.city,
+      province: customer?.province,
+      postal_code: customer?.postal_code,
+      phone: customer?.phone,
+      email: customer?.email,
     },
     lineItems: [],
   });

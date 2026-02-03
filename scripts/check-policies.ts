@@ -43,7 +43,14 @@ async function checkPolicies() {
   console.log(`Found ${data?.length || 0} policies on users table:\n`);
 
   if (data && data.length > 0) {
-    data.forEach((policy: any) => {
+    type PolicyRow = {
+      policyname?: string | null;
+      cmd?: string | null;
+      qual?: string | null;
+      with_check?: string | null;
+    };
+    const rows = data as PolicyRow[];
+    rows.forEach((policy) => {
       console.log(`Policy: ${policy.policyname}`);
       console.log(`  Command: ${policy.cmd}`);
       console.log(`  USING: ${policy.qual}`);
@@ -63,13 +70,15 @@ async function checkPolicies() {
     .single();
 
   if (tableInfo) {
-    console.log(`\nRLS Status: ${(tableInfo as any).rowsecurity ? "✅ ENABLED" : "❌ DISABLED"}`);
+    const rowSecurity = (tableInfo as { rowsecurity?: boolean | null }).rowsecurity;
+    console.log(`\nRLS Status: ${rowSecurity ? "✅ ENABLED" : "❌ DISABLED"}`);
   }
 }
 
 checkPolicies()
   .then(() => process.exit(0))
-  .catch((error) => {
-    console.error("Fatal error:", error);
+  .catch((error: unknown) => {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Fatal error:", message);
     process.exit(1);
   });

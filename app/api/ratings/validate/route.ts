@@ -89,12 +89,30 @@ export async function GET(request: Request) {
     );
   }
 
+  type CustomerRow = { first_name?: string | null; last_name?: string | null };
+  type TechnicianRow = { full_name?: string | null };
+  type JobRecord = {
+    job_id: string;
+    service_type?: string | null;
+    scheduled_date?: string | null;
+    customers?: CustomerRow | CustomerRow[] | null;
+    technician?: TechnicianRow | TechnicianRow[] | null;
+  };
+
+  const jobRecord = job as JobRecord;
+  const getFirst = <T,>(value: T | T[] | null | undefined) =>
+    Array.isArray(value) ? value[0] ?? null : value ?? null;
+  const customer = getFirst(jobRecord.customers);
+  const technician = getFirst(jobRecord.technician);
+  const customerName = `${customer?.first_name ?? ""} ${customer?.last_name ?? ""}`.trim();
+  const technicianName = technician?.full_name ?? "Technicien";
+
   const data = {
-    job_id: job.job_id,
-    customer_name: `${(job.customers as any)?.[0]?.first_name || (job.customers as any)?.first_name || ""} ${(job.customers as any)?.[0]?.last_name || (job.customers as any)?.last_name || ""}`.trim(),
-    service_type: job.service_type ?? "Service",
-    service_date: job.scheduled_date ?? "",
-    technician_name: (job.technician as any)?.[0]?.full_name || (job.technician as any)?.full_name || "Technicien",
+    job_id: jobRecord.job_id,
+    customer_name: customerName,
+    service_type: jobRecord.service_type ?? "Service",
+    service_date: jobRecord.scheduled_date ?? "",
+    technician_name: technicianName,
   };
 
   return NextResponse.json({ success: true, data, ...data });

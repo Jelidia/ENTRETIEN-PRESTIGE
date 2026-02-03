@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
 import { createAdminClient, createUserClient } from "./supabaseServer";
 import { getAccessTokenFromRequest } from "./session";
-import { resolvePermissions, type PermissionKey } from "./permissions";
+import { resolvePermissions, type PermissionKey, type PermissionMap } from "./permissions";
 
-async function loadPermissions(request: Request, profile: { company_id: string; role: string; access_permissions?: any }) {
+async function loadPermissions(
+  request: Request,
+  profile: { company_id: string; role: string; access_permissions?: Partial<PermissionMap> | null }
+) {
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
   const { data: company } = await client

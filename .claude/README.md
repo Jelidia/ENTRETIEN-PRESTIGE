@@ -3,7 +3,8 @@
 **Project:** Entretien Prestige
 **Last Updated:** 2026-01-28
 
-This directory contains all Claude Code automation configurations for the project.
+This directory contains legacy Claude Code automation configurations for the project.
+For current OpenCode guidance, use `docs/ai/codex/AGENTS.md`.
 
 ---
 
@@ -166,7 +167,7 @@ This directory contains all Claude Code automation configurations for the projec
 5. Try a simple agent - "Use bug-hunter to check for missing RLS policies"
 
 ### Project Context:
-- `../docs/ai/claude/CLAUDE.md` - Project architecture
+- `../docs/ai/codex/AGENTS.md` - Current project guidance
 - `../docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` - Current status
 - `../docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md` - Requirements
 
@@ -272,11 +273,11 @@ Potential new skills/agents:
 For issues or questions:
 1. Check `SKILLS_GUIDE.md` or `AGENTS_GUIDE.md`
 2. Review examples in this README
-3. Check project docs (`../docs/ai/claude/CLAUDE.md`)
+3. Check project docs (`../docs/ai/codex/AGENTS.md`)
 4. Ask Claude Code directly
 
 ---
 
 **Last Updated:** 2026-01-28
 **Version:** 1.0
-**Status:** Production Ready ✅
+**Status:** Legacy reference (not authoritative)

@@ -253,7 +253,7 @@ export default function PublicRatingPage({ params }: { params: { token: string }
 
 const styles = {
   container: {
-    minHeight: "100vh",
+    minHeight: "100dvh",
     backgroundColor: "#f1f5f9",
     padding: "20px",
     display: "flex",

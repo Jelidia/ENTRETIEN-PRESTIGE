@@ -21,7 +21,7 @@ type Territory = {
   active_customers?: number;
   monthly_revenue?: number;
   day_of_week?: string | null;
-  polygon?: any;
+  polygon?: unknown;
 };
 
 const daysOfWeek = [

@@ -26,14 +26,9 @@ Notes
 - EP-P0-PAY-03 Make manual Interac marking safe and auditable.
 
 ## P1 - Engineering, auth, dispatch, messaging, storage
-- EP-P1-ENG-01 Validate all required env vars at boot (fail fast).
-- EP-P1-ENG-02 Structured logging and request IDs everywhere.
 - EP-P1-ENG-03 Standardize API response format and error handling.
-- EP-P1-ENG-04 Add Supabase migration sanity check to CI.
-- EP-P1-ENG-05 Remove unsafe any usage and tighten validators.
+- EP-P1-ENG-05 Remove unsafe any usage and tighten validators. [WIP: OpenCode 2026-02-03]
 - EP-P1-ENG-06 Add E2E tests for critical flows.
-- EP-P1-ENG-07 Remove stale agent docs and regenerate accurate documentation.
-- EP-P1-ENG-08 Create production deployment checklist.
 - EP-P1-AUTH-01 Redesign permission keys so technician settings do not equal company settings.
 - EP-P1-AUTH-02 Field-level authorization for jobs and customers.
 - EP-P1-AUTH-03 Define and enforce a job status state machine.
@@ -67,13 +62,6 @@ Notes
 - EP-P3-SESS-01 Implement session management (view and revoke active sessions).
 
 ## UI device adaptiveness
-- C1 Primary navigation present on initial render (all devices).
-- C3 Interactive components expose ARIA semantics and keyboard patterns.
-- C4 Replace 100vh usage and remove destructive overflow.
-- M1 Device-aware image delivery (responsive + DPR).
-- M2 Centralize icons and reduce duplication.
-- L1 Cross-browser graceful degradation and feature detection.
-- L2 Add responsive and accessibility testing to CI.
 
 ## Spec decisions to finalize (missing requirements)
 - Notification matrix (who gets what for each event).
@@ -98,20 +86,17 @@ Notes
 - Monitoring and logging plan (error tracking, analytics, performance).
 
 ## QA and testing
-- Run manual comprehensive test: npx tsx tests/manual-comprehensive-test.ts (log failures as new tasks here).
+- Manual comprehensive test blocked: missing Playwright dependency (install Playwright and rerun npx tsx tests/manual-comprehensive-test.ts). [WIP: opencode 2026-02-03]
 - Run full E2E suite: npm run test:e2e (fix failures).
 - Verify scrolling on /dashboard, /team, /profile, /admin/users.
 - Verify /team loads and /api/users returns 200 (adjust RLS if needed).
 - Test core workflows: create lead, customer, team member, job; dispatch calendar (auto-assign, drag-drop).
 - Test technician pages: /technician, /technician/schedule, /technician/equipment, /technician/customers, /technician/earnings, /technician/profile, /technician/map.
-- Verify bottom nav shows exactly 5 tabs per role.
 - Verify all 4 roles can login and logout works.
 - Retest sales leads load time and timeouts.
 
 ## Pre-production checklist
 - Supabase migrations apply cleanly on a fresh DB (CI enforced).
 - RLS enabled and tested for every tenant table.
-- Remove docs/ops/RATE_LIMIT_DISABLED.md before production.
-- Remove rate limit warning from docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md before production.
 - Run npm run typecheck, npm run lint, npm test, npm run test:e2e.
 - Verify RLS helper functions exist and policies are correct (get_user_role, get_user_company_id).

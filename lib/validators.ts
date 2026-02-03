@@ -1,7 +1,25 @@
 import { z } from "zod";
 
+type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
+
+const jsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
+  z.union([
+    z.string(),
+    z.number(),
+    z.boolean(),
+    z.null(),
+    z.array(jsonValueSchema),
+    z.record(jsonValueSchema),
+  ])
+);
+
+const jsonRecordSchema = z.record(jsonValueSchema);
 const permissionMapSchema = z.record(z.boolean());
 const rolePermissionsSchema = z.record(permissionMapSchema);
+const polygonCoordinateSchema = z.union([
+  z.object({ lat: z.number(), lng: z.number() }),
+  z.tuple([z.number(), z.number()]),
+]);
 const seedAccountSchema = z.object({
   role: z.enum(["admin", "technician", "sales_rep"]),
   fullName: z.string().min(2),
@@ -114,7 +132,7 @@ export const jobCheckOutSchema = z.object({
 });
 
 export const jobUpsellSchema = z.object({
-  upsells: z.array(z.record(z.any())),
+  upsells: z.array(jsonRecordSchema),
   actualRevenue: z.number(),
 });
 
@@ -316,7 +334,7 @@ export const territoryCreateSchema = z.object({
   territoryName: z.string().min(2),
   salesRepId: z.string().min(1),
   neighborhoods: z.array(z.string()).optional(),
-  polygonCoordinates: z.array(z.any()).optional(),
+  polygonCoordinates: z.array(polygonCoordinateSchema).optional(),
 });
 
 export const commissionCreateSchema = z.object({
@@ -344,10 +362,10 @@ export const checklistCreateSchema = z.object({
   workDate: z.string().min(6),
   startCompleted: z.boolean().optional(),
   startTime: z.string().optional(),
-  startItems: z.array(z.record(z.any())).optional(),
+  startItems: z.array(jsonRecordSchema).optional(),
   endCompleted: z.boolean().optional(),
   endTime: z.string().optional(),
-  endItems: z.array(z.record(z.any())).optional(),
+  endItems: z.array(jsonRecordSchema).optional(),
   shiftStatus: z.string().optional(),
 });
 
@@ -471,5 +489,5 @@ export const mapsTerritoryQuerySchema = z.object({
 export const smsTriggerBodySchema = z.object({
   event: z.enum(["job_scheduled", "reminder_24h", "reminder_1h", "job_completed", "no_show"]),
   jobId: uuidSchema,
-  customData: z.record(z.any()).optional(),
+  customData: jsonRecordSchema.optional(),
 });

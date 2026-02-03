@@ -11,8 +11,8 @@ import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 import { logger } from "@/lib/logger";
 import { getRequestContext } from "@/lib/requestId";
 
-function smsUnavailable(error: unknown) {
-  logger.error("SMS is unavailable", { error });
+function smsUnavailable(error: unknown, requestContext: Record<string, unknown>) {
+  logger.error("SMS is unavailable", { ...requestContext, error });
   return NextResponse.json({ error: "SMS is unavailable" }, { status: 503 });
 }
 
@@ -44,6 +44,7 @@ export async function POST(
 ) {
   const ip = getRequestIp(request);
   const action = params.action;
+  const baseRequestContext = getRequestContext(request, { action, ip });
   if (action === "webhook") {
     const formData = await request.formData();
     const signature = request.headers.get("x-twilio-signature");
@@ -59,7 +60,7 @@ export async function POST(
     if (!isValid) {
       logger.warn(
         "Rejected inbound SMS webhook with invalid signature",
-        getRequestContext(request, { signature_present: Boolean(signature) })
+        { ...baseRequestContext, signature_present: Boolean(signature) }
       );
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -77,7 +78,7 @@ export async function POST(
       if (error) {
         logger.error(
           "Failed to check inbound SMS dedupe",
-          getRequestContext(request, { error })
+          { ...baseRequestContext, error }
         );
       }
       if (existing) {
@@ -109,6 +110,11 @@ export async function POST(
     return auth.response;
   }
   const { profile } = auth;
+  const requestContext = {
+    ...baseRequestContext,
+    user_id: profile.user_id,
+    company_id: profile.company_id,
+  };
 
   const payload = await request.json().catch(() => null);
   const parsed = smsSendSchema.safeParse(payload);
@@ -137,7 +143,7 @@ export async function POST(
   try {
     await sendSms(parsed.data.to, parsed.data.message);
   } catch (error) {
-    return smsUnavailable(error);
+    return smsUnavailable(error, requestContext);
   }
   await admin.from("sms_messages").insert({
     company_id: profile.company_id,

@@ -48,10 +48,6 @@
 
 ---
 
-> ⚠️ **CRITICAL ALERT:** Rate limiting is currently **DISABLED** for testing purposes.
-> See `docs/ops/RATE_LIMIT_DISABLED.md` for details and re-enablement instructions.
-> **DO NOT deploy to production without re-enabling rate limiting!**
-
 This document is a **single, end‑to‑end backlog** of *everything that must be fixed, completed, hardened, or added* to make the `ENTRETIEN-PRESTIGE-main` codebase **production‑ready to deploy**.
 
 It merges:

@@ -111,7 +111,7 @@ describe("Bug Fixes - Sales Dashboard API", () => {
     it("should handle empty leaderboard gracefully", () => {
       // This is a documentation test - the actual fix is in the API route
       // The API should not return 500 when leaderboard is empty
-      const emptyLeaderboard: any[] = [];
+      const emptyLeaderboard: string[] = [];
       expect(emptyLeaderboard).toEqual([]);
     });
 

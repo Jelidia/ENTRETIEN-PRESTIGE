@@ -6,6 +6,22 @@ import { usePathname, useRouter } from "next/navigation";
 import clsx from "clsx";
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
+import {
+  CustomersOutlineIcon,
+  DispatchListIcon,
+  EarningsCardIcon,
+  GearIcon,
+  HomeIcon,
+  InvoicesIcon,
+  JobsIcon,
+  MapIcon,
+  NotificationsIcon,
+  OperationsStackIcon,
+  ProfileIcon,
+  ReportsIcon,
+  SalesTrendIcon,
+  TargetIcon,
+} from "@/components/icons/nav-icons";
 import type { PermissionKey, PermissionMap } from "@/lib/permissions";
 
 // Simplified navigation - fewer items, more intuitive
@@ -27,268 +43,91 @@ const bottomNavItems: {
     href: "/dashboard",
     label: "Home",
     permission: "dashboard",
-    icon: ({ active }) => (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className={clsx("bottom-nav-icon", active && "bottom-nav-icon-active")}>
-        <path
-          d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5.5a1 1 0 0 1-1-1v-4.5h-3V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-9.5Z"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinejoin="round"
-        />
-      </svg>
-    ),
+    icon: HomeIcon,
   },
   {
     href: "/dispatch",
     label: "Dispatch",
     permission: "dispatch",
-    icon: ({ active }) => (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className={clsx("bottom-nav-icon", active && "bottom-nav-icon-active")}>
-        <path
-          d="M4 6h16M4 12h16M4 18h10"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-        />
-        <circle cx="18" cy="18" r="2" fill="currentColor" />
-      </svg>
-    ),
+    icon: DispatchListIcon,
   },
   {
     href: "/jobs",
     label: "Jobs",
     permission: "jobs",
-    icon: ({ active }) => (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className={clsx("bottom-nav-icon", active && "bottom-nav-icon-active")}>
-        <rect x="4" y="5" width="16" height="14" rx="2" fill="none" stroke="currentColor" strokeWidth="1.6" />
-        <path d="M8 9h8M8 13h6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-      </svg>
-    ),
+    icon: JobsIcon,
   },
   {
     href: "/customers",
     label: "Clients",
     permission: "customers",
-    icon: ({ active }) => (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className={clsx("bottom-nav-icon", active && "bottom-nav-icon-active")}>
-        <path
-          d="M8 12a4 4 0 1 1 8 0"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-        />
-        <path
-          d="M4 20c1.5-3 4-4.5 8-4.5s6.5 1.5 8 4.5"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-        />
-      </svg>
-    ),
+    icon: CustomersOutlineIcon,
   },
   {
     href: "/invoices",
     label: "Invoices",
     permission: "invoices",
-    icon: ({ active }) => (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className={clsx("bottom-nav-icon", active && "bottom-nav-icon-active")}>
-        <path
-          d="M6 3h8l4 4v14H6Z"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M8 11h8M8 15h6"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-        />
-      </svg>
-    ),
+    icon: InvoicesIcon,
   },
   {
     href: "/sales",
     label: "Sales",
     permission: "sales",
-    icon: ({ active }) => (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className={clsx("bottom-nav-icon", active && "bottom-nav-icon-active")}>
-        <path
-          d="M4 16l4-4 4 4 6-7"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <circle cx="18" cy="9" r="2" fill="currentColor" />
-      </svg>
-    ),
+    icon: SalesTrendIcon,
   },
   {
     href: "/operations",
     label: "Ops",
     permission: "operations",
-    icon: ({ active }) => (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className={clsx("bottom-nav-icon", active && "bottom-nav-icon-active")}>
-        <path
-          d="M12 4 4 8l8 4 8-4-8-4Z"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M4 12l8 4 8-4"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M4 16l8 4 8-4"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinejoin="round"
-        />
-      </svg>
-    ),
+    icon: OperationsStackIcon,
   },
   {
     href: "/reports",
     label: "Reports",
     permission: "reports",
-    icon: ({ active }) => (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className={clsx("bottom-nav-icon", active && "bottom-nav-icon-active")}>
-        <path d="M5 19V9M12 19V5M19 19v-7" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-        <path d="M4 19h16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-      </svg>
-    ),
+    icon: ReportsIcon,
   },
   {
     href: "/notifications",
     label: "Alerts",
     permission: "notifications",
-    icon: ({ active }) => (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className={clsx("bottom-nav-icon", active && "bottom-nav-icon-active")}>
-        <path
-          d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinejoin="round"
-        />
-        <path d="M10 19a2 2 0 0 0 4 0" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      </svg>
-    ),
+    icon: NotificationsIcon,
   },
   {
     href: "/technician",
     label: "Today",
     permission: "technician",
-    icon: ({ active }) => (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className={clsx("bottom-nav-icon", active && "bottom-nav-icon-active")}>
-        <path
-          d="M12 3v4m0 10v4M4.5 12h4m7 0h4"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-        />
-        <circle cx="12" cy="12" r="3" fill="currentColor" />
-      </svg>
-    ),
+    icon: TargetIcon,
   },
   {
     href: "/technician/map",
     label: "Map",
     permission: "technician",
-    icon: ({ active }) => (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className={clsx("bottom-nav-icon", active && "bottom-nav-icon-active")}>
-        <path
-          d="M3.5 6.5 9 4l6 2.5L20.5 4v13.5L15 20l-6-2.5L3.5 20V6.5Z"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinejoin="round"
-        />
-        <path d="M9 4v13.5M15 6.5V20" fill="none" stroke="currentColor" strokeWidth="1.6" />
-      </svg>
-    ),
+    icon: MapIcon,
   },
   {
     href: "/technician/customers",
     label: "Customers",
     permission: "technician",
-    icon: ({ active }) => (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className={clsx("bottom-nav-icon", active && "bottom-nav-icon-active")}>
-        <path
-          d="M8 12a4 4 0 1 1 8 0"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-        />
-        <path
-          d="M4 20c1.5-3 4-4.5 8-4.5s6.5 1.5 8 4.5"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-        />
-      </svg>
-    ),
+    icon: CustomersOutlineIcon,
   },
   {
     href: "/technician/earnings",
     label: "Earnings",
     permission: "technician",
-    icon: ({ active }) => (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className={clsx("bottom-nav-icon", active && "bottom-nav-icon-active")}>
-        <path
-          d="M4 6h16v12H4z"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinejoin="round"
-        />
-        <path d="M7 9h10M7 13h6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-      </svg>
-    ),
+    icon: EarningsCardIcon,
   },
   {
     href: "/technician/profile",
     label: "Profile",
     permission: "technician",
-    icon: ({ active }) => (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className={clsx("bottom-nav-icon", active && "bottom-nav-icon-active")}>
-        <circle cx="12" cy="8" r="3.5" fill="none" stroke="currentColor" strokeWidth="1.6" />
-        <path d="M4 20c1.8-3.4 4.6-5 8-5s6.2 1.6 8 5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-      </svg>
-    ),
+    icon: ProfileIcon,
   },
   {
     href: "/settings",
     label: "Settings",
     permission: "settings",
-    icon: ({ active }) => (
-      <svg viewBox="0 0 24 24" aria-hidden="true" className={clsx("bottom-nav-icon", active && "bottom-nav-icon-active")}>
-        <path
-          d="M12 8.2a3.8 3.8 0 1 1 0 7.6 3.8 3.8 0 0 1 0-7.6Zm8 3.8-1.7-.3a6.8 6.8 0 0 0-.9-2.1l1-1.4-1.9-1.9-1.4 1a6.8 6.8 0 0 0-2.1-.9L12 4l-2.1.4a6.8 6.8 0 0 0-2.1.9l-1.4-1-1.9 1.9 1 1.4a6.8 6.8 0 0 0-.9 2.1L4 12l.4 2.1c.2.7.5 1.4.9 2.1l-1 1.4 1.9 1.9 1.4-1c.7.4 1.4.7 2.1.9L12 20l2.1-.4c.7-.2 1.4-.5 2.1-.9l1.4 1 1.9-1.9-1-1.4c.4-.7.7-1.4.9-2.1L20 12Z"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.3"
-          strokeLinejoin="round"
-        />
-      </svg>
-    ),
+    icon: GearIcon,
   },
 ];
 
@@ -354,6 +193,7 @@ export default function SideNav() {
           width={140}
           height={40}
           priority
+          sizes="140px"
           style={{ objectFit: "contain", marginBottom: "8px" }}
         />
       </div>

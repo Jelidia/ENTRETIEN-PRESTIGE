@@ -108,7 +108,7 @@ export default function SalesPage() {
       .split(",")
       .map((item) => item.trim())
       .filter(Boolean);
-    let polygonCoordinates: any = undefined;
+    let polygonCoordinates: unknown = undefined;
     if (territoryForm.polygonCoordinates) {
       try {
         polygonCoordinates = JSON.parse(territoryForm.polygonCoordinates);

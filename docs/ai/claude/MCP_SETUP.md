@@ -1,5 +1,8 @@
 # MCP Integration Setup - Entretien Prestige
 
+Deprecated. This Claude Code MCP guide is not maintained.
+Use `docs/ai/codex/AGENTS.md` for current tooling guidance.
+
 Model Context Protocol (MCP) integration for enhanced Claude Code capabilities with Entretien Prestige.
 
 ## Overview

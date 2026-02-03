@@ -1,5 +1,7 @@
 type AuditStatus = "success" | "failed" | "denied";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
+
 type AuditOptions = {
   oldValues?: Record<string, unknown> | null;
   newValues?: Record<string, unknown> | null;
@@ -9,7 +11,7 @@ type AuditOptions = {
 };
 
 export async function logAudit(
-  client: { from: (table: string) => any },
+  client: Pick<SupabaseClient, "from">,
   userId: string | null,
   action: string,
   resourceType: string,

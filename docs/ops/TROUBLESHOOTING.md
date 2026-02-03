@@ -872,7 +872,7 @@ Include:
 
 ### Documentation Locations
 
-- **Project docs:** `docs/ai/claude/CLAUDE.md`, `README.md`
+- **Project docs:** `docs/ai/codex/AGENTS.md`, `README.md`
 - **Spec:** `docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md`
 - **Agents:** `/.claude/AGENTS_GUIDE.md`
 - **Skills:** `/.claude/SKILLS_GUIDE.md`

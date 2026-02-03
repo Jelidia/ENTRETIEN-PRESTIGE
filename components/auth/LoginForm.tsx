@@ -103,6 +103,7 @@ export default function LoginForm({ redirect }: { redirect?: string }) {
           width={180}
           height={50}
           priority
+          sizes="(max-width: 640px) 140px, 180px"
           style={{ objectFit: "contain", margin: "0 auto" }}
         />
         <h2 style={{ marginTop: 16, fontSize: "24px", fontWeight: "bold", color: "#1E40AF" }}>

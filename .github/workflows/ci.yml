@@ -21,6 +21,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Supabase migration sanity check
+        run: |
+          node -e 'const fs=require("fs");const path=require("path");const dir=path.join(process.cwd(),"supabase","migrations");if(!fs.existsSync(dir)){console.error("Missing supabase/migrations");process.exit(1);}const files=fs.readdirSync(dir).filter((f)=>f.endsWith(".sql"));if(!files.length){console.error("No migration files found");process.exit(1);}const invalid=files.filter((f)=>!/^[0-9]{14}_.+\.sql$/.test(f));if(invalid.length){console.error("Invalid migration filenames:",invalid.join(", "));process.exit(1);}const timestamps=files.map((f)=>f.slice(0,14));const dupes=timestamps.filter((t,i)=>timestamps.indexOf(t)!==i);if(dupes.length){const uniq=[...new Set(dupes)];console.error("Duplicate migration timestamps:",uniq.join(", "));process.exit(1);}const schema=path.join(process.cwd(),"supabase","schema.sql");if(!fs.existsSync(schema)){console.error("Missing supabase/schema.sql");process.exit(1);}console.log("Supabase migrations sanity check ok");'
+
       - name: Lint
         run: npm run lint
 

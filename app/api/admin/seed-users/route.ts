@@ -224,11 +224,12 @@ export async function POST(request: Request) {
         if (user.role === "admin") {
           adminUserId = authUserId;
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : "Unknown error";
         results.push({
           email: user.email,
           status: "error",
-          error: error.message,
+          error: message,
         });
       }
     }
@@ -252,11 +253,12 @@ export async function POST(request: Request) {
         users: SEED_USERS.map((u) => u.email),
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
       {
         error: "Seeding failed",
-        details: error.message,
+        details: message,
       },
       { status: 500 }
     );
