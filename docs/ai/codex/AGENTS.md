@@ -99,7 +99,7 @@ node scripts/verify-users-exist.ts
 2. `docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md` — full product specification
 3. `docs/ops/TROUBLESHOOTING.md` — debugging playbook
 
-OpenCode handoff: `docs/ai/codex/OPENCODE_HANDOFF_PROMPT.md` (current status + next steps).
+Task coordination: `docs/tasks/DOCS_TASK_LIST.md` (single source of truth).
 
 ## OpenCode/Codex quality-of-life
 
