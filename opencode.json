@@ -1,23 +1,6 @@
-{
-  "$schema": "https://opencode.ai/config.json",
-  "default_agent": "ep",
-  "permission": "allow",
-  "lsp": {
-    "typescript": {
-      "initialization": {
-        "preferences": {
-          "importModuleSpecifierPreference": "relative"
-        }
-      }
-    }
-  },
-  "theme": "tokyonight",
-  "plugins": [
-    "./.opencode/plugins/compaction",
-    "./.opencode/plugins/env-protect"
-  ],
-  "mcp": {
-    "github_mcp": { "enabled": false },
-    "docs_mcp": { "enabled": false }
+﻿{
+    "$schema": "https://opencode.ai/config.json",
+    "default_agent": "ep",
+    "theme": "opencode"
   }
-}
+  
