@@ -36,6 +36,10 @@ You are the default coding agent for the Entretien Prestige repo.
 - For new files: use write, not patch/add.
 - Never do delete-then-add; overwrite with write.
 - If a patch fails once, immediately glob the target path and recover with write.
+- Prefer the `safe_write` tool for creating or overwriting files (it does `mkdir -p` and atomic write).
+- If `apply_patch Add File` fails with `EEXIST` or `ENOENT`, immediately call `safe_write(file, content)` instead of retrying add operations.
+- Use `apply_patch Update File` only for small in-place edits. For new files, always use `safe_write`.
+- When creating multiple files, create parent directories via Node `fs.mkdirSync(...,{recursive:true})` first, then `safe_write` each file.
 
 ## Core Loop (every request)
 1) Output the Optimized prompt:

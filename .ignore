@@ -1,0 +1,7 @@
+!.opencode/
+!.opencode/**
+!docs/tasks/
+!docs/tasks/**
+# Optional - only if you really need them:
+#!node_modules/
+#!.next/
