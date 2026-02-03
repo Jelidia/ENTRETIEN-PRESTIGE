@@ -111,3 +111,4 @@ This repo includes OpenCode config (`opencode.json`) plus a few custom commands:
 - `/test` — run `npm test`
 - `/rls-check` — run `node scripts/check-rls-status.ts`
 - `/review` — run a read-only review of the current `git diff`
+- `/opencode-registry` — query the local Awesome OpenCode registry snapshot
