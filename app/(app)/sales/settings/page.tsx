@@ -175,7 +175,7 @@ export default function SalesSettingsPage() {
           <div style={{ marginTop: 12 }}>
             <div className="list">
               {territories.map((territory) => (
-                <div className="list-item" key={territory.territory_id} style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}>
+                <div className="list-item list-item-stack" key={territory.territory_id}>
                   <div style={{ width: "100%" }}>
                     <strong>{territory.territory_name}</strong>
                     <div className="card-meta">

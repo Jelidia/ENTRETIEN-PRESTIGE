@@ -4,6 +4,7 @@ import TopBar from "@/components/TopBar";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { permissionKeys, type PermissionKey, type PermissionMap, defaultRolePermissions, mergeRolePermissions } from "@/lib/permissions";
+import { logger } from "@/lib/logger";
 
 type TeamMember = {
   user_id: string;
@@ -84,7 +85,7 @@ export default function TeamPage() {
         setRolePermissions(mergedPermissions);
       }
     } catch (err) {
-      console.error("Failed to load company settings:", err);
+      logger.error("Failed to load company settings", { error: err });
     }
   }
 
@@ -202,8 +203,7 @@ export default function TeamPage() {
             members.map((member) => (
               <div
                 key={member.user_id}
-                className="list-item"
-                style={{ flexDirection: "column", alignItems: "flex-start", gap: 8 }}
+                className="list-item list-item-stack"
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
                   <div>
@@ -240,7 +240,7 @@ export default function TeamPage() {
                     {statusLabels[member.status || "inactive"] || "Inconnu"}
                   </span>
                 </div>
-                <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                <div className="list-item-actions">
                   <Link href={`/team/${member.user_id}`} className="button-secondary">
                     Voir profil
                   </Link>

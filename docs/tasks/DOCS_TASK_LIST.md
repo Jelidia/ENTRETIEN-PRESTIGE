@@ -5,7 +5,7 @@
 This file is the only coordination list for work in this repo.
 
 How to use
-- Claim a task by appending: " [WIP: <owner> <YYYY-MM-DD>]" to that line.
+- Chose a task yourself and claim it by appending it with: " [WIP: <owner> <YYYY-MM-DD>]" to that line.
 - If a task has any WIP tag, do not work on it.
 - When a task is done, delete the entire line.
 - If you stop without finishing, remove your WIP tag so others can take it.
@@ -28,13 +28,11 @@ Notes
 - EP-P0-PAY-03 Make manual Interac marking safe and auditable.
 
 ## P1 - Engineering, auth, dispatch, messaging, storage
-- EP-P1-ENG-02 Structured logging + request IDs everywhere (replace console.*).
 - EP-P1-ENG-03 Standardize API response format and error handling.
 - EP-P1-ENG-04 CI pipeline: typecheck + lint + tests + migration sanity.
 - EP-P1-ENG-05 Remove unsafe any usage and tighten validators.
 - EP-P1-ENG-06 Add E2E tests for critical flows (Playwright).
-- EP-P1-ENG-07 Remove stale agent docs/outdated claims; regenerate accurate documentation.
-- EP-P1-ENG-08 Create a production deployment checklist (repeatable + auditable).
+- EP-P1-ENG-07 Remove stale agent docs/outdated claims; regenerate accurate documentation. [WIP: OpenCode 2026-02-04]
 - EP-P1-AUTH-01 Redesign permission keys so technician settings do not equal company settings. 
 - EP-P1-AUTH-02 Field-level authorization for jobs and customers.
 - EP-P1-AUTH-03 Define and enforce a job status state machine.
@@ -44,8 +42,6 @@ Notes
 - EP-P1-DISP-02 Replace naive auto-assign with an explainable assignment algorithm.
 - EP-P1-DISP-03 Build employee availability management end-to-end.
 - EP-P1-DISP-04 Weather cancellation safety checks and notifications.
-- EP-P1-MSG-01 Fix SMS send idempotency and message persistence ordering.
-- EP-P1-MSG-02 Inbound SMS webhook: verify signature, dedupe, map messages to correct company.
 - EP-P1-MSG-03 Opt-out and consent compliance for SMS (STOP handling, quiet hours).
 - EP-P1-MSG-04 Email sending requires Resend when enabled and tracks delivery.
 - EP-P1-STOR-01 Stop storing public URLs for sensitive documents. 
@@ -96,19 +92,20 @@ Notes
 - Monitoring and logging plan (error tracking, analytics, performance).
 
 ## QA and testing
-- Manual comprehensive test blocked: missing Playwright dependency (install Playwright and rerun npx tsx tests/manual-comprehensive-test.ts).
-- Run full E2E suite: npm run test:e2e (fix failures).
+- Run full E2E suite: npm run test:e2e (fix failures). [WIP: OpenCode 2026-02-04]
 - Test core workflows: create lead, customer, team member, job; dispatch calendar (auto-assign, drag-drop).
 
-## Pre-production checklist
-- Supabase migrations apply cleanly on a fresh DB (CI enforced).
-- RLS enabled and tested for every tenant table.
-- APP_ENCRYPTION_KEY present and validated in production.
-- Stripe keys + webhook secret configured (or payments disabled explicitly).
-- Twilio configured + webhook signature verification enabled (or SMS disabled explicitly).
-- Resend configured (or email disabled explicitly).
-- Storage buckets private and signed URLs used for documents/photos.
-- No demo/mock fallback data in production paths.
-- Run npm run typecheck, npm run lint, npm test, npm run test:e2e.
-- Observability configured (structured logs + request IDs + error tracking).
-- Verify RLS helper functions exist and policies are correct (get_user_role, get_user_company_id).
+## Production deployment checklist
+- Record release tag or commit SHA, deployment time, and approver in the deployment log.
+- Confirm CI is green for the release commit (typecheck, lint, tests, e2e) and archive results.
+- Apply Supabase migrations in staging and production; store migration logs.
+- Verify RLS enabled for every tenant table and helper functions exist (get_user_role, get_user_company_id).
+- Validate production secrets and env vars are present (APP_ENCRYPTION_KEY, Stripe, Twilio, Resend) in the secrets manager.
+- Verify Stripe keys + webhook secret configured (or payments disabled explicitly).
+- Verify Twilio configured + webhook signature verification enabled (or SMS disabled explicitly).
+- Verify Resend configured (or email disabled explicitly).
+- Verify storage buckets are private and signed URLs used for documents/photos.
+- Ensure no demo or mock fallback data in production paths.
+- Confirm observability configured (structured logs + request IDs + error tracking) and capture a test request.
+- Run smoke tests for core workflows: create lead, customer, team member, job; verify dispatch calendar behavior.
+- Capture rollback plan (previous release tag and DB backup status).

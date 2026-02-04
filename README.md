@@ -4,35 +4,17 @@
 
 Full-stack operations platform for Quebec cleaning company with dispatch, CRM, billing, SMS automation, sales pipeline, and commission tracking.
 
-**Status:** ~70-75% complete, foundation solid, APIs working, UI has critical gaps (see `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md`)
+**Status:** In progress; see `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` for blockers and readiness.
 
-**Claude Code Integration:** Full development environment with 6 agents, 10 skills, comprehensive hooks, and MCP integration
+**AI tooling:** See `docs/ai/codex/AGENTS.md` for the current agent workflow and repo rules (legacy Claude Code docs are archived).
 
 ---
 
 ## 🚀 Quick Start
 
-### Claude Code Setup (Recommended)
+### AI Tooling (OpenCode/Codex)
 
-If you're using Claude Code for development:
-
-```bash
-# The plugin is already configured in this project
-# Just start Claude Code and the session hook will guide you:
-claude
-
-# Or run setup manually:
-.claude/hooks/project-setup.sh
-```
-
-You'll have access to:
-- 🤖 6 Specialized Agents (feature-builder, database-architect, qa-engineer, bug-hunter, deploy-manager, code-reviewer)
-- 🔧 10 Custom Skills (api-builder, ui-builder, test-generator, migration-builder, etc.)
-- 🎨 3 Output Styles (quebec-french, production-ready, code-review)
-- 🔗 Comprehensive Hooks (validation, formatting, testing)
-- 📡 MCP Integration (Supabase, Git, Stripe, Twilio)
-
-See `.claude/README.md` for complete Claude Code documentation.
+See `docs/ai/codex/AGENTS.md` for the current agent workflow, available skills, and repo rules. Legacy Claude Code docs are archived and not maintained.
 
 ### Standard Setup
 
@@ -594,9 +576,9 @@ See `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` for deploy
 
 ### For Developers
 
-- **docs/ai/codex/AGENTS.md** - Primary agent guidance (read this first)
-- **docs/ai/claude/CLAUDE.md** - Legacy Claude Code guide (deprecated)
-- **README.md** - This file (setup and overview)
+- **docs/ai/codex/AGENTS.md** - Primary agent guidance and repo rules (read this first)
+- **README.md** - Setup and overview
+- **docs/ai/claude/** - Archived legacy Claude Code notes (not maintained)
 
 ### For Deployment
 
@@ -744,14 +726,13 @@ SELECT company_id FROM jobs WHERE job_id = 'yyy';
 
 **Project:** Entretien Prestige
 **Location:** Grand Montréal, Quebec, Canada
-**Version:** 1.0 (In Development - 70-75% Complete)
+**Version:** 1.0 (In Development)
 **Specification:** Version 2.0 - Final (January 27, 2026)
 **Status:** NOT READY FOR PRODUCTION (critical bugs found - see `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md`)
 
 **For technical questions:**
 - See `docs/ai/codex/AGENTS.md` - Primary agent guidance
-- See `docs/ai/claude/CLAUDE.md` - Legacy Claude Code guide (deprecated)
-- See `docs/ops/TROUBLESHOOTING.md` - Database issues
+- See `docs/ops/TROUBLESHOOTING.md` - Debugging playbook
 
 **For business requirements:**
 - See `docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md` - Full specification

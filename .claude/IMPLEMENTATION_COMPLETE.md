@@ -1,5 +1,9 @@
 # Claude Code Implementation Complete
 
+# Legacy Claude Code (Archived)
+
+This file is not maintained and may be inaccurate. For current tooling guidance, use `docs/ai/codex/AGENTS.md`.
+
 **Date:** 2026-01-28
 **Status:** ✅ ALL FEATURES IMPLEMENTED
 

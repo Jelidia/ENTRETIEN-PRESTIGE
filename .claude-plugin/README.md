@@ -1,5 +1,8 @@
 # Entretien Prestige Development Plugin
 
+> Archived (legacy Claude Code plugin). This documentation is not maintained and may be inaccurate.
+> For current tooling guidance, use `docs/ai/codex/AGENTS.md`.
+
 Complete Claude Code development environment for Entretien Prestige - a mobile-first ERP system for Quebec cleaning companies.
 
 ## 🚀 Quick Start

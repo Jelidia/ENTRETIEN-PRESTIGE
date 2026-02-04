@@ -1,9 +1,11 @@
 # Claude Code Agents Guide
 
+# Legacy Claude Code Agents (Archived)
+
+This file is not maintained and may be inaccurate. For current agent guidance, use `docs/ai/codex/AGENTS.md`.
+
 **Last Updated:** 2026-01-28
 **Total Agents:** 6
-
-This document lists all available agents for the Entretien Prestige project and how to use them.
 
 ---
 

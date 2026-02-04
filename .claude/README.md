@@ -1,10 +1,14 @@
 # Claude Code Configuration
 
+# Legacy Claude Code (Archived)
+
+This directory is kept only for historical reference. The content below is not maintained and may be inaccurate.
+For current OpenCode/Codex guidance, use `docs/ai/codex/AGENTS.md`.
+
+The directory listing below is a historical snapshot and may not match current files.
+
 **Project:** Entretien Prestige
 **Last Updated:** 2026-01-28
-
-This directory contains legacy Claude Code automation configurations for the project.
-For current OpenCode guidance, use `docs/ai/codex/AGENTS.md`.
 
 ---
 

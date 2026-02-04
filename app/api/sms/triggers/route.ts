@@ -193,6 +193,8 @@ export async function POST(request: Request) {
 
   if (shouldSendSms && message) {
     const phoneNumber = formatPhoneNumber(customerRecord.phone);
+    let idempotencyScope = "";
+    let idempotencyRequestHash = "";
 
     try {
       const idempotency = await beginIdempotency(client, request, profile.user_id, {
@@ -209,6 +211,8 @@ export async function POST(request: Request) {
       if (idempotency.action === "in_progress") {
         return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
       }
+      idempotencyScope = idempotency.scope;
+      idempotencyRequestHash = idempotency.requestHash;
 
       const threadId = await resolveThreadId(client, customerRecord.customer_id ?? null, phoneNumber);
       const createdAt = new Date().toISOString();
@@ -234,10 +238,18 @@ export async function POST(request: Request) {
           job_id: jobId,
           event,
         });
-        return NextResponse.json(
-          { success: false, error: "Unable to persist SMS" },
-          { status: 500 }
-        );
+        const responseBody = { success: false, error: "Unable to persist SMS" };
+        if (idempotencyScope && idempotencyRequestHash) {
+          await completeIdempotency(
+            client,
+            request,
+            idempotencyScope,
+            idempotencyRequestHash,
+            responseBody,
+            500
+          );
+        }
+        return NextResponse.json(responseBody, { status: 500 });
       }
 
       try {
@@ -292,9 +304,18 @@ export async function POST(request: Request) {
         event,
       });
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      return NextResponse.json({ success: false, error: "Failed to send SMS", details: errorMessage },
-        { status: 500 }
-      );
+      const responseBody = { success: false, error: "Failed to send SMS", details: errorMessage };
+      if (idempotencyScope && idempotencyRequestHash) {
+        await completeIdempotency(
+          client,
+          request,
+          idempotencyScope,
+          idempotencyRequestHash,
+          responseBody,
+          500
+        );
+      }
+      return NextResponse.json(responseBody, { status: 500 });
     }
   }
 

@@ -9,7 +9,7 @@ This guide covers common issues and their solutions for the Entretien Prestige p
 - [Authentication & Authorization](#authentication--authorization)
 - [Build & TypeScript Errors](#build--typescript-errors)
 - [Testing Issues](#testing-issues)
-- [Claude Code Issues](#claude-code-issues)
+- [Legacy Claude Code (Archived)](#legacy-claude-code-archived)
 - [Environment & Configuration](#environment--configuration)
 - [Development Server Issues](#development-server-issues)
 - [Integration Issues](#integration-issues)
@@ -18,20 +18,15 @@ This guide covers common issues and their solutions for the Entretien Prestige p
 
 ## Quick Diagnostics
 
-### Run the Doctor Command
-
-Claude Code includes a diagnostic tool:
+### Baseline Checks
 
 ```bash
-claude /doctor
+npm run lint
+npm run typecheck
+npm test
 ```
 
-This will check:
-- Node and npm versions
-- Project dependencies
-- Configuration files
-- Environment variables
-- Git status
+These checks surface common errors in linting, typing, and tests.
 
 ### Common Quick Fixes
 
@@ -50,8 +45,6 @@ npm run typecheck
 rm -rf node_modules/.vitest
 npm test
 
-# Fix permissions (Linux/Mac)
-chmod +x .claude/hooks/*.sh
 ```
 
 ## Database Issues
@@ -421,99 +414,10 @@ beforeEach(() => {
 });
 ```
 
-## Claude Code Issues
+## Legacy Claude Code (Archived)
 
-### Issue: Claude Code Commands Not Found
-
-**Symptoms:** `claude: command not found`
-
-**Solutions:**
-```bash
-# Check if Claude Code is installed
-which claude
-
-# Install/reinstall Claude Code
-npm install -g @anthropic/claude-code
-
-# Add to PATH (if installed but not in PATH)
-export PATH="$PATH:$HOME/.npm-global/bin"
-
-# Or use npx
-npx @anthropic/claude-code
-```
-
-### Issue: Agents/Skills Not Loading
-
-**Symptoms:** `/agent feature-builder` not recognized
-
-**Check:**
-```bash
-# Verify directory structure
-ls .claude/agents/
-ls .claude/skills/
-
-# Check agent file format
-cat .claude/agents/feature-builder.md
-# Should have YAML frontmatter at top
-
-# Verify settings
-cat .claude/settings.json
-```
-
-**Solutions:**
-```bash
-# Reinstall plugin
-claude plugins uninstall entretien-prestige-dev
-claude plugins install entretien-prestige-dev
-
-# Clear Claude cache
-rm -rf ~/.claude/cache
-
-# Restart Claude Code
-claude --restart
-```
-
-### Issue: Hooks Not Running
-
-**Symptoms:** Expected validation doesn't happen
-
-**Check:**
-```bash
-# Verify hooks are executable
-ls -la .claude/hooks/
-# Should show: -rwxr-xr-x (executable)
-
-# Make executable if needed
-chmod +x .claude/hooks/*.sh
-
-# Test hook manually
-bash .claude/hooks/validate-migration.sh supabase/migrations/test.sql
-```
-
-**Windows fix:**
-```bash
-# In Git Bash or WSL
-dos2unix .claude/hooks/*.sh
-
-# Or re-save files with LF line endings
-# In VS Code: View > Command Palette > "Change End of Line Sequence" > LF
-```
-
-### Issue: Output Styles Not Applied
-
-**Symptoms:** Output doesn't follow Quebec French or production-ready style
-
-**Solutions:**
-```bash
-# Explicitly specify style
-claude --output-style quebec-french
-
-# Set default in settings
-echo '{"outputStyles": {"default": "production-ready"}}' > .claude/settings.local.json
-
-# Verify style is loaded
-claude --list-output-styles
-```
+Legacy Claude Code docs and plugin references are archived and not maintained.
+For current tooling guidance, use `docs/ai/codex/AGENTS.md`.
 
 ## Environment & Configuration
 
@@ -720,7 +624,7 @@ npm run typecheck
 git config --global core.autocrlf input
 
 # Convert existing files
-dos2unix .claude/hooks/*.sh
+dos2unix path/to/script.sh
 
 # Or in VS Code
 # View > Command Palette > "Change End of Line Sequence" > LF
@@ -757,11 +661,7 @@ const filePath = './supabase/migrations/file.sql';
 # Or use WSL
 wsl --install
 
-# Or convert to PowerShell
-# scripts/claude-automation.ps1
-
-# Or use Node.js instead of bash
-node scripts/claude-automation.js
+# Or use PowerShell or Node.js scripts if provided
 ```
 
 ## WSL-Specific Issues
@@ -818,9 +718,6 @@ export NEXT_PUBLIC_SUPABASE_URL="..."
 ### Enable Debug Logging
 
 ```bash
-# Claude Code debug mode
-claude --debug --log-file debug.log
-
 # Next.js debug mode
 DEBUG=* npm run dev
 
@@ -845,9 +742,6 @@ const client = createClient(url, key, {
 # Test logs
 coverage/index.html
 
-# Claude Code logs
-.claude/logs/
-
 # Browser console
 # Chrome DevTools > Console
 # Look for: errors, network failures, CORS issues
@@ -864,7 +758,6 @@ Include:
    ```bash
    node --version
    npm --version
-   claude --version
    cat package.json | grep "next"
    ```
 6. **Logs:** Relevant error logs
@@ -874,8 +767,6 @@ Include:
 
 - **Project docs:** `docs/ai/codex/AGENTS.md`, `README.md`
 - **Spec:** `docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md`
-- **Agents:** `/.claude/AGENTS_GUIDE.md`
-- **Skills:** `/.claude/SKILLS_GUIDE.md`
 - **Migrations:** `/supabase/migrations/`
 - **Deployment:** `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md`
 

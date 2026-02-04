@@ -7,6 +7,8 @@ import { isSmsConfigured } from "@/lib/twilio";
 import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
+import { logger } from "@/lib/logger";
+import { getRequestContext } from "@/lib/requestId";
 
 type DocumentFields = {
   id_document_front_url?: string;
@@ -62,11 +64,14 @@ export async function GET(request: Request) {
     .limit(200);
 
   if (error) {
-    console.error("Failed to load users", {
-      userId: profile.user_id,
-      companyId: profile.company_id,
-      error,
-    });
+    logger.error(
+      "Failed to load users",
+      getRequestContext(request, {
+        user_id: profile.user_id,
+        company_id: profile.company_id,
+        error,
+      })
+    );
     return NextResponse.json({ success: false, error: "Unable to load users" }, { status: 400 });
   }
 

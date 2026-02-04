@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { smsSendSchema } from "@/lib/validators";
 import { sendSms, verifyTwilioSignature } from "@/lib/twilio";
+import { formatPhoneNumber } from "@/lib/smsTemplates";
 import { createAdminClient, createUserClient } from "@/lib/supabaseServer";
 import { requireRole } from "@/lib/auth";
 import { getAccessTokenFromRequest } from "@/lib/session";
@@ -66,6 +67,8 @@ export async function POST(
     }
 
     const from = paramsMap.From ?? "";
+    const normalizedFrom = from ? formatPhoneNumber(from) : "";
+    const phoneNumber = normalizedFrom && normalizedFrom !== "+" ? normalizedFrom : from;
     const body = paramsMap.Body ?? "";
     const messageSid = paramsMap.MessageSid ?? "";
     const admin = createAdminClient();
@@ -85,20 +88,52 @@ export async function POST(
         return NextResponse.json({ success: true, data: { ok: true }, ok: true });
       }
     }
-    const { data: customer } = await admin
+    const { data: customers, error: customerError } = await admin
       .from("customers")
       .select("customer_id, company_id")
-      .eq("phone", from)
-      .maybeSingle();
-    if (!customer?.company_id) {
-      logger.warn("Inbound SMS missing company mapping", { ...baseRequestContext, from });
+      .eq("phone", phoneNumber)
+      .limit(1);
+    if (customerError) {
+      logger.error("Failed to map inbound SMS to customer", {
+        ...baseRequestContext,
+        error: customerError,
+        phone_number: phoneNumber,
+      });
+    }
+    const customer = customers?.[0] ?? null;
+    let companyId = customer?.company_id ?? null;
+    let customerId = customer?.customer_id ?? null;
+    if (!companyId && phoneNumber) {
+      const { data: recentMessages, error: messageError } = await admin
+        .from("sms_messages")
+        .select("company_id, customer_id")
+        .eq("phone_number", phoneNumber)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (messageError) {
+        logger.error("Failed to map inbound SMS from message history", {
+          ...baseRequestContext,
+          error: messageError,
+          phone_number: phoneNumber,
+        });
+      }
+      const recentMessage = recentMessages?.[0] ?? null;
+      companyId = companyId ?? recentMessage?.company_id ?? null;
+      customerId = customerId ?? recentMessage?.customer_id ?? null;
+    }
+    if (!companyId) {
+      logger.warn("Inbound SMS missing company mapping", {
+        ...baseRequestContext,
+        from,
+        phone_number: phoneNumber,
+      });
       return NextResponse.json({ success: false, error: "Unknown sender" }, { status: 404 });
     }
-    const threadId = await resolveThreadId(admin, customer?.customer_id ?? null, from);
+    const threadId = await resolveThreadId(admin, customerId ?? null, phoneNumber || from);
     await admin.from("sms_messages").insert({
-      company_id: customer.company_id,
-      customer_id: customer.customer_id ?? null,
-      phone_number: from,
+      company_id: companyId,
+      customer_id: customerId ?? null,
+      phone_number: phoneNumber || from,
       content: body,
       direction: "inbound",
       twilio_sid: messageSid || null,
@@ -161,7 +196,9 @@ export async function POST(
     .single();
   if (insertError || !messageRecord) {
     logger.error("Failed to persist outbound SMS", { ...requestContext, error: insertError });
-    return NextResponse.json({ success: false, error: "Unable to persist SMS" }, { status: 500 });
+    const responseBody = { success: false, error: "Unable to persist SMS" };
+    await completeIdempotency(admin, request, idempotency.scope, idempotency.requestHash, responseBody, 500);
+    return NextResponse.json(responseBody, { status: 500 });
   }
   try {
     await sendSms(parsed.data.to, parsed.data.message);
@@ -173,6 +210,8 @@ export async function POST(
     if (statusError) {
       logger.error("Failed to update SMS status", { ...requestContext, error: statusError });
     }
+    const responseBody = { success: false, error: "SMS is unavailable" };
+    await completeIdempotency(admin, request, idempotency.scope, idempotency.requestHash, responseBody, 503);
     return smsUnavailable(error, requestContext);
   }
   const { error: updateError } = await admin

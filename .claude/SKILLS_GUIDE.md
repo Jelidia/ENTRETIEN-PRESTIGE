@@ -1,9 +1,11 @@
 # Claude Code Skills Guide
 
+# Legacy Claude Code Skills (Archived)
+
+This file is not maintained and may be inaccurate. For current skills guidance, use `docs/ai/codex/AGENTS.md`.
+
 **Last Updated:** 2026-01-28
 **Total Skills:** 10
-
-This document lists all available skills for the Entretien Prestige project and how to use them.
 
 ---
 

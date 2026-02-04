@@ -8,100 +8,96 @@
       - generic [ref=e6]:
         - heading "Gestion des utilisateurs" [level=1] [ref=e7]
         - button "+ Créer un utilisateur" [ref=e8] [cursor=pointer]
-      - generic [ref=e9]: Invalid API key
-      - table [ref=e11]:
-        - rowgroup [ref=e12]:
-          - row "Email Nom complet Rôle Statut Actions" [ref=e13]:
-            - columnheader "Email" [ref=e14]
-            - columnheader "Nom complet" [ref=e15]
-            - columnheader "Rôle" [ref=e16]
-            - columnheader "Statut" [ref=e17]
-            - columnheader "Actions" [ref=e18]
-        - rowgroup [ref=e19]:
-          - row "jelidiadam12+1@gmail.com Technician Demo Technicien Actif Modifier Supprimer" [ref=e20]:
-            - cell "jelidiadam12+1@gmail.com" [ref=e21]
-            - cell "Technician Demo" [ref=e22]
-            - cell "Technicien" [ref=e23]
-            - cell "Actif" [ref=e24]
-            - cell "Modifier Supprimer" [ref=e25]:
-              - button "Modifier" [ref=e26] [cursor=pointer]
-              - button "Supprimer" [ref=e27]
-          - row "jelidiadam12+2@gmail.com Sales Rep Demo Représentant commercial Actif Modifier Supprimer" [ref=e28]:
-            - cell "jelidiadam12+2@gmail.com" [ref=e29]
-            - cell "Sales Rep Demo" [ref=e30]
-            - cell "Représentant commercial" [ref=e31]
-            - cell "Actif" [ref=e32]
-            - cell "Modifier Supprimer" [ref=e33]:
-              - button "Modifier" [ref=e34] [cursor=pointer]
-              - button "Supprimer" [ref=e35]
-          - row "youssef.takhi@hotmail.com Youssef Takhi Responsable Actif Modifier Supprimer" [ref=e36]:
-            - cell "youssef.takhi@hotmail.com" [ref=e37]
-            - cell "Youssef Takhi" [ref=e38]
-            - cell "Responsable" [ref=e39]
-            - cell "Actif" [ref=e40]
-            - cell "Modifier Supprimer" [ref=e41]:
-              - button "Modifier" [ref=e42] [cursor=pointer]
-              - button "Supprimer" [ref=e43]
-          - row "jelidiadam12@gmail.com Adam Jelidi Administrateur Actif Modifier Supprimer" [ref=e44]:
-            - cell "jelidiadam12@gmail.com" [ref=e45]
-            - cell "Adam Jelidi" [ref=e46]
-            - cell "Administrateur" [ref=e47]
-            - cell "Actif" [ref=e48]
-            - cell "Modifier Supprimer" [ref=e49]:
-              - button "Modifier" [ref=e50] [cursor=pointer]
-              - button "Supprimer" [ref=e51]
-      - generic [ref=e52]:
-        - paragraph [ref=e53]: 1 à 4 de 4 utilisateurs
-        - generic [ref=e54]:
-          - button "← Page précédente" [disabled] [ref=e55] [cursor=pointer]
-          - button "Page suivante →" [disabled] [ref=e56] [cursor=pointer]
-      - generic [ref=e58]:
-        - heading "Nouvel utilisateur" [level=2] [ref=e59]
-        - generic [ref=e60]:
-          - generic [ref=e61]:
-            - generic [ref=e62]: Email
-            - textbox [ref=e63]: qa.user+1770016961995@example.com
-          - generic [ref=e64]:
-            - generic [ref=e65]: Mot de passe
-            - textbox [ref=e66]: Prestige2026!
-            - generic [ref=e67]: Min 8 caractères, 1 majuscule, 1 chiffre, 1 caractère spécial
-          - generic [ref=e68]:
-            - generic [ref=e69]: Nom complet
-            - textbox [ref=e70]: QA User
-          - generic [ref=e71]:
-            - generic [ref=e72]: Rôle
-            - combobox [ref=e73]:
+      - generic [ref=e9]: User not allowed
+      - generic [ref=e10]:
+        - generic [ref=e11]:
+          - generic [ref=e12]: Technician Demo
+          - generic [ref=e13]: jelidiadam12+1@gmail.com
+          - generic [ref=e14]:
+            - generic [ref=e15]: Technicien
+            - generic [ref=e16]: Actif
+          - generic [ref=e17]:
+            - button "Modifier" [ref=e18] [cursor=pointer]
+            - button "Supprimer" [ref=e19]
+        - generic [ref=e20]:
+          - generic [ref=e21]: Sales Rep Demo
+          - generic [ref=e22]: jelidiadam12+2@gmail.com
+          - generic [ref=e23]:
+            - generic [ref=e24]: Représentant commercial
+            - generic [ref=e25]: Actif
+          - generic [ref=e26]:
+            - button "Modifier" [ref=e27] [cursor=pointer]
+            - button "Supprimer" [ref=e28]
+        - generic [ref=e29]:
+          - generic [ref=e30]: Youssef Takhi
+          - generic [ref=e31]: youssef.takhi@hotmail.com
+          - generic [ref=e32]:
+            - generic [ref=e33]: Responsable
+            - generic [ref=e34]: Actif
+          - generic [ref=e35]:
+            - button "Modifier" [ref=e36] [cursor=pointer]
+            - button "Supprimer" [ref=e37]
+        - generic [ref=e38]:
+          - generic [ref=e39]: Adam Jelidi
+          - generic [ref=e40]: jelidiadam12@gmail.com
+          - generic [ref=e41]:
+            - generic [ref=e42]: Administrateur
+            - generic [ref=e43]: Actif
+          - generic [ref=e44]:
+            - button "Modifier" [ref=e45] [cursor=pointer]
+            - button "Supprimer" [ref=e46]
+      - generic [ref=e47]:
+        - paragraph [ref=e48]: 1 à 4 de 4 utilisateurs
+        - generic [ref=e49]:
+          - button "← Page précédente" [disabled] [ref=e50] [cursor=pointer]
+          - button "Page suivante →" [disabled] [ref=e51] [cursor=pointer]
+      - generic [ref=e53]:
+        - heading "Nouvel utilisateur" [level=2] [ref=e54]
+        - generic [ref=e55]:
+          - generic [ref=e56]:
+            - generic [ref=e57]: Email
+            - textbox [ref=e58]: qa.user+1770237557952@example.com
+          - generic [ref=e59]:
+            - generic [ref=e60]: Mot de passe
+            - textbox [ref=e61]: Prestige2026!
+            - generic [ref=e62]: Min 8 caractères, 1 majuscule, 1 chiffre, 1 caractère spécial
+          - generic [ref=e63]:
+            - generic [ref=e64]: Nom complet
+            - textbox [ref=e65]: QA User
+          - generic [ref=e66]:
+            - generic [ref=e67]: Rôle
+            - combobox [ref=e68]:
               - option "Administrateur"
               - option "Responsable"
               - option "Représentant commercial"
               - option "Technicien" [selected]
-          - generic [ref=e74]:
-            - generic [ref=e75]: Statut
-            - combobox [ref=e76]:
+          - generic [ref=e69]:
+            - generic [ref=e70]: Statut
+            - combobox [ref=e71]:
               - option "Actif" [selected]
               - option "Inactif"
-          - generic [ref=e77]:
-            - button "Créer" [active] [ref=e78] [cursor=pointer]
-            - button "Annuler" [ref=e79] [cursor=pointer]
-    - navigation "Primary navigation" [ref=e80]:
-      - link "Home" [ref=e81] [cursor=pointer]:
+          - generic [ref=e72]:
+            - button "Créer" [active] [ref=e73] [cursor=pointer]
+            - button "Annuler" [ref=e74] [cursor=pointer]
+    - navigation "Primary navigation" [ref=e75]:
+      - link "Home" [ref=e76] [cursor=pointer]:
         - /url: /dashboard
-        - img [ref=e82]
-        - generic [ref=e84]: Home
-      - link "Schedule" [ref=e85] [cursor=pointer]:
+        - img [ref=e77]
+        - generic [ref=e79]: Home
+      - link "Schedule" [ref=e80] [cursor=pointer]:
         - /url: /dispatch
-        - img [ref=e86]
-        - generic [ref=e89]: Schedule
-      - link "Customers" [ref=e90] [cursor=pointer]:
+        - img [ref=e81]
+        - generic [ref=e84]: Schedule
+      - link "Customers" [ref=e85] [cursor=pointer]:
         - /url: /customers
-        - img [ref=e91]
-        - generic [ref=e95]: Customers
-      - link "Team" [ref=e96] [cursor=pointer]:
+        - img [ref=e86]
+        - generic [ref=e90]: Customers
+      - link "Team" [ref=e91] [cursor=pointer]:
         - /url: /team
-        - img [ref=e97]
-        - generic [ref=e102]: Team
-      - link "Settings" [ref=e103] [cursor=pointer]:
+        - img [ref=e92]
+        - generic [ref=e97]: Team
+      - link "Settings" [ref=e98] [cursor=pointer]:
         - /url: /settings
-        - img [ref=e104]
-        - generic [ref=e107]: Settings
+        - img [ref=e99]
+        - generic [ref=e102]: Settings
 ```

@@ -6,6 +6,7 @@ import { buildSalesStats, type LeadRow, type LeaderboardRow } from "@/lib/salesD
 import { emptyQuerySchema } from "@/lib/validators";
 import { captureError } from "@/lib/errorTracking";
 import { getRequestContext } from "@/lib/requestId";
+import { logger } from "@/lib/logger";
 
 export async function GET(request: Request) {
   const auth = await requireRole(request, ["admin", "manager", "sales_rep"], "sales");
@@ -54,7 +55,10 @@ export async function GET(request: Request) {
     .eq("year", now.getUTCFullYear());
 
   if (leaderboardError) {
-    console.warn("Leaderboard query failed (non-critical):", leaderboardError);
+    logger.warn("Leaderboard query failed (non-critical)", {
+      ...requestContext,
+      error: leaderboardError,
+    });
   }
 
   const stats = buildSalesStats({

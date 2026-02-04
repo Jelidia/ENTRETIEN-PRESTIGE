@@ -27,6 +27,15 @@ If you need deeper context, prefer **targeted reads** (don’t paste huge files 
 - `scripts/` — operational scripts (RLS/policies, reseed, verify users)
 - `supabase/` — schema, migrations, RLS policies (tracked)
 
+## Authoritative docs
+
+- **Agent workflow + repo rules:** `docs/ai/codex/AGENTS.md` (this file)
+- **Deployment readiness + blockers:** `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md`
+- **Product requirements:** `docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md`
+- **Setup + env vars:** `README.md`
+
+Legacy Claude Code documentation under `docs/ai/claude/` and `.claude-plugin/` is archived and not maintained.
+
 ## Non‑negotiables (project rules)
 
 ### UI/UX
@@ -73,6 +82,12 @@ If you need deeper context, prefer **targeted reads** (don’t paste huge files 
    - `npm run test:e2e` (Playwright)
 6. Summarize: what changed, why, files touched, commands run.
 
+## Available skills and agents (current)
+
+**Skills:** `spec-enforcer`, `docs-updater`, `french-ui-helper`, `agent-browser`, `ui-fr-ca`, `testing-selection`, `task-coordination`, `rls-audit`, `api-route-safety`
+
+**Agents:** `general`, `explore`, `qa`, `review`, `scout`, `security`, `ui`
+
 ## Common commands
 
 ```bash
@@ -95,9 +110,11 @@ node scripts/verify-users-exist.ts
 
 ## “If you only read 3 docs”
 
-1. `README.md` — setup + high-level rules + known issues
+1. `README.md` — setup + env vars + operational overview
 2. `docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md` — full product specification
-3. `docs/ops/TROUBLESHOOTING.md` — debugging playbook
+3. `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` — deployment readiness + blockers
+
+Troubleshooting: `docs/ops/TROUBLESHOOTING.md`.
 
 Task coordination: `docs/tasks/DOCS_TASK_LIST.md` (single source of truth).
 

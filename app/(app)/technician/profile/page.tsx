@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { logger } from "@/lib/logger";
 
 type AccessResponse = {
   role?: string;
@@ -53,7 +54,7 @@ export default function TechnicianProfilePage() {
         }
       }
     } catch (error) {
-      console.error("Failed to load profile:", error);
+      logger.error("Failed to load profile", { error });
     } finally {
       setLoading(false);
     }

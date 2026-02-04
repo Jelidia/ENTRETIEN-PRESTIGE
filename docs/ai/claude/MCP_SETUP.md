@@ -1,5 +1,8 @@
 # MCP Integration Setup - Entretien Prestige
 
+> Archived (legacy Claude Code MCP guidance). This file is not maintained and may be inaccurate.
+> For current tooling guidance, use `docs/ai/codex/AGENTS.md`.
+
 Deprecated. This Claude Code MCP guide is not maintained.
 Use `docs/ai/codex/AGENTS.md` for current tooling guidance.
 

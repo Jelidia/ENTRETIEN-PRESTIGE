@@ -804,8 +804,10 @@ These are referenced by API routes but missing from the local schema:
 
 **Where**
 - `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md`
-- `CRITICAL_FIXES_README.md`
+- `README.md`
+- `docs/ai/claude/*`
 - `.claude/*`
+- `.claude-plugin/*`
 
 **What to change**
 - Archive or delete deprecated docs under `.claude/` that are not part of the product.

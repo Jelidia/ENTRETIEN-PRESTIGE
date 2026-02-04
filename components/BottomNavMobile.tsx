@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
+import { logger } from "@/lib/logger";
 import {
   CalendarIcon,
   ClockIcon,
@@ -174,7 +175,7 @@ export default function BottomNavMobile({
           setRole(data.role);
         }
       })
-      .catch((err) => console.error("Failed to load permissions", err));
+      .catch((err) => logger.error("Failed to load permissions", { error: err }));
   }, []);
 
   if (!permissions || !role) {

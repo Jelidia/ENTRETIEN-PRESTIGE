@@ -1,5 +1,8 @@
 # CLAUDE.md
 
+> Archived (legacy Claude Code). This file is not maintained and may be inaccurate.
+> For current guidance, use `docs/ai/codex/AGENTS.md`.
+
 Deprecated. This legacy Claude Code guide is not maintained.
 Use `docs/ai/codex/AGENTS.md` for current guidance.
 
@@ -365,7 +368,6 @@ Minimum production checks:
 - `docs/ai/codex/AGENTS.md` — primary agent guidance
 - `docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md` — requirements/spec
 - `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` — production-readiness checklist and backlog
-- `CRITICAL_FIXES_README.md` — immediate fixes overview
 - `docs/ops/TROUBLESHOOTING.md` — known issues and debugging
 - `.claude/AGENTS_GUIDE.md`, `.claude/SKILLS_GUIDE.md` — legacy Claude Code configuration
 

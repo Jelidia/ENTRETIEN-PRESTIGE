@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { logger } from "@/lib/logger";
 
 export default function LogoutButton() {
   const [loading, setLoading] = useState(false);
@@ -24,11 +25,11 @@ export default function LogoutButton() {
         // Force full page reload to clear all state
         window.location.href = "/login";
       } else {
-        console.error("Logout failed");
+        logger.error("Logout failed");
         setLoading(false);
       }
     } catch (error) {
-      console.error("Logout error:", error);
+      logger.error("Logout error", { error });
       setLoading(false);
     }
   }
