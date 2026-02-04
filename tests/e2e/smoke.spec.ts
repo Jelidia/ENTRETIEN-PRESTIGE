@@ -1,11 +1,10 @@
 import { expect, test } from "@playwright/test";
 
-test("home page renders hero content", async ({ page }) => {
+test("home page redirects to login", async ({ page }) => {
   await page.goto("/");
 
-  await expect(page.getByText("Entretien Prestige")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Dispatch Entretien Prestige" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
+  await page.waitForURL(/\/login/, { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole("heading", { name: /sign in/i })).toBeVisible();
 });
 
 test("login page shows sign-in form", async ({ page }) => {

@@ -55,15 +55,25 @@ export async function POST(
     return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
   }
 
+  let providerId: string | null = null;
   try {
-    await sendEmail(parsed.data.to, parsed.data.subject, parsed.data.html);
+    const sendResult = await sendEmail(parsed.data.to, parsed.data.subject, parsed.data.html);
+    providerId = sendResult.id ?? null;
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    await logAudit(client, profile.user_id, "email_send", "customer", null, "failed", {
+      ipAddress: ip,
+      userAgent: request.headers.get("user-agent") ?? null,
+      newValues: { to: parsed.data.to, subject: parsed.data.subject, error: errorMessage },
+    });
+    const responseBody = { success: false, error: "Email is unavailable" };
+    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 503);
     return emailUnavailable(error, requestContext);
   }
   await logAudit(client, profile.user_id, "email_send", "customer", null, "success", {
     ipAddress: ip,
     userAgent: request.headers.get("user-agent") ?? null,
-    newValues: { to: parsed.data.to, subject: parsed.data.subject },
+    newValues: { to: parsed.data.to, subject: parsed.data.subject, provider_id: providerId },
   });
   const responseBody = { success: true, data: { ok: true }, ok: true };
   await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);

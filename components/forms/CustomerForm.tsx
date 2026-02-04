@@ -30,19 +30,19 @@ export default function CustomerForm() {
 
     const data = await response.json();
     if (!response.ok) {
-      setStatus(data.error ?? "Unable to create customer");
+      setStatus(data.error ?? "Impossible de créer le client");
       return;
     }
 
-    setStatus("Customer saved.");
+    setStatus("Client enregistré.");
     window.location.reload();
   }
 
   return (
     <form className="form-grid" onSubmit={handleSubmit}>
-      <div className="grid-2">
+      <div className="stack">
         <div className="form-row">
-          <label className="label" htmlFor="firstName">First name</label>
+          <label className="label" htmlFor="firstName">Prénom</label>
           <input
             id="firstName"
             className="input"
@@ -52,7 +52,7 @@ export default function CustomerForm() {
           />
         </div>
         <div className="form-row">
-          <label className="label" htmlFor="lastName">Last name</label>
+          <label className="label" htmlFor="lastName">Nom</label>
           <input
             id="lastName"
             className="input"
@@ -63,7 +63,7 @@ export default function CustomerForm() {
         </div>
       </div>
       <div className="form-row">
-        <label className="label" htmlFor="email">Email</label>
+        <label className="label" htmlFor="email">Courriel</label>
         <input
           id="email"
           className="input"
@@ -73,7 +73,7 @@ export default function CustomerForm() {
         />
       </div>
       <div className="form-row">
-        <label className="label" htmlFor="phone">Phone</label>
+        <label className="label" htmlFor="phone">Téléphone</label>
         <input
           id="phone"
           className="input"
@@ -89,13 +89,13 @@ export default function CustomerForm() {
           value={form.type}
           onChange={(event) => updateField("type", event.target.value)}
         >
-          <option value="residential">Residential</option>
+          <option value="residential">Résidentiel</option>
           <option value="commercial">Commercial</option>
-          <option value="industrial">Industrial</option>
+          <option value="industrial">Industriel</option>
         </select>
       </div>
       <div className="form-row">
-        <label className="label" htmlFor="address">Address</label>
+        <label className="label" htmlFor="address">Adresse</label>
         <input
           id="address"
           className="input"
@@ -103,9 +103,9 @@ export default function CustomerForm() {
           onChange={(event) => updateField("address", event.target.value)}
         />
       </div>
-      <div className="grid-2">
+      <div className="stack">
         <div className="form-row">
-          <label className="label" htmlFor="city">City</label>
+          <label className="label" htmlFor="city">Ville</label>
           <input
             id="city"
             className="input"
@@ -114,7 +114,7 @@ export default function CustomerForm() {
           />
         </div>
         <div className="form-row">
-          <label className="label" htmlFor="postalCode">Postal code</label>
+          <label className="label" htmlFor="postalCode">Code postal</label>
           <input
             id="postalCode"
             className="input"
@@ -124,7 +124,7 @@ export default function CustomerForm() {
         </div>
       </div>
       <button className="button-primary" type="submit">
-        Save customer
+        Enregistrer le client
       </button>
       {status ? <div className="hint">{status}</div> : null}
     </form>

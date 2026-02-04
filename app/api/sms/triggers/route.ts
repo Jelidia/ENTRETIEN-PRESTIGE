@@ -34,6 +34,32 @@ async function resolveThreadId(
   return data?.thread_id ?? randomUUID();
 }
 
+const DEFAULT_TIMEZONE = "America/Montreal";
+const QUIET_HOURS_START = 21;
+const QUIET_HOURS_END = 8;
+
+function getLocalHour(date: Date, timeZone: string) {
+  try {
+    const formatted = new Intl.DateTimeFormat("en-US", {
+      hour: "numeric",
+      hour12: false,
+      timeZone,
+    }).format(date);
+    const hour = Number(formatted);
+    return Number.isNaN(hour) ? date.getHours() : hour;
+  } catch {
+    return date.getHours();
+  }
+}
+
+function isWithinQuietHours(date: Date, timeZone: string) {
+  const hour = getLocalHour(date, timeZone);
+  if (QUIET_HOURS_START < QUIET_HOURS_END) {
+    return hour >= QUIET_HOURS_START && hour < QUIET_HOURS_END;
+  }
+  return hour >= QUIET_HOURS_START || hour < QUIET_HOURS_END;
+}
+
 // Trigger SMS based on job events
 export async function POST(request: Request) {
   const auth = await requireUser(request);
@@ -64,7 +90,7 @@ export async function POST(request: Request) {
     .from("jobs")
     .select(`
       *,
-      customer:customers(customer_id, first_name, last_name, phone, email)
+      customer:customers(customer_id, first_name, last_name, phone, email, sms_opt_in)
     `)
     .eq("job_id", jobId)
     .single();
@@ -192,6 +218,35 @@ export async function POST(request: Request) {
   }
 
   if (shouldSendSms && message) {
+    if (customerRecord.sms_opt_in === false) {
+      return NextResponse.json({
+        success: true,
+        message: "SMS skipped (opted out)",
+        data: { skipped: true, reason: "opt_out" },
+      });
+    }
+
+    const { data: company, error: companyError } = await client
+      .from("companies")
+      .select("timezone")
+      .eq("company_id", job.company_id)
+      .maybeSingle();
+    if (companyError) {
+      await captureError(companyError, {
+        ...requestContext,
+        action: "load_company_timezone",
+        job_id: jobId,
+      });
+    }
+    const timeZone = company?.timezone ?? DEFAULT_TIMEZONE;
+    if (isWithinQuietHours(new Date(), timeZone)) {
+      return NextResponse.json({
+        success: true,
+        message: "SMS skipped (quiet hours)",
+        data: { skipped: true, reason: "quiet_hours" },
+      });
+    }
+
     const phoneNumber = formatPhoneNumber(customerRecord.phone);
     let idempotencyScope = "";
     let idempotencyRequestHash = "";

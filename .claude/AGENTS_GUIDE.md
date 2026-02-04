@@ -1,5 +1,3 @@
-# Claude Code Agents Guide
-
 # Legacy Claude Code Agents (Archived)
 
 This file is not maintained and may be inaccurate. For current agent guidance, use `docs/ai/codex/AGENTS.md`.

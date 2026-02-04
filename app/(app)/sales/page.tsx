@@ -1,7 +1,7 @@
 "use client";
 
 import TopBar from "@/components/TopBar";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type LeadRow = {
   lead_id: string;
@@ -21,6 +21,51 @@ type TerritoryRow = {
   active_customers?: number;
 };
 
+type MapCenter = { lat: number; lng: number };
+
+type GoogleMapInstance = {
+  setCenter: (center: MapCenter) => void;
+  addListener: (
+    event: string,
+    handler: (event: { latLng?: { lat: () => number; lng: () => number } }) => void
+  ) => { remove: () => void };
+};
+
+type GooglePolygonInstance = {
+  setMap: (map: GoogleMapInstance | null) => void;
+  setPath: (path: MapCenter[]) => void;
+};
+
+type GoogleMapsApi = {
+  maps?: {
+    Map: new (
+      element: HTMLDivElement | null,
+      options: {
+        center: MapCenter;
+        zoom: number;
+        mapTypeControl: boolean;
+        fullscreenControl: boolean;
+        streetViewControl: boolean;
+      }
+    ) => GoogleMapInstance;
+    Polygon: new (options: {
+      paths: MapCenter[];
+      map: GoogleMapInstance | null;
+      strokeColor: string;
+      strokeOpacity: number;
+      strokeWeight: number;
+      fillColor: string;
+      fillOpacity: number;
+    }) => GooglePolygonInstance;
+  };
+};
+
+const isMapPoint = (value: unknown): value is MapCenter => {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as { lat?: unknown; lng?: unknown };
+  return typeof candidate.lat === "number" && typeof candidate.lng === "number";
+};
+
 type LeaderboardRow = {
   rank: number;
   total_revenue?: number;
@@ -34,6 +79,8 @@ export default function SalesPage() {
   const [territories, setTerritories] = useState<TerritoryRow[]>([]);
   const [leadStatus, setLeadStatus] = useState("");
   const [territoryStatus, setTerritoryStatus] = useState("");
+  const [polygonPoints, setPolygonPoints] = useState<MapCenter[]>([]);
+  const [mapReady, setMapReady] = useState(false);
   const [leadForm, setLeadForm] = useState({
     firstName: "",
     lastName: "",
@@ -50,10 +97,135 @@ export default function SalesPage() {
     neighborhoods: "",
     polygonCoordinates: "",
   });
+  const mapRef = useRef<HTMLDivElement | null>(null);
+  const mapInstance = useRef<GoogleMapInstance | null>(null);
+  const polygonInstance = useRef<GooglePolygonInstance | null>(null);
+  const mapClickListener = useRef<{ remove: () => void } | null>(null);
+  const mapsKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
+
+  const getGoogle = useCallback(() => {
+    return (window as unknown as { google?: GoogleMapsApi }).google ?? null;
+  }, []);
+
+  const loadGoogleMaps = useCallback((key: string) => {
+    return new Promise<void>((resolve, reject) => {
+      const google = getGoogle();
+      if (google?.maps) {
+        resolve();
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${key}`;
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error("Map script failed"));
+      document.body.appendChild(script);
+    });
+  }, [getGoogle]);
+
+  const initMap = useCallback(() => {
+    const google = getGoogle();
+    const maps = google?.maps;
+    if (!maps) {
+      return;
+    }
+    mapInstance.current = new maps.Map(mapRef.current, {
+      center: { lat: 45.5017, lng: -73.5673 },
+      zoom: 11,
+      mapTypeControl: false,
+      fullscreenControl: false,
+      streetViewControl: false,
+    });
+    if (mapClickListener.current) {
+      mapClickListener.current.remove();
+    }
+    mapClickListener.current = mapInstance.current.addListener("click", (event) => {
+      const latLng = event.latLng;
+      if (!latLng) return;
+      setPolygonPoints((prev) => {
+        const next = [...prev, { lat: latLng.lat(), lng: latLng.lng() }];
+        setTerritoryForm((form) => ({
+          ...form,
+          polygonCoordinates: JSON.stringify(next),
+        }));
+        return next;
+      });
+    });
+    setMapReady(true);
+  }, [getGoogle]);
+
+  const renderPolygon = useCallback(() => {
+    const google = getGoogle();
+    const maps = google?.maps;
+    if (!maps || !mapInstance.current) {
+      return;
+    }
+    if (polygonPoints.length < 3) {
+      if (polygonInstance.current) {
+        polygonInstance.current.setMap(null);
+        polygonInstance.current = null;
+      }
+      return;
+    }
+    if (!polygonInstance.current) {
+      polygonInstance.current = new maps.Polygon({
+        paths: polygonPoints,
+        map: mapInstance.current,
+        strokeColor: "#1e40af",
+        strokeOpacity: 0.9,
+        strokeWeight: 2,
+        fillColor: "#93c5fd",
+        fillOpacity: 0.3,
+      });
+    } else {
+      polygonInstance.current.setPath(polygonPoints);
+    }
+    mapInstance.current.setCenter(polygonPoints[0]);
+  }, [getGoogle, polygonPoints]);
+
+  const mapMessage = useMemo(() => {
+    if (!mapsKey) return "Carte désactivée. Ajoutez NEXT_PUBLIC_GOOGLE_MAPS_API_KEY.";
+    if (!mapReady) return "Chargement de la carte...";
+    if (!polygonPoints.length) return "Cliquez sur la carte pour tracer le territoire.";
+    return "";
+  }, [mapReady, mapsKey, polygonPoints.length]);
 
   useEffect(() => {
     void loadData();
   }, []);
+
+  useEffect(() => {
+    if (!mapsKey || !mapRef.current) {
+      return;
+    }
+    void loadGoogleMaps(mapsKey)
+      .then(() => initMap())
+      .catch(() => setTerritoryStatus("Impossible de charger la carte"));
+  }, [initMap, loadGoogleMaps, mapsKey]);
+
+  useEffect(() => {
+    if (!mapReady) return;
+    renderPolygon();
+  }, [mapReady, renderPolygon]);
+
+  useEffect(() => {
+    if (!territoryForm.polygonCoordinates) {
+      setPolygonPoints([]);
+      return;
+    }
+    try {
+      const parsed = JSON.parse(territoryForm.polygonCoordinates);
+      if (!Array.isArray(parsed)) {
+        return;
+      }
+      const points = parsed.filter(isMapPoint) as MapCenter[];
+      if (points.length) {
+        setPolygonPoints(points);
+      }
+    } catch {
+      // ignore parsing errors until submit
+    }
+  }, [territoryForm.polygonCoordinates]);
 
   async function loadData() {
     const [leaderboardRes, leadsRes, territoriesRes] = await Promise.all([
@@ -333,6 +505,26 @@ export default function SalesPage() {
                   setTerritoryForm({ ...territoryForm, polygonCoordinates: event.target.value })
                 }
               />
+            </div>
+            <div>
+              <div className="card-label">Carte du territoire</div>
+              <div className="card-meta">Cliquez sur la carte pour dessiner le polygone.</div>
+              <div className="map-shell" style={{ marginTop: 12 }}>
+                <div className="map-canvas" ref={mapRef} />
+                {mapMessage ? <div className="map-overlay">{mapMessage}</div> : null}
+              </div>
+              <div className="table-actions" style={{ marginTop: 12 }}>
+                <button
+                  className="button-ghost"
+                  type="button"
+                  onClick={() => {
+                    setPolygonPoints([]);
+                    setTerritoryForm((form) => ({ ...form, polygonCoordinates: "" }));
+                  }}
+                >
+                  Effacer le polygone
+                </button>
+              </div>
             </div>
             <button className="button-primary" type="submit">Save territory</button>
             {territoryStatus ? <div className="hint">{territoryStatus}</div> : null}

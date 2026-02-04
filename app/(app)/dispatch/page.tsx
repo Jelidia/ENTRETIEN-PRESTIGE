@@ -35,6 +35,47 @@ type GpsRow = {
   latitude: number;
   longitude: number;
   timestamp: string;
+  technician_id?: string | null;
+};
+
+type MapCenter = { lat: number; lng: number };
+
+type GoogleMapInstance = {
+  setCenter: (center: MapCenter) => void;
+};
+
+type GoogleMarkerInstance = {
+  setMap: (map: GoogleMapInstance | null) => void;
+};
+
+type GoogleMapsApi = {
+  maps?: {
+    Map: new (
+      element: HTMLDivElement | null,
+      options: {
+        center: MapCenter;
+        zoom: number;
+        mapTypeControl: boolean;
+        fullscreenControl: boolean;
+        streetViewControl: boolean;
+      }
+    ) => GoogleMapInstance;
+    Marker: new (options: {
+      position: MapCenter;
+      map: GoogleMapInstance | null;
+      label?: string;
+      title?: string;
+    }) => GoogleMarkerInstance;
+  };
+};
+
+type GpsMarker = {
+  id: string;
+  technicianId: string;
+  name: string;
+  lastSeen: string;
+  lastSeenLabel: string;
+  position: MapCenter;
 };
 
 type DragState = {
@@ -78,6 +119,7 @@ export default function DispatchPage() {
   const [gpsForm, setGpsForm] = useState({ technicianId: "", start: "", end: "" });
   const [gpsResults, setGpsResults] = useState<GpsRow[]>([]);
   const [selectedDate, setSelectedDate] = useState("");
+  const [mapReady, setMapReady] = useState(false);
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [resizeState, setResizeState] = useState<ResizeState | null>(null);
   const [dragPreview, setDragPreview] = useState<DragPreview | null>(null);
@@ -109,6 +151,117 @@ export default function DispatchPage() {
   const createPreviewRef = useRef<DragPreview | null>(null);
   const rafRef = useRef<number | null>(null);
   const createRafRef = useRef<number | null>(null);
+  const mapRef = useRef<HTMLDivElement | null>(null);
+  const mapInstance = useRef<GoogleMapInstance | null>(null);
+  const gpsMarkersRef = useRef<GoogleMarkerInstance[]>([]);
+  const mapsKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
+
+  const techNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    board.forEach((column) => {
+      if (column.technicianId) {
+        map.set(column.technicianId, column.technician);
+      }
+    });
+    return map;
+  }, [board]);
+
+  const gpsMarkers = useMemo<GpsMarker[]>(() => {
+    const latestByTech = new Map<string, GpsRow>();
+    gpsResults.forEach((point) => {
+      const key = point.technician_id ?? point.location_id;
+      const existing = latestByTech.get(key);
+      if (!existing) {
+        latestByTech.set(key, point);
+        return;
+      }
+      const existingTime = new Date(existing.timestamp).getTime();
+      const currentTime = new Date(point.timestamp).getTime();
+      if (currentTime > existingTime) {
+        latestByTech.set(key, point);
+      }
+    });
+
+    return Array.from(latestByTech.entries()).map(([key, point]) => {
+      const technicianId = point.technician_id ?? key;
+      const name = techNameById.get(technicianId) ?? `Technicien ${technicianId.slice(0, 6)}`;
+      const lastSeenDate = new Date(point.timestamp);
+      return {
+        id: key,
+        technicianId,
+        name,
+        lastSeen: point.timestamp,
+        lastSeenLabel: lastSeenDate.toLocaleString("fr-CA"),
+        position: { lat: point.latitude, lng: point.longitude },
+      };
+    });
+  }, [gpsResults, techNameById]);
+
+  const mapMessage = useMemo(() => {
+    if (!mapsKey) return "Carte désactivée. Ajoutez NEXT_PUBLIC_GOOGLE_MAPS_API_KEY.";
+    if (!mapReady) return "Chargement de la carte...";
+    if (!gpsMarkers.length) return "Aucun GPS pour le moment. Lancez une recherche.";
+    return "";
+  }, [gpsMarkers.length, mapReady, mapsKey]);
+
+  const getGoogle = useCallback(() => {
+    return (window as unknown as { google?: GoogleMapsApi }).google ?? null;
+  }, []);
+
+  const loadGoogleMaps = useCallback((key: string) => {
+    return new Promise<void>((resolve, reject) => {
+      const google = getGoogle();
+      if (google?.maps) {
+        resolve();
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${key}`;
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error("Map script failed"));
+      document.body.appendChild(script);
+    });
+  }, [getGoogle]);
+
+  const initMap = useCallback(() => {
+    const google = getGoogle();
+    const maps = google?.maps;
+    if (!maps) {
+      return;
+    }
+    mapInstance.current = new maps.Map(mapRef.current, {
+      center: { lat: 45.5017, lng: -73.5673 },
+      zoom: 11,
+      mapTypeControl: false,
+      fullscreenControl: false,
+      streetViewControl: false,
+    });
+    setMapReady(true);
+  }, [getGoogle]);
+
+  const renderGpsMarkers = useCallback(() => {
+    const google = getGoogle();
+    const maps = google?.maps;
+    if (!maps || !mapInstance.current) {
+      return;
+    }
+    gpsMarkersRef.current.forEach((marker) => marker.setMap(null));
+    gpsMarkersRef.current = [];
+    if (!gpsMarkers.length) {
+      return;
+    }
+    gpsMarkers.forEach((marker) => {
+      const created = new maps.Marker({
+        position: marker.position,
+        map: mapInstance.current,
+        label: marker.name,
+        title: `${marker.name} • ${marker.lastSeenLabel}`,
+      });
+      gpsMarkersRef.current.push(created);
+    });
+    mapInstance.current.setCenter(gpsMarkers[0].position);
+  }, [getGoogle, gpsMarkers]);
 
   const loadDispatch = useCallback(async () => {
     const [boardRes, conflictsRes] = await Promise.all([
@@ -145,7 +298,7 @@ export default function DispatchPage() {
   const commitSchedule = useCallback(
     async (preview: DragPreview) => {
       if (!selectedDate) {
-        setStatus("Select a date before rescheduling.");
+        setStatus("Sélectionnez une date avant de replanifier.");
         return;
       }
 
@@ -154,7 +307,7 @@ export default function DispatchPage() {
       setBoard(next);
 
       if (!preview.technicianId) {
-        setStatus("Preview updated (not saved). Missing technician ID.");
+        setStatus("Prévisualisation mise à jour (non enregistrée). ID technicien manquant.");
         return;
       }
 
@@ -172,11 +325,11 @@ export default function DispatchPage() {
       const json = await response.json().catch(() => ({}));
       if (!response.ok) {
         setBoard(previous);
-        setStatus(json.error ?? "Unable to update schedule");
+        setStatus(json.error ?? "Impossible de mettre à jour l'horaire");
         return;
       }
 
-      setStatus("Schedule updated.");
+      setStatus("Horaire mis à jour.");
       void loadDispatch();
     },
     [selectedDate, loadDispatch]
@@ -185,6 +338,20 @@ export default function DispatchPage() {
   useEffect(() => {
     void loadDispatch();
   }, [loadDispatch]);
+
+  useEffect(() => {
+    if (!mapsKey || !mapRef.current) {
+      return;
+    }
+    void loadGoogleMaps(mapsKey)
+      .then(() => initMap())
+      .catch(() => setStatus("Impossible de charger la carte"));
+  }, [initMap, loadGoogleMaps, mapsKey]);
+
+  useEffect(() => {
+    if (!mapReady) return;
+    renderGpsMarkers();
+  }, [mapReady, renderGpsMarkers]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -405,10 +572,10 @@ export default function DispatchPage() {
     const response = await fetch("/api/dispatch/auto-assign", { method: "POST" });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setStatus(json.error ?? "Unable to auto-assign");
+      setStatus(json.error ?? "Impossible d'effectuer l'affectation auto");
       return;
     }
-    setStatus(`Auto-assigned ${json.assigned ?? 0} jobs.`);
+    setStatus(`Affectation auto : ${json.assigned ?? 0} travaux.`);
     void loadDispatch();
   }
 
@@ -422,10 +589,10 @@ export default function DispatchPage() {
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setStatus(json.error ?? "Unable to reassign job");
+      setStatus(json.error ?? "Impossible de réaffecter le travail");
       return;
     }
-    setStatus("Job reassigned.");
+    setStatus("Travail réaffecté.");
     setReassignForm({ jobId: "", technicianId: "" });
     void loadDispatch();
   }
@@ -440,10 +607,10 @@ export default function DispatchPage() {
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setStatus(json.error ?? "Unable to cancel jobs");
+      setStatus(json.error ?? "Impossible d'annuler les travaux");
       return;
     }
-    setStatus("Weather cancellations applied.");
+    setStatus("Annulations météo appliquées.");
     setWeatherForm({ startDate: "", endDate: "" });
     void loadDispatch();
   }
@@ -465,7 +632,7 @@ export default function DispatchPage() {
     const response = await fetch(url);
     const json = await response.json().catch(() => ({ data: [] }));
     if (!response.ok) {
-      setStatus(json.error ?? "Unable to load GPS");
+      setStatus(json.error ?? "Impossible de charger le GPS");
       return;
     }
     setGpsResults(json.data ?? []);
@@ -539,7 +706,7 @@ export default function DispatchPage() {
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setQuickCreateStatus(json.error ?? "Unable to create job");
+      setQuickCreateStatus(json.error ?? "Impossible de créer le travail");
       return;
     }
 
@@ -552,7 +719,7 @@ export default function DispatchPage() {
       });
     }
 
-    setQuickCreateStatus("Job created.");
+    setQuickCreateStatus("Travail créé.");
     setQuickCreateOpen(false);
     setQuickCreateForm((prev) => ({
       ...prev,
@@ -672,23 +839,23 @@ export default function DispatchPage() {
   const gridHeight = (END_HOUR - START_HOUR) * HOUR_HEIGHT;
   const gridTemplate = `80px repeat(${Math.max(visibleColumns.length, 1)}, minmax(180px, 1fr))`;
   const dateLabel = selectedDate
-    ? new Date(`${selectedDate}T00:00:00`).toLocaleDateString("en-CA", {
+    ? new Date(`${selectedDate}T00:00:00`).toLocaleDateString("fr-CA", {
         weekday: "short",
         month: "short",
         day: "numeric",
         year: "numeric",
       })
-    : "Dispatch";
+    : "Répartition";
 
   return (
     <div className="page">
       <TopBar
-        title="Dispatch"
-        subtitle="Week view, reassignments, and conflicts"
+        title="Répartition"
+        subtitle="Vue semaine, réassignations et conflits"
         actions={
           <>
             <button className="button-secondary" type="button" onClick={autoAssign}>
-              Auto-assign
+              Affectation auto
             </button>
             <button
               className="button-primary"
@@ -703,7 +870,7 @@ export default function DispatchPage() {
                 })
               }
             >
-              New job
+              Nouveau travail
             </button>
           </>
         }
@@ -712,7 +879,7 @@ export default function DispatchPage() {
       <section className="dispatch-calendar">
         <div className="dispatch-toolbar">
           <div>
-            <div className="card-label">Schedule</div>
+            <div className="card-label">Horaire</div>
             <div className="dispatch-date">{dateLabel}</div>
           </div>
           {isCompact && (
@@ -726,7 +893,7 @@ export default function DispatchPage() {
               >
                 {columns.map((column) => {
                   const techKey = getTechKey(column);
-                  const techLabel = column.technician || "Non assigne";
+                  const techLabel = column.technician || "Non assigné";
                   return (
                     <option key={techKey} value={techKey}>
                       {techLabel}
@@ -738,28 +905,28 @@ export default function DispatchPage() {
           )}
           <div className="dispatch-controls">
             <button className="button-ghost" type="button" onClick={() => shiftDate(-1)}>
-              Prev
+              Préc.
             </button>
             <button
               className="button-secondary"
               type="button"
               onClick={() => setSelectedDate(new Date().toISOString().slice(0, 10))}
             >
-              Today
+              Aujourd'hui
             </button>
             <button className="button-ghost" type="button" onClick={() => shiftDate(1)}>
-              Next
+              Suiv.
             </button>
           </div>
         </div>
 
         <div className="calendar-shell">
           <div className="calendar-header" style={{ gridTemplateColumns: gridTemplate }}>
-            <div className="calendar-time-header">Time</div>
+            <div className="calendar-time-header">Heure</div>
             {visibleColumns.map((column) => (
               <div key={getTechKey(column)} className="calendar-tech-header">
                 <span>{column.technician}</span>
-                <span className="calendar-tech-meta">{column.jobs.length} jobs</span>
+                <span className="calendar-tech-meta">{column.jobs.length} travaux</span>
               </div>
             ))}
           </div>
@@ -828,8 +995,8 @@ export default function DispatchPage() {
                       <div className="calendar-event-time">
                         {formatTime(dragPreview.startMinutes)} - {formatTime(dragPreview.endMinutes)}
                       </div>
-                      <div className="calendar-event-title">Rescheduling</div>
-                      <div className="calendar-event-meta">Drop to confirm</div>
+                      <div className="calendar-event-title">Replanification</div>
+                      <div className="calendar-event-meta">Déposer pour confirmer</div>
                     </div>
                   ) : null}
                   {createPreview?.techKey === techKey ? (
@@ -843,8 +1010,8 @@ export default function DispatchPage() {
                       <div className="calendar-event-time">
                         {formatTime(createPreview.startMinutes)} - {formatTime(createPreview.endMinutes)}
                       </div>
-                      <div className="calendar-event-title">New job</div>
-                      <div className="calendar-event-meta">Drag to size</div>
+                      <div className="calendar-event-title">Nouveau travail</div>
+                      <div className="calendar-event-meta">Glisser pour ajuster</div>
                     </div>
                   ) : null}
                 </div>
@@ -859,22 +1026,22 @@ export default function DispatchPage() {
           <div className="quick-create-panel" onClick={(event) => event.stopPropagation()}>
             <div className="quick-create-header">
               <div>
-                <div className="card-label">Quick create</div>
-                <div className="quick-create-title">New job slot</div>
+                <div className="card-label">Création rapide</div>
+                <div className="quick-create-title">Nouveau créneau</div>
                 <div className="card-meta">
                   {quickCreateForm.scheduledDate} · {quickCreateForm.scheduledStartTime} - {quickCreateForm.scheduledEndTime}
                 </div>
                 {quickCreateTechnician.name ? (
-                  <div className="card-meta">Technician: {quickCreateTechnician.name}</div>
+                  <div className="card-meta">Technicien: {quickCreateTechnician.name}</div>
                 ) : null}
               </div>
               <button className="button-ghost" type="button" onClick={() => setQuickCreateOpen(false)}>
-                Close
+                Fermer
               </button>
             </div>
             <form className="form-grid" onSubmit={submitQuickCreate}>
               <div className="form-row">
-                <label className="label" htmlFor="qcCustomer">Customer ID</label>
+                <label className="label" htmlFor="qcCustomer">ID client</label>
                 <input
                   id="qcCustomer"
                   className="input"
@@ -896,14 +1063,14 @@ export default function DispatchPage() {
                       setQuickCreateForm((prev) => ({ ...prev, serviceType: event.target.value }))
                     }
                   >
-                    <option value="window_cleaning">Window cleaning</option>
-                    <option value="gutter_cleaning">Gutter cleaning</option>
-                    <option value="pressure_wash">Pressure wash</option>
-                    <option value="roof_cleaning">Roof cleaning</option>
+                    <option value="window_cleaning">Nettoyage de vitres</option>
+                    <option value="gutter_cleaning">Nettoyage de gouttières</option>
+                    <option value="pressure_wash">Nettoyage à pression</option>
+                    <option value="roof_cleaning">Nettoyage de toiture</option>
                   </select>
                 </div>
                 <div className="form-row">
-                  <label className="label" htmlFor="qcPackage">Package</label>
+                  <label className="label" htmlFor="qcPackage">Forfait</label>
                   <select
                     id="qcPackage"
                     className="select"
@@ -933,7 +1100,7 @@ export default function DispatchPage() {
                   />
                 </div>
                 <div className="form-row">
-                  <label className="label" htmlFor="qcStart">Start</label>
+                  <label className="label" htmlFor="qcStart">Début</label>
                   <input
                     id="qcStart"
                     className="input"
@@ -945,7 +1112,7 @@ export default function DispatchPage() {
                   />
                 </div>
                 <div className="form-row">
-                  <label className="label" htmlFor="qcEnd">End</label>
+                  <label className="label" htmlFor="qcEnd">Fin</label>
                   <input
                     id="qcEnd"
                     className="input"
@@ -958,7 +1125,7 @@ export default function DispatchPage() {
                 </div>
               </div>
               <div className="form-row">
-                <label className="label" htmlFor="qcAddress">Address</label>
+                <label className="label" htmlFor="qcAddress">Adresse</label>
                 <input
                   id="qcAddress"
                   className="input"
@@ -970,7 +1137,7 @@ export default function DispatchPage() {
               </div>
               <div className="grid-2">
                 <div className="form-row">
-                  <label className="label" htmlFor="qcCity">City</label>
+                  <label className="label" htmlFor="qcCity">Ville</label>
                   <input
                     id="qcCity"
                     className="input"
@@ -981,7 +1148,7 @@ export default function DispatchPage() {
                   />
                 </div>
                 <div className="form-row">
-                  <label className="label" htmlFor="qcPostal">Postal code</label>
+                  <label className="label" htmlFor="qcPostal">Code postal</label>
                   <input
                     id="qcPostal"
                     className="input"
@@ -994,7 +1161,7 @@ export default function DispatchPage() {
               </div>
               <div className="grid-2">
                 <div className="form-row">
-                  <label className="label" htmlFor="qcRevenue">Estimated revenue</label>
+                  <label className="label" htmlFor="qcRevenue">Revenu estimé</label>
                   <input
                     id="qcRevenue"
                     className="input"
@@ -1013,7 +1180,7 @@ export default function DispatchPage() {
                         checked={quickCreateAssign}
                         onChange={(event) => setQuickCreateAssign(event.target.checked)}
                       />
-                      Assign to {quickCreateTechnician.name || "technician"}
+                      Assigner à {quickCreateTechnician.name || "technicien"}
                     </label>
                   ) : null}
                 </div>
@@ -1030,9 +1197,9 @@ export default function DispatchPage() {
                 />
               </div>
               <div className="table-actions">
-                <button className="button-primary" type="submit">Create job</button>
+                <button className="button-primary" type="submit">Créer le travail</button>
                 <button className="button-ghost" type="button" onClick={() => setQuickCreateOpen(false)}>
-                  Cancel
+                  Annuler
                 </button>
               </div>
               {quickCreateStatus ? <div className="hint">{quickCreateStatus}</div> : null}
@@ -1041,12 +1208,12 @@ export default function DispatchPage() {
         </div>
       ) : null}
 
-      <div className="grid-3">
+      <div className="stack">
         <div className="card">
-          <h3 className="card-title">Reassign job</h3>
+          <h3 className="card-title">Réaffecter un travail</h3>
           <form className="form-grid" onSubmit={submitReassign}>
             <div className="form-row">
-              <label className="label" htmlFor="reassignJob">Job ID</label>
+              <label className="label" htmlFor="reassignJob">ID du travail</label>
               <input
                 id="reassignJob"
                 className="input"
@@ -1056,7 +1223,7 @@ export default function DispatchPage() {
               />
             </div>
             <div className="form-row">
-              <label className="label" htmlFor="reassignTech">Technician ID</label>
+              <label className="label" htmlFor="reassignTech">ID technicien</label>
               <input
                 id="reassignTech"
                 className="input"
@@ -1065,15 +1232,15 @@ export default function DispatchPage() {
                 required
               />
             </div>
-            <button className="button-primary" type="submit">Reassign</button>
+            <button className="button-primary" type="submit">Réaffecter</button>
           </form>
         </div>
 
         <div className="card">
-          <h3 className="card-title">Weather cancel</h3>
+          <h3 className="card-title">Annulation météo</h3>
           <form className="form-grid" onSubmit={submitWeather}>
             <div className="form-row">
-              <label className="label" htmlFor="startDate">Start date</label>
+              <label className="label" htmlFor="startDate">Date de début</label>
               <input
                 id="startDate"
                 className="input"
@@ -1084,7 +1251,7 @@ export default function DispatchPage() {
               />
             </div>
             <div className="form-row">
-              <label className="label" htmlFor="endDate">End date</label>
+              <label className="label" htmlFor="endDate">Date de fin</label>
               <input
                 id="endDate"
                 className="input"
@@ -1094,15 +1261,15 @@ export default function DispatchPage() {
                 required
               />
             </div>
-            <button className="button-secondary" type="submit">Cancel jobs</button>
+            <button className="button-secondary" type="submit">Annuler les travaux</button>
           </form>
         </div>
 
         <div className="card">
-          <h3 className="card-title">GPS lookup</h3>
+          <h3 className="card-title">Recherche GPS</h3>
           <form className="form-grid" onSubmit={submitGps}>
             <div className="form-row">
-              <label className="label" htmlFor="gpsTech">Technician ID</label>
+              <label className="label" htmlFor="gpsTech">ID technicien</label>
               <input
                 id="gpsTech"
                 className="input"
@@ -1110,9 +1277,9 @@ export default function DispatchPage() {
                 onChange={(event) => setGpsForm({ ...gpsForm, technicianId: event.target.value })}
               />
             </div>
-            <div className="grid-2">
+            <div className="stack">
               <div className="form-row">
-                <label className="label" htmlFor="gpsStart">Start</label>
+                <label className="label" htmlFor="gpsStart">Début</label>
                 <input
                   id="gpsStart"
                   className="input"
@@ -1122,7 +1289,7 @@ export default function DispatchPage() {
                 />
               </div>
               <div className="form-row">
-                <label className="label" htmlFor="gpsEnd">End</label>
+                <label className="label" htmlFor="gpsEnd">Fin</label>
                 <input
                   id="gpsEnd"
                   className="input"
@@ -1132,21 +1299,21 @@ export default function DispatchPage() {
                 />
               </div>
             </div>
-            <button className="button-ghost" type="submit">Load GPS</button>
+            <button className="button-ghost" type="submit">Charger le GPS</button>
           </form>
         </div>
       </div>
 
-      <div className="grid-2">
+      <div className="stack">
         <div className="card">
-          <h3 className="card-title">Conflicts</h3>
+          <h3 className="card-title">Conflits</h3>
           <table className="table">
             <thead>
               <tr>
-                <th>Job</th>
-                <th>Technician</th>
+                <th>Travail</th>
+                <th>Technicien</th>
                 <th>Date</th>
-                <th>Window</th>
+                <th>Créneau</th>
               </tr>
             </thead>
             <tbody>
@@ -1165,18 +1332,31 @@ export default function DispatchPage() {
         </div>
 
         <div className="card">
-          <h3 className="card-title">GPS results</h3>
-          <div className="list" style={{ marginTop: 12 }}>
-            {gpsResults.map((point) => (
-              <div className="list-item" key={point.location_id}>
-                <div>
-                  <strong>{point.latitude.toFixed(5)}, {point.longitude.toFixed(5)}</strong>
-                  <div className="card-meta">{new Date(point.timestamp).toLocaleString()}</div>
-                </div>
-                <span className="tag">GPS</span>
-              </div>
-            ))}
+          <h3 className="card-title">Carte GPS des techniciens</h3>
+          <div className="map-shell">
+            <div className="map-canvas" ref={mapRef} />
+            {mapMessage ? <div className="map-overlay">{mapMessage}</div> : null}
           </div>
+          {gpsMarkers.length ? (
+            <div className="list" style={{ marginTop: 12 }}>
+              {gpsMarkers.map((marker) => (
+                <div className="list-item" key={marker.id}>
+                  <div>
+                    <strong>{marker.name}</strong>
+                    <div className="card-meta">Dernier ping : {marker.lastSeenLabel}</div>
+                    <div className="card-meta">
+                      {marker.position.lat.toFixed(5)}, {marker.position.lng.toFixed(5)}
+                    </div>
+                  </div>
+                  <span className="tag">GPS</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="card-meta" style={{ marginTop: 12 }}>
+              Aucun point GPS disponible.
+            </div>
+          )}
         </div>
       </div>
 

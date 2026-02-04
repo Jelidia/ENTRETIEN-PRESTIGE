@@ -32,7 +32,7 @@ Notes
 - EP-P1-ENG-04 CI pipeline: typecheck + lint + tests + migration sanity.
 - EP-P1-ENG-05 Remove unsafe any usage and tighten validators.
 - EP-P1-ENG-06 Add E2E tests for critical flows (Playwright).
-- EP-P1-ENG-07 Remove stale agent docs/outdated claims; regenerate accurate documentation. [WIP: OpenCode 2026-02-04]
+- EP-P1-ENG-08 Product gap audit: compare spec + live UI vs code; log missing/mis-implemented features with file refs.
 - EP-P1-AUTH-01 Redesign permission keys so technician settings do not equal company settings. 
 - EP-P1-AUTH-02 Field-level authorization for jobs and customers.
 - EP-P1-AUTH-03 Define and enforce a job status state machine.
@@ -42,8 +42,13 @@ Notes
 - EP-P1-DISP-02 Replace naive auto-assign with an explainable assignment algorithm.
 - EP-P1-DISP-03 Build employee availability management end-to-end.
 - EP-P1-DISP-04 Weather cancellation safety checks and notifications.
-- EP-P1-MSG-03 Opt-out and consent compliance for SMS (STOP handling, quiet hours).
-- EP-P1-MSG-04 Email sending requires Resend when enabled and tracks delivery.
+- EP-P1-DISP-05 Dispatch schedule view toggle: add day/3-day/week/month selector (mobile-first).
+- EP-P1-DISP-06 Render 3-day/week/month grids with correct job grouping + headers.
+- EP-P1-DISP-07 Enable drag-and-drop across multi-day/week/month grids (mouse + touch) to update job date/time.
+- EP-P1-DISP-08 Add date picker (single day + range) with schedule preview list.
+- EP-P1-DISP-09 Move weather cancellation controls from schedule to Settings page (permissions + UX).
+- EP-P1-DISP-10 Weather cancellation flow: select dates -> list affected jobs -> cancel all or reschedule.
+- EP-P1-DISP-11 Reschedule flow: send SMS link -> customer selects new slot -> confirm + update job.
 - EP-P1-STOR-01 Stop storing public URLs for sensitive documents. 
 - EP-P1-STOR-02 Add file validation and malware scanning hook.
 
@@ -54,6 +59,10 @@ Notes
 - EP-P2-CUST-01 Implement customer communication timeline and connect to jobs/leads.
 - EP-P2-SALES-01 Add sales territory management UI with map polygon drawing.
 - EP-P2-GPS-01 Make GPS tracking production-grade.
+- EP-P2-AVAIL-01 Admin/Manager availability page: team availability grid + overrides.
+- EP-P2-AVAIL-02 Sales rep availability page: self availability edit (days + time windows).
+- EP-P2-AVAIL-03 Technician availability page: self availability edit (days + time windows).
+- EP-P2-UI-02 Mobile UI audit: fix iOS/Android layout/visibility issues on dispatch, schedule, map, settings, leads, customers.
 - EP-P2-UI-01 Replace manual ID entry with searchable pickers and pagination.
 - EP-P2-I18N-01 French-first UX copy and Quebec formatting.
 

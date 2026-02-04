@@ -32,7 +32,7 @@ describe("Team Page", () => {
       // BottomNavMobile.tsx defines /team route for admin and manager roles
       const teamNavItem = {
         href: "/team",
-        label: "Team",
+        label: "Équipe",
         permission: "team",
         roles: ["admin", "manager"],
       };

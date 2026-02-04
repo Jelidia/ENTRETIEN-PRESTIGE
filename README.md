@@ -32,7 +32,7 @@ Copy `.env.example` to `.env.local`:
 cp .env.example .env.local
 ```
 
-Configure required variables:
+Configure required variables (see `.env.example` for the full list):
 
 ```bash
 # Supabase (REQUIRED)
@@ -45,6 +45,14 @@ APP_ENCRYPTION_KEY=
 
 # Base URL (REQUIRED for production)
 NEXT_PUBLIC_BASE_URL=http://localhost:3000
+
+# Feature flags (optional; defaults to enabled in production)
+FEATURE_SMS=true|false
+FEATURE_PAYMENTS=true|false
+FEATURE_EMAIL=true|false
+
+# Optional company contact email used in templates
+NEXT_PUBLIC_COMPANY_EMAIL=
 ```
 
 **Generate encryption key:**
@@ -71,6 +79,10 @@ RESEND_FROM_EMAIL=
 
 # Google Maps
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=
+GOOGLE_MAPS_API_KEY=
+
+# Error tracking
+ERROR_TRACKING_ENDPOINT=
 ```
 
 ### 3. Database Setup
@@ -484,17 +496,30 @@ describe("calculatePrice", () => {
 
 #### Environment Variables
 
-**Required:**
+**Required (core):**
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 APP_ENCRYPTION_KEY=
 NEXT_PUBLIC_BASE_URL=
+```
+
+**Feature flags (optional; default to enabled in production):**
+```bash
 FEATURE_SMS=true|false
 FEATURE_PAYMENTS=true|false
 FEATURE_EMAIL=true|false
-NEXT_PUBLIC_COMPANY_EMAIL=
+```
+
+**Required when features are enabled:**
+```bash
+TWILIO_ACCOUNT_SID=
+TWILIO_AUTH_TOKEN=
+TWILIO_FROM_NUMBER=
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+RESEND_API_KEY=
 ```
 
 Generate APP_ENCRYPTION_KEY:
@@ -504,15 +529,10 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 
 **Optional (integrations and extras):**
 ```bash
+RESEND_FROM_EMAIL=
+NEXT_PUBLIC_COMPANY_EMAIL=
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=
 GOOGLE_MAPS_API_KEY=
-STRIPE_SECRET_KEY=
-STRIPE_WEBHOOK_SECRET=
-TWILIO_ACCOUNT_SID=
-TWILIO_AUTH_TOKEN=
-TWILIO_FROM_NUMBER=
-RESEND_API_KEY=
-RESEND_FROM_EMAIL=
 ERROR_TRACKING_ENDPOINT=
 ```
 

@@ -24,6 +24,26 @@ type SmsRow = {
   created_at: string;
 };
 
+const statusLabels: Record<string, string> = {
+  active: "Actif",
+  inactive: "Inactif",
+  suspended: "Suspendu",
+};
+
+const typeLabels: Record<string, string> = {
+  residential: "Résidentiel",
+  commercial: "Commercial",
+  industrial: "Industriel",
+};
+
+const directionLabels: Record<string, string> = {
+  inbound: "Entrant",
+  outbound: "Sortant",
+};
+
+const formatBalance = (value?: number | null) =>
+  new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD" }).format(value ?? 0);
+
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<CustomerRow[]>([]);
   const [blacklistStatus, setBlacklistStatus] = useState("");
@@ -78,10 +98,10 @@ export default function CustomersPage() {
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setBlacklistStatus(json.error ?? "Unable to blacklist");
+      setBlacklistStatus(json.error ?? "Impossible d'ajouter à la liste noire");
       return;
     }
-    setBlacklistStatus("Customer blacklisted.");
+    setBlacklistStatus("Client ajouté à la liste noire.");
     setBlacklistForm({
       customerId: "",
       reason: "non_payment",
@@ -106,10 +126,10 @@ export default function CustomersPage() {
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setComplaintStatus(json.error ?? "Unable to file complaint");
+      setComplaintStatus(json.error ?? "Impossible de déposer la plainte");
       return;
     }
-    setComplaintStatus("Complaint logged.");
+    setComplaintStatus("Plainte enregistrée.");
     setComplaintForm({
       customerId: "",
       jobId: "",
@@ -129,10 +149,10 @@ export default function CustomersPage() {
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setSmsStatus(json.error ?? "Unable to send SMS");
+      setSmsStatus(json.error ?? "Impossible d'envoyer le SMS");
       return;
     }
-    setSmsStatus("SMS sent.");
+    setSmsStatus("SMS envoyé.");
     setSmsForm({ to: "", message: "" });
     void loadCustomers();
   }
@@ -147,72 +167,80 @@ export default function CustomersPage() {
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setEmailStatus(json.error ?? "Unable to send email");
+      setEmailStatus(json.error ?? "Impossible d'envoyer le courriel");
       return;
     }
-    setEmailStatus("Email sent.");
+    setEmailStatus("Courriel envoyé.");
     setEmailForm({ to: "", subject: "", html: "" });
   }
 
   return (
     <div className="page">
       <TopBar
-        title="Customers"
-        subtitle="CRM overview and account health"
-        actions={<button className="button-primary" type="button">Add customer</button>}
+        title="Clients"
+        subtitle="Aperçu CRM et santé des comptes"
+        actions={<button className="button-primary" type="button">Ajouter un client</button>}
       />
-      <div className="grid-2">
+      <div className="stack">
         <div className="card">
           <table className="table table-desktop">
             <thead>
               <tr>
-                <th>Name</th>
+                <th>Nom</th>
                 <th>Type</th>
-                <th>Status</th>
-                <th>Last service</th>
-                <th>Balance</th>
+                <th>Statut</th>
+                <th>Dernier service</th>
+                <th>Solde</th>
               </tr>
             </thead>
             <tbody>
-              {customers.map((customer) => (
-                <tr key={customer.customer_id}>
-                  <td>{customer.first_name} {customer.last_name}</td>
-                  <td>{customer.customer_type}</td>
-                  <td>
-                    <StatusBadge status={customer.status} />
-                  </td>
-                  <td>{customer.last_service_date ?? ""}</td>
-                  <td>{customer.account_balance ? `$${customer.account_balance}` : "$0"}</td>
-                </tr>
-              ))}
+              {customers.map((customer) => {
+                const typeLabel = typeLabels[customer.customer_type] ?? customer.customer_type;
+                const statusLabel = statusLabels[customer.status] ?? customer.status;
+                return (
+                  <tr key={customer.customer_id}>
+                    <td>{customer.first_name} {customer.last_name}</td>
+                    <td>{typeLabel}</td>
+                    <td>
+                      <StatusBadge status={statusLabel} />
+                    </td>
+                    <td>{customer.last_service_date ?? ""}</td>
+                    <td>{formatBalance(customer.account_balance)}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
           <div className="card-list-mobile" style={{ marginTop: 12 }}>
-            {customers.map((customer) => (
-              <div className="mobile-card" key={customer.customer_id}>
-                <div className="mobile-card-title">
-                  {customer.first_name} {customer.last_name}
+            {customers.map((customer) => {
+              const typeLabel = typeLabels[customer.customer_type] ?? customer.customer_type;
+              const statusLabel = statusLabels[customer.status] ?? customer.status;
+              return (
+                <div className="mobile-card" key={customer.customer_id}>
+                  <div className="mobile-card-title">
+                    {customer.first_name} {customer.last_name}
+                  </div>
+                  <div className="mobile-card-meta">{typeLabel}</div>
+                  <div className="mobile-card-meta">Dernier service : {customer.last_service_date ?? ""}</div>
+                  <div className="table-actions">
+                    <StatusBadge status={statusLabel} />
+                    <span className="tag">{formatBalance(customer.account_balance)}</span>
+                  </div>
                 </div>
-                <div className="mobile-card-meta">{customer.customer_type}</div>
-                <div className="mobile-card-meta">Last service: {customer.last_service_date ?? ""}</div>
-                <div className="table-actions">
-                  <StatusBadge status={customer.status} />
-                  <span className="tag">{customer.account_balance ? `$${customer.account_balance}` : "$0"}</span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
         <div className="stack">
           <div className="card">
-            <h3 className="card-title">New customer</h3>
+            <h3 className="card-title">Nouveau client</h3>
             <CustomerForm />
           </div>
           <div className="card">
-            <h3 className="card-title">Blacklist customer</h3>
+            <h3 className="card-title">Mettre sur liste noire</h3>
             <form className="form-grid" onSubmit={submitBlacklist}>
               <div className="form-row">
-                <label className="label" htmlFor="blacklistCustomer">Customer ID</label>
+                <label className="label" htmlFor="blacklistCustomer">ID client</label>
                 <input
                   id="blacklistCustomer"
                   className="input"
@@ -221,39 +249,39 @@ export default function CustomersPage() {
                   required
                 />
               </div>
-              <div className="grid-2">
+              <div className="stack">
                 <div className="form-row">
-                  <label className="label" htmlFor="blacklistReason">Reason</label>
+                  <label className="label" htmlFor="blacklistReason">Raison</label>
                   <select
                     id="blacklistReason"
                     className="select"
                     value={blacklistForm.reason}
                     onChange={(event) => setBlacklistForm({ ...blacklistForm, reason: event.target.value })}
                   >
-                    <option value="non_payment">Non payment</option>
-                    <option value="dispute">Dispute</option>
-                    <option value="difficult_customer">Difficult customer</option>
-                    <option value="fraud">Fraud</option>
-                    <option value="other">Other</option>
+                    <option value="non_payment">Non paiement</option>
+                    <option value="dispute">Litige</option>
+                    <option value="difficult_customer">Client difficile</option>
+                    <option value="fraud">Fraude</option>
+                    <option value="other">Autre</option>
                   </select>
                 </div>
                 <div className="form-row">
-                  <label className="label" htmlFor="riskLevel">Risk level</label>
+                  <label className="label" htmlFor="riskLevel">Niveau de risque</label>
                   <select
                     id="riskLevel"
                     className="select"
                     value={blacklistForm.riskLevel}
                     onChange={(event) => setBlacklistForm({ ...blacklistForm, riskLevel: event.target.value })}
                   >
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                    <option value="critical">Critical</option>
+                    <option value="low">Faible</option>
+                    <option value="medium">Moyen</option>
+                    <option value="high">Élevé</option>
+                    <option value="critical">Critique</option>
                   </select>
                 </div>
               </div>
               <div className="form-row">
-                <label className="label" htmlFor="recommendedAction">Recommended action</label>
+                <label className="label" htmlFor="recommendedAction">Action recommandée</label>
                 <input
                   id="recommendedAction"
                   className="input"
@@ -272,15 +300,15 @@ export default function CustomersPage() {
                   onChange={(event) => setBlacklistForm({ ...blacklistForm, description: event.target.value })}
                 />
               </div>
-              <button className="button-primary" type="submit">Save blacklist</button>
+              <button className="button-primary" type="submit">Enregistrer la liste noire</button>
               {blacklistStatus ? <div className="hint">{blacklistStatus}</div> : null}
             </form>
           </div>
           <div className="card">
-            <h3 className="card-title">File complaint</h3>
+            <h3 className="card-title">Déposer une plainte</h3>
             <form className="form-grid" onSubmit={submitComplaint}>
               <div className="form-row">
-                <label className="label" htmlFor="complaintCustomer">Customer ID</label>
+                <label className="label" htmlFor="complaintCustomer">ID client</label>
                 <input
                   id="complaintCustomer"
                   className="input"
@@ -290,7 +318,7 @@ export default function CustomersPage() {
                 />
               </div>
               <div className="form-row">
-                <label className="label" htmlFor="complaintJob">Job ID</label>
+                <label className="label" htmlFor="complaintJob">ID travail</label>
                 <input
                   id="complaintJob"
                   className="input"
@@ -300,7 +328,7 @@ export default function CustomersPage() {
                 />
               </div>
               <div className="form-row">
-                <label className="label" htmlFor="complaintType">Complaint type</label>
+                <label className="label" htmlFor="complaintType">Type de plainte</label>
                 <input
                   id="complaintType"
                   className="input"
@@ -309,16 +337,16 @@ export default function CustomersPage() {
                 />
               </div>
               <div className="form-row">
-                <label className="label" htmlFor="complaintSeverity">Severity</label>
+                <label className="label" htmlFor="complaintSeverity">Gravité</label>
                 <select
                   id="complaintSeverity"
                   className="select"
                   value={complaintForm.severity}
                   onChange={(event) => setComplaintForm({ ...complaintForm, severity: event.target.value })}
                 >
-                  <option value="minor">Minor</option>
-                  <option value="major">Major</option>
-                  <option value="critical">Critical</option>
+                  <option value="minor">Mineure</option>
+                  <option value="major">Majeure</option>
+                  <option value="critical">Critique</option>
                 </select>
               </div>
               <div className="form-row">
@@ -330,7 +358,7 @@ export default function CustomersPage() {
                   onChange={(event) => setComplaintForm({ ...complaintForm, description: event.target.value })}
                 />
               </div>
-              <button className="button-primary" type="submit">Submit complaint</button>
+              <button className="button-primary" type="submit">Soumettre la plainte</button>
               {complaintStatus ? <div className="hint">{complaintStatus}</div> : null}
             </form>
           </div>
@@ -338,7 +366,7 @@ export default function CustomersPage() {
             <h3 className="card-title">Communications</h3>
             <form className="form-grid" onSubmit={submitSms}>
               <div className="form-row">
-                <label className="label" htmlFor="smsTo">SMS to</label>
+                <label className="label" htmlFor="smsTo">SMS à</label>
                 <input
                   id="smsTo"
                   className="input"
@@ -357,13 +385,13 @@ export default function CustomersPage() {
                   required
                 />
               </div>
-              <button className="button-primary" type="submit">Send SMS</button>
+              <button className="button-primary" type="submit">Envoyer le SMS</button>
               {smsStatus ? <div className="hint">{smsStatus}</div> : null}
             </form>
 
             <form className="form-grid" onSubmit={submitEmail} style={{ marginTop: 20 }}>
               <div className="form-row">
-                <label className="label" htmlFor="emailTo">Email to</label>
+                <label className="label" htmlFor="emailTo">Courriel à</label>
                 <input
                   id="emailTo"
                   className="input"
@@ -374,7 +402,7 @@ export default function CustomersPage() {
                 />
               </div>
               <div className="form-row">
-                <label className="label" htmlFor="emailSubject">Subject</label>
+                <label className="label" htmlFor="emailSubject">Sujet</label>
                 <input
                   id="emailSubject"
                   className="input"
@@ -384,7 +412,7 @@ export default function CustomersPage() {
                 />
               </div>
               <div className="form-row">
-                <label className="label" htmlFor="emailBody">Body</label>
+                <label className="label" htmlFor="emailBody">Message</label>
                 <textarea
                   id="emailBody"
                   className="textarea"
@@ -393,23 +421,26 @@ export default function CustomersPage() {
                   required
                 />
               </div>
-              <button className="button-secondary" type="submit">Send email</button>
+              <button className="button-secondary" type="submit">Envoyer le courriel</button>
               {emailStatus ? <div className="hint">{emailStatus}</div> : null}
             </form>
 
             <div className="card" style={{ marginTop: 20 }}>
-              <div className="card-title">SMS log</div>
+              <div className="card-title">Journal SMS</div>
               <div className="list" style={{ marginTop: 12 }}>
-                {smsMessages.map((sms) => (
-                  <div className="list-item" key={sms.sms_id}>
-                    <div>
-                      <strong>{sms.phone_number}</strong>
-                      <div className="card-meta">{sms.content}</div>
-                      <div className="card-meta">{new Date(sms.created_at).toLocaleString()}</div>
+                {smsMessages.map((sms) => {
+                  const directionLabel = directionLabels[sms.direction] ?? sms.direction;
+                  return (
+                    <div className="list-item" key={sms.sms_id}>
+                      <div>
+                        <strong>{sms.phone_number}</strong>
+                        <div className="card-meta">{sms.content}</div>
+                        <div className="card-meta">{new Date(sms.created_at).toLocaleString("fr-CA")}</div>
+                      </div>
+                      <span className="tag">{directionLabel}</span>
                     </div>
-                    <span className="tag">{sms.direction}</span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>

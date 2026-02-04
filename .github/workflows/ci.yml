@@ -25,6 +25,146 @@ jobs:
         run: |
           node -e 'const fs=require("fs");const path=require("path");const dir=path.join(process.cwd(),"supabase","migrations");if(!fs.existsSync(dir)){console.error("Missing supabase/migrations");process.exit(1);}const files=fs.readdirSync(dir).filter((f)=>f.endsWith(".sql"));if(!files.length){console.error("No migration files found");process.exit(1);}const invalid=files.filter((f)=>!/^[0-9]{14}_.+\.sql$/.test(f));if(invalid.length){console.error("Invalid migration filenames:",invalid.join(", "));process.exit(1);}const timestamps=files.map((f)=>f.slice(0,14));const dupes=timestamps.filter((t,i)=>timestamps.indexOf(t)!==i);if(dupes.length){const uniq=[...new Set(dupes)];console.error("Duplicate migration timestamps:",uniq.join(", "));process.exit(1);}const schema=path.join(process.cwd(),"supabase","schema.sql");if(!fs.existsSync(schema)){console.error("Missing supabase/schema.sql");process.exit(1);}console.log("Supabase migrations sanity check ok");'
 
+      - name: Verify doc API references
+        run: |
+          node - <<'NODE'
+          const fs = require("fs");
+          const path = require("path");
+
+          const docsToCheck = [
+            "README.md",
+            "docs/ai/codex/AGENTS.md",
+            "docs/ops/TROUBLESHOOTING.md",
+          ];
+
+          const apiRoot = path.join(process.cwd(), "app", "api");
+          const allowedPrefixChars = new Set([
+            "",
+            " ",
+            "\n",
+            "\t",
+            "`",
+            "'",
+            '"',
+            "(",
+            "[",
+            "{",
+            "<",
+            "|",
+            ">",
+            "=",
+            ":",
+          ]);
+
+          function hasUrlPrefix(text, index) {
+            const start = Math.max(0, index - 100);
+            const prefix = text.slice(start, index);
+            const httpIndex = Math.max(prefix.lastIndexOf("http://"), prefix.lastIndexOf("https://"));
+            if (httpIndex === -1) {
+              return false;
+            }
+            const tail = prefix.slice(httpIndex);
+            return !/\s/.test(tail);
+          }
+
+          function isAppApiPath(text, index) {
+            if (index < 3) {
+              return false;
+            }
+            const lookbehind = text.slice(Math.max(0, index - 6), index);
+            if (lookbehind.endsWith("app/") || lookbehind.endsWith("app\\")) {
+              return true;
+            }
+            if (lookbehind.endsWith("app")) {
+              const beforeApp = index - 4 >= 0 ? text[index - 4] : "";
+              if (!beforeApp || /[\s'"`\(\[\{<\|=.:\/\\]/.test(beforeApp)) {
+                return true;
+              }
+            }
+            return false;
+          }
+
+          function walk(dir, files = []) {
+            const entries = fs.readdirSync(dir, { withFileTypes: true });
+            for (const entry of entries) {
+              const fullPath = path.join(dir, entry.name);
+              if (entry.isDirectory()) {
+                walk(fullPath, files);
+              } else if (entry.isFile() && entry.name === "route.ts") {
+                files.push(fullPath);
+              }
+            }
+            return files;
+          }
+
+          function buildRoutePatterns() {
+            if (!fs.existsSync(apiRoot)) {
+              throw new Error("Missing app/api directory");
+            }
+            const routeFiles = walk(apiRoot);
+            return routeFiles.map((filePath) => {
+              const relative = path.relative(apiRoot, filePath).replace(/\\/g, "/");
+              const routePath = relative.replace(/\/route\.ts$/, "");
+              const segments = routePath.split("/");
+              const pattern = segments
+                .map((segment) => (segment.startsWith("[") && segment.endsWith("]") ? "[^/]+" : segment))
+                .join("/");
+              return new RegExp(`^/api/${pattern}$`);
+            });
+          }
+
+          function collectDocEndpoints(filePath) {
+            const content = fs.readFileSync(filePath, "utf8");
+            const apiRegex = /\/api\/[A-Za-z0-9_\-\[\]\/]+/g;
+            const endpoints = new Set();
+            let match = apiRegex.exec(content);
+            while (match) {
+              const start = match.index;
+              if (isAppApiPath(content, start)) {
+                match = apiRegex.exec(content);
+                continue;
+              }
+              const prefixChar = start > 0 ? content[start - 1] : "";
+              if (start > 0 && !allowedPrefixChars.has(prefixChar) && !hasUrlPrefix(content, start)) {
+                match = apiRegex.exec(content);
+                continue;
+              }
+              const cleaned = match[0].replace(/[),.;:]+$/, "");
+              endpoints.add(cleaned);
+              match = apiRegex.exec(content);
+            }
+            return Array.from(endpoints);
+          }
+
+          const routePatterns = buildRoutePatterns();
+          const missing = [];
+
+          for (const docPath of docsToCheck) {
+            const fullPath = path.join(process.cwd(), docPath);
+            if (!fs.existsSync(fullPath)) {
+              missing.push({ docPath, endpoint: "<missing doc file>" });
+              continue;
+            }
+            const endpoints = collectDocEndpoints(fullPath);
+            for (const endpoint of endpoints) {
+              const isValid = routePatterns.some((pattern) => pattern.test(endpoint));
+              if (!isValid) {
+                missing.push({ docPath, endpoint });
+              }
+            }
+          }
+
+          if (missing.length) {
+            console.error("Invalid API references found in docs:");
+            for (const item of missing) {
+              console.error(`- ${item.docPath}: ${item.endpoint}`);
+            }
+            process.exit(1);
+          }
+
+          console.log("Docs API references verified.");
+          NODE
+
       - name: Lint
         run: npm run lint
 

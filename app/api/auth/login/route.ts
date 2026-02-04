@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { loginSchema } from "@/lib/validators";
-import { createAnonClient, createAdminClient } from "@/lib/supabaseServer";
+import { createAnonClient, createAdminClient, createUserClient } from "@/lib/supabaseServer";
 import { setSessionCookies } from "@/lib/session";
 import { createChallenge } from "@/lib/security";
 import { isSmsConfigured } from "@/lib/twilio";
@@ -96,11 +96,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false, error: "Invalid credentials" }, { status: 401 });
   }
 
-  const { data: profile } = await admin
+  const userClient = createUserClient(data.session.access_token);
+  const { data: profile } = await userClient
     .from("users")
     .select("role, two_factor_enabled, two_factor_method, phone")
     .eq("user_id", data.user.id)
-    .single();
+    .maybeSingle();
+  const { data: adminProfile } = profile
+    ? { data: profile }
+    : await admin
+        .from("users")
+        .select("role, two_factor_enabled, two_factor_method, phone")
+        .eq("user_id", data.user.id)
+        .maybeSingle();
+  const resolvedProfile = profile ?? adminProfile ?? null;
 
   await admin
     .from("users")
@@ -116,9 +125,9 @@ export async function POST(request: Request) {
     userAgent: request.headers.get("user-agent") ?? null,
   });
 
-  if (profile?.role === "admin" && profile?.two_factor_enabled) {
-    if (profile.two_factor_method === "sms") {
-      if (!profile.phone) {
+  if (resolvedProfile?.role === "admin" && resolvedProfile?.two_factor_enabled) {
+    if (resolvedProfile.two_factor_method === "sms") {
+      if (!resolvedProfile.phone) {
         return NextResponse.json({ success: false, error: "SMS 2FA requires a phone number" }, { status: 400 });
       }
       if (!isSmsConfigured()) {
@@ -128,7 +137,7 @@ export async function POST(request: Request) {
     try {
       const challenge = await createChallenge(admin, {
         userId: data.user.id,
-        method: profile.two_factor_method ?? "sms",
+        method: resolvedProfile?.two_factor_method ?? "sms",
         session: data.session,
       });
       const responseBody = {
@@ -154,7 +163,12 @@ export async function POST(request: Request) {
     last_activity: new Date().toISOString(),
   });
 
-  const responseBody = { success: true, data: { ok: true, role: profile?.role }, ok: true, role: profile?.role };
+  const responseBody = {
+    success: true,
+    data: { ok: true, role: resolvedProfile?.role },
+    ok: true,
+    role: resolvedProfile?.role,
+  };
   const response = NextResponse.json(responseBody);
   setSessionCookies(response, data.session);
   await completeIdempotency(admin, request, idempotency.scope, idempotency.requestHash, responseBody, 200);

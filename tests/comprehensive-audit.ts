@@ -430,7 +430,7 @@ async function testDispatch(): Promise<void> {
     log('Workflow', 'Dispatch', '/dispatch', 'PASS', 'Calendar structure present');
 
     // Check for auto-assign button
-    const autoAssign = await page.locator('button', { hasText: /auto.*assign/i }).count() > 0;
+    const autoAssign = await page.locator('button', { hasText: /auto-assign|affectation auto/i }).count() > 0;
     if (autoAssign) {
       log('Workflow', 'Dispatch', '/dispatch', 'INFO', 'Auto-assign button found');
     } else {

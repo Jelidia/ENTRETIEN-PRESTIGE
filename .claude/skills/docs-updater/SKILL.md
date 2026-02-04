@@ -1,6 +1,6 @@
 ---
 name: docs-updater
-description: Update docs/ai/claude/CLAUDE.md, README.md, and docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md after completing features. Keeps documentation synchronized with codebase changes.
+description: Update docs/ai/codex/AGENTS.md, README.md, and docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md after completing features. Keeps documentation synchronized with codebase changes.
 argument-hint: "What changed (e.g., 'Update docs: added loyalty points redemption feature')"
 user-invocable: true
 disable-model-invocation: false
@@ -29,7 +29,7 @@ After completing features, fixing bugs, or making significant changes to the cod
 1. Reads current documentation files
 2. Updates relevant sections with completed work
 3. Increments progress percentages in docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
-4. Adds new API endpoints to docs/ai/claude/CLAUDE.md
+4. Updates architecture and repo rules in docs/ai/codex/AGENTS.md
 5. Updates feature status from ⚠️ to ✅
 6. Maintains consistent formatting
 
@@ -44,11 +44,10 @@ After completing features, fixing bugs, or making significant changes to the cod
 
 ## Files to update
 
-### docs/ai/claude/CLAUDE.md
+### docs/ai/codex/AGENTS.md
 - Architecture section (new routes, components)
-- API endpoint list
-- Critical Files section
-- Current Status percentage
+- Repo rules and non-negotiables
+- Key entry points and diagnostics
 
 ### README.md (if exists)
 - Feature list

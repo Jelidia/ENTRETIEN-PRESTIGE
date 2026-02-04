@@ -1,5 +1,3 @@
-# Claude Code Configuration
-
 # Legacy Claude Code (Archived)
 
 This directory is kept only for historical reference. The content below is not maintained and may be inaccurate.

@@ -17,6 +17,29 @@ function smsUnavailable(error: unknown, requestContext: Record<string, unknown>)
   return NextResponse.json({ success: false, error: "SMS is unavailable" }, { status: 503 });
 }
 
+const optOutKeywords = new Set(["STOP", "STOPALL", "UNSUBSCRIBE", "CANCEL", "END", "QUIT"]);
+const optInKeywords = new Set(["START", "YES", "UNSTOP"]);
+
+function getOptAction(message: string) {
+  const trimmed = message.trim();
+  if (!trimmed) {
+    return null;
+  }
+  const keyword = trimmed.split(/\s+/)[0].toUpperCase().replace(/[^A-Z]/g, "");
+  if (optOutKeywords.has(keyword)) {
+    return "opt_out";
+  }
+  if (optInKeywords.has(keyword)) {
+    return "opt_in";
+  }
+  return null;
+}
+
+function normalizePhoneNumber(phone: string) {
+  const normalized = phone ? formatPhoneNumber(phone) : "";
+  return normalized && normalized !== "+" ? normalized : phone;
+}
+
 async function resolveThreadId(
   admin: ReturnType<typeof createAdminClient>,
   customerId: string | null,
@@ -67,9 +90,9 @@ export async function POST(
     }
 
     const from = paramsMap.From ?? "";
-    const normalizedFrom = from ? formatPhoneNumber(from) : "";
-    const phoneNumber = normalizedFrom && normalizedFrom !== "+" ? normalizedFrom : from;
+    const phoneNumber = normalizePhoneNumber(from);
     const body = paramsMap.Body ?? "";
+    const optAction = getOptAction(body);
     const messageSid = paramsMap.MessageSid ?? "";
     const admin = createAdminClient();
     if (messageSid) {
@@ -104,12 +127,18 @@ export async function POST(
     let companyId = customer?.company_id ?? null;
     let customerId = customer?.customer_id ?? null;
     if (!companyId && phoneNumber) {
-      const { data: recentMessages, error: messageError } = await admin
+      const phoneCandidates = Array.from(new Set([phoneNumber, from].filter(Boolean)));
+      let messageQuery = admin
         .from("sms_messages")
         .select("company_id, customer_id")
-        .eq("phone_number", phoneNumber)
         .order("created_at", { ascending: false })
         .limit(1);
+      if (phoneCandidates.length > 1) {
+        messageQuery = messageQuery.in("phone_number", phoneCandidates);
+      } else if (phoneCandidates.length === 1) {
+        messageQuery = messageQuery.eq("phone_number", phoneCandidates[0]);
+      }
+      const { data: recentMessages, error: messageError } = await messageQuery;
       if (messageError) {
         logger.error("Failed to map inbound SMS from message history", {
           ...baseRequestContext,
@@ -129,6 +158,26 @@ export async function POST(
       });
       return NextResponse.json({ success: false, error: "Unknown sender" }, { status: 404 });
     }
+    if (optAction) {
+      let optQuery = admin.from("customers").update({ sms_opt_in: optAction === "opt_in" });
+      if (customerId) {
+        optQuery = optQuery.eq("customer_id", customerId);
+      } else {
+        optQuery = optQuery.eq("company_id", companyId).eq("phone", phoneNumber || from);
+      }
+      const { error: optError } = await optQuery;
+      if (optError) {
+        logger.error("Failed to update SMS opt-in status", {
+          ...baseRequestContext,
+          error: optError,
+          company_id: companyId,
+          customer_id: customerId,
+          phone_number: phoneNumber || from,
+          action: optAction,
+        });
+      }
+    }
+
     const threadId = await resolveThreadId(admin, customerId ?? null, phoneNumber || from);
     await admin.from("sms_messages").insert({
       company_id: companyId,
@@ -162,11 +211,28 @@ export async function POST(
   }
 
   const admin = createAdminClient();
+  const phoneNumber = normalizePhoneNumber(parsed.data.to);
+  const optQuery = parsed.data.customerId
+    ? admin.from("customers").select("sms_opt_in").eq("customer_id", parsed.data.customerId)
+    : admin
+        .from("customers")
+        .select("sms_opt_in")
+        .eq("company_id", profile.company_id)
+        .eq("phone", phoneNumber);
+  const { data: smsConsent, error: consentError } = await optQuery.maybeSingle();
+  if (consentError) {
+    logger.error("Failed to verify SMS consent", { ...requestContext, error: consentError });
+    return NextResponse.json({ success: false, error: "Unable to verify SMS consent" }, { status: 500 });
+  }
+  if (smsConsent?.sms_opt_in === false) {
+    return NextResponse.json({ success: false, error: "Customer has opted out of SMS" }, { status: 403 });
+  }
+
   const threadId = parsed.data.threadId
     ? parsed.data.threadId
-    : await resolveThreadId(admin, parsed.data.customerId ?? null, parsed.data.to);
+    : await resolveThreadId(admin, parsed.data.customerId ?? null, phoneNumber);
   const idempotency = await beginIdempotency(admin, request, profile.user_id, {
-    to: parsed.data.to,
+    to: phoneNumber,
     message: parsed.data.message,
     threadId,
   });
@@ -185,7 +251,7 @@ export async function POST(
     .insert({
       company_id: profile.company_id,
       customer_id: parsed.data.customerId ?? null,
-      phone_number: parsed.data.to,
+      phone_number: phoneNumber,
       content: parsed.data.message,
       direction: "outbound",
       thread_id: threadId,
@@ -201,7 +267,7 @@ export async function POST(
     return NextResponse.json(responseBody, { status: 500 });
   }
   try {
-    await sendSms(parsed.data.to, parsed.data.message);
+    await sendSms(phoneNumber, parsed.data.message);
   } catch (error) {
     const { error: statusError } = await admin
       .from("sms_messages")
@@ -224,7 +290,7 @@ export async function POST(
   await logAudit(admin, profile.user_id, "sms_send", "sms_thread", threadId, "success", {
     ipAddress: ip,
     userAgent: request.headers.get("user-agent") ?? null,
-    newValues: { to: parsed.data.to },
+    newValues: { to: phoneNumber },
   });
   const responseBody = { success: true, data: { ok: true }, ok: true };
   await completeIdempotency(admin, request, idempotency.scope, idempotency.requestHash, responseBody, 200);

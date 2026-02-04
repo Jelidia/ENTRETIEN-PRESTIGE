@@ -1,5 +1,3 @@
-# Claude Code Skills Guide
-
 # Legacy Claude Code Skills (Archived)
 
 This file is not maintained and may be inaccurate. For current skills guidance, use `docs/ai/codex/AGENTS.md`.

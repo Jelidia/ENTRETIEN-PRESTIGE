@@ -108,10 +108,20 @@ export async function POST(
       return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
     }
 
+    let providerId: string | null = null;
     if (parsed.data.channel === "email") {
       try {
-        await sendInvoiceEmail(parsed.data.to, parsed.data.subject, parsed.data.body);
+        const sendResult = await sendInvoiceEmail(parsed.data.to, parsed.data.subject, parsed.data.body);
+        providerId = sendResult.id ?? null;
       } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        await logAudit(client, user.id, "invoice_send", "invoice", params.id, "failed", {
+          ipAddress: ip,
+          userAgent: request.headers.get("user-agent") ?? null,
+          newValues: { channel: parsed.data.channel, to: parsed.data.to, error: errorMessage },
+        });
+        const responseBody = { success: false, error: "Email is unavailable" };
+        await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 503);
         return emailUnavailable(error, requestContext);
       }
     } else {
@@ -130,7 +140,7 @@ export async function POST(
     await logAudit(client, user.id, "invoice_send", "invoice", params.id, "success", {
       ipAddress: ip,
       userAgent: request.headers.get("user-agent") ?? null,
-      newValues: { channel: parsed.data.channel },
+      newValues: { channel: parsed.data.channel, to: parsed.data.to, provider_id: providerId },
     });
 
     const responseBody = { success: true, data: { ok: true }, ok: true };

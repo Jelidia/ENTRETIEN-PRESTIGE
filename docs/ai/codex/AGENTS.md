@@ -56,7 +56,7 @@ Legacy Claude Code documentation under `docs/ai/claude/` and `.claude-plugin/` i
 
 - **Idempotency**: write endpoints that can be retried should use the helpers in `lib/idempotency.ts`.
 - **Audit logging**: sensitive actions should log via `lib/auditLog.ts`.
-- **Rate limiting**: currently disabled (see `lib/rateLimit.ts` + `docs/ops/RATE_LIMIT_DISABLED.md`). Don’t accidentally remove/ignore this in “cleanup” work.
+- **Rate limiting**: currently disabled (see `lib/rateLimit.ts`). Don’t accidentally remove/ignore this in “cleanup” work.
 
 ### Code conventions
 

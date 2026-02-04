@@ -76,7 +76,7 @@ It merges:
    - **Invoice PDF:** `/api/invoices/[id]/pdf` selects columns (`invoice_date`, `gst_amount`, `qst_amount`) that do not exist, so PDF generation fails.
 
 4. **Security hardening still required:** encryption fails open without `APP_ENCRYPTION_KEY`, rate limiting is in‑memory, webhook signature verification is missing/partial, and several endpoints are not safely idempotent with external side-effects.
-- ⚠️ **CURRENT STATUS:** Rate limiting is **TEMPORARILY DISABLED** in `lib/rateLimit.ts` for testing. Must be re-enabled before production (see `docs/ops/RATE_LIMIT_DISABLED.md`).
+- ⚠️ **CURRENT STATUS:** Rate limiting is **TEMPORARILY DISABLED** in `lib/rateLimit.ts` for testing. Must be re-enabled before production.
 
 5. **Production engineering missing:** CI with `npm run typecheck`, standardized API error responses, request IDs, structured logging, and E2E tests.
 
