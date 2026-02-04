@@ -17,7 +17,7 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const parsed = notificationSettingsSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid settings" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid settings" }, { status: 400 });
   }
 
   const token = getAccessTokenFromRequest(request);
@@ -27,10 +27,10 @@ export async function POST(request: Request) {
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
   }
   const { error } = await client
     .from("users")
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     .eq("user_id", user.id);
 
   if (error) {
-    return NextResponse.json({ error: "Unable to save settings" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Unable to save settings" }, { status: 400 });
   }
 
   await logAudit(client, user.id, "notification_settings_update", "user", user.id, "success", {
@@ -66,7 +66,7 @@ export async function GET(request: Request) {
     .single();
 
   if (error) {
-    return NextResponse.json({ error: "Unable to load settings" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Unable to load settings" }, { status: 400 });
   }
 
   return NextResponse.json({ success: true, data: data?.notification_settings ?? {} });

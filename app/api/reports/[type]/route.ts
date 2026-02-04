@@ -188,7 +188,7 @@ export async function GET(
     return NextResponse.json({ success: true, data });
   }
 
-  return NextResponse.json({ error: "Unsupported report" }, { status: 400 });
+  return NextResponse.json({ success: false, error: "Unsupported report" }, { status: 400 });
 }
 
 export async function POST(
@@ -216,10 +216,10 @@ export async function POST(
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
   }
 
   const respondCreated = async () => {
@@ -231,7 +231,7 @@ export async function POST(
   if (type === "leads") {
     const parsed = leadCreateSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid lead" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Invalid lead" }, { status: 400 });
     }
     const { error } = await client.from("leads").insert({
       company_id: profile.company_id,
@@ -249,7 +249,7 @@ export async function POST(
       notes: parsed.data.notes,
     });
     if (error) {
-      return NextResponse.json({ error: "Unable to create lead" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Unable to create lead" }, { status: 400 });
     }
     await logAudit(client, profile.user_id, "report_lead_create", "lead", null, "success", {
       ipAddress: ip,
@@ -262,7 +262,7 @@ export async function POST(
   if (type === "territories") {
     const parsed = territoryCreateSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid territory" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Invalid territory" }, { status: 400 });
     }
     const { error } = await client.from("sales_territories").insert({
       company_id: profile.company_id,
@@ -272,7 +272,7 @@ export async function POST(
       polygon_coordinates: parsed.data.polygonCoordinates,
     });
     if (error) {
-      return NextResponse.json({ error: "Unable to create territory" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Unable to create territory" }, { status: 400 });
     }
     await logAudit(client, profile.user_id, "report_territory_create", "territory", null, "success", {
       ipAddress: ip,
@@ -285,7 +285,7 @@ export async function POST(
   if (type === "commission") {
     const parsed = commissionCreateSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid commission" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Invalid commission" }, { status: 400 });
     }
     const estimated =
       parsed.data.estimatedCommission ??
@@ -300,7 +300,7 @@ export async function POST(
       status: "estimated",
     });
     if (error) {
-      return NextResponse.json({ error: "Unable to create commission" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Unable to create commission" }, { status: 400 });
     }
     await logAudit(client, profile.user_id, "report_commission_create", "commission", null, "success", {
       ipAddress: ip,
@@ -313,7 +313,7 @@ export async function POST(
   if (type === "payroll") {
     const parsed = payrollCreateSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid payroll" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Invalid payroll" }, { status: 400 });
     }
     const { error } = await client.from("payroll_statements").insert({
       company_id: profile.company_id,
@@ -328,7 +328,7 @@ export async function POST(
       total_revenue: parsed.data.totalRevenue,
     });
     if (error) {
-      return NextResponse.json({ error: "Unable to create payroll" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Unable to create payroll" }, { status: 400 });
     }
     await logAudit(client, profile.user_id, "report_payroll_create", "payroll", null, "success", {
       ipAddress: ip,
@@ -341,7 +341,7 @@ export async function POST(
   if (type === "checklists") {
     const parsed = checklistCreateSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid checklist" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Invalid checklist" }, { status: 400 });
     }
     const { error } = await client.from("shift_checklists").insert({
       company_id: profile.company_id,
@@ -356,7 +356,7 @@ export async function POST(
       shift_status: parsed.data.shiftStatus ?? "pending",
     });
     if (error) {
-      return NextResponse.json({ error: "Unable to create checklist" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Unable to create checklist" }, { status: 400 });
     }
     await logAudit(client, profile.user_id, "report_checklist_create", "checklist", null, "success", {
       ipAddress: ip,
@@ -369,7 +369,7 @@ export async function POST(
   if (type === "incidents") {
     const parsed = incidentCreateSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid incident" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Invalid incident" }, { status: 400 });
     }
     const { error } = await client.from("incidents").insert({
       company_id: profile.company_id,
@@ -382,7 +382,7 @@ export async function POST(
       report_date: new Date().toISOString(),
     });
     if (error) {
-      return NextResponse.json({ error: "Unable to create incident" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Unable to create incident" }, { status: 400 });
     }
     await logAudit(client, profile.user_id, "report_incident_create", "incident", null, "success", {
       ipAddress: ip,
@@ -395,7 +395,7 @@ export async function POST(
   if (type === "quality-issues") {
     const parsed = qualityIssueCreateSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid quality issue" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Invalid quality issue" }, { status: 400 });
     }
     const { error } = await client.from("job_quality_issues").insert({
       company_id: profile.company_id,
@@ -408,7 +408,7 @@ export async function POST(
       reported_date: new Date().toISOString(),
     });
     if (error) {
-      return NextResponse.json({ error: "Unable to create quality issue" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Unable to create quality issue" }, { status: 400 });
     }
     await logAudit(client, profile.user_id, "report_quality_issue_create", "quality_issue", null, "success", {
       ipAddress: ip,
@@ -418,5 +418,5 @@ export async function POST(
     return await respondCreated();
   }
 
-  return NextResponse.json({ error: "Unsupported report" }, { status: 400 });
+  return NextResponse.json({ success: false, error: "Unsupported report" }, { status: 400 });
 }

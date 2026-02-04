@@ -25,7 +25,7 @@ export async function POST(
   if (action === "blacklist") {
     const parsed = blacklistSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
     }
 
     const idempotency = await beginIdempotency(client, request, profile.user_id, {
@@ -36,10 +36,10 @@ export async function POST(
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
     }
 
     const { error } = await client.from("customer_blacklist").insert({
@@ -54,7 +54,7 @@ export async function POST(
     });
 
     if (error) {
-      return NextResponse.json({ error: "Unable to blacklist" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Unable to blacklist" }, { status: 400 });
     }
 
     await logAudit(client, user.id, "customer_blacklist", "customer", params.id, "success", {
@@ -71,7 +71,7 @@ export async function POST(
   if (action === "complaint") {
     const parsed = complaintSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid complaint" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Invalid complaint" }, { status: 400 });
     }
 
     const idempotency = await beginIdempotency(client, request, profile.user_id, {
@@ -82,10 +82,10 @@ export async function POST(
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
     }
 
     const { error } = await client.from("job_quality_issues").insert({
@@ -100,7 +100,7 @@ export async function POST(
     });
 
     if (error) {
-      return NextResponse.json({ error: "Unable to file complaint" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Unable to file complaint" }, { status: 400 });
     }
 
     await logAudit(client, user.id, "customer_complaint", "customer", params.id, "success", {
@@ -114,7 +114,7 @@ export async function POST(
     return NextResponse.json(responseBody);
   }
 
-  return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
+  return NextResponse.json({ success: false, error: "Unsupported action" }, { status: 400 });
 }
 
 export async function GET(
@@ -135,7 +135,7 @@ export async function GET(
       .select("job_id, service_type, status, scheduled_date")
       .eq("customer_id", params.id);
     if (error) {
-      return NextResponse.json({ error: "Unable to load jobs" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Unable to load jobs" }, { status: 400 });
     }
     return NextResponse.json({ success: true, data });
   }
@@ -146,10 +146,10 @@ export async function GET(
       .select("invoice_id, invoice_number, payment_status, total_amount, due_date")
       .eq("customer_id", params.id);
     if (error) {
-      return NextResponse.json({ error: "Unable to load invoices" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Unable to load invoices" }, { status: 400 });
     }
     return NextResponse.json({ success: true, data });
   }
 
-  return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
+  return NextResponse.json({ success: false, error: "Unsupported action" }, { status: 400 });
 }

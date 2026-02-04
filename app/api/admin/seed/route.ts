@@ -22,7 +22,7 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const parsed = seedAccountsSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid seed data" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid seed data" }, { status: 400 });
   }
 
   const { profile } = auth;
@@ -32,10 +32,10 @@ export async function POST(request: Request) {
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
   }
 
   const admin = createAdminClient();

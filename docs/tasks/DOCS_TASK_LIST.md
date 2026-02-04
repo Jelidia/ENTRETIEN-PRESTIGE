@@ -18,17 +18,13 @@ Notes
 - EP-P0-DB-05 RLS audit plus role alignment (company isolation is not enough).
 - EP-P0-SEC-02 Replace in-memory rate limiting with a shared production store (remove temporary disable).
 - EP-P0-SEC-07 Decide and enforce registration model (self-signup vs invite-only).
-- EP-P0-FLOW-02 Make job photo uploads work end-to-end (upload + DB record + viewing).
-- EP-P0-FLOW-03 Implement Leads API to match Sales Leads UI.
+- EP-P0-FLOW-03 Implement Leads API to match Sales Leads UI. [WIP: OpenCode 2026-02-03]
 - EP-P0-FLOW-04 Finish customer rating and review workflow (tokens -> rating -> bonus).
 - EP-P0-PAY-01 Harden Stripe payment flow (intent creation, webhook, idempotency, persistence).
 - EP-P0-PAY-02 Define and implement a real payment ledger.
 - EP-P0-PAY-03 Make manual Interac marking safe and auditable.
 
 ## P1 - Engineering, auth, dispatch, messaging, storage
-- EP-P1-ENG-03 Standardize API response format and error handling.
-- EP-P1-ENG-05 Remove unsafe any usage and tighten validators. [WIP: OpenCode 2026-02-03]
-- EP-P1-ENG-06 Add E2E tests for critical flows.
 - EP-P1-AUTH-01 Redesign permission keys so technician settings do not equal company settings.
 - EP-P1-AUTH-02 Field-level authorization for jobs and customers.
 - EP-P1-AUTH-03 Define and enforce a job status state machine.
@@ -38,7 +34,6 @@ Notes
 - EP-P1-DISP-02 Replace naive auto-assign with an explainable assignment algorithm.
 - EP-P1-DISP-03 Build employee availability management end-to-end.
 - EP-P1-DISP-04 Weather cancellation safety checks and notifications.
-- EP-P1-MSG-01 Fix SMS send idempotency and message persistence ordering.
 - EP-P1-MSG-02 Inbound SMS webhook verification, dedupe, and company mapping.
 - EP-P1-MSG-03 Opt-out and consent compliance for SMS (STOP handling, quiet hours).
 - EP-P1-MSG-04 Email sending requires Resend when enabled and tracks delivery.
@@ -88,12 +83,7 @@ Notes
 ## QA and testing
 - Manual comprehensive test blocked: missing Playwright dependency (install Playwright and rerun npx tsx tests/manual-comprehensive-test.ts). [WIP: opencode 2026-02-03]
 - Run full E2E suite: npm run test:e2e (fix failures).
-- Verify scrolling on /dashboard, /team, /profile, /admin/users.
-- Verify /team loads and /api/users returns 200 (adjust RLS if needed).
 - Test core workflows: create lead, customer, team member, job; dispatch calendar (auto-assign, drag-drop).
-- Test technician pages: /technician, /technician/schedule, /technician/equipment, /technician/customers, /technician/earnings, /technician/profile, /technician/map.
-- Verify all 4 roles can login and logout works.
-- Retest sales leads load time and timeouts.
 
 ## Pre-production checklist
 - Supabase migrations apply cleanly on a fresh DB (CI enforced).

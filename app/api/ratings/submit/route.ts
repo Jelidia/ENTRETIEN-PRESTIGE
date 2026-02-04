@@ -30,8 +30,7 @@ export async function POST(request: Request) {
   const requestContext = getRequestContext(request);
   const limit = rateLimit(`ratings:submit:${ip}`, 10, 15 * 60 * 1000);
   if (!limit.allowed) {
-    return NextResponse.json(
-      { error: "Trop de tentatives. Réessayez plus tard." },
+    return NextResponse.json({ success: false, error: "Trop de tentatives. Réessayez plus tard." },
       { status: 429 }
     );
   }
@@ -40,8 +39,7 @@ export async function POST(request: Request) {
   const validation = ratingSubmitSchema.safeParse(body);
 
   if (!validation.success) {
-    return NextResponse.json(
-      { error: "Données invalides", details: validation.error.format() },
+    return NextResponse.json({ success: false, error: "Données invalides", details: validation.error.format() },
       { status: 400 }
     );
   }
@@ -55,10 +53,10 @@ export async function POST(request: Request) {
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
   }
 
   // Validate token
@@ -69,15 +67,13 @@ export async function POST(request: Request) {
     .maybeSingle();
 
   if (tokenError || !ratingToken) {
-    return NextResponse.json(
-      { error: "Token invalide" },
+    return NextResponse.json({ success: false, error: "Token invalide" },
       { status: 404 }
     );
   }
 
   if (!timingSafeEqualHex(tokenHash, ratingToken.token_hash)) {
-    return NextResponse.json(
-      { error: "Token invalide" },
+    return NextResponse.json({ success: false, error: "Token invalide" },
       { status: 404 }
     );
   }
@@ -88,16 +84,14 @@ export async function POST(request: Request) {
   const expiresAt = new Date(ratingToken.expires_at);
 
   if (now > expiresAt) {
-    return NextResponse.json(
-      { error: "Ce lien a expiré" },
+    return NextResponse.json({ success: false, error: "Ce lien a expiré" },
       { status: 410 }
     );
   }
 
   // Check if already used
   if (ratingToken.used_at) {
-    return NextResponse.json(
-      { error: "Ce lien a déjà été utilisé" },
+    return NextResponse.json({ success: false, error: "Ce lien a déjà été utilisé" },
       { status: 410 }
     );
   }
@@ -111,8 +105,7 @@ export async function POST(request: Request) {
     .maybeSingle();
 
   if (consumeError || !consumedToken) {
-    return NextResponse.json(
-      { error: "Ce lien a déjà été utilisé" },
+    return NextResponse.json({ success: false, error: "Ce lien a déjà été utilisé" },
       { status: 410 }
     );
   }
@@ -129,8 +122,7 @@ export async function POST(request: Request) {
       .from("customer_rating_tokens")
       .update({ used_at: null })
       .eq("token_id", ratingToken.token_id);
-    return NextResponse.json(
-      { error: "Service introuvable" },
+    return NextResponse.json({ success: false, error: "Service introuvable" },
       { status: 404 }
     );
   }
@@ -158,8 +150,7 @@ export async function POST(request: Request) {
       job_id: job.job_id,
       company_id: job.company_id,
     });
-    return NextResponse.json(
-      { error: "Échec de l'enregistrement de l'évaluation" },
+    return NextResponse.json({ success: false, error: "Échec de l'enregistrement de l'évaluation" },
       { status: 500 }
     );
   }

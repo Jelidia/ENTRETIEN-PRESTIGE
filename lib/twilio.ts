@@ -71,7 +71,7 @@ export async function sendSms(to: string, body: string) {
   const url = `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`;
   const credentials = Buffer.from(`${accountSid}:${authToken}`).toString("base64");
 
-  await fetch(url, {
+  const response = await fetch(url, {
     method: "POST",
     headers: {
       Authorization: `Basic ${credentials}`,
@@ -79,4 +79,10 @@ export async function sendSms(to: string, body: string) {
     },
     body: new URLSearchParams({ From: fromNumber, To: to, Body: body }).toString(),
   });
+
+  if (!response.ok) {
+    const details = await response.text().catch(() => "");
+    const suffix = details ? `: ${details}` : "";
+    throw new Error(`Twilio SMS failed (${response.status})${suffix}`);
+  }
 }

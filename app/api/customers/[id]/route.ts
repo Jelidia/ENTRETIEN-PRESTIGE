@@ -19,7 +19,7 @@ export async function GET(
   const client = createUserClient(token ?? "");
   const { data, error } = await client.from("customers").select("*").eq("customer_id", params.id).single();
   if (error || !data) {
-    return NextResponse.json({ error: "Customer not found" }, { status: 404 });
+    return NextResponse.json({ success: false, error: "Customer not found" }, { status: 404 });
   }
 
   return NextResponse.json({ success: true, data });
@@ -38,7 +38,7 @@ export async function PATCH(
   const body = await request.json().catch(() => null);
   const parsed = customerUpdateSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid update" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid update" }, { status: 400 });
   }
 
   const token = getAccessTokenFromRequest(request);
@@ -48,10 +48,10 @@ export async function PATCH(
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
   }
   const { data, error } = await client
     .from("customers")
@@ -61,7 +61,7 @@ export async function PATCH(
     .single();
 
   if (error || !data) {
-    return NextResponse.json({ error: "Unable to update customer" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Unable to update customer" }, { status: 400 });
   }
 
   await logAudit(client, profile.user_id, "customer_update", "customer", params.id, "success", {

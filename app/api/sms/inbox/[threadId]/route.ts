@@ -16,7 +16,7 @@ export async function GET(
 
   const paramsResult = threadIdParamSchema.safeParse(params);
   if (!paramsResult.success) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
   }
 
   const token = getAccessTokenFromRequest(request);
@@ -30,8 +30,7 @@ export async function GET(
     .order("created_at", { ascending: true });
 
   if (error) {
-    return NextResponse.json(
-      { error: "Failed to load messages", details: error.message },
+    return NextResponse.json({ success: false, error: "Failed to load messages", details: error.message },
       { status: 500 }
     );
   }

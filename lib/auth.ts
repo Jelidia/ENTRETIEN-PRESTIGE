@@ -21,14 +21,18 @@ async function loadPermissions(
 export async function requireUser(request: Request) {
   const token = getAccessTokenFromRequest(request);
   if (!token) {
-    return { response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
+    return {
+      response: NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 }),
+    };
   }
 
   const client = createUserClient(token);
   const { data, error } = await client.auth.getUser();
 
   if (error || !data.user) {
-    return { response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
+    return {
+      response: NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 }),
+    };
   }
 
   const selectFields =
@@ -72,7 +76,12 @@ export async function requireUser(request: Request) {
     }
 
     const details = profileError?.message ?? adminProfileError?.message;
-    return { response: NextResponse.json({ error: "Profile missing", details }, { status: 403 }) };
+    return {
+      response: NextResponse.json(
+        { success: false, error: "Profile missing", details },
+        { status: 403 }
+      ),
+    };
   }
 
   return { user: data.user, profile };
@@ -89,7 +98,9 @@ export async function requireRole(
   }
 
   if (!roles.includes(auth.profile.role)) {
-    return { response: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
+    return {
+      response: NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 }),
+    };
   }
 
   if (permissions) {
@@ -97,7 +108,9 @@ export async function requireRole(
     const needed = Array.isArray(permissions) ? permissions : [permissions];
     const allowed = needed.some((permission) => permissionMap[permission]);
     if (!allowed) {
-      return { response: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
+      return {
+        response: NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 }),
+      };
     }
     return { ...auth, permissions: permissionMap };
   }
@@ -115,7 +128,9 @@ export async function requirePermission(request: Request, permissions: Permissio
   const needed = Array.isArray(permissions) ? permissions : [permissions];
   const allowed = needed.some((permission) => permissionMap[permission]);
   if (!allowed) {
-    return { response: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
+    return {
+      response: NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 }),
+    };
   }
 
   return { ...auth, permissions: permissionMap };

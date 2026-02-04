@@ -14,13 +14,13 @@ export async function POST(request: Request) {
   const parsed = loginSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid login request" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid login request" }, { status: 400 });
   }
 
   const ip = getRequestIp(request);
   const limit = rateLimit(`login:${ip}`, 5, 15 * 60 * 1000);
   if (!limit.allowed) {
-    return NextResponse.json({ error: "Too many attempts" }, { status: 429 });
+    return NextResponse.json({ success: false, error: "Too many attempts" }, { status: 429 });
   }
 
   const admin = createAdminClient();
@@ -33,10 +33,10 @@ export async function POST(request: Request) {
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
   }
 
   const { data: userRecord } = await admin
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
       userAgent: request.headers.get("user-agent") ?? null,
       newValues: { email: parsed.data.email },
     });
-    return NextResponse.json({ error: "Account suspended" }, { status: 403 });
+    return NextResponse.json({ success: false, error: "Account suspended" }, { status: 403 });
   }
 
   if (userRecord?.failed_login_attempts && userRecord.failed_login_attempts >= 5) {
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
         userAgent: request.headers.get("user-agent") ?? null,
         newValues: { email: parsed.data.email },
       });
-      return NextResponse.json({ error: "Account locked" }, { status: 403 });
+      return NextResponse.json({ success: false, error: "Account locked" }, { status: 403 });
     }
   }
 
@@ -93,7 +93,7 @@ export async function POST(request: Request) {
       userAgent: request.headers.get("user-agent") ?? null,
       newValues: { email: parsed.data.email },
     });
-    return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+    return NextResponse.json({ success: false, error: "Invalid credentials" }, { status: 401 });
   }
 
   const { data: profile } = await admin
@@ -119,10 +119,10 @@ export async function POST(request: Request) {
   if (profile?.role === "admin" && profile?.two_factor_enabled) {
     if (profile.two_factor_method === "sms") {
       if (!profile.phone) {
-        return NextResponse.json({ error: "SMS 2FA requires a phone number" }, { status: 400 });
+        return NextResponse.json({ success: false, error: "SMS 2FA requires a phone number" }, { status: 400 });
       }
       if (!isSmsConfigured()) {
-        return NextResponse.json({ error: "SMS 2FA is not configured" }, { status: 400 });
+        return NextResponse.json({ success: false, error: "SMS 2FA is not configured" }, { status: 400 });
       }
     }
     try {
@@ -140,7 +140,7 @@ export async function POST(request: Request) {
       await completeIdempotency(admin, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
       return NextResponse.json(responseBody);
     } catch (error) {
-      return NextResponse.json({ error: "Unable to send verification code" }, { status: 500 });
+      return NextResponse.json({ success: false, error: "Unable to send verification code" }, { status: 500 });
     }
   }
 

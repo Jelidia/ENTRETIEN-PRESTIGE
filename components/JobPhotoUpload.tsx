@@ -47,22 +47,28 @@ export default function JobPhotoUpload({ jobId, onComplete }: JobPhotoUploadProp
     setError("");
 
     const res = await fetch(`/api/jobs/${jobId}/photos`);
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
       setError(data.error ?? "Failed to load photos");
       setLoading(false);
-      return;
+      return null;
     }
 
-    setPhotos(data.photos ?? []);
-    setComplete(data.complete ?? false);
-    setMissing(data.missing ?? []);
+    const payload = {
+      photos: data.photos ?? [],
+      complete: Boolean(data.complete),
+      missing: data.missing ?? [],
+    };
+    setPhotos(payload.photos);
+    setComplete(payload.complete);
+    setMissing(payload.missing);
     setLoading(false);
 
-    if (data.complete && onComplete) {
+    if (payload.complete && onComplete) {
       onComplete();
     }
+    return payload;
   }, [jobId, onComplete]);
 
   useEffect(() => {
@@ -89,53 +95,32 @@ export default function JobPhotoUpload({ jobId, onComplete }: JobPhotoUploadProp
     setError("");
 
     try {
-      // Upload to Supabase Storage
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("path", `jobs/${jobId}/${selectedType}-${selectedSide}-${Date.now()}.jpg`);
+      formData.append("photo_type", selectedType);
+      formData.append("side", selectedSide);
 
-      const uploadRes = await fetch("/api/uploads", {
+      const uploadRes = await fetch(`/api/jobs/${jobId}/photos`, {
         method: "POST",
         body: formData,
       });
 
-      const uploadData = await uploadRes.json();
+      const uploadData = await uploadRes.json().catch(() => ({}));
 
       if (!uploadRes.ok) {
-        throw new Error(uploadData.error ?? "Failed to upload image");
-      }
-
-      // Save photo record
-      const saveRes = await fetch(`/api/jobs/${jobId}/photos`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          photo_type: selectedType,
-          side: selectedSide,
-          photo_url: uploadData.publicUrl,
-        }),
-      });
-
-      const saveData = await saveRes.json();
-
-      if (!saveRes.ok) {
-        throw new Error(saveData.error ?? "Failed to save photo");
+        throw new Error(uploadData.error ?? "Failed to upload photo");
       }
 
       // Reload photos
-      await loadPhotos();
+      const updated = await loadPhotos();
 
       // Auto-advance to next missing photo
-      if (missing.length > 0) {
-        const nextMissing = missing[0];
-        if (nextMissing) {
-          setSelectedType(nextMissing.photo_type);
-          setSelectedSide(nextMissing.side);
-        }
+      const nextMissing = updated?.missing?.[0];
+      if (nextMissing) {
+        setSelectedType(nextMissing.photo_type);
+        setSelectedSide(nextMissing.side);
       }
-
     } catch (err) {
-      console.error("Photo upload error:", err);
       setError(err instanceof Error ? err.message : "Failed to upload photo");
     } finally {
       setUploading(false);

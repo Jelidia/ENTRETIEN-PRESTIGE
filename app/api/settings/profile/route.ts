@@ -26,8 +26,7 @@ export async function PATCH(request: Request) {
     const result = profileUpdateSchema.safeParse(body);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: "Invalid input", details: result.error.format() },
+      return NextResponse.json({ success: false, error: "Invalid input", details: result.error.format() },
         { status: 400 }
       );
     }
@@ -40,10 +39,10 @@ export async function PATCH(request: Request) {
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
     }
 
     // Build update object with only provided fields
@@ -65,8 +64,7 @@ export async function PATCH(request: Request) {
         ...requestContext,
         action: "update_profile",
       });
-      return NextResponse.json(
-        { error: "Failed to update profile" },
+      return NextResponse.json({ success: false, error: "Failed to update profile" },
         { status: 500 }
       );
     }
@@ -88,8 +86,7 @@ export async function PATCH(request: Request) {
       ...requestContext,
       action: "update_profile",
     });
-    return NextResponse.json(
-      { error: "An error occurred" },
+    return NextResponse.json({ success: false, error: "An error occurred" },
       { status: 500 }
     );
   }

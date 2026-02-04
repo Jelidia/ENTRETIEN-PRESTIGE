@@ -6,7 +6,7 @@ import { emptyQuerySchema } from "@/lib/validators";
 
 export async function GET(request: Request) {
   if (process.env.NODE_ENV !== "development") {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ success: false, error: "Not found" }, { status: 404 });
   }
 
   const auth = await requireRole(request, ["admin"]);
@@ -16,14 +16,13 @@ export async function GET(request: Request) {
 
   const queryResult = emptyQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
   if (!queryResult.success) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
   }
 
   const token = getAccessTokenFromRequest(request);
 
   if (!token) {
-    return NextResponse.json({
-      error: "No session token found",
+    return NextResponse.json({ success: false, error: "No session token found",
       cookies: request.headers.get("cookie"),
       hasToken: false,
     });
@@ -33,8 +32,7 @@ export async function GET(request: Request) {
   const { data: userData, error: userError } = await client.auth.getUser();
 
   if (userError || !userData.user) {
-    return NextResponse.json({
-      error: "Invalid session",
+    return NextResponse.json({ success: false, error: "Invalid session",
       details: userError?.message,
       hasToken: true,
       tokenValid: false,
@@ -48,8 +46,7 @@ export async function GET(request: Request) {
     .single();
 
   if (profileError) {
-    return NextResponse.json({
-      error: "Profile fetch failed",
+    return NextResponse.json({ success: false, error: "Profile fetch failed",
       details: profileError.message,
       hasToken: true,
       tokenValid: true,

@@ -15,7 +15,7 @@ import { getRequestContext } from "@/lib/requestId";
 
 function stripeUnavailable(error: unknown, requestContext: Record<string, unknown>) {
   logger.error("Stripe is unavailable", { ...requestContext, error });
-  return NextResponse.json({ error: "Payments are unavailable" }, { status: 503 });
+  return NextResponse.json({ success: false, error: "Payments are unavailable" }, { status: 503 });
 }
 
 function getIdempotencyKey(request: Request) {
@@ -110,7 +110,7 @@ export async function POST(
   if (action === "init") {
     const parsed = paymentInitSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid payment" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Invalid payment" }, { status: 400 });
     }
 
     const idempotency = await beginIdempotency(client, request, profile.user_id, {
@@ -121,10 +121,10 @@ export async function POST(
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
     }
 
     const stripeIdempotencyKey = getIdempotencyKey(request);
@@ -159,10 +159,10 @@ export async function POST(
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
     }
     await client
       .from("invoices")
@@ -181,7 +181,7 @@ export async function POST(
   if (action === "refund") {
     const parsed = paymentRefundSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid refund" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Invalid refund" }, { status: 400 });
     }
 
     const idempotency = await beginIdempotency(client, request, profile.user_id, {
@@ -192,10 +192,10 @@ export async function POST(
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
     }
 
     const stripeIdempotencyKey = getIdempotencyKey(request);
@@ -219,7 +219,7 @@ export async function POST(
     return NextResponse.json(responseBody);
   }
 
-  return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
+  return NextResponse.json({ success: false, error: "Unsupported action" }, { status: 400 });
 }
 
 export async function GET(
@@ -227,7 +227,7 @@ export async function GET(
   { params }: { params: { action: string } }
 ) {
   if (params.action !== "history") {
-    return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Unsupported action" }, { status: 400 });
   }
 
   const auth = await requireRole(request, ["admin", "manager"], "invoices");
@@ -242,7 +242,7 @@ export async function GET(
     .order("issued_date", { ascending: false });
 
   if (error) {
-    return NextResponse.json({ error: "Unable to load payments" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Unable to load payments" }, { status: 400 });
   }
 
   return NextResponse.json({ success: true, data });

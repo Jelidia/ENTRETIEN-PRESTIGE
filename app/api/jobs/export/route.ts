@@ -12,14 +12,14 @@ export async function GET(request: Request) {
 
   const queryResult = emptyQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
   if (!queryResult.success) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
   }
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
 
   const { data, error } = await client.from("jobs").select("job_id, service_type, status, scheduled_date, estimated_revenue");
   if (error || !data) {
-    return NextResponse.json({ error: "Unable to export" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Unable to export" }, { status: 400 });
   }
 
   const { searchParams } = new URL(request.url);

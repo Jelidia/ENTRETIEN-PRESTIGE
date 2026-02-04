@@ -23,7 +23,7 @@ export async function GET(request: Request) {
     .single();
 
   if (error || !data) {
-    return NextResponse.json({ error: "Company not found" }, { status: 404 });
+    return NextResponse.json({ success: false, error: "Company not found" }, { status: 404 });
   }
 
   return NextResponse.json({ success: true, data });
@@ -39,7 +39,7 @@ export async function PATCH(request: Request) {
   const body = await request.json().catch(() => null);
   const parsed = companyUpdateSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid update" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid update" }, { status: 400 });
   }
 
   const update = { ...parsed.data } as Record<string, unknown>;
@@ -55,10 +55,10 @@ export async function PATCH(request: Request) {
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
   }
   const { data, error } = await client
     .from("companies")
@@ -68,7 +68,7 @@ export async function PATCH(request: Request) {
     .single();
 
   if (error || !data) {
-    return NextResponse.json({ error: "Unable to update company" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Unable to update company" }, { status: 400 });
   }
 
   await logAudit(client, profile.user_id, "company_update", "company", profile.company_id, "success", {

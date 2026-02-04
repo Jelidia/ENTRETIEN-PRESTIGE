@@ -12,8 +12,7 @@ export async function POST(request: Request) {
   const ip = getRequestIp(request);
   const limit = rateLimit(`auth:verify-2fa:${ip}`, 10, 10 * 60 * 1000);
   if (!limit.allowed) {
-    return NextResponse.json(
-      { error: "Trop de tentatives. Réessayez plus tard." },
+    return NextResponse.json({ success: false, error: "Trop de tentatives. Réessayez plus tard." },
       { status: 429 }
     );
   }
@@ -22,7 +21,7 @@ export async function POST(request: Request) {
   const parsed = verify2faSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid verification request" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid verification request" }, { status: 400 });
   }
 
   const admin = createAdminClient();
@@ -34,15 +33,15 @@ export async function POST(request: Request) {
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
   }
   const session = await consumeChallenge(admin, parsed.data.challengeId, parsed.data.code);
 
   if (!session) {
-    return NextResponse.json({ error: "Invalid or expired code" }, { status: 401 });
+    return NextResponse.json({ success: false, error: "Invalid or expired code" }, { status: 401 });
   }
 
   const { data: userData } = await admin.auth.getUser(session.access_token);

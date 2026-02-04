@@ -5,6 +5,7 @@ const BASE_URL = "http://localhost:3000";
 const USERS = {
   admin: { email: "jelidiadam12@gmail.com", password: "Prestige2026!" },
   manager: { email: "youssef.takhi@hotmail.com", password: "Prestige2026!" },
+  sales: { email: "jelidiadam12+2@gmail.com", password: "Prestige2026!" },
   technician: { email: "jelidiadam12+1@gmail.com", password: "Prestige2026!" },
 };
 
@@ -67,6 +68,8 @@ test.describe("manual verification", () => {
       await expect(page.locator(".content")).toBeVisible();
       const scroll = await checkContentScroll(page);
       console.log(`Scroll check ${path}:`, scroll);
+      expect(scroll.exists).toBeTruthy();
+      expect(scroll.overflowY).not.toBe("hidden");
       if (scroll.scrollable) {
         expect(scroll.after).toBeGreaterThan(scroll.before);
       }
@@ -289,6 +292,68 @@ test.describe("manual verification", () => {
     }
   });
 
+  test("admin: create customer via form", async ({ page }) => {
+    await login(page, USERS.admin.email, USERS.admin.password, /\/dashboard/);
+    await gotoPage(page, "/customers");
+    await page.waitForTimeout(800);
+
+    await page.evaluate(() => {
+      window.location.reload = () => {};
+    });
+
+    const stamp = Date.now();
+    const customerEmail = `qa.customer+${stamp}@example.com`;
+
+    await page.fill("#firstName", "QA");
+    await page.fill("#lastName", `Customer-${stamp}`);
+    await page.fill("#email", customerEmail);
+    await page.fill("#phone", "5555555555");
+    await page.fill("#address", "123 Test Street");
+    await page.fill("#city", "Montreal");
+    await page.fill("#postalCode", "H2X1Y4");
+
+    const createResponsePromise = page.waitForResponse(
+      (res) => res.url().includes("/api/customers") && res.request().method() === "POST",
+      { timeout: 20000 }
+    );
+
+    await page.getByRole("button", { name: "Save customer" }).click();
+    const createResponse = await createResponsePromise;
+    const createStatus = createResponse.status();
+    const createText = await createResponse.text().catch(() => "");
+    const createJson = createText ? JSON.parse(createText) : null;
+
+    console.log("Create customer response", createStatus, createText || "(empty)");
+    expect(createStatus).toBe(201);
+    if (createJson) {
+      expect(createJson?.data?.customer_id).toBeTruthy();
+    }
+
+    await expect(page.getByText("Customer saved.")).toBeVisible();
+  });
+
+  test("all roles can login and logout", async ({ page }) => {
+    const roles = [
+      { name: "admin", user: USERS.admin, urlPattern: /\/dashboard/, protectedPath: "/dashboard" },
+      { name: "manager", user: USERS.manager, urlPattern: /\/dashboard/, protectedPath: "/dashboard" },
+      { name: "sales", user: USERS.sales, urlPattern: /\/sales/, protectedPath: "/sales/dashboard" },
+      { name: "technician", user: USERS.technician, urlPattern: /\/technician/, protectedPath: "/technician" },
+    ];
+
+    for (const role of roles) {
+      await login(page, role.user.email, role.user.password, role.urlPattern);
+      await expect(page).toHaveURL(role.urlPattern);
+
+      const logoutResponse = await page.request.post(`${BASE_URL}/api/auth/logout`);
+      console.log(`Logout response for ${role.name}:`, logoutResponse.status());
+      expect(logoutResponse.status()).toBe(200);
+
+      await gotoPage(page, role.protectedPath);
+      await page.waitForURL(/\/login/, { timeout: 20000 });
+      await expect(page.getByRole("heading", { name: /sign in/i })).toBeVisible();
+    }
+  });
+
   test("manager: settings loads + team visibility", async ({ page }) => {
     await login(page, USERS.manager.email, USERS.manager.password, /\/dashboard/);
 
@@ -303,6 +368,7 @@ test.describe("manual verification", () => {
 
     await gotoPage(page, "/team");
     await page.waitForTimeout(800);
+    await expect(page.locator(".list-item").first()).toBeVisible({ timeout: 20000 });
 
     const managerApi = await page.evaluate(async () => {
       const controller = new AbortController();
@@ -325,8 +391,27 @@ test.describe("manual verification", () => {
 
   });
 
+  test("sales: leads page loads without timeout", async ({ page }) => {
+    await login(page, USERS.sales.email, USERS.sales.password, /\/sales/);
+
+    const leadsResponsePromise = page.waitForResponse(
+      (res) => res.url().includes("/api/leads") && res.request().method() === "GET",
+      { timeout: 20000 }
+    );
+
+    await gotoPage(page, "/sales/leads");
+    const leadsResponse = await leadsResponsePromise;
+
+    expect(leadsResponse.status()).toBe(200);
+    await expect(page.getByRole("button", { name: /nouveau lead/i })).toBeVisible();
+    await expect(page.getByText(/chargement/i)).toHaveCount(0);
+  });
+
   test("technician: pages load", async ({ page }) => {
     await login(page, USERS.technician.email, USERS.technician.password, /\/technician/);
+
+    await expect(page.locator(".bottom-nav")).toBeVisible();
+    await expect(page.locator(".bottom-nav-item")).toHaveCount(5);
 
     const routes = [
       "/technician",

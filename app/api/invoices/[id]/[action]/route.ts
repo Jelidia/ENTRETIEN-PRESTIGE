@@ -53,12 +53,12 @@ const pickFirst = <T,>(value: T | T[] | null | undefined) =>
 
 function emailUnavailable(error: unknown, requestContext: Record<string, unknown>) {
   logger.error("Email is unavailable", { ...requestContext, error });
-  return NextResponse.json({ error: "Email is unavailable" }, { status: 503 });
+  return NextResponse.json({ success: false, error: "Email is unavailable" }, { status: 503 });
 }
 
 function smsUnavailable(error: unknown, requestContext: Record<string, unknown>) {
   logger.error("SMS is unavailable", { ...requestContext, error });
-  return NextResponse.json({ error: "SMS is unavailable" }, { status: 503 });
+  return NextResponse.json({ success: false, error: "SMS is unavailable" }, { status: 503 });
 }
 
 export async function POST(
@@ -86,7 +86,7 @@ export async function POST(
   if (action === "send") {
     const parsed = invoiceSendSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid send request" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Invalid send request" }, { status: 400 });
     }
 
     const idempotency = await beginIdempotency(client, request, user.id, {
@@ -97,10 +97,10 @@ export async function POST(
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
     }
 
     if (parsed.data.channel === "email") {
@@ -136,7 +136,7 @@ export async function POST(
   if (action === "payment") {
     const parsed = invoicePaymentSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid payment" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Invalid payment" }, { status: 400 });
     }
 
     const idempotency = await beginIdempotency(client, request, user.id, {
@@ -147,10 +147,10 @@ export async function POST(
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
     }
 
     await client
@@ -211,7 +211,7 @@ export async function POST(
       .single();
 
     if (error || !data) {
-      return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+      return NextResponse.json({ success: false, error: "Invoice not found" }, { status: 404 });
     }
 
     const invoiceRecord = data as InvoiceRecord;
@@ -260,7 +260,7 @@ export async function POST(
     });
   }
 
-  return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
+  return NextResponse.json({ success: false, error: "Unsupported action" }, { status: 400 });
 }
 
 export async function GET(
@@ -268,7 +268,7 @@ export async function GET(
   { params }: { params: { id: string; action: string } }
 ) {
   if (params.action !== "pdf") {
-    return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Unsupported action" }, { status: 400 });
   }
 
   const auth = await requirePermission(request, "invoices");
@@ -313,7 +313,7 @@ export async function GET(
     .single();
 
   if (error || !data) {
-    return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+    return NextResponse.json({ success: false, error: "Invoice not found" }, { status: 404 });
   }
 
   const invoiceRecord = data as InvoiceRecord;

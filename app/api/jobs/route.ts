@@ -32,7 +32,7 @@ export async function GET(request: Request) {
 
   const { data, error } = await query;
   if (error) {
-    return NextResponse.json({ error: "Unable to load jobs" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Unable to load jobs" }, { status: 400 });
   }
 
   return NextResponse.json({ success: true, data });
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
   const parsed = jobCreateSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid job payload" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid job payload" }, { status: 400 });
   }
 
   const token = getAccessTokenFromRequest(request);
@@ -59,10 +59,10 @@ export async function POST(request: Request) {
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
   }
   const { data, error } = await client
     .from("jobs")
@@ -89,7 +89,7 @@ export async function POST(request: Request) {
     .single();
 
   if (error || !data) {
-    return NextResponse.json({ error: "Unable to create job" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Unable to create job" }, { status: 400 });
   }
 
   await logAudit(client, user.id, "create_job", "job", data.job_id, "success", {

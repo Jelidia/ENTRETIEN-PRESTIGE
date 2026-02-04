@@ -405,7 +405,6 @@ export const dispatchScheduleSchema = z.object({
 export const photoUploadSchema = z.object({
   photo_type: z.enum(["before", "after"]),
   side: z.enum(["front", "back", "left", "right"]),
-  photo_url: z.string().url(),
 });
 
 export const availabilitySlotSchema = z.object({
@@ -427,6 +426,49 @@ export const profileUpdateSchema = z.object({
 });
 
 const uuidSchema = z.string().uuid();
+
+const leadStatusSchema = z.enum(["new", "contacted", "estimated", "won", "lost"]);
+
+export const leadCreateSchema = z.object({
+  customer_name: z.string().min(2),
+  phone: z.string().min(7),
+  email: z.string().email().nullable().optional(),
+  address: z.string().min(2).nullable().optional(),
+  estimated_value: z.number().min(0).optional(),
+  follow_up_date: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+  status: leadStatusSchema.optional(),
+  sales_rep_id: uuidSchema.nullable().optional(),
+});
+
+export const leadUpdateSchema = z
+  .object({
+    customer_name: z.string().min(2).optional(),
+    phone: z.string().min(7).optional(),
+    email: z.string().email().nullable().optional(),
+    address: z.string().nullable().optional(),
+    estimated_value: z.number().min(0).optional(),
+    follow_up_date: z.string().nullable().optional(),
+    notes: z.string().nullable().optional(),
+    status: leadStatusSchema.optional(),
+    lost_reason: z.string().nullable().optional(),
+    sales_rep_id: uuidSchema.nullable().optional(),
+  })
+  .refine((data) => Object.values(data).some((value) => value !== undefined), {
+    message: "At least one field must be provided for update",
+  });
+
+export const leadsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).optional(),
+  page_size: z.coerce.number().int().min(1).max(50).optional(),
+  search: z.string().min(1).optional(),
+  status: leadStatusSchema.optional(),
+});
+
+export const leadActivityCreateSchema = z.object({
+  type: z.enum(["call", "sms", "note", "status"]),
+  notes: z.string().min(1).optional(),
+});
 
 export const emptyBodySchema = z.object({}).passthrough();
 export const emptyQuerySchema = z.object({}).passthrough();

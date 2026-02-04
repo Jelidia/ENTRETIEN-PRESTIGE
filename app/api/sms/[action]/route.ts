@@ -13,7 +13,7 @@ import { getRequestContext } from "@/lib/requestId";
 
 function smsUnavailable(error: unknown, requestContext: Record<string, unknown>) {
   logger.error("SMS is unavailable", { ...requestContext, error });
-  return NextResponse.json({ error: "SMS is unavailable" }, { status: 503 });
+  return NextResponse.json({ success: false, error: "SMS is unavailable" }, { status: 503 });
 }
 
 async function resolveThreadId(
@@ -62,7 +62,7 @@ export async function POST(
         "Rejected inbound SMS webhook with invalid signature",
         { ...baseRequestContext, signature_present: Boolean(signature) }
       );
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
     const from = paramsMap.From ?? "";
@@ -119,7 +119,7 @@ export async function POST(
   const payload = await request.json().catch(() => null);
   const parsed = smsSendSchema.safeParse(payload);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid message" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid message" }, { status: 400 });
   }
 
   const admin = createAdminClient();
@@ -135,25 +135,49 @@ export async function POST(
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
+  }
+  const createdAt = new Date().toISOString();
+  const { data: messageRecord, error: insertError } = await admin
+    .from("sms_messages")
+    .insert({
+      company_id: profile.company_id,
+      customer_id: parsed.data.customerId ?? null,
+      phone_number: parsed.data.to,
+      content: parsed.data.message,
+      direction: "outbound",
+      thread_id: threadId,
+      status: "queued",
+      created_at: createdAt,
+    })
+    .select("sms_id")
+    .single();
+  if (insertError || !messageRecord) {
+    logger.error("Failed to persist outbound SMS", { ...requestContext, error: insertError });
+    return NextResponse.json({ success: false, error: "Unable to persist SMS" }, { status: 500 });
   }
   try {
     await sendSms(parsed.data.to, parsed.data.message);
   } catch (error) {
+    const { error: statusError } = await admin
+      .from("sms_messages")
+      .update({ status: "failed" })
+      .eq("sms_id", messageRecord.sms_id);
+    if (statusError) {
+      logger.error("Failed to update SMS status", { ...requestContext, error: statusError });
+    }
     return smsUnavailable(error, requestContext);
   }
-  await admin.from("sms_messages").insert({
-    company_id: profile.company_id,
-    customer_id: parsed.data.customerId ?? null,
-    phone_number: parsed.data.to,
-    content: parsed.data.message,
-    direction: "outbound",
-    thread_id: threadId,
-    created_at: new Date().toISOString(),
-  });
+  const { error: updateError } = await admin
+    .from("sms_messages")
+    .update({ status: "sent" })
+    .eq("sms_id", messageRecord.sms_id);
+  if (updateError) {
+    logger.error("Failed to update SMS status", { ...requestContext, error: updateError });
+  }
   await logAudit(admin, profile.user_id, "sms_send", "sms_thread", threadId, "success", {
     ipAddress: ip,
     userAgent: request.headers.get("user-agent") ?? null,
@@ -169,7 +193,7 @@ export async function GET(
   { params }: { params: { action: string } }
 ) {
   if (params.action !== "list") {
-    return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Unsupported action" }, { status: 400 });
   }
 
   const auth = await requireRole(request, ["admin", "manager", "dispatcher"], "customers");
@@ -186,7 +210,7 @@ export async function GET(
     .limit(100);
 
   if (error) {
-    return NextResponse.json({ error: "Unable to load SMS" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Unable to load SMS" }, { status: 400 });
   }
 
   return NextResponse.json({ success: true, data });

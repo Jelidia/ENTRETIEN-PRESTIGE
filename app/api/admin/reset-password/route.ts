@@ -26,8 +26,7 @@ export async function POST(request: Request) {
   const result = adminResetByEmailSchema.safeParse(body);
 
   if (!result.success) {
-    return NextResponse.json(
-      { error: "Données invalides", details: result.error.format() },
+    return NextResponse.json({ success: false, error: "Données invalides", details: result.error.format() },
       { status: 400 }
     );
   }
@@ -40,10 +39,10 @@ export async function POST(request: Request) {
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
   }
 
   // 3. Find user by email within company
@@ -56,8 +55,7 @@ export async function POST(request: Request) {
     .maybeSingle();
 
   if (targetError || !targetUser) {
-    return NextResponse.json(
-      { error: "Utilisateur introuvable" },
+    return NextResponse.json({ success: false, error: "Utilisateur introuvable" },
       { status: 404 }
     );
   }
@@ -72,8 +70,7 @@ export async function POST(request: Request) {
       ...requestContext,
       action: "admin_reset_password_by_email",
     });
-    return NextResponse.json(
-      { error: "Impossible de réinitialiser le mot de passe" },
+    return NextResponse.json({ success: false, error: "Impossible de réinitialiser le mot de passe" },
       { status: 500 }
     );
   }

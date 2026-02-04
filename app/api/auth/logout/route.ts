@@ -11,21 +11,20 @@ export async function POST(request: Request) {
   const ip = getRequestIp(request);
   const limit = rateLimit(`auth:logout:${ip}`, 30, 5 * 60 * 1000);
   if (!limit.allowed) {
-    return NextResponse.json(
-      { error: "Trop de tentatives. Réessayez plus tard." },
+    return NextResponse.json({ success: false, error: "Trop de tentatives. Réessayez plus tard." },
       { status: 429 }
     );
   }
 
   const queryResult = emptyQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
   if (!queryResult.success) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
   }
 
   const body = await request.json().catch(() => ({}));
   const bodyResult = emptyBodySchema.safeParse(body);
   if (!bodyResult.success) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
   }
 
   const token = getAccessTokenFromRequest(request);
@@ -42,10 +41,10 @@ export async function POST(request: Request) {
     return response;
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
   }
   await anon.auth.signOut();
 

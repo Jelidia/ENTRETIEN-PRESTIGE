@@ -19,7 +19,7 @@ export async function POST(
 
   const paramsResult = threadIdParamSchema.safeParse(params);
   if (!paramsResult.success) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
   }
 
   const token = getAccessTokenFromRequest(request);
@@ -32,10 +32,10 @@ export async function POST(
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
   }
 
   const { error } = await client
@@ -45,8 +45,7 @@ export async function POST(
     .eq("direction", "inbound");
 
   if (error) {
-    return NextResponse.json(
-      { error: "Failed to mark as read", details: error.message },
+    return NextResponse.json({ success: false, error: "Failed to mark as read", details: error.message },
       { status: 500 }
     );
   }

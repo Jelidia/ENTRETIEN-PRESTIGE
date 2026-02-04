@@ -32,7 +32,7 @@ export async function POST(
   if (action === "assign") {
     const parsed = jobAssignSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid assignment" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Invalid assignment" }, { status: 400 });
     }
 
     const idempotency = await beginIdempotency(client, request, user.id, {
@@ -43,10 +43,10 @@ export async function POST(
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
     }
 
     const { error } = await client
@@ -55,7 +55,7 @@ export async function POST(
       .eq("job_id", params.id);
 
     if (error) {
-      return NextResponse.json({ error: "Unable to assign job" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Unable to assign job" }, { status: 400 });
     }
 
     await client.from("job_assignments").insert({
@@ -87,7 +87,7 @@ export async function POST(
   if (action === "check-in") {
     const parsed = jobCheckInSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid check-in" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Invalid check-in" }, { status: 400 });
     }
 
     const idempotency = await beginIdempotency(client, request, user.id, {
@@ -98,10 +98,10 @@ export async function POST(
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
     }
 
     await client.from("gps_locations").insert({
@@ -133,7 +133,7 @@ export async function POST(
   if (action === "check-out") {
     const parsed = jobCheckOutSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid check-out" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Invalid check-out" }, { status: 400 });
     }
 
     const idempotency = await beginIdempotency(client, request, user.id, {
@@ -144,10 +144,10 @@ export async function POST(
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
     }
 
     await client.from("gps_locations").insert({
@@ -182,10 +182,10 @@ export async function POST(
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
     }
     await client
       .from("jobs")
@@ -226,10 +226,10 @@ export async function POST(
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
     }
     await client
       .from("jobs")
@@ -257,7 +257,7 @@ export async function POST(
   if (action === "upsell") {
     const parsed = jobUpsellSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid upsell" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Invalid upsell" }, { status: 400 });
     }
 
     const idempotency = await beginIdempotency(client, request, user.id, {
@@ -268,10 +268,10 @@ export async function POST(
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
     }
 
     await client
@@ -290,5 +290,5 @@ export async function POST(
     return NextResponse.json(responseBody);
   }
 
-  return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
+  return NextResponse.json({ success: false, error: "Unsupported action" }, { status: 400 });
 }

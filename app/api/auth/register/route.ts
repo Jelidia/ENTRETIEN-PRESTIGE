@@ -10,8 +10,7 @@ export async function POST(request: Request) {
   const ip = getRequestIp(request);
   const limit = rateLimit(`auth:register:${ip}`, 5, 15 * 60 * 1000);
   if (!limit.allowed) {
-    return NextResponse.json(
-      { error: "Trop de tentatives. Réessayez plus tard." },
+    return NextResponse.json({ success: false, error: "Trop de tentatives. Réessayez plus tard." },
       { status: 429 }
     );
   }
@@ -20,7 +19,7 @@ export async function POST(request: Request) {
   const parsed = registerSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid registration" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid registration" }, { status: 400 });
   }
 
   const admin = createAdminClient();
@@ -34,10 +33,10 @@ export async function POST(request: Request) {
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
   }
 
   const { data: company, error: companyError } = await admin
@@ -47,7 +46,7 @@ export async function POST(request: Request) {
     .single();
 
   if (companyError || !company) {
-    return NextResponse.json({ error: "Unable to create company" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Unable to create company" }, { status: 400 });
   }
 
   const { data: authData, error: authError } = await admin.auth.admin.createUser({
@@ -58,7 +57,7 @@ export async function POST(request: Request) {
   });
 
   if (authError || !authData.user) {
-    return NextResponse.json({ error: "Unable to create user" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Unable to create user" }, { status: 400 });
   }
 
   const smsConfigured = isSmsConfigured();
@@ -76,7 +75,7 @@ export async function POST(request: Request) {
   });
 
   if (profileError) {
-    return NextResponse.json({ error: "Unable to store profile" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Unable to store profile" }, { status: 400 });
   }
 
   await logAudit(admin, authData.user.id, "register", "company", company.company_id, "success", {

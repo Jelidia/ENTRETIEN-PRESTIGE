@@ -12,7 +12,7 @@ import { getRequestContext } from "@/lib/requestId";
 
 function emailUnavailable(error: unknown, requestContext: Record<string, unknown>) {
   logger.error("Email is unavailable", { ...requestContext, error });
-  return NextResponse.json({ error: "Email is unavailable" }, { status: 503 });
+  return NextResponse.json({ success: false, error: "Email is unavailable" }, { status: 503 });
 }
 
 export async function POST(
@@ -35,13 +35,13 @@ export async function POST(
   const client = createUserClient(token ?? "");
 
   if (params.action !== "send") {
-    return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Unsupported action" }, { status: 400 });
   }
 
   const body = await request.json().catch(() => null);
   const parsed = emailSendSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid email" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid email" }, { status: 400 });
   }
 
   const idempotency = await beginIdempotency(client, request, profile.user_id, parsed.data);
@@ -49,10 +49,10 @@ export async function POST(
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
   }
 
   try {
@@ -80,7 +80,7 @@ export async function GET(
   }
 
   if (params.action !== "template") {
-    return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Unsupported action" }, { status: 400 });
   }
 
   const data = {

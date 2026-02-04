@@ -13,7 +13,14 @@ function setGeolocation(mode: "success" | "error" | "none") {
   const geolocation = {
     getCurrentPosition: (onSuccess: PositionCallback, onError?: PositionErrorCallback) => {
       if (mode === "error") {
-        onError?.({ code: 1, message: "Denied", PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3 } as any);
+        const error: GeolocationPositionError = {
+          code: 1,
+          message: "Denied",
+          PERMISSION_DENIED: 1,
+          POSITION_UNAVAILABLE: 2,
+          TIMEOUT: 3,
+        };
+        onError?.(error);
         return;
       }
       onSuccess({

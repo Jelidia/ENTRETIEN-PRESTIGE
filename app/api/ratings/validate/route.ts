@@ -8,8 +8,7 @@ export async function GET(request: Request) {
   const ip = getRequestIp(request);
   const limit = rateLimit(`ratings:validate:${ip}`, 30, 15 * 60 * 1000);
   if (!limit.allowed) {
-    return NextResponse.json(
-      { error: "Trop de tentatives. Réessayez plus tard." },
+    return NextResponse.json({ success: false, error: "Trop de tentatives. Réessayez plus tard." },
       { status: 429 }
     );
   }
@@ -17,8 +16,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const queryResult = ratingsValidateQuerySchema.safeParse(Object.fromEntries(searchParams));
   if (!queryResult.success) {
-    return NextResponse.json(
-      { error: "Token manquant" },
+    return NextResponse.json({ success: false, error: "Token manquant" },
       { status: 400 }
     );
   }
@@ -35,15 +33,13 @@ export async function GET(request: Request) {
     .maybeSingle();
 
   if (tokenError || !ratingToken) {
-    return NextResponse.json(
-      { error: "Token invalide" },
+    return NextResponse.json({ success: false, error: "Token invalide" },
       { status: 404 }
     );
   }
 
   if (!timingSafeEqualHex(tokenHash, ratingToken.token_hash)) {
-    return NextResponse.json(
-      { error: "Token invalide" },
+    return NextResponse.json({ success: false, error: "Token invalide" },
       { status: 404 }
     );
   }
@@ -53,16 +49,14 @@ export async function GET(request: Request) {
   const expiresAt = new Date(ratingToken.expires_at);
 
   if (now > expiresAt) {
-    return NextResponse.json(
-      { error: "Ce lien a expiré" },
+    return NextResponse.json({ success: false, error: "Ce lien a expiré" },
       { status: 410 }
     );
   }
 
   // Check if already used
   if (ratingToken.used_at) {
-    return NextResponse.json(
-      { error: "Ce lien a déjà été utilisé" },
+    return NextResponse.json({ success: false, error: "Ce lien a déjà été utilisé" },
       { status: 410 }
     );
   }
@@ -83,8 +77,7 @@ export async function GET(request: Request) {
     .single();
 
   if (jobError || !job) {
-    return NextResponse.json(
-      { error: "Service introuvable" },
+    return NextResponse.json({ success: false, error: "Service introuvable" },
       { status: 404 }
     );
   }

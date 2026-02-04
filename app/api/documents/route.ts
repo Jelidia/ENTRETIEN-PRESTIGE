@@ -23,7 +23,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const queryResult = documentsQuerySchema.safeParse(Object.fromEntries(searchParams));
   if (!queryResult.success) {
-    return NextResponse.json({ error: "Invalid document request" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid document request" }, { status: 400 });
   }
   const { userId, docType } = queryResult.data;
   const column = docTypeMap[docType];
@@ -37,12 +37,12 @@ export async function GET(request: Request) {
     .single();
 
   if (error || !user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
+    return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
   }
 
   const path = user[column as keyof typeof user] as string | null;
   if (!path) {
-    return NextResponse.json({ error: "Document missing" }, { status: 404 });
+    return NextResponse.json({ success: false, error: "Document missing" }, { status: 404 });
   }
 
   const { data: signed, error: signError } = await admin
@@ -51,7 +51,7 @@ export async function GET(request: Request) {
     .createSignedUrl(path, 300);
 
   if (signError || !signed?.signedUrl) {
-    return NextResponse.json({ error: "Unable to sign document" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Unable to sign document" }, { status: 500 });
   }
 
   await logAudit(admin, auth.profile.user_id, "document_access", "user", userId, "success", {

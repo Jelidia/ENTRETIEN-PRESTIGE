@@ -17,7 +17,7 @@ export async function POST(
   }
   const paramsResult = idParamSchema.safeParse(params);
   if (!paramsResult.success) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
   }
   const notifId = paramsResult.data.id;
   const { profile } = auth;
@@ -29,10 +29,10 @@ export async function POST(
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
   }
   const { error } = await client
     .from("notifications")
@@ -40,7 +40,7 @@ export async function POST(
     .eq("notif_id", notifId);
 
   if (error) {
-    return NextResponse.json({ error: "Unable to update" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Unable to update" }, { status: 400 });
   }
 
   await logAudit(client, profile.user_id, "notification_read", "notification", notifId, "success", {

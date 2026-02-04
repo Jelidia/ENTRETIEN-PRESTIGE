@@ -16,20 +16,19 @@ export async function POST(request: Request) {
 
   const queryResult = emptyQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
   if (!queryResult.success) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
   }
 
   const body = await request.json().catch(() => ({}));
   const bodyResult = emptyBodySchema.safeParse(body);
   if (!bodyResult.success) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
   }
 
   const ip = getRequestIp(request);
   const limit = rateLimit(`auth:setup-2fa:${user.id}:${ip}`, 5, 15 * 60 * 1000);
   if (!limit.allowed) {
-    return NextResponse.json(
-      { error: "Trop de tentatives. Réessayez plus tard." },
+    return NextResponse.json({ success: false, error: "Trop de tentatives. Réessayez plus tard." },
       { status: 429 }
     );
   }
@@ -42,10 +41,10 @@ export async function POST(request: Request) {
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
   }
   const secret = generateAuthenticatorSecret(user.email ?? "user");
 
@@ -59,7 +58,7 @@ export async function POST(request: Request) {
     .eq("user_id", user.id);
 
   if (error) {
-    return NextResponse.json({ error: "Unable to setup 2FA" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Unable to setup 2FA" }, { status: 400 });
   }
 
   await logAudit(admin, user.id, "setup_2fa", "user", user.id, "success", {

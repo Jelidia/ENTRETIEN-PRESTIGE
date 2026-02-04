@@ -24,7 +24,7 @@ export async function GET(request: Request) {
 
   const queryResult = emptyQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
   if (!queryResult.success) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
   }
 
   const token = getAccessTokenFromRequest(request);
@@ -97,8 +97,7 @@ export async function GET(request: Request) {
   const { data: messages, error } = await query;
 
   if (error) {
-    return NextResponse.json(
-      { error: "Failed to load inbox", details: error.message },
+    return NextResponse.json({ success: false, error: "Failed to load inbox", details: error.message },
       { status: 500 }
     );
   }

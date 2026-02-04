@@ -15,7 +15,7 @@ export async function GET(
 
   const paramsResult = idParamSchema.safeParse(params);
   if (!paramsResult.success) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
   }
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
@@ -26,7 +26,7 @@ export async function GET(
     .single();
 
   if (error || !data) {
-    return NextResponse.json({ error: "Geofence not found" }, { status: 404 });
+    return NextResponse.json({ success: false, error: "Geofence not found" }, { status: 404 });
   }
 
   return NextResponse.json({ success: true, data });

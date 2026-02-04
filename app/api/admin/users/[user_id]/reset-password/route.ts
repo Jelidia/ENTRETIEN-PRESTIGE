@@ -31,8 +31,7 @@ export async function POST(
   const result = adminResetPasswordSchema.safeParse(body);
 
   if (!result.success) {
-    return NextResponse.json(
-      { error: "Données invalides", details: result.error.format() },
+    return NextResponse.json({ success: false, error: "Données invalides", details: result.error.format() },
       { status: 400 }
     );
   }
@@ -49,10 +48,10 @@ export async function POST(
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
   }
   const { data: targetUser, error: fetchError } = await client
     .from("users")
@@ -61,15 +60,13 @@ export async function POST(
     .single();
 
   if (fetchError || !targetUser) {
-    return NextResponse.json(
-      { error: "Utilisateur introuvable" },
+    return NextResponse.json({ success: false, error: "Utilisateur introuvable" },
       { status: 404 }
     );
   }
 
   if (targetUser.company_id !== profile.company_id) {
-    return NextResponse.json(
-      { error: "Accès interdit" },
+    return NextResponse.json({ success: false, error: "Accès interdit" },
       { status: 403 }
     );
   }
@@ -85,8 +82,7 @@ export async function POST(
       ...requestContext,
       action: "admin_reset_password",
     });
-    return NextResponse.json(
-      { error: "Impossible de réinitialiser le mot de passe" },
+    return NextResponse.json({ success: false, error: "Impossible de réinitialiser le mot de passe" },
       { status: 500 }
     );
   }

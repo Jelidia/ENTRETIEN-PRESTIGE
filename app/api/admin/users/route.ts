@@ -37,7 +37,7 @@ export async function GET(request: Request) {
       ...requestContext,
       action: "count_users",
     });
-    return NextResponse.json({ error: "Failed to load users" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Failed to load users" }, { status: 500 });
   }
 
   // Get paginated users
@@ -53,7 +53,7 @@ export async function GET(request: Request) {
       ...requestContext,
       action: "fetch_users",
     });
-    return NextResponse.json({ error: "Failed to load users" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Failed to load users" }, { status: 500 });
   }
 
   const total = count ?? 0;
@@ -86,8 +86,7 @@ export async function POST(request: Request) {
     const result = userCreateSchema.safeParse(body);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: "Invalid input", details: result.error.format() },
+      return NextResponse.json({ success: false, error: "Invalid input", details: result.error.format() },
         { status: 400 }
       );
     }
@@ -100,10 +99,10 @@ export async function POST(request: Request) {
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
     }
 
     // Check if email already exists
@@ -114,8 +113,7 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     if (existingUser) {
-      return NextResponse.json(
-        { error: "Cet email existe déjà" },
+      return NextResponse.json({ success: false, error: "Cet email existe déjà" },
         { status: 400 }
       );
     }
@@ -129,8 +127,7 @@ export async function POST(request: Request) {
     });
 
     if (authError || !authData.user) {
-      return NextResponse.json(
-        { error: authError?.message ?? "Unable to create auth user" },
+      return NextResponse.json({ success: false, error: authError?.message ?? "Unable to create auth user" },
         { status: 400 }
       );
     }
@@ -157,8 +154,7 @@ export async function POST(request: Request) {
         action: "create_user",
         created_user_id: authData.user.id,
       });
-      return NextResponse.json(
-        { error: "Failed to create user" },
+      return NextResponse.json({ success: false, error: "Failed to create user" },
         { status: 500 }
       );
     }
@@ -185,8 +181,7 @@ export async function POST(request: Request) {
       ...requestContext,
       action: "create_user",
     });
-    return NextResponse.json(
-      { error: "An error occurred" },
+    return NextResponse.json({ success: false, error: "An error occurred" },
       { status: 500 }
     );
   }

@@ -61,8 +61,7 @@ export async function POST(request: Request) {
 
     // Security check
     if (body.secret !== SEED_SECRET) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
+      return NextResponse.json({ success: false, error: "Unauthorized" },
         { status: 401 }
       );
     }
@@ -96,8 +95,7 @@ export async function POST(request: Request) {
         .single();
 
       if (companyError || !newCompany) {
-        return NextResponse.json(
-          { error: "Failed to create company", details: companyError },
+        return NextResponse.json({ success: false, error: "Failed to create company", details: companyError },
           { status: 500 }
         );
       }
@@ -255,9 +253,7 @@ export async function POST(request: Request) {
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json(
-      {
-        error: "Seeding failed",
+    return NextResponse.json({ success: false, error: "Seeding failed",
         details: message,
       },
       { status: 500 }

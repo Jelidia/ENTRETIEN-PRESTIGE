@@ -14,7 +14,7 @@ export async function GET(request: Request) {
   }
   const queryResult = emptyQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
   if (!queryResult.success) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
   }
   const { user } = auth;
   const token = getAccessTokenFromRequest(request);
@@ -26,7 +26,7 @@ export async function GET(request: Request) {
     .order("created_at", { ascending: false });
 
   if (error) {
-    return NextResponse.json({ error: "Unable to load notifications" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Unable to load notifications" }, { status: 400 });
   }
 
   return NextResponse.json({ success: true, data });
@@ -42,7 +42,7 @@ export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url);
   const queryResult = notificationDeleteQuerySchema.safeParse(Object.fromEntries(searchParams));
   if (!queryResult.success) {
-    return NextResponse.json({ error: "Invalid notification id" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid notification id" }, { status: 400 });
   }
   const { id } = queryResult.data;
 
@@ -53,14 +53,14 @@ export async function DELETE(request: Request) {
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
   }
   const { error } = await client.from("notifications").delete().eq("notif_id", id);
   if (error) {
-    return NextResponse.json({ error: "Unable to delete" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Unable to delete" }, { status: 400 });
   }
 
   await logAudit(client, profile.user_id, "notification_delete", "notification", id, "success", {

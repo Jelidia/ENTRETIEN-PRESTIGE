@@ -10,8 +10,7 @@ export async function POST(request: Request) {
   const ip = getRequestIp(request);
   const limit = rateLimit(`auth:forgot-password:${ip}`, 5, 15 * 60 * 1000);
   if (!limit.allowed) {
-    return NextResponse.json(
-      { error: "Trop de tentatives. Réessayez plus tard." },
+    return NextResponse.json({ success: false, error: "Trop de tentatives. Réessayez plus tard." },
       { status: 429 }
     );
   }
@@ -20,7 +19,7 @@ export async function POST(request: Request) {
   const parsed = forgotPasswordSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
   }
 
   const admin = createAdminClient();
@@ -33,10 +32,10 @@ export async function POST(request: Request) {
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
   }
   const { error } = await anon.auth.resetPasswordForEmail(parsed.data.email, {
     redirectTo: `${getBaseUrl()}/reset-password`,
@@ -49,7 +48,7 @@ export async function POST(request: Request) {
       userAgent: request.headers.get("user-agent") ?? null,
       newValues: { email: parsed.data.email },
     });
-    return NextResponse.json({ error: "Unable to send reset link" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Unable to send reset link" }, { status: 400 });
   }
 
   await logAudit(admin, null, "forgot_password", "user", null, "success", {

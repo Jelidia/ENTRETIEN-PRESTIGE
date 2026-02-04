@@ -28,8 +28,7 @@ export async function GET(
 
   // Technicians can only view their own availability
   if (profile.role === "technician" && params.id !== user.id) {
-    return NextResponse.json(
-      { error: "Vous ne pouvez voir que votre propre disponibilité" },
+    return NextResponse.json({ success: false, error: "Vous ne pouvez voir que votre propre disponibilité" },
       { status: 403 }
     );
   }
@@ -42,15 +41,13 @@ export async function GET(
     .maybeSingle();
 
   if (userError || !targetUser) {
-    return NextResponse.json(
-      { error: "Utilisateur introuvable" },
+    return NextResponse.json({ success: false, error: "Utilisateur introuvable" },
       { status: 404 }
     );
   }
 
   if (targetUser.company_id !== profile.company_id) {
-    return NextResponse.json(
-      { error: "Utilisateur introuvable" },
+    return NextResponse.json({ success: false, error: "Utilisateur introuvable" },
       { status: 404 }
     );
   }
@@ -69,8 +66,7 @@ export async function GET(
       ...requestContext,
       action: "fetch_availability",
     });
-    return NextResponse.json(
-      { error: "Échec du chargement de la disponibilité" },
+    return NextResponse.json({ success: false, error: "Échec du chargement de la disponibilité" },
       { status: 500 }
     );
   }
@@ -102,8 +98,7 @@ export async function POST(
 
   // Technicians can only update their own availability
   if (profile.role === "technician" && params.id !== user.id) {
-    return NextResponse.json(
-      { error: "Vous ne pouvez modifier que votre propre disponibilité" },
+    return NextResponse.json({ success: false, error: "Vous ne pouvez modifier que votre propre disponibilité" },
       { status: 403 }
     );
   }
@@ -116,15 +111,13 @@ export async function POST(
     .maybeSingle();
 
   if (userError || !targetUser) {
-    return NextResponse.json(
-      { error: "Utilisateur introuvable" },
+    return NextResponse.json({ success: false, error: "Utilisateur introuvable" },
       { status: 404 }
     );
   }
 
   if (targetUser.company_id !== profile.company_id) {
-    return NextResponse.json(
-      { error: "Utilisateur introuvable" },
+    return NextResponse.json({ success: false, error: "Utilisateur introuvable" },
       { status: 404 }
     );
   }
@@ -134,8 +127,7 @@ export async function POST(
   const validation = availabilityUpdateSchema.safeParse(body);
 
   if (!validation.success) {
-    return NextResponse.json(
-      { error: "Données invalides", details: validation.error.format() },
+    return NextResponse.json({ success: false, error: "Données invalides", details: validation.error.format() },
       { status: 400 }
     );
   }
@@ -146,10 +138,10 @@ export async function POST(
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
   }
 
   // Delete existing availability
@@ -180,8 +172,7 @@ export async function POST(
         ...requestContext,
         action: "save_availability",
       });
-      return NextResponse.json(
-        { error: "Échec de l'enregistrement de la disponibilité" },
+      return NextResponse.json({ success: false, error: "Échec de l'enregistrement de la disponibilité" },
         { status: 500 }
       );
     }

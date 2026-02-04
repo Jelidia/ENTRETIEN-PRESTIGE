@@ -10,26 +10,25 @@ export async function POST(request: Request) {
   const ip = getRequestIp(request);
   const limit = rateLimit(`auth:refresh:${ip}`, 30, 5 * 60 * 1000);
   if (!limit.allowed) {
-    return NextResponse.json(
-      { error: "Trop de tentatives. Réessayez plus tard." },
+    return NextResponse.json({ success: false, error: "Trop de tentatives. Réessayez plus tard." },
       { status: 429 }
     );
   }
 
   const queryResult = emptyQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
   if (!queryResult.success) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
   }
 
   const body = await request.json().catch(() => ({}));
   const bodyResult = emptyBodySchema.safeParse(body);
   if (!bodyResult.success) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
   }
 
   const refreshToken = getRefreshTokenFromRequest(request);
   if (!refreshToken) {
-    return NextResponse.json({ error: "Missing refresh token" }, { status: 401 });
+    return NextResponse.json({ success: false, error: "Missing refresh token" }, { status: 401 });
   }
 
   const admin = createAdminClient();
@@ -41,15 +40,15 @@ export async function POST(request: Request) {
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
   }
   const { data, error } = await anon.auth.refreshSession({ refresh_token: refreshToken });
 
   if (error || !data.session) {
-    return NextResponse.json({ error: "Unable to refresh session" }, { status: 401 });
+    return NextResponse.json({ success: false, error: "Unable to refresh session" }, { status: 401 });
   }
 
   await logAudit(admin, data.session.user.id, "refresh_session", "user", data.session.user.id, "success", {

@@ -13,7 +13,7 @@ export async function GET(request: Request) {
 
   const queryResult = emptyQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
   if (!queryResult.success) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
   }
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
@@ -35,7 +35,7 @@ export async function GET(request: Request) {
     .limit(200);
 
   if (!technicians || !jobs) {
-    return NextResponse.json({ data: [] });
+    return NextResponse.json({ success: true, data: [] });
   }
 
   const data = technicians.map((tech) => ({

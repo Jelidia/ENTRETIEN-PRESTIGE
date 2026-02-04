@@ -467,7 +467,7 @@ describe("Phase 1: Team Page Permissions Modal", () => {
       },
     };
 
-    (global.fetch as any).mockImplementation((url: string, options: any) => {
+    mockFetch.mockImplementation((url: RequestInfo | URL, options?: RequestInit) => {
       if (url.includes("/api/users/user-1") && options?.method === "PATCH") {
         return Promise.resolve({
           ok: true,

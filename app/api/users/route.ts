@@ -16,7 +16,7 @@ export async function GET(request: Request) {
   const { profile } = auth;
   const token = getAccessTokenFromRequest(request);
   if (!token) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
   }
   const client = createUserClient(token);
   const { data, error } = await client
@@ -32,7 +32,7 @@ export async function GET(request: Request) {
       companyId: profile.company_id,
       error,
     });
-    return NextResponse.json({ error: "Unable to load users" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Unable to load users" }, { status: 400 });
   }
 
   return NextResponse.json({ success: true, data });
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const parsed = userCreateSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid user" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid user" }, { status: 400 });
   }
 
   const client = createUserClient(getAccessTokenFromRequest(request) ?? "");
@@ -57,10 +57,10 @@ export async function POST(request: Request) {
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
   }
 
   const admin = createAdminClient();
@@ -77,8 +77,7 @@ export async function POST(request: Request) {
   });
 
   if (authError || !userData.user) {
-    return NextResponse.json(
-      { error: authError?.message ?? "Unable to create auth user" },
+    return NextResponse.json({ success: false, error: authError?.message ?? "Unable to create auth user" },
       { status: 400 }
     );
   }
@@ -107,8 +106,7 @@ export async function POST(request: Request) {
   });
 
   if (error) {
-    return NextResponse.json(
-      { error: error.message ?? "Unable to store user profile" },
+    return NextResponse.json({ success: false, error: error.message ?? "Unable to store user profile" },
       { status: 400 }
     );
   }

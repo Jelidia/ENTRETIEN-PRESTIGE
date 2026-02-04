@@ -50,10 +50,10 @@ export async function PATCH(
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
     }
 
     // Verify user belongs to same company
@@ -64,11 +64,11 @@ export async function PATCH(
       .single();
 
     if (!existingUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
     }
 
     if (existingUser.company_id !== profile.company_id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
     }
 
     // Update user
@@ -84,8 +84,7 @@ export async function PATCH(
         ...requestContext,
         action: "update_user",
       });
-      return NextResponse.json(
-        { error: "Failed to update user" },
+      return NextResponse.json({ success: false, error: "Failed to update user" },
         { status: 500 }
       );
     }
@@ -107,8 +106,7 @@ export async function PATCH(
       ...requestContext,
       action: "update_user",
     });
-    return NextResponse.json(
-      { error: "An error occurred" },
+    return NextResponse.json({ success: false, error: "An error occurred" },
       { status: 500 }
     );
   }
@@ -140,10 +138,10 @@ export async function DELETE(
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
   }
 
   // Verify user belongs to same company
@@ -154,17 +152,16 @@ export async function DELETE(
     .single();
 
   if (!existingUser) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
+    return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
   }
 
   if (existingUser.company_id !== profile.company_id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
   }
 
   // Prevent deleting yourself
   if (userId === profile.user_id) {
-    return NextResponse.json(
-      { error: "Cannot delete your own account" },
+    return NextResponse.json({ success: false, error: "Cannot delete your own account" },
       { status: 400 }
     );
   }
@@ -180,8 +177,7 @@ export async function DELETE(
       ...requestContext,
       action: "delete_user",
     });
-    return NextResponse.json(
-      { error: "Failed to delete user" },
+    return NextResponse.json({ success: false, error: "Failed to delete user" },
       { status: 500 }
     );
   }

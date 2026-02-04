@@ -53,8 +53,7 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const bodyResult = smsTriggerBodySchema.safeParse(body);
   if (!bodyResult.success) {
-    return NextResponse.json(
-      { error: "Missing event or jobId" },
+    return NextResponse.json({ success: false, error: "Missing event or jobId" },
       { status: 400 }
     );
   }
@@ -71,16 +70,14 @@ export async function POST(request: Request) {
     .single();
 
   if (jobError || !job) {
-    return NextResponse.json(
-      { error: "Job not found" },
+    return NextResponse.json({ success: false, error: "Job not found" },
       { status: 404 }
     );
   }
 
   const customerRecord = Array.isArray(job.customer) ? job.customer[0] : job.customer;
   if (!customerRecord || !customerRecord.phone) {
-    return NextResponse.json(
-      { error: "Customer has no phone number" },
+    return NextResponse.json({ success: false, error: "Customer has no phone number" },
       { status: 400 }
     );
   }
@@ -186,8 +183,7 @@ export async function POST(request: Request) {
       break;
 
     default:
-      return NextResponse.json(
-        { error: "Unknown event type" },
+      return NextResponse.json({ success: false, error: "Unknown event type" },
         { status: 400 }
       );
   }
@@ -205,27 +201,72 @@ export async function POST(request: Request) {
         return NextResponse.json(idempotency.body, { status: idempotency.status });
       }
       if (idempotency.action === "conflict") {
-        return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+        return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
       }
       if (idempotency.action === "in_progress") {
-        return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+        return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
       }
 
-      await sendSms(phoneNumber, message);
-
       const threadId = await resolveThreadId(client, customerRecord.customer_id ?? null, phoneNumber);
+      const createdAt = new Date().toISOString();
+      const { data: messageRecord, error: insertError } = await client
+        .from("sms_messages")
+        .insert({
+          company_id: job.company_id,
+          customer_id: customerRecord.customer_id ?? null,
+          phone_number: phoneNumber,
+          content: message,
+          direction: "outbound",
+          status: "queued",
+          related_job_id: jobId,
+          thread_id: threadId,
+          created_at: createdAt,
+        })
+        .select("sms_id")
+        .single();
+      if (insertError || !messageRecord) {
+        await captureError(insertError ?? new Error("Failed to persist SMS"), {
+          ...requestContext,
+          action: "persist_sms",
+          job_id: jobId,
+          event,
+        });
+        return NextResponse.json(
+          { success: false, error: "Unable to persist SMS" },
+          { status: 500 }
+        );
+      }
 
-      // Log SMS in database
-      await client.from("sms_messages").insert({
-        company_id: job.company_id,
-        customer_id: customerRecord.customer_id ?? null,
-        phone_number: phoneNumber,
-        content: message,
-        direction: "outbound",
-        status: "sent",
-        related_job_id: jobId,
-        thread_id: threadId,
-      });
+      try {
+        await sendSms(phoneNumber, message);
+      } catch (error) {
+        const { error: statusError } = await client
+          .from("sms_messages")
+          .update({ status: "failed" })
+          .eq("sms_id", messageRecord.sms_id);
+        if (statusError) {
+          await captureError(statusError, {
+            ...requestContext,
+            action: "sms_failed_status",
+            job_id: jobId,
+            event,
+          });
+        }
+        throw error;
+      }
+
+      const { error: statusError } = await client
+        .from("sms_messages")
+        .update({ status: "sent" })
+        .eq("sms_id", messageRecord.sms_id);
+      if (statusError) {
+        await captureError(statusError, {
+          ...requestContext,
+          action: "sms_sent_status",
+          job_id: jobId,
+          event,
+        });
+      }
 
       await logAudit(client, profile.user_id, "sms_trigger", "sms_thread", threadId, "success", {
         ipAddress: ip,
@@ -248,8 +289,7 @@ export async function POST(request: Request) {
         event,
       });
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      return NextResponse.json(
-        { error: "Failed to send SMS", details: errorMessage },
+      return NextResponse.json({ success: false, error: "Failed to send SMS", details: errorMessage },
         { status: 500 }
       );
     }

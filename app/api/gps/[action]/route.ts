@@ -25,7 +25,7 @@ export async function POST(
   if (action === "checkin" || action === "checkout") {
     const parsed = gpsCheckinSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Invalid payload" }, { status: 400 });
     }
 
     const idempotency = await beginIdempotency(client, request, user.id, {
@@ -36,10 +36,10 @@ export async function POST(
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
     }
 
     await client.from("gps_locations").insert({
@@ -66,7 +66,7 @@ export async function POST(
   if (action === "hourly-ping") {
     const parsed = gpsPingSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Invalid payload" }, { status: 400 });
     }
 
     const idempotency = await beginIdempotency(client, request, user.id, {
@@ -77,10 +77,10 @@ export async function POST(
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
     }
 
     await client.from("gps_locations").insert({
@@ -114,7 +114,7 @@ export async function POST(
       .lte("timestamp", end ?? new Date().toISOString());
 
     if (error) {
-      return NextResponse.json({ error: "Unable to load history" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Unable to load history" }, { status: 400 });
     }
     return NextResponse.json({ success: true, data });
   }
@@ -122,7 +122,7 @@ export async function POST(
   if (action === "geofence") {
     const parsed = geofenceCreateSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid geofence" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Invalid geofence" }, { status: 400 });
     }
 
     const idempotency = await beginIdempotency(client, request, user.id, {
@@ -133,10 +133,10 @@ export async function POST(
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
     }
     await client.from("geofences").insert({
       company_id: profile.company_id,
@@ -156,7 +156,7 @@ export async function POST(
     return NextResponse.json(responseBody);
   }
 
-  return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
+  return NextResponse.json({ success: false, error: "Unsupported action" }, { status: 400 });
 }
 
 export async function GET(
@@ -164,7 +164,7 @@ export async function GET(
   { params }: { params: { action: string } }
 ) {
   if (params.action !== "history") {
-    return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Unsupported action" }, { status: 400 });
   }
 
   const auth = await requirePermission(request, ["technician", "dispatch"]);
@@ -183,7 +183,7 @@ export async function GET(
     .lte("timestamp", end ?? new Date().toISOString());
 
   if (error) {
-    return NextResponse.json({ error: "Unable to load history" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Unable to load history" }, { status: 400 });
   }
 
   return NextResponse.json({ success: true, data });

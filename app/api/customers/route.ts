@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     .limit(100);
 
   if (error) {
-    return NextResponse.json({ error: "Unable to load customers" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Unable to load customers" }, { status: 400 });
   }
 
   return NextResponse.json({ success: true, data });
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
   const parsed = customerCreateSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid customer" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid customer" }, { status: 400 });
   }
 
   const token = getAccessTokenFromRequest(request);
@@ -48,10 +48,10 @@ export async function POST(request: Request) {
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
   }
   const { data, error } = await client
     .from("customers")
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
     .single();
 
   if (error || !data) {
-    return NextResponse.json({ error: "Unable to create customer" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Unable to create customer" }, { status: 400 });
   }
 
   await logAudit(client, profile.user_id, "customer_create", "customer", data.customer_id, "success", {

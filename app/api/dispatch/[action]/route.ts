@@ -25,7 +25,7 @@ export async function POST(
   if (action === "reassign") {
     const parsed = dispatchReassignSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
     }
 
     const idempotency = await beginIdempotency(client, request, profile.user_id, {
@@ -36,10 +36,10 @@ export async function POST(
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
     }
 
     const { error } = await client
@@ -48,7 +48,7 @@ export async function POST(
       .eq("job_id", parsed.data.jobId);
 
     if (error) {
-      return NextResponse.json({ error: "Unable to reassign" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Unable to reassign" }, { status: 400 });
     }
 
     await logAudit(client, profile.user_id, "dispatch_reassign", "job", parsed.data.jobId, "success", {
@@ -65,7 +65,7 @@ export async function POST(
   if (action === "schedule") {
     const parsed = dispatchScheduleSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid schedule" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Invalid schedule" }, { status: 400 });
     }
 
     const idempotency = await beginIdempotency(client, request, profile.user_id, {
@@ -76,10 +76,10 @@ export async function POST(
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
     }
 
     const updates: Record<string, string> = {
@@ -98,7 +98,7 @@ export async function POST(
       .eq("job_id", parsed.data.jobId);
 
     if (error) {
-      return NextResponse.json({ error: "Unable to update schedule" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Unable to update schedule" }, { status: 400 });
     }
 
     await logAudit(client, profile.user_id, "dispatch_schedule", "job", parsed.data.jobId, "success", {
@@ -118,10 +118,10 @@ export async function POST(
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
     }
     const { data: technicians } = await client
       .from("users")
@@ -166,7 +166,7 @@ export async function POST(
   if (action === "weather-cancel") {
     const parsed = weatherCancelSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
     }
 
     const idempotency = await beginIdempotency(client, request, profile.user_id, {
@@ -177,10 +177,10 @@ export async function POST(
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
     }
 
     const { error } = await client
@@ -190,7 +190,7 @@ export async function POST(
       .lte("scheduled_date", parsed.data.endDate);
 
     if (error) {
-      return NextResponse.json({ error: "Unable to cancel jobs" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Unable to cancel jobs" }, { status: 400 });
     }
 
     await logAudit(client, profile.user_id, "dispatch_weather_cancel", "job", null, "success", {
@@ -204,7 +204,7 @@ export async function POST(
     return NextResponse.json(responseBody);
   }
 
-  return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
+  return NextResponse.json({ success: false, error: "Unsupported action" }, { status: 400 });
 }
 
 export async function GET(
@@ -227,11 +227,11 @@ export async function GET(
       .order("scheduled_date", { ascending: true });
 
     if (error || !data) {
-      return NextResponse.json({ error: "Unable to load conflicts" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Unable to load conflicts" }, { status: 400 });
     }
 
     return NextResponse.json({ success: true, data });
   }
 
-  return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
+  return NextResponse.json({ success: false, error: "Unsupported action" }, { status: 400 });
 }

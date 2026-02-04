@@ -20,7 +20,7 @@ export async function GET(
   const { searchParams } = new URL(request.url);
   const paramsResult = mapsActionParamSchema.safeParse(params);
   if (!paramsResult.success) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
   }
   const action = paramsResult.data.action;
   const query = Object.fromEntries(searchParams);
@@ -28,7 +28,7 @@ export async function GET(
   if (action === "geocode") {
     const queryResult = mapsGeocodeQuerySchema.safeParse(query);
     if (!queryResult.success) {
-      return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
     }
     const { address } = queryResult.data;
     const data = await geocodeAddress(address);
@@ -38,7 +38,7 @@ export async function GET(
   if (action === "distance") {
     const queryResult = mapsDistanceQuerySchema.safeParse(query);
     if (!queryResult.success) {
-      return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
     }
     const { origins, destinations } = queryResult.data;
     const data = await getDistanceMatrix(origins, destinations);
@@ -48,11 +48,11 @@ export async function GET(
   if (action === "territory") {
     const queryResult = mapsTerritoryQuerySchema.safeParse(query);
     if (!queryResult.success) {
-      return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
     }
     const { polygon } = queryResult.data;
     return NextResponse.json({ success: true, data: { polygon }, polygon });
   }
 
-  return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
+  return NextResponse.json({ success: false, error: "Unsupported action" }, { status: 400 });
 }

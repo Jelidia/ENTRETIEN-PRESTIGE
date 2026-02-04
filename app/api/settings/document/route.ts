@@ -32,8 +32,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const queryResult = settingsDocumentQuerySchema.safeParse(Object.fromEntries(searchParams));
   if (!queryResult.success) {
-    return NextResponse.json(
-      { error: "Invalid type. Must be: contract, id_photo, or profile_photo" },
+    return NextResponse.json({ success: false, error: "Invalid type. Must be: contract, id_photo, or profile_photo" },
       { status: 400 }
     );
   }
@@ -47,12 +46,12 @@ export async function GET(request: Request) {
     .single();
 
   if (error || !user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
+    return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
   }
 
   const rawPath = user[field as keyof typeof user] as string | null;
   if (!rawPath) {
-    return NextResponse.json({ error: "Document missing" }, { status: 404 });
+    return NextResponse.json({ success: false, error: "Document missing" }, { status: 404 });
   }
 
   const admin = createAdminClient();
@@ -62,7 +61,7 @@ export async function GET(request: Request) {
     .createSignedUrl(storagePath, 300);
 
   if (signError || !signed?.signedUrl) {
-    return NextResponse.json({ error: "Unable to sign document" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Unable to sign document" }, { status: 500 });
   }
 
   return NextResponse.json({ success: true, data: { url: signed.signedUrl }, url: signed.signedUrl });
@@ -82,8 +81,7 @@ export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url);
   const queryResult = settingsDocumentQuerySchema.safeParse(Object.fromEntries(searchParams));
   if (!queryResult.success) {
-    return NextResponse.json(
-      { error: "Invalid type. Must be: contract, id_photo, or profile_photo" },
+    return NextResponse.json({ success: false, error: "Invalid type. Must be: contract, id_photo, or profile_photo" },
       { status: 400 }
     );
   }
@@ -99,10 +97,10 @@ export async function DELETE(request: Request) {
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
     }
 
     // Get current file URL
@@ -114,7 +112,7 @@ export async function DELETE(request: Request) {
       .single();
 
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
     }
 
     const fileUrl = user[field as keyof typeof user] as string | null;
@@ -147,8 +145,7 @@ export async function DELETE(request: Request) {
         action: "update_user_document",
         document_type: type,
       });
-      return NextResponse.json(
-        { error: "Failed to delete document" },
+      return NextResponse.json({ success: false, error: "Failed to delete document" },
         { status: 500 }
       );
     }
@@ -172,8 +169,7 @@ export async function DELETE(request: Request) {
       action: "delete_document",
       document_type: type,
     });
-    return NextResponse.json(
-      { error: "An error occurred" },
+    return NextResponse.json({ success: false, error: "An error occurred" },
       { status: 500 }
     );
   }

@@ -25,8 +25,7 @@ export async function PATCH(request: Request) {
     const result = changePasswordSchema.safeParse(body);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: "Invalid input", details: result.error.format() },
+      return NextResponse.json({ success: false, error: "Invalid input", details: result.error.format() },
         { status: 400 }
       );
     }
@@ -40,8 +39,7 @@ export async function PATCH(request: Request) {
     });
 
     if (signInError) {
-      return NextResponse.json(
-        { error: "Mot de passe actuel incorrect" },
+      return NextResponse.json({ success: false, error: "Mot de passe actuel incorrect" },
         { status: 400 }
       );
     }
@@ -54,10 +52,10 @@ export async function PATCH(request: Request) {
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
     }
     const { error: updateError } = await client.auth.updateUser({
       password: newPassword,
@@ -68,8 +66,7 @@ export async function PATCH(request: Request) {
         ...requestContext,
         action: "update_password",
       });
-      return NextResponse.json(
-        { error: "Failed to change password" },
+      return NextResponse.json({ success: false, error: "Failed to change password" },
         { status: 500 }
       );
     }
@@ -92,8 +89,7 @@ export async function PATCH(request: Request) {
       ...requestContext,
       action: "change_password",
     });
-    return NextResponse.json(
-      { error: "An error occurred" },
+    return NextResponse.json({ success: false, error: "An error occurred" },
       { status: 500 }
     );
   }

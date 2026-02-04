@@ -16,14 +16,13 @@ export async function POST(request: Request) {
 
   const queryResult = emptyQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
   if (!queryResult.success) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
   }
 
   const ip = getRequestIp(request);
   const limit = rateLimit(`auth:disable-2fa:${profile.user_id}:${ip}`, 5, 15 * 60 * 1000);
   if (!limit.allowed) {
-    return NextResponse.json(
-      { error: "Trop de tentatives. Réessayez plus tard." },
+    return NextResponse.json({ success: false, error: "Trop de tentatives. Réessayez plus tard." },
       { status: 429 }
     );
   }
@@ -31,7 +30,7 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const bodyResult = disable2faBodySchema.safeParse(body);
   if (!bodyResult.success) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
   }
   const userId = bodyResult.data.userId ?? profile.user_id;
 
@@ -43,7 +42,7 @@ export async function POST(request: Request) {
     .single();
 
   if (targetError || !targetUser) {
-    return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
+    return NextResponse.json({ success: false, error: "Utilisateur introuvable" }, { status: 404 });
   }
 
   const idempotency = await beginIdempotency(client, request, profile.user_id, {
@@ -53,10 +52,10 @@ export async function POST(request: Request) {
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
   }
 
   const admin = createAdminClient();
@@ -66,7 +65,7 @@ export async function POST(request: Request) {
     .eq("user_id", userId);
 
   if (error) {
-    return NextResponse.json({ error: "Unable to disable 2FA" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Unable to disable 2FA" }, { status: 400 });
   }
 
   await logAudit(admin, profile.user_id, "disable_2fa", "user", userId, "success", {

@@ -15,7 +15,7 @@ export async function GET(
 
   const paramsResult = idParamSchema.safeParse(params);
   if (!paramsResult.success) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
   }
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
@@ -26,7 +26,7 @@ export async function GET(
     .order("scheduled_date", { ascending: true });
 
   if (error) {
-    return NextResponse.json({ error: "Unable to load schedule" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Unable to load schedule" }, { status: 400 });
   }
 
   return NextResponse.json({ success: true, data });

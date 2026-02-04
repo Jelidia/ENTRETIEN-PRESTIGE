@@ -11,6 +11,16 @@ type GpsPoint = {
   timestamp: string;
 };
 
+type GoogleMapsWindow = Window & {
+  google?: {
+    maps?: {
+      Map?: unknown;
+      Marker?: unknown;
+      Polyline?: unknown;
+    };
+  };
+};
+
 function createFetchMock(historyData: GpsPoint[] = []): FetchMock {
   return vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url =
@@ -33,7 +43,14 @@ function setGeolocation(success = true) {
   const geolocation = {
     getCurrentPosition: (onSuccess: PositionCallback, onError?: PositionErrorCallback) => {
       if (!success) {
-        onError?.({ code: 1, message: "Denied", PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3 } as any);
+        const error: GeolocationPositionError = {
+          code: 1,
+          message: "Denied",
+          PERMISSION_DENIED: 1,
+          POSITION_UNAVAILABLE: 2,
+          TIMEOUT: 3,
+        };
+        onError?.(error);
         return;
       }
       onSuccess({
@@ -61,7 +78,8 @@ function setupGoogleMaps() {
   const Marker = vi.fn(() => ({ setMap: vi.fn() }));
   const Polyline = vi.fn(() => ({ setMap: vi.fn() }));
   const Map = vi.fn(() => mapInstance);
-  (window as any).google = {
+  const windowWithGoogle = window as GoogleMapsWindow;
+  windowWithGoogle.google = {
     maps: {
       Map,
       Marker,
@@ -75,7 +93,8 @@ describe("TechnicianMapPage", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
-    delete (window as any).google;
+    const windowWithGoogle = window as GoogleMapsWindow;
+    delete windowWithGoogle.google;
   });
   it("shows a disabled message without maps key", async () => {
     delete process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -117,7 +136,10 @@ describe("TechnicianMapPage", () => {
       expect(historyCalls.length).toBeGreaterThan(1);
     });
 
-    delete (window as any).google.maps;
+    const windowWithGoogle = window as GoogleMapsWindow;
+    if (windowWithGoogle.google?.maps) {
+      delete windowWithGoogle.google.maps;
+    }
     refreshButtons[0].click();
     await waitFor(() => {
       const historyCalls = fetchMock.mock.calls.filter((call: unknown[]) =>
@@ -173,7 +195,8 @@ describe("TechnicianMapPage", () => {
     process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = "test-key";
     clearGeolocation();
     vi.stubGlobal("fetch", createFetchMock([]));
-    delete (window as any).google;
+    const windowWithGoogle = window as GoogleMapsWindow;
+    delete windowWithGoogle.google;
 
     const originalCreate = document.createElement.bind(document);
     const createdScript = document.createElement("script");
@@ -196,7 +219,8 @@ describe("TechnicianMapPage", () => {
     process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = "test-key";
     clearGeolocation();
     vi.stubGlobal("fetch", createFetchMock([]));
-    (window as any).google = {};
+    const windowWithGoogle = window as GoogleMapsWindow;
+    windowWithGoogle.google = {};
 
     const originalCreate = document.createElement.bind(document);
     const createdScript = document.createElement("script");

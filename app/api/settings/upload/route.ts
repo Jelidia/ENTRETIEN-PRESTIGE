@@ -33,8 +33,7 @@ export async function POST(request: Request) {
   const { searchParams } = new URL(request.url);
   const queryResult = settingsUploadQuerySchema.safeParse(Object.fromEntries(searchParams));
   if (!queryResult.success) {
-    return NextResponse.json(
-      { error: "Invalid type. Must be: contract, id_photo, or profile_photo" },
+    return NextResponse.json({ success: false, error: "Invalid type. Must be: contract, id_photo, or profile_photo" },
       { status: 400 }
     );
   }
@@ -45,13 +44,12 @@ export async function POST(request: Request) {
     const file = formData.get("file") as File;
 
     if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "No file provided" }, { status: 400 });
     }
 
     // Validate file size (5MB max)
     if (file.size > 5 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: "Fichier trop volumineux (max 5MB)" },
+      return NextResponse.json({ success: false, error: "Fichier trop volumineux (max 5MB)" },
         { status: 400 }
       );
     }
@@ -59,15 +57,13 @@ export async function POST(request: Request) {
     // Validate file type
     if (type === "contract") {
       if (file.type !== "application/pdf") {
-        return NextResponse.json(
-          { error: "Format non supporté. PDF uniquement." },
+        return NextResponse.json({ success: false, error: "Format non supporté. PDF uniquement." },
           { status: 400 }
         );
       }
     } else {
       if (!["image/jpeg", "image/jpg", "image/png"].includes(file.type)) {
-        return NextResponse.json(
-          { error: "Format non supporté. JPG ou PNG uniquement." },
+        return NextResponse.json({ success: false, error: "Format non supporté. JPG ou PNG uniquement." },
           { status: 400 }
         );
       }
@@ -83,10 +79,10 @@ export async function POST(request: Request) {
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
     }
 
     // Generate unique filename
@@ -98,7 +94,7 @@ export async function POST(request: Request) {
     const createResult = await admin.storage.createBucket(bucketName, { public: false });
     const createError = createResult.error?.message?.toLowerCase() ?? "";
     if (createResult.error && !createError.includes("already exists")) {
-      return NextResponse.json({ error: "Unable to prepare storage" }, { status: 500 });
+      return NextResponse.json({ success: false, error: "Unable to prepare storage" }, { status: 500 });
     }
 
     // Upload to Supabase Storage
@@ -116,8 +112,7 @@ export async function POST(request: Request) {
         action: "upload_document",
         document_type: type,
       });
-      return NextResponse.json(
-        { error: "Failed to upload file" },
+      return NextResponse.json({ success: false, error: "Failed to upload file" },
         { status: 500 }
       );
     }
@@ -127,8 +122,7 @@ export async function POST(request: Request) {
       .createSignedUrl(storagePath, 300);
 
     if (signError || !signed?.signedUrl) {
-      return NextResponse.json(
-        { error: "Failed to sign document" },
+      return NextResponse.json({ success: false, error: "Failed to sign document" },
         { status: 500 }
       );
     }
@@ -154,8 +148,7 @@ export async function POST(request: Request) {
         action: "update_document_reference",
         document_type: type,
       });
-      return NextResponse.json(
-        { error: "Failed to update profile" },
+      return NextResponse.json({ success: false, error: "Failed to update profile" },
         { status: 500 }
       );
     }
@@ -181,8 +174,7 @@ export async function POST(request: Request) {
       action: "upload_document",
       document_type: type,
     });
-    return NextResponse.json(
-      { error: "An error occurred" },
+    return NextResponse.json({ success: false, error: "An error occurred" },
       { status: 500 }
     );
   }

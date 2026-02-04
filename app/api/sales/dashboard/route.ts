@@ -15,7 +15,7 @@ export async function GET(request: Request) {
 
   const queryResult = emptyQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
   if (!queryResult.success) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
   }
 
   const { profile, user } = auth;
@@ -42,7 +42,7 @@ export async function GET(request: Request) {
       leadsError,
       ...requestContext,
     });
-    return NextResponse.json({ error: "Unable to load sales dashboard" }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Unable to load sales dashboard" }, { status: 500 });
   }
 
   // Leaderboard is optional - if it fails or is empty, continue with empty array

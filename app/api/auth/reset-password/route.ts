@@ -13,8 +13,7 @@ export async function POST(request: Request) {
   const requestContext = getRequestContext(request);
   const limit = rateLimit(`auth:reset-password:${ip}`, 5, 15 * 60 * 1000);
   if (!limit.allowed) {
-    return NextResponse.json(
-      { error: "Trop de tentatives. Réessayez plus tard." },
+    return NextResponse.json({ success: false, error: "Trop de tentatives. Réessayez plus tard." },
       { status: 429 }
     );
   }
@@ -24,8 +23,7 @@ export async function POST(request: Request) {
   const result = resetPasswordSchema.safeParse(body);
 
   if (!result.success) {
-    return NextResponse.json(
-      { error: "Données invalides", details: result.error.format() },
+    return NextResponse.json({ success: false, error: "Données invalides", details: result.error.format() },
       { status: 400 }
     );
   }
@@ -42,16 +40,15 @@ export async function POST(request: Request) {
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
   }
   const { data: exchangeData, error: exchangeError } = await anon.auth.exchangeCodeForSession(code);
 
   if (exchangeError || !exchangeData.session) {
-    return NextResponse.json(
-      { error: "Code de réinitialisation invalide ou expiré" },
+    return NextResponse.json({ success: false, error: "Code de réinitialisation invalide ou expiré" },
       { status: 400 }
     );
   }
@@ -63,8 +60,7 @@ export async function POST(request: Request) {
       ...requestContext,
       action: "reset_password",
     });
-    return NextResponse.json(
-      { error: "Impossible de mettre à jour le mot de passe" },
+    return NextResponse.json({ success: false, error: "Impossible de mettre à jour le mot de passe" },
       { status: 500 }
     );
   }
