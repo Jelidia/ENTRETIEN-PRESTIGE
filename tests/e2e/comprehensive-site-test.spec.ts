@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type APIResponse, type Page } from '@playwright/test';
 
 /**
  * Comprehensive test suite for Entretien Prestige
@@ -13,15 +13,56 @@ const TEST_ADMIN = {
   password: process.env.PLAYWRIGHT_ADMIN_PASSWORD ?? "Prestige2026!",
 };
 
+type AuthCookie = { name: string; value: string; url: string };
+
+const adminSession = { cookies: null as AuthCookie[] | null };
+
+function parseSetCookie(value: string): AuthCookie | null {
+  const pair = value.split(";")[0]?.trim();
+  if (!pair) return null;
+  const separatorIndex = pair.indexOf("=");
+  if (separatorIndex <= 0) return null;
+  const name = pair.slice(0, separatorIndex).trim();
+  const cookieValue = pair.slice(separatorIndex + 1);
+  if (!name) return null;
+  return { name, value: cookieValue, url: BASE_URL };
+}
+
+function extractAuthCookies(response: APIResponse): AuthCookie[] {
+  const headerEntries = response
+    .headersArray()
+    .filter((header) => header.name.toLowerCase() === "set-cookie");
+  const cookies = headerEntries
+    .map((header) => parseSetCookie(header.value))
+    .filter((cookie): cookie is AuthCookie => Boolean(cookie));
+  if (cookies.length > 0) return cookies;
+
+  const fallbackHeader = response.headers()["set-cookie"];
+  if (!fallbackHeader) return [];
+  const fallback = parseSetCookie(fallbackHeader);
+  return fallback ? [fallback] : [];
+}
+
+async function ensureAdminSession(page: Page) {
+  if (!adminSession.cookies) {
+    const response = await page.request.post(`${BASE_URL}/api/auth/login`, {
+      data: { email: TEST_ADMIN.email, password: TEST_ADMIN.password },
+    });
+    expect(response.ok()).toBe(true);
+    adminSession.cookies = extractAuthCookies(response);
+    expect(adminSession.cookies.length).toBeGreaterThan(0);
+  }
+  await page.context().addCookies(adminSession.cookies);
+}
+
+async function gotoAuthed(page: Page, path: string) {
+  await ensureAdminSession(page);
+  await page.goto(`${BASE_URL}${path}`, { waitUntil: "domcontentloaded", timeout: 60000 });
+}
+
 test.describe('Critical Bugs', () => {
   test('Page should scroll vertically', async ({ page }) => {
-    await page.goto(`${BASE_URL}/login`);
-    await page.fill('input[type="email"]', TEST_ADMIN.email);
-    await page.fill('input[type="password"]', TEST_ADMIN.password);
-    await page.click('button[type="submit"]');
-
-    // Wait for navigation to dashboard
-    await page.waitForURL('**/dashboard', { timeout: 20000, waitUntil: 'domcontentloaded' });
+    await gotoAuthed(page, "/dashboard");
 
     const scrollState = await page.evaluate(() => {
       const content = document.querySelector('.content') as HTMLElement | null;
@@ -70,12 +111,7 @@ test.describe('Authentication', () => {
 
 test.describe('Navigation', () => {
   test.beforeEach(async ({ page }) => {
-    // Login before each test
-    await page.goto(`${BASE_URL}/login`);
-    await page.fill('input[type="email"]', TEST_ADMIN.email);
-    await page.fill('input[type="password"]', TEST_ADMIN.password);
-    await page.click('button[type="submit"]');
-    await page.waitForURL('**/dashboard', { timeout: 20000, waitUntil: 'domcontentloaded' });
+    await gotoAuthed(page, "/dashboard");
   });
 
   test('Bottom navigation is visible and has exactly 5 tabs', async ({ page }) => {
@@ -105,11 +141,7 @@ test.describe('Navigation', () => {
 
 test.describe('Dashboard Page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(`${BASE_URL}/login`);
-    await page.fill('input[type="email"]', TEST_ADMIN.email);
-    await page.fill('input[type="password"]', TEST_ADMIN.password);
-    await page.click('button[type="submit"]');
-    await page.waitForURL('**/dashboard', { timeout: 20000, waitUntil: 'domcontentloaded' });
+    await gotoAuthed(page, "/dashboard");
   });
 
   test('Dashboard renders without errors', async ({ page }) => {
@@ -127,11 +159,7 @@ test.describe('Dashboard Page', () => {
 
 test.describe('Customers Page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(`${BASE_URL}/login`);
-    await page.fill('input[type="email"]', TEST_ADMIN.email);
-    await page.fill('input[type="password"]', TEST_ADMIN.password);
-    await page.click('button[type="submit"]');
-    await page.waitForURL('**/dashboard', { timeout: 20000, waitUntil: 'domcontentloaded' });
+    await gotoAuthed(page, "/dashboard");
   });
 
   test('Can navigate to customers page', async ({ page }) => {
@@ -155,11 +183,7 @@ test.describe('Customers Page', () => {
 
 test.describe('Sales Leads Page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(`${BASE_URL}/login`);
-    await page.fill('input[type="email"]', TEST_ADMIN.email);
-    await page.fill('input[type="password"]', TEST_ADMIN.password);
-    await page.click('button[type="submit"]');
-    await page.waitForURL('**/dashboard', { timeout: 20000, waitUntil: 'domcontentloaded' });
+    await gotoAuthed(page, "/dashboard");
   });
 
   test('Can navigate to leads page', async ({ page }) => {
@@ -181,11 +205,7 @@ test.describe('Sales Leads Page', () => {
 
 test.describe('Jobs Page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(`${BASE_URL}/login`);
-    await page.fill('input[type="email"]', TEST_ADMIN.email);
-    await page.fill('input[type="password"]', TEST_ADMIN.password);
-    await page.click('button[type="submit"]');
-    await page.waitForURL('**/dashboard', { timeout: 20000, waitUntil: 'domcontentloaded' });
+    await gotoAuthed(page, "/dashboard");
   });
 
   test('Can navigate to jobs page', async ({ page }) => {
@@ -199,11 +219,7 @@ test.describe('Jobs Page', () => {
 
 test.describe('Dispatch Page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(`${BASE_URL}/login`);
-    await page.fill('input[type="email"]', TEST_ADMIN.email);
-    await page.fill('input[type="password"]', TEST_ADMIN.password);
-    await page.click('button[type="submit"]');
-    await page.waitForURL('**/dashboard', { timeout: 20000, waitUntil: 'domcontentloaded' });
+    await gotoAuthed(page, "/dashboard");
   });
 
   test('Can navigate to dispatch page', async ({ page }) => {
@@ -217,11 +233,7 @@ test.describe('Dispatch Page', () => {
 
 test.describe('Team Page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(`${BASE_URL}/login`);
-    await page.fill('input[type="email"]', TEST_ADMIN.email);
-    await page.fill('input[type="password"]', TEST_ADMIN.password);
-    await page.click('button[type="submit"]');
-    await page.waitForURL('**/dashboard', { timeout: 20000, waitUntil: 'domcontentloaded' });
+    await gotoAuthed(page, "/dashboard");
   });
 
   test('Can navigate to team page', async ({ page }) => {
@@ -243,11 +255,7 @@ test.describe('Team Page', () => {
 
 test.describe('Settings Page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(`${BASE_URL}/login`);
-    await page.fill('input[type="email"]', TEST_ADMIN.email);
-    await page.fill('input[type="password"]', TEST_ADMIN.password);
-    await page.click('button[type="submit"]');
-    await page.waitForURL('**/dashboard', { timeout: 20000, waitUntil: 'domcontentloaded' });
+    await gotoAuthed(page, "/dashboard");
   });
 
   test('Can navigate to settings page', async ({ page }) => {
@@ -303,11 +311,7 @@ test.describe('Mobile Responsiveness', () => {
   test.use({ viewport: { width: 375, height: 667 } }); // iPhone SE size
 
   test('Page renders correctly on mobile', async ({ page }) => {
-    await page.goto(`${BASE_URL}/login`);
-    await page.fill('input[type="email"]', TEST_ADMIN.email);
-    await page.fill('input[type="password"]', TEST_ADMIN.password);
-    await page.click('button[type="submit"]');
-    await page.waitForURL('**/dashboard', { timeout: 20000, waitUntil: 'domcontentloaded' });
+    await gotoAuthed(page, "/dashboard");
 
     // Check max width is 640px
     const contentWidth = await page.evaluate(() => {
@@ -319,11 +323,7 @@ test.describe('Mobile Responsiveness', () => {
   });
 
   test('Bottom nav is visible on mobile', async ({ page }) => {
-    await page.goto(`${BASE_URL}/login`);
-    await page.fill('input[type="email"]', TEST_ADMIN.email);
-    await page.fill('input[type="password"]', TEST_ADMIN.password);
-    await page.click('button[type="submit"]');
-    await page.waitForURL('**/dashboard', { timeout: 20000, waitUntil: 'domcontentloaded' });
+    await gotoAuthed(page, "/dashboard");
 
     await expect(page.locator('.bottom-nav')).toBeVisible({ timeout: 20000 });
   });

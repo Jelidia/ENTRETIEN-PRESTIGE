@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type APIResponse, type Page } from '@playwright/test';
 
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
 
@@ -9,6 +9,65 @@ const USERS = {
   technician: { email: 'jelidiadam12+1@gmail.com', password: 'Prestige2026!', expectedDashboard: '/technician' },
 };
 
+type AuthCookie = { name: string; value: string; url: string };
+type UserKey = keyof typeof USERS;
+
+const sessionCache: Record<UserKey, AuthCookie[] | null> = {
+  admin: null,
+  manager: null,
+  sales: null,
+  technician: null,
+};
+
+function parseSetCookie(value: string): AuthCookie | null {
+  const pair = value.split(";")[0]?.trim();
+  if (!pair) return null;
+  const separatorIndex = pair.indexOf("=");
+  if (separatorIndex <= 0) return null;
+  const name = pair.slice(0, separatorIndex).trim();
+  const cookieValue = pair.slice(separatorIndex + 1);
+  if (!name) return null;
+  return { name, value: cookieValue, url: BASE_URL };
+}
+
+function extractAuthCookies(response: APIResponse): AuthCookie[] {
+  const headerEntries = response
+    .headersArray()
+    .filter((header) => header.name.toLowerCase() === "set-cookie");
+  const cookies = headerEntries
+    .map((header) => parseSetCookie(header.value))
+    .filter((cookie): cookie is AuthCookie => Boolean(cookie));
+  if (cookies.length > 0) return cookies;
+
+  const fallbackHeader = response.headers()["set-cookie"];
+  if (!fallbackHeader) return [];
+  const fallback = parseSetCookie(fallbackHeader);
+  return fallback ? [fallback] : [];
+}
+
+async function ensureSession(page: Page, userKey: UserKey) {
+  if (!sessionCache[userKey]) {
+    const user = USERS[userKey];
+    const response = await page.request.post(`${BASE_URL}/api/auth/login`, {
+      data: { email: user.email, password: user.password },
+    });
+    expect(response.ok()).toBe(true);
+    const cookies = extractAuthCookies(response);
+    expect(cookies.length).toBeGreaterThan(0);
+    sessionCache[userKey] = cookies;
+  }
+
+  const cookies = sessionCache[userKey];
+  if (cookies) {
+    await page.context().addCookies(cookies);
+  }
+}
+
+async function gotoAuthed(page: Page, userKey: UserKey, path: string) {
+  await ensureSession(page, userKey);
+  await page.goto(`${BASE_URL}${path}`, { waitUntil: "domcontentloaded", timeout: 60000 });
+}
+
 test.describe('Complete Site Testing - All Users', () => {
   test.beforeEach(async ({ page }) => {
     // Set viewport to mobile size (max 640px as per requirements)
@@ -16,18 +75,7 @@ test.describe('Complete Site Testing - All Users', () => {
   });
 
   test('Admin - Full Flow Test', async ({ page }) => {
-    // Login
-    await page.goto(`${BASE_URL}/login`);
-    await page.fill('input[type="email"]', USERS.admin.email);
-    await page.fill('input[type="password"]', USERS.admin.password);
-
-    // Submit and wait for navigation
-    await Promise.all([
-      page.waitForURL(/dashboard/, { timeout: 20000, waitUntil: 'domcontentloaded' }),
-      page.click('button[type="submit"]')
-    ]);
-
-    // Check we're on the right dashboard
+    await gotoAuthed(page, "admin", "/dashboard");
     await expect(page).toHaveURL(/\/dashboard/);
 
     // Check for logout button (icon-only button with SVG)
@@ -36,12 +84,16 @@ test.describe('Complete Site Testing - All Users', () => {
     console.log('Admin - Logout button found:', hasLogoutButton);
 
     // Test navigation tabs
+    await expect(page.locator('.bottom-nav')).toBeVisible({ timeout: 20000 });
     const navTabs = await page.locator('.bottom-nav a, .bottom-nav-item').count();
     console.log('Admin - Navigation tabs count:', navTabs);
 
     // Test Team page - click on Team tab in bottom navigation
     await page.goto(`${BASE_URL}/team`);
     await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(1000);
+
+    await expect(page.getByRole('heading', { name: /équipe|team/i })).toBeVisible({ timeout: 20000 });
 
     // Check if team members are shown
     const teamMembers = await page.locator('.list-item').count();
@@ -81,18 +133,13 @@ test.describe('Complete Site Testing - All Users', () => {
   });
 
   test('Manager - Full Flow Test', async ({ page }) => {
-    await page.goto(`${BASE_URL}/login`);
-    await page.fill('input[type="email"]', USERS.manager.email);
-    await page.fill('input[type="password"]', USERS.manager.password);
-
-    await Promise.all([
-      page.waitForURL(/dashboard/, { timeout: 20000, waitUntil: 'domcontentloaded' }),
-      page.click('button[type="submit"]')
-    ]);
+    await gotoAuthed(page, "manager", "/dashboard");
 
     // Test Team page access
     await page.goto(`${BASE_URL}/team`);
     await page.waitForTimeout(1000);
+
+    await expect(page.getByRole('heading', { name: /équipe|team/i })).toBeVisible({ timeout: 20000 });
 
     const teamMembers = await page.locator('.list-item').count();
     console.log('Manager - Team members shown:', teamMembers);
@@ -104,14 +151,7 @@ test.describe('Complete Site Testing - All Users', () => {
   });
 
   test('Sales Rep - Full Flow Test', async ({ page }) => {
-    await page.goto(`${BASE_URL}/login`);
-    await page.fill('input[type="email"]', USERS.sales.email);
-    await page.fill('input[type="password"]', USERS.sales.password);
-
-    await Promise.all([
-      page.waitForURL(/sales/, { timeout: 20000, waitUntil: 'domcontentloaded' }),
-      page.click('button[type="submit"]')
-    ]);
+    await gotoAuthed(page, "sales", "/sales/dashboard");
 
     // Should be redirected to sales dashboard
     await expect(page).toHaveURL(/\/sales/);
@@ -128,14 +168,7 @@ test.describe('Complete Site Testing - All Users', () => {
   });
 
   test('Technician - Full Flow Test', async ({ page }) => {
-    await page.goto(`${BASE_URL}/login`);
-    await page.fill('input[type="email"]', USERS.technician.email);
-    await page.fill('input[type="password"]', USERS.technician.password);
-
-    await Promise.all([
-      page.waitForURL(/technician/, { timeout: 20000, waitUntil: 'domcontentloaded' }),
-      page.click('button[type="submit"]')
-    ]);
+    await gotoAuthed(page, "technician", "/technician");
 
     // Should be redirected to technician page
     await expect(page).toHaveURL(/\/technician/);
@@ -159,15 +192,7 @@ test.describe('Complete Site Testing - All Users', () => {
   });
 
   test('Check All Buttons and Links', async ({ page }) => {
-    // Login as admin
-    await page.goto(`${BASE_URL}/login`);
-    await page.fill('input[type="email"]', USERS.admin.email);
-    await page.fill('input[type="password"]', USERS.admin.password);
-
-    await Promise.all([
-      page.waitForURL(/dashboard/, { timeout: 20000, waitUntil: 'domcontentloaded' }),
-      page.click('button[type="submit"]')
-    ]);
+    await gotoAuthed(page, "admin", "/dashboard");
 
     // Get all buttons
     const buttons = await page.locator('button').all();
@@ -191,14 +216,7 @@ test.describe('Complete Site Testing - All Users', () => {
     // Test at exact 640px
     await page.setViewportSize({ width: 640, height: 844 });
 
-    await page.goto(`${BASE_URL}/login`);
-    await page.fill('input[type="email"]', USERS.admin.email);
-    await page.fill('input[type="password"]', USERS.admin.password);
-
-    await Promise.all([
-      page.waitForURL(/dashboard/, { timeout: 20000, waitUntil: 'domcontentloaded' }),
-      page.click('button[type="submit"]')
-    ]);
+    await gotoAuthed(page, "admin", "/dashboard");
 
     // Check no horizontal scroll
     const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);

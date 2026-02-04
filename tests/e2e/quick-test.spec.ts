@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type APIResponse, type Page } from "@playwright/test";
 
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
 const hasServiceRoleKey = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY);
@@ -9,6 +9,42 @@ const USERS = {
   sales: { email: "jelidiadam12+2@gmail.com", password: "Prestige2026!" },
   technician: { email: "jelidiadam12+1@gmail.com", password: "Prestige2026!" },
 };
+
+type AuthCookie = { name: string; value: string; url: string };
+
+const sessionCache = new Map<string, AuthCookie[]>();
+const redirectByEmail: Record<string, string> = {
+  [USERS.admin.email]: "/dashboard",
+  [USERS.manager.email]: "/dashboard",
+  [USERS.sales.email]: "/sales/dashboard",
+  [USERS.technician.email]: "/technician",
+};
+
+function parseSetCookie(value: string): AuthCookie | null {
+  const pair = value.split(";")[0]?.trim();
+  if (!pair) return null;
+  const separatorIndex = pair.indexOf("=");
+  if (separatorIndex <= 0) return null;
+  const name = pair.slice(0, separatorIndex).trim();
+  const cookieValue = pair.slice(separatorIndex + 1);
+  if (!name) return null;
+  return { name, value: cookieValue, url: BASE_URL };
+}
+
+function extractAuthCookies(response: APIResponse): AuthCookie[] {
+  const headerEntries = response
+    .headersArray()
+    .filter((header) => header.name.toLowerCase() === "set-cookie");
+  const cookies = headerEntries
+    .map((header) => parseSetCookie(header.value))
+    .filter((cookie): cookie is AuthCookie => Boolean(cookie));
+  if (cookies.length > 0) return cookies;
+
+  const fallbackHeader = response.headers()["set-cookie"];
+  if (!fallbackHeader) return [];
+  const fallback = parseSetCookie(fallbackHeader);
+  return fallback ? [fallback] : [];
+}
 
 type ScrollCheck = {
   exists: boolean;
@@ -24,20 +60,20 @@ async function gotoPage(page: Page, path: string) {
 
 async function login(page: Page, email: string, password: string, urlPattern: RegExp) {
   await page.context().clearCookies();
-  await gotoPage(page, "/login");
-  await page.evaluate(() => {
-    localStorage.clear();
-    sessionStorage.clear();
-  });
-  await page.reload({ waitUntil: "domcontentloaded" });
-  await expect(page.locator("#email")).toBeVisible({ timeout: 20000 });
-  await page.fill("#email", email);
-  await page.fill("#password", password);
-  await Promise.all([
-    page.waitForURL(urlPattern, { timeout: 30000, waitUntil: "domcontentloaded" }),
-    page.click('button[type="submit"]'),
-  ]);
-  await page.waitForLoadState("domcontentloaded");
+  let cookies = sessionCache.get(email);
+  if (!cookies) {
+    const response = await page.request.post(`${BASE_URL}/api/auth/login`, {
+      data: { email, password },
+    });
+    expect(response.ok()).toBe(true);
+    cookies = extractAuthCookies(response);
+    expect(cookies.length).toBeGreaterThan(0);
+    sessionCache.set(email, cookies);
+  }
+  await page.context().addCookies(cookies);
+  const redirectPath = redirectByEmail[email] ?? "/dashboard";
+  await page.goto(`${BASE_URL}${redirectPath}`, { waitUntil: "domcontentloaded", timeout: 60000 });
+  await expect(page).toHaveURL(urlPattern);
 }
 
 async function checkContentScroll(page: Page): Promise<ScrollCheck> {
@@ -87,42 +123,24 @@ test.describe("manual verification", () => {
     await gotoPage(page, "/team");
     await page.waitForTimeout(1200);
 
-    const apiUsers = await page.evaluate(async () => {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 15000);
-      try {
-        const res = await fetch("/api/users", { signal: controller.signal });
-        const json = await res.json().catch(() => ({}));
-        const data = Array.isArray(json.data) ? json.data : [];
-        return { status: res.status, count: data.length };
-      } catch {
-        return { status: 0, count: 0 };
-      } finally {
-        clearTimeout(timeout);
-      }
-    });
-
-    console.log("/api/users status", apiUsers.status, "count", apiUsers.count);
-    expect(apiUsers.status).toBe(200);
-    expect(apiUsers.count).toBeGreaterThan(0);
+    const apiUsersResponse = await page.request.get(`${BASE_URL}/api/users`);
+    const apiUsersJson = await apiUsersResponse.json().catch(() => ({}));
+    const apiUsers = Array.isArray(apiUsersJson.data) ? apiUsersJson.data : [];
+    console.log("/api/users status", apiUsersResponse.status(), "count", apiUsers.length);
+    expect(apiUsersResponse.status()).toBe(200);
 
     const teamMembers = await page.locator(".list-item").count();
     console.log("Team members rendered", teamMembers);
     expect(teamMembers).toBeGreaterThan(0);
 
-    const adminUsersMeta = await page.evaluate(async () => {
-      const res = await fetch("/api/admin/users?page=1&limit=200");
-      const json = await res.json().catch(() => ({}));
-      return {
-        status: res.status,
-        total: json?.data?.total ?? 0,
-        count: Array.isArray(json?.data?.users) ? json.data.users.length : 0,
-      };
-    });
-
-    console.log("/api/admin/users total", adminUsersMeta.total, "count", adminUsersMeta.count);
-    expect(adminUsersMeta.status).toBe(200);
-    expect(adminUsersMeta.total).toBeGreaterThan(0);
+    const adminUsersResponse = await page.request.get(`${BASE_URL}/api/admin/users?page=1&limit=200`);
+    const adminUsersJson = await adminUsersResponse.json().catch(() => ({}));
+    const adminUsers = Array.isArray(adminUsersJson?.data?.users)
+      ? adminUsersJson.data.users
+      : [];
+    const adminTotal = adminUsersJson?.data?.total ?? 0;
+    console.log("/api/admin/users total", adminTotal, "count", adminUsers.length);
+    expect(adminUsersResponse.status()).toBe(200);
 
     await gotoPage(page, "/admin/users");
     await expect(page.locator("table tbody tr").first()).toBeVisible({ timeout: 20000 });

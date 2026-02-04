@@ -1307,28 +1307,40 @@ export default function DispatchPage() {
       <div className="stack">
         <div className="card">
           <h3 className="card-title">Conflits</h3>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Travail</th>
-                <th>Technicien</th>
-                <th>Date</th>
-                <th>Créneau</th>
-              </tr>
-            </thead>
-            <tbody>
-              {conflicts.map((conflict) => (
-                <tr key={conflict.job_id}>
-                  <td>{conflict.job_id}</td>
-                  <td>{conflict.technician_id}</td>
-                  <td>{conflict.scheduled_date}</td>
-                  <td>
-                    {conflict.scheduled_start_time ?? ""} - {conflict.scheduled_end_time ?? ""}
-                  </td>
+          <div className="table-scroll">
+            <table className="table table-desktop">
+              <thead>
+                <tr>
+                  <th>Travail</th>
+                  <th>Technicien</th>
+                  <th>Date</th>
+                  <th>Créneau</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {conflicts.map((conflict) => (
+                  <tr key={conflict.job_id}>
+                    <td>{conflict.job_id}</td>
+                    <td>{conflict.technician_id}</td>
+                    <td>{formatConflictDate(conflict.scheduled_date)}</td>
+                    <td>{formatConflictWindow(conflict.scheduled_start_time, conflict.scheduled_end_time)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="card-list-mobile" style={{ marginTop: 12 }}>
+            {conflicts.map((conflict) => (
+              <div className="mobile-card" key={conflict.job_id}>
+                <div className="mobile-card-title">Travail #{conflict.job_id}</div>
+                <div className="mobile-card-meta">Technicien : {conflict.technician_id}</div>
+                <div className="mobile-card-meta">Date : {formatConflictDate(conflict.scheduled_date)}</div>
+                <div className="mobile-card-meta">
+                  Créneau : {formatConflictWindow(conflict.scheduled_start_time, conflict.scheduled_end_time)}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="card">
@@ -1419,6 +1431,21 @@ function moveJob(board: DispatchColumnType[], preview: DragPreview, selectedDate
     jobs.sort((a, b) => getJobTimes(a).start - getJobTimes(b).start);
     return { ...column, jobs };
   });
+}
+
+function formatConflictDate(value?: string) {
+  if (!value) return "";
+  const raw = value.length <= 10 ? `${value}T00:00:00` : value;
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+  return parsed.toLocaleDateString("fr-CA");
+}
+
+function formatConflictWindow(start?: string, end?: string) {
+  if (start && end) return `${start} - ${end}`;
+  return start ?? end ?? "";
 }
 
 function getJobTimes(job: DispatchJob) {

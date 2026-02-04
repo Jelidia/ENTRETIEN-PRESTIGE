@@ -41,8 +41,33 @@ const directionLabels: Record<string, string> = {
   outbound: "Sortant",
 };
 
+const complaintTypeOptions = [
+  { value: "cleanliness", label: "Propreté" },
+  { value: "damage", label: "Dommages" },
+  { value: "no_show", label: "Absence" },
+  { value: "billing", label: "Facturation" },
+  { value: "other", label: "Autre" },
+];
+
+const recommendedActionOptions = [
+  { value: "prepayment_required", label: "Pré-paiement requis" },
+  { value: "credit_hold", label: "Blocage de crédit" },
+  { value: "manager_review", label: "Révision par gestionnaire" },
+  { value: "no_action", label: "Aucune action" },
+];
+
 const formatBalance = (value?: number | null) =>
   new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD" }).format(value ?? 0);
+
+const formatServiceDate = (value?: string | null) => {
+  if (!value) return "";
+  const raw = value.length <= 10 ? `${value}T00:00:00` : value;
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+  return parsed.toLocaleDateString("fr-CA");
+};
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<CustomerRow[]>([]);
@@ -204,7 +229,7 @@ export default function CustomersPage() {
                     <td>
                       <StatusBadge status={statusLabel} />
                     </td>
-                    <td>{customer.last_service_date ?? ""}</td>
+                    <td>{formatServiceDate(customer.last_service_date)}</td>
                     <td>{formatBalance(customer.account_balance)}</td>
                   </tr>
                 );
@@ -221,7 +246,7 @@ export default function CustomersPage() {
                     {customer.first_name} {customer.last_name}
                   </div>
                   <div className="mobile-card-meta">{typeLabel}</div>
-                  <div className="mobile-card-meta">Dernier service : {customer.last_service_date ?? ""}</div>
+                  <div className="mobile-card-meta">Dernier service : {formatServiceDate(customer.last_service_date)}</div>
                   <div className="table-actions">
                     <StatusBadge status={statusLabel} />
                     <span className="tag">{formatBalance(customer.account_balance)}</span>
@@ -282,14 +307,20 @@ export default function CustomersPage() {
               </div>
               <div className="form-row">
                 <label className="label" htmlFor="recommendedAction">Action recommandée</label>
-                <input
+                <select
                   id="recommendedAction"
-                  className="input"
+                  className="select"
                   value={blacklistForm.recommendedAction}
                   onChange={(event) =>
                     setBlacklistForm({ ...blacklistForm, recommendedAction: event.target.value })
                   }
-                />
+                >
+                  {recommendedActionOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="form-row">
                 <label className="label" htmlFor="blacklistDescription">Description</label>
@@ -329,12 +360,18 @@ export default function CustomersPage() {
               </div>
               <div className="form-row">
                 <label className="label" htmlFor="complaintType">Type de plainte</label>
-                <input
+                <select
                   id="complaintType"
-                  className="input"
+                  className="select"
                   value={complaintForm.complaintType}
                   onChange={(event) => setComplaintForm({ ...complaintForm, complaintType: event.target.value })}
-                />
+                >
+                  {complaintTypeOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="form-row">
                 <label className="label" htmlFor="complaintSeverity">Gravité</label>
