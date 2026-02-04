@@ -13,6 +13,21 @@ const docTypeMap: Record<string, string> = {
   signature: "contract_signature_url",
 };
 
+function resolveStoragePath(value: string) {
+  const marker = "/storage/v1/object/";
+  const index = value.indexOf(marker);
+  if (index === -1) {
+    return value;
+  }
+  const tail = value.slice(index + marker.length);
+  const [access, bucket, ...rest] = tail.split("/");
+  if ((access !== "public" && access !== "sign") || bucket !== bucketName) {
+    return value;
+  }
+  const path = rest.join("/").split("?")[0];
+  return path || value;
+}
+
 export async function GET(request: Request) {
   const auth = await requireRole(request, ["admin", "manager"], "team");
   if ("response" in auth) {
@@ -45,10 +60,11 @@ export async function GET(request: Request) {
     return NextResponse.json({ success: false, error: "Document missing" }, { status: 404 });
   }
 
+  const storagePath = resolveStoragePath(path);
   const { data: signed, error: signError } = await admin
     .storage
     .from(bucketName)
-    .createSignedUrl(path, 300);
+    .createSignedUrl(storagePath, 300);
 
   if (signError || !signed?.signedUrl) {
     return NextResponse.json({ success: false, error: "Unable to sign document" }, { status: 500 });

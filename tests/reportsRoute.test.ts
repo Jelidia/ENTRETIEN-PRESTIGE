@@ -28,7 +28,7 @@ const { mockLogAudit } = vi.hoisted(() => ({
 }));
 
 const {
-  mockLeadCreateSchema,
+  mockReportLeadCreateSchema,
   mockTerritoryCreateSchema,
   mockCommissionCreateSchema,
   mockPayrollCreateSchema,
@@ -36,7 +36,7 @@ const {
   mockIncidentCreateSchema,
   mockQualityIssueCreateSchema,
 } = vi.hoisted(() => ({
-  mockLeadCreateSchema: { safeParse: vi.fn() },
+  mockReportLeadCreateSchema: { safeParse: vi.fn() },
   mockTerritoryCreateSchema: { safeParse: vi.fn() },
   mockCommissionCreateSchema: { safeParse: vi.fn() },
   mockPayrollCreateSchema: { safeParse: vi.fn() },
@@ -67,7 +67,7 @@ vi.mock("@/lib/audit", () => ({
 }));
 
 vi.mock("@/lib/validators", () => ({
-  leadCreateSchema: mockLeadCreateSchema,
+  reportLeadCreateSchema: mockReportLeadCreateSchema,
   territoryCreateSchema: mockTerritoryCreateSchema,
   commissionCreateSchema: mockCommissionCreateSchema,
   payrollCreateSchema: mockPayrollCreateSchema,
@@ -171,7 +171,7 @@ beforeEach(() => {
   mockGetAccessTokenFromRequest.mockReturnValue("token");
   mockCreateUserClient.mockReturnValue({ from: mockClientFrom });
 
-  mockLeadCreateSchema.safeParse.mockImplementation((body: { firstName?: string; lastName?: string }) => ({
+  mockReportLeadCreateSchema.safeParse.mockImplementation((body: { firstName?: string; lastName?: string }) => ({
     success: true,
     data: {
       firstName: body?.firstName ?? "Jean",
@@ -470,7 +470,7 @@ describe("POST /api/reports/[type]", () => {
   });
 
   it("returns 400 when lead validation fails", async () => {
-    mockLeadCreateSchema.safeParse.mockReturnValueOnce({
+    mockReportLeadCreateSchema.safeParse.mockReturnValueOnce({
       success: false,
       error: { format: () => ({}) },
     });
@@ -494,7 +494,7 @@ describe("POST /api/reports/[type]", () => {
   });
 
   it("creates lead with provided values", async () => {
-    mockLeadCreateSchema.safeParse.mockReturnValueOnce({
+    mockReportLeadCreateSchema.safeParse.mockReturnValueOnce({
       success: true,
       data: {
         firstName: "Jean",
@@ -526,7 +526,7 @@ describe("POST /api/reports/[type]", () => {
   });
 
   it("creates lead with defaults and completes idempotency", async () => {
-    mockLeadCreateSchema.safeParse.mockReturnValueOnce({
+    mockReportLeadCreateSchema.safeParse.mockReturnValueOnce({
       success: true,
       data: {
         firstName: "Jean",

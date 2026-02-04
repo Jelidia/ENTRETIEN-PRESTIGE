@@ -315,7 +315,7 @@ export const seedAccountsSchema = z.object({
   accounts: z.array(seedAccountSchema).min(1),
 });
 
-export const leadCreateSchema = z.object({
+export const reportLeadCreateSchema = z.object({
   firstName: z.string().min(2),
   lastName: z.string().min(2),
   phone: z.string().optional(),

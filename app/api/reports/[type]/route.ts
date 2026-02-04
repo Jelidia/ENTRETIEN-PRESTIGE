@@ -6,7 +6,7 @@ import {
   checklistCreateSchema,
   commissionCreateSchema,
   incidentCreateSchema,
-  leadCreateSchema,
+  reportLeadCreateSchema,
   payrollCreateSchema,
   qualityIssueCreateSchema,
   territoryCreateSchema,
@@ -229,7 +229,7 @@ export async function POST(
   };
 
   if (type === "leads") {
-    const parsed = leadCreateSchema.safeParse(body);
+    const parsed = reportLeadCreateSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json({ success: false, error: "Invalid lead" }, { status: 400 });
     }

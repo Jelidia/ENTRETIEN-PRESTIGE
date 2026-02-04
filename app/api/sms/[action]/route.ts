@@ -90,10 +90,14 @@ export async function POST(
       .select("customer_id, company_id")
       .eq("phone", from)
       .maybeSingle();
+    if (!customer?.company_id) {
+      logger.warn("Inbound SMS missing company mapping", { ...baseRequestContext, from });
+      return NextResponse.json({ success: false, error: "Unknown sender" }, { status: 404 });
+    }
     const threadId = await resolveThreadId(admin, customer?.customer_id ?? null, from);
     await admin.from("sms_messages").insert({
-      company_id: customer?.company_id ?? null,
-      customer_id: customer?.customer_id ?? null,
+      company_id: customer.company_id,
+      customer_id: customer.customer_id ?? null,
       phone_number: from,
       content: body,
       direction: "inbound",

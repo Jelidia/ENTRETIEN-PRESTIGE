@@ -7,6 +7,41 @@ import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 
+type DocumentFields = {
+  id_document_front_url?: string;
+  id_document_back_url?: string;
+  contract_document_url?: string;
+  contract_signature_url?: string;
+};
+
+function normalizeDocumentPath(value?: string | null) {
+  if (!value) {
+    return value;
+  }
+  const marker = "/storage/v1/object/";
+  const index = value.indexOf(marker);
+  if (index === -1) {
+    return value;
+  }
+  const tail = value.slice(index + marker.length);
+  const [access, bucket, ...rest] = tail.split("/");
+  if ((access !== "public" && access !== "sign") || (bucket !== "documents" && bucket !== "user-documents")) {
+    return value;
+  }
+  const path = rest.join("/").split("?")[0];
+  return path || value;
+}
+
+function normalizeDocumentFields<T extends DocumentFields>(data: T) {
+  return {
+    ...data,
+    id_document_front_url: normalizeDocumentPath(data.id_document_front_url),
+    id_document_back_url: normalizeDocumentPath(data.id_document_back_url),
+    contract_document_url: normalizeDocumentPath(data.contract_document_url),
+    contract_signature_url: normalizeDocumentPath(data.contract_signature_url),
+  };
+}
+
 export async function PATCH(
   request: Request,
   { params }: { params: { id: string } }
@@ -24,9 +59,11 @@ export async function PATCH(
     return NextResponse.json({ success: false, error: "Invalid update" }, { status: 400 });
   }
 
+  const normalized = normalizeDocumentFields(parsed.data);
+
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
-  const idempotency = await beginIdempotency(client, request, profile.user_id, parsed.data);
+  const idempotency = await beginIdempotency(client, request, profile.user_id, normalized);
   if (idempotency.action === "replay") {
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
@@ -38,7 +75,7 @@ export async function PATCH(
   }
   const { data, error } = await client
     .from("users")
-    .update(parsed.data)
+    .update(normalized)
     .eq("user_id", params.id)
     .eq("company_id", profile.company_id)
     .select()
@@ -51,7 +88,7 @@ export async function PATCH(
   await logAudit(client, profile.user_id, "user_update", "user", params.id, "success", {
     ipAddress: ip,
     userAgent: request.headers.get("user-agent") ?? null,
-    newValues: parsed.data,
+    newValues: normalized,
   });
 
   const responseBody = { success: true, data };

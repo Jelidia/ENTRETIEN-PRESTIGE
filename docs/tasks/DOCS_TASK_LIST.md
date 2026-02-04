@@ -18,13 +18,13 @@ Notes
 - EP-P0-DB-05 RLS audit plus role alignment (company isolation is not enough).
 - EP-P0-SEC-02 Replace in-memory rate limiting with a shared production store (remove temporary disable).
 - EP-P0-SEC-07 Decide and enforce registration model (self-signup vs invite-only).
-- EP-P0-FLOW-03 Implement Leads API to match Sales Leads UI. [WIP: OpenCode 2026-02-03]
 - EP-P0-FLOW-04 Finish customer rating and review workflow (tokens -> rating -> bonus).
 - EP-P0-PAY-01 Harden Stripe payment flow (intent creation, webhook, idempotency, persistence).
 - EP-P0-PAY-02 Define and implement a real payment ledger.
 - EP-P0-PAY-03 Make manual Interac marking safe and auditable.
 
 ## P1 - Engineering, auth, dispatch, messaging, storage
+- Fix build failure: duplicate leadCreateSchema export. [WIP: OpenCode 2026-02-03]
 - EP-P1-AUTH-01 Redesign permission keys so technician settings do not equal company settings.
 - EP-P1-AUTH-02 Field-level authorization for jobs and customers.
 - EP-P1-AUTH-03 Define and enforce a job status state machine.
@@ -34,10 +34,9 @@ Notes
 - EP-P1-DISP-02 Replace naive auto-assign with an explainable assignment algorithm.
 - EP-P1-DISP-03 Build employee availability management end-to-end.
 - EP-P1-DISP-04 Weather cancellation safety checks and notifications.
-- EP-P1-MSG-02 Inbound SMS webhook verification, dedupe, and company mapping.
 - EP-P1-MSG-03 Opt-out and consent compliance for SMS (STOP handling, quiet hours).
 - EP-P1-MSG-04 Email sending requires Resend when enabled and tracks delivery.
-- EP-P1-STOR-01 Stop storing public URLs for sensitive documents.
+- EP-P1-STOR-01 Stop storing public URLs for sensitive documents. [WIP: OpenCode 2026-02-03]
 - EP-P1-STOR-02 Add file validation and malware scanning hook.
 
 ## P2 - Feature completeness and UX

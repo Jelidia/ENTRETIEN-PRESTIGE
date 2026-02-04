@@ -8,6 +8,41 @@ import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 
+type DocumentFields = {
+  id_document_front_url?: string;
+  id_document_back_url?: string;
+  contract_document_url?: string;
+  contract_signature_url?: string;
+};
+
+function normalizeDocumentPath(value?: string | null) {
+  if (!value) {
+    return value;
+  }
+  const marker = "/storage/v1/object/";
+  const index = value.indexOf(marker);
+  if (index === -1) {
+    return value;
+  }
+  const tail = value.slice(index + marker.length);
+  const [access, bucket, ...rest] = tail.split("/");
+  if ((access !== "public" && access !== "sign") || (bucket !== "documents" && bucket !== "user-documents")) {
+    return value;
+  }
+  const path = rest.join("/").split("?")[0];
+  return path || value;
+}
+
+function normalizeDocumentFields<T extends DocumentFields>(data: T) {
+  return {
+    ...data,
+    id_document_front_url: normalizeDocumentPath(data.id_document_front_url),
+    id_document_back_url: normalizeDocumentPath(data.id_document_back_url),
+    contract_document_url: normalizeDocumentPath(data.contract_document_url),
+    contract_signature_url: normalizeDocumentPath(data.contract_signature_url),
+  };
+}
+
 export async function GET(request: Request) {
   const auth = await requireRole(request, ["admin", "manager"], "team");
   if ("response" in auth) {
@@ -51,8 +86,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false, error: "Invalid user" }, { status: 400 });
   }
 
+  const normalized = normalizeDocumentFields(parsed.data);
+
   const client = createUserClient(getAccessTokenFromRequest(request) ?? "");
-  const idempotency = await beginIdempotency(client, request, profile.user_id, parsed.data);
+  const idempotency = await beginIdempotency(client, request, profile.user_id, normalized);
   if (idempotency.action === "replay") {
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
@@ -65,15 +102,15 @@ export async function POST(request: Request) {
 
   const admin = createAdminClient();
   const smsConfigured = isSmsConfigured();
-  const isAdmin = parsed.data.role === "admin";
-  const enableSms2fa = Boolean(isAdmin && parsed.data.phone && smsConfigured);
+  const isAdmin = normalized.role === "admin";
+  const enableSms2fa = Boolean(isAdmin && normalized.phone && smsConfigured);
   const twoFactorMethod = enableSms2fa ? "sms" : "authenticator";
   const twoFactorEnabled = enableSms2fa;
   const { data: userData, error: authError } = await admin.auth.admin.createUser({
-    email: parsed.data.email,
-    password: parsed.data.password,
+    email: normalized.email,
+    password: normalized.password,
     email_confirm: true,
-    user_metadata: { full_name: parsed.data.fullName, phone: parsed.data.phone },
+    user_metadata: { full_name: normalized.fullName, phone: normalized.phone },
   });
 
   if (authError || !userData.user) {
@@ -85,24 +122,24 @@ export async function POST(request: Request) {
   const { error } = await admin.from("users").insert({
     user_id: userData.user.id,
     company_id: profile.company_id,
-    email: parsed.data.email,
-    phone: parsed.data.phone,
-    full_name: parsed.data.fullName,
-    role: parsed.data.role,
+    email: normalized.email,
+    phone: normalized.phone,
+    full_name: normalized.fullName,
+    role: normalized.role,
     status: "active",
     two_factor_enabled: twoFactorEnabled,
     two_factor_method: twoFactorMethod,
-    access_permissions: parsed.data.accessPermissions,
-    address: parsed.data.address,
-    city: parsed.data.city,
-    province: parsed.data.province,
-    postal_code: parsed.data.postal_code,
-    country: parsed.data.country,
-    id_document_front_url: parsed.data.id_document_front_url,
-    id_document_back_url: parsed.data.id_document_back_url,
-    contract_document_url: parsed.data.contract_document_url,
-    contract_signature_url: parsed.data.contract_signature_url,
-    contract_signed_at: parsed.data.contract_signed_at,
+    access_permissions: normalized.accessPermissions,
+    address: normalized.address,
+    city: normalized.city,
+    province: normalized.province,
+    postal_code: normalized.postal_code,
+    country: normalized.country,
+    id_document_front_url: normalized.id_document_front_url,
+    id_document_back_url: normalized.id_document_back_url,
+    contract_document_url: normalized.contract_document_url,
+    contract_signature_url: normalized.contract_signature_url,
+    contract_signed_at: normalized.contract_signed_at,
   });
 
   if (error) {
@@ -115,9 +152,9 @@ export async function POST(request: Request) {
     ipAddress: ip,
     userAgent: request.headers.get("user-agent") ?? null,
     newValues: {
-      email: parsed.data.email,
-      full_name: parsed.data.fullName,
-      role: parsed.data.role,
+      email: normalized.email,
+      full_name: normalized.fullName,
+      role: normalized.role,
     },
   });
 
