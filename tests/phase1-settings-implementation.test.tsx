@@ -23,6 +23,16 @@ vi.mock("next/navigation", () => ({
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
+const getRequestUrl = (url: RequestInfo | URL) => {
+  if (typeof url === "string") {
+    return url;
+  }
+  if (url instanceof URL) {
+    return url.toString();
+  }
+  return url.url;
+};
+
 const mockUser = {
   user_id: "123",
   email: "test@example.com",
@@ -63,13 +73,14 @@ describe("Phase 1: Settings Page Rebuild", () => {
 
   it("should render settings page with correct tabs", async () => {
     mockFetch.mockImplementation((url: RequestInfo | URL) => {
-      if (url.includes("/api/access")) {
+      const requestUrl = getRequestUrl(url);
+      if (requestUrl.includes("/api/access")) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve(mockAccessResponse),
         });
       }
-      if (url.includes("/api/users/")) {
+      if (requestUrl.includes("/api/users/")) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ data: mockUser }),

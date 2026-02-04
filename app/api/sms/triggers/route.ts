@@ -142,7 +142,10 @@ export async function POST(request: Request) {
           });
         } else if (invoice.payment_method === "credit_card") {
           // Generate Stripe payment link (you'd need to implement this)
-          const paymentLink = customData?.paymentLink || "https://pay.entretien-prestige.ca/invoice/" + invoice.invoice_id;
+          const paymentLink =
+            typeof customData?.paymentLink === "string" && customData.paymentLink
+              ? customData.paymentLink
+              : "https://pay.entretien-prestige.ca/invoice/" + invoice.invoice_id;
           message = smsTemplates.jobCompletedStripe({
             invoiceNumber: invoice.invoice_number || invoice.invoice_id.substring(0, 8),
             amount,

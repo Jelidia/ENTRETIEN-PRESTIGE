@@ -116,10 +116,11 @@ export default function TechnicianMapPage() {
 
   const initMap = useCallback(() => {
     const google = getGoogle();
-    if (!google?.maps) {
+    const maps = google?.maps;
+    if (!maps) {
       return;
     }
-    mapInstance.current = new google.maps.Map(mapRef.current, {
+    mapInstance.current = new maps.Map(mapRef.current, {
       center: { lat: 45.5017, lng: -73.5673 },
       zoom: 12,
       mapTypeControl: false,
@@ -131,7 +132,8 @@ export default function TechnicianMapPage() {
 
   const renderMarkers = useCallback(() => {
     const google = getGoogle();
-    if (!google?.maps || !mapInstance.current) {
+    const maps = google?.maps;
+    if (!maps || !mapInstance.current) {
       return;
     }
     markers.current.forEach((marker) => marker.setMap(null));
@@ -146,7 +148,7 @@ export default function TechnicianMapPage() {
     }
 
     path.forEach((position, index) => {
-      const marker = new google.maps.Marker({
+      const marker = new maps.Marker({
         position,
         map: mapInstance.current,
         label: index === path.length - 1 ? "Now" : "",
@@ -154,7 +156,7 @@ export default function TechnicianMapPage() {
       markers.current.push(marker);
     });
 
-    polyline.current = new google.maps.Polyline({
+    polyline.current = new maps.Polyline({
       path,
       map: mapInstance.current,
       strokeColor: "#1e40af",

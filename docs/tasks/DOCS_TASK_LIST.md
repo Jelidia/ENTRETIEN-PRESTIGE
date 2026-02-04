@@ -28,7 +28,8 @@ Notes
 - EP-P0-PAY-03 Make manual Interac marking safe and auditable.
 
 ## P1 - Engineering, auth, dispatch, messaging, storage
-- Fix build failure: duplicate leadCreateSchema export. 
+- Fix typecheck: invoice action route nullable string assignments.
+- Fix typecheck: settings tests request includes on RequestInfo.
 - EP-P1-ENG-01 Validate all required environment variables at boot (fail fast).
 - EP-P1-ENG-02 Structured logging + request IDs everywhere (replace console.*).
 - EP-P1-ENG-03 Standardize API response format and error handling.
@@ -37,7 +38,7 @@ Notes
 - EP-P1-ENG-06 Add E2E tests for critical flows (Playwright).
 - EP-P1-ENG-07 Remove stale agent docs/outdated claims; regenerate accurate documentation.
 - EP-P1-ENG-08 Create a production deployment checklist (repeatable + auditable).
-- EP-P1-AUTH-01 Redesign permission keys so technician settings do not equal company settings.
+- EP-P1-AUTH-01 Redesign permission keys so technician settings do not equal company settings. 
 - EP-P1-AUTH-02 Field-level authorization for jobs and customers.
 - EP-P1-AUTH-03 Define and enforce a job status state machine.
 - EP-P1-AUTH-04 Report data-scope rules to prevent technician data leakage.
@@ -70,6 +71,10 @@ Notes
 - EP-P3-SESS-01 Implement session management (view and revoke active sessions).
 
 ## UI device adaptiveness
+- Enforce mobile-first single-column layout (max 640px) across all app pages.
+- Ensure bottom navigation with 5 tabs per role; remove any left sidebar usage.
+- Replace long scrolling pages with pagination, modals, accordions, and tabs.
+- Verify consistent layout behavior across 320px to 4K screens.
 
 ## Spec decisions to finalize (missing requirements)
 - Notification matrix (who gets what for each event).
@@ -101,5 +106,12 @@ Notes
 ## Pre-production checklist
 - Supabase migrations apply cleanly on a fresh DB (CI enforced).
 - RLS enabled and tested for every tenant table.
+- APP_ENCRYPTION_KEY present and validated in production.
+- Stripe keys + webhook secret configured (or payments disabled explicitly).
+- Twilio configured + webhook signature verification enabled (or SMS disabled explicitly).
+- Resend configured (or email disabled explicitly).
+- Storage buckets private and signed URLs used for documents/photos.
+- No demo/mock fallback data in production paths.
 - Run npm run typecheck, npm run lint, npm test, npm run test:e2e.
+- Observability configured (structured logs + request IDs + error tracking).
 - Verify RLS helper functions exist and policies are correct (get_user_role, get_user_company_id).
