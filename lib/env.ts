@@ -60,13 +60,53 @@ export function validateEnv() {
     .filter((entry) => !process.env[entry.key])
     .map((entry) => entry.key);
 
-  const missingRequired = isProd()
-    ? validatedEnvKeys
-        .filter((entry) => entry.required && !process.env[entry.key])
-        .map((entry) => entry.key)
-    : [];
+  const smsFlag = getEnv("FEATURE_SMS").toLowerCase();
+  const smsEnabled = smsFlag ? smsFlag === "true" : isProd();
+  const paymentsFlag = getEnv("FEATURE_PAYMENTS").toLowerCase();
+  const paymentsEnabled = paymentsFlag ? paymentsFlag === "true" : isProd();
+  const emailFlag = getEnv("FEATURE_EMAIL").toLowerCase();
+  const emailEnabled = emailFlag ? emailFlag === "true" : isProd();
 
-  if (missingRequired.length) {
+  const missingFeatureKeys: string[] = [];
+  if (smsEnabled) {
+    if (!process.env.TWILIO_ACCOUNT_SID) {
+      missingFeatureKeys.push("TWILIO_ACCOUNT_SID");
+    }
+    if (!process.env.TWILIO_AUTH_TOKEN) {
+      missingFeatureKeys.push("TWILIO_AUTH_TOKEN");
+    }
+    if (!process.env.TWILIO_FROM_NUMBER) {
+      missingFeatureKeys.push("TWILIO_FROM_NUMBER");
+    }
+  }
+  if (paymentsEnabled) {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      missingFeatureKeys.push("STRIPE_SECRET_KEY");
+    }
+    if (!process.env.STRIPE_WEBHOOK_SECRET) {
+      missingFeatureKeys.push("STRIPE_WEBHOOK_SECRET");
+    }
+  }
+  if (emailEnabled && !process.env.RESEND_API_KEY) {
+    missingFeatureKeys.push("RESEND_API_KEY");
+  }
+
+  for (const key of missingFeatureKeys) {
+    if (!missing.includes(key)) {
+      missing.push(key);
+    }
+  }
+
+  const missingRequired = Array.from(
+    new Set([
+      ...validatedEnvKeys
+        .filter((entry) => entry.required && !process.env[entry.key])
+        .map((entry) => entry.key),
+      ...missingFeatureKeys,
+    ])
+  );
+
+  if (missingRequired.length && process.env.NODE_ENV !== "test") {
     throw new Error(`Missing required env vars: ${missingRequired.join(", ")}`);
   }
 

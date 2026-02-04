@@ -28,9 +28,6 @@ Notes
 - EP-P0-PAY-03 Make manual Interac marking safe and auditable.
 
 ## P1 - Engineering, auth, dispatch, messaging, storage
-- Fix typecheck: invoice action route nullable string assignments.
-- Fix typecheck: settings tests request includes on RequestInfo.
-- EP-P1-ENG-01 Validate all required environment variables at boot (fail fast).
 - EP-P1-ENG-02 Structured logging + request IDs everywhere (replace console.*).
 - EP-P1-ENG-03 Standardize API response format and error handling.
 - EP-P1-ENG-04 CI pipeline: typecheck + lint + tests + migration sanity.

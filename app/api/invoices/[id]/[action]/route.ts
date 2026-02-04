@@ -51,6 +51,11 @@ type InvoiceRecord = {
 const pickFirst = <T,>(value: T | T[] | null | undefined) =>
   Array.isArray(value) ? value[0] ?? null : value ?? null;
 
+const toOptionalString = (value?: string | null) => value ?? undefined;
+
+const formatDate = (value?: string | null): string =>
+  value ? value.slice(0, 10) : new Date().toISOString().slice(0, 10);
+
 function emailUnavailable(error: unknown, requestContext: Record<string, unknown>) {
   logger.error("Email is unavailable", { ...requestContext, error });
   return NextResponse.json({ success: false, error: "Email is unavailable" }, { status: 503 });
@@ -218,35 +223,35 @@ export async function POST(
     const company = pickFirst(invoiceRecord.companies);
     const customer = pickFirst(invoiceRecord.customers);
     const customerName = `${customer?.first_name ?? ""} ${customer?.last_name ?? ""}`.trim();
+    const invoiceDate = formatDate(invoiceRecord.issued_date);
+    const dueDate = formatDate(invoiceRecord.due_date ?? invoiceRecord.issued_date ?? null);
 
     const pdfBytes = await generateInvoicePdf({
       invoiceNumber: invoiceRecord.invoice_number,
-      invoiceDate: invoiceRecord.issued_date
-        ? invoiceRecord.issued_date.split("T")[0]
-        : new Date().toISOString().split("T")[0],
-      dueDate: invoiceRecord.due_date,
+      invoiceDate,
+      dueDate,
       totalAmount: invoiceRecord.total_amount ?? 0,
       subtotal: invoiceRecord.subtotal ?? 0,
-      notes: invoiceRecord.notes,
+      notes: toOptionalString(invoiceRecord.notes),
       company: {
         name: company?.name ?? "Entretien Prestige",
-        address: company?.address,
-        city: company?.city,
-        province: company?.province,
-        postal_code: company?.postal_code,
-        phone: company?.phone,
-        email: company?.email,
-        gst_number: company?.gst_number,
-        qst_number: company?.qst_number,
+        address: toOptionalString(company?.address),
+        city: toOptionalString(company?.city),
+        province: toOptionalString(company?.province),
+        postal_code: toOptionalString(company?.postal_code),
+        phone: toOptionalString(company?.phone),
+        email: toOptionalString(company?.email),
+        gst_number: toOptionalString(company?.gst_number),
+        qst_number: toOptionalString(company?.qst_number),
       },
       customer: {
         name: customerName,
-        address: customer?.address,
-        city: customer?.city,
-        province: customer?.province,
-        postal_code: customer?.postal_code,
-        phone: customer?.phone,
-        email: customer?.email,
+        address: toOptionalString(customer?.address),
+        city: toOptionalString(customer?.city),
+        province: toOptionalString(customer?.province),
+        postal_code: toOptionalString(customer?.postal_code),
+        phone: toOptionalString(customer?.phone),
+        email: toOptionalString(customer?.email),
       },
       lineItems: [],
     });
@@ -320,35 +325,35 @@ export async function GET(
   const company = pickFirst(invoiceRecord.companies);
   const customer = pickFirst(invoiceRecord.customers);
   const customerName = `${customer?.first_name ?? ""} ${customer?.last_name ?? ""}`.trim();
+  const invoiceDate = formatDate(invoiceRecord.issued_date);
+  const dueDate = formatDate(invoiceRecord.due_date ?? invoiceRecord.issued_date ?? null);
 
   const pdfBytes = await generateInvoicePdf({
     invoiceNumber: invoiceRecord.invoice_number,
-    invoiceDate: invoiceRecord.issued_date
-      ? invoiceRecord.issued_date.split("T")[0]
-      : new Date().toISOString().split("T")[0],
-    dueDate: invoiceRecord.due_date,
+    invoiceDate,
+    dueDate,
     totalAmount: invoiceRecord.total_amount ?? 0,
     subtotal: invoiceRecord.subtotal ?? 0,
-    notes: invoiceRecord.notes,
+    notes: toOptionalString(invoiceRecord.notes),
     company: {
       name: company?.name ?? "Entretien Prestige",
-      address: company?.address,
-      city: company?.city,
-      province: company?.province,
-      postal_code: company?.postal_code,
-      phone: company?.phone,
-      email: company?.email,
-      gst_number: company?.gst_number,
-      qst_number: company?.qst_number,
+      address: toOptionalString(company?.address),
+      city: toOptionalString(company?.city),
+      province: toOptionalString(company?.province),
+      postal_code: toOptionalString(company?.postal_code),
+      phone: toOptionalString(company?.phone),
+      email: toOptionalString(company?.email),
+      gst_number: toOptionalString(company?.gst_number),
+      qst_number: toOptionalString(company?.qst_number),
     },
     customer: {
       name: customerName,
-      address: customer?.address,
-      city: customer?.city,
-      province: customer?.province,
-      postal_code: customer?.postal_code,
-      phone: customer?.phone,
-      email: customer?.email,
+      address: toOptionalString(customer?.address),
+      city: toOptionalString(customer?.city),
+      province: toOptionalString(customer?.province),
+      postal_code: toOptionalString(customer?.postal_code),
+      phone: toOptionalString(customer?.phone),
+      email: toOptionalString(customer?.email),
     },
     lineItems: [],
   });

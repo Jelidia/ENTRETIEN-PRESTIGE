@@ -107,13 +107,14 @@ describe("Phase 1: Settings Page Rebuild", () => {
 
   it("should show profile information correctly", async () => {
     mockFetch.mockImplementation((url: RequestInfo | URL) => {
-      if (url.includes("/api/access")) {
+      const requestUrl = getRequestUrl(url);
+      if (requestUrl.includes("/api/access")) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve(mockAccessResponse),
         });
       }
-      if (url.includes("/api/users/")) {
+      if (requestUrl.includes("/api/users/")) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ data: mockUser }),
@@ -137,19 +138,20 @@ describe("Phase 1: Settings Page Rebuild", () => {
 
   it("should allow editing name via modal", async () => {
     mockFetch.mockImplementation((url: RequestInfo | URL) => {
-      if (url.includes("/api/access")) {
+      const requestUrl = getRequestUrl(url);
+      if (requestUrl.includes("/api/access")) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve(mockAccessResponse),
         });
       }
-      if (url.includes("/api/users/")) {
+      if (requestUrl.includes("/api/users/")) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ data: mockUser }),
         });
       }
-      if (url.includes("/api/settings/profile")) {
+      if (requestUrl.includes("/api/settings/profile")) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ success: true, data: { ...mockUser, full_name: "Updated Name" } }),
@@ -180,13 +182,14 @@ describe("Phase 1: Settings Page Rebuild", () => {
 
   it("should switch language correctly", async () => {
     mockFetch.mockImplementation((url: RequestInfo | URL) => {
-      if (url.includes("/api/access")) {
+      const requestUrl = getRequestUrl(url);
+      if (requestUrl.includes("/api/access")) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve(mockAccessResponse),
         });
       }
-      if (url.includes("/api/users/")) {
+      if (requestUrl.includes("/api/users/")) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ data: mockUser }),
@@ -222,13 +225,14 @@ describe("Phase 1: Settings Page Rebuild", () => {
 
   it("should NOT show documents tab for admin users", async () => {
     mockFetch.mockImplementation((url: RequestInfo | URL) => {
-      if (url.includes("/api/access")) {
+      const requestUrl = getRequestUrl(url);
+      if (requestUrl.includes("/api/access")) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve(mockAccessResponse),
         });
       }
-      if (url.includes("/api/users/")) {
+      if (requestUrl.includes("/api/users/")) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ data: mockUser }),
@@ -256,13 +260,14 @@ describe("Phase 1: Settings Page Rebuild", () => {
     const techAccess = { ...mockAccessResponse, role: "technician" };
 
     mockFetch.mockImplementation((url: RequestInfo | URL) => {
-      if (url.includes("/api/access")) {
+      const requestUrl = getRequestUrl(url);
+      if (requestUrl.includes("/api/access")) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve(techAccess),
         });
       }
-      if (url.includes("/api/users/")) {
+      if (requestUrl.includes("/api/users/")) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ data: techUser }),
@@ -305,13 +310,14 @@ describe("Phase 1: Sales Settings Page", () => {
     };
 
     mockFetch.mockImplementation((url: RequestInfo | URL) => {
-      if (url.includes("/api/users/me")) {
+      const requestUrl = getRequestUrl(url);
+      if (requestUrl.includes("/api/users/me")) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve(salesUser),
         });
       }
-      if (url.includes("/api/reports/territories")) {
+      if (requestUrl.includes("/api/reports/territories")) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ data: [mockTerritory] }),
@@ -346,13 +352,14 @@ describe("Phase 1: Sales Settings Page", () => {
     };
 
     mockFetch.mockImplementation((url: RequestInfo | URL, options?: RequestInit) => {
-      if (url.includes("/api/users/me")) {
+      const requestUrl = getRequestUrl(url);
+      if (requestUrl.includes("/api/users/me")) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve(salesUser),
         });
       }
-      if (url.includes("/api/reports/territories")) {
+      if (requestUrl.includes("/api/reports/territories")) {
         if (options?.method === "PATCH") {
           return Promise.resolve({
             ok: true,
@@ -420,13 +427,14 @@ describe("Phase 1: Team Page Permissions Modal", () => {
     };
 
     mockFetch.mockImplementation((url: RequestInfo | URL) => {
-      if (url.includes("/api/users") && !url.includes("/api/users/")) {
+      const requestUrl = getRequestUrl(url);
+      if (requestUrl.includes("/api/users") && !requestUrl.includes("/api/users/")) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ data: mockTeamMembers }),
         });
       }
-      if (url.includes("/api/company")) {
+      if (requestUrl.includes("/api/company")) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ data: mockCompany }),
@@ -479,19 +487,20 @@ describe("Phase 1: Team Page Permissions Modal", () => {
     };
 
     mockFetch.mockImplementation((url: RequestInfo | URL, options?: RequestInit) => {
-      if (url.includes("/api/users/user-1") && options?.method === "PATCH") {
+      const requestUrl = getRequestUrl(url);
+      if (requestUrl.includes("/api/users/user-1") && options?.method === "PATCH") {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ success: true }),
         });
       }
-      if (url.includes("/api/users") && !url.includes("/api/users/")) {
+      if (requestUrl.includes("/api/users") && !requestUrl.includes("/api/users/")) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ data: mockTeamMembers }),
         });
       }
-      if (url.includes("/api/company")) {
+      if (requestUrl.includes("/api/company")) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ data: mockCompany }),
