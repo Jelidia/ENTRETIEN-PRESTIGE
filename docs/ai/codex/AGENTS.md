@@ -34,7 +34,7 @@ If you need deeper context, prefer **targeted reads** (don’t paste huge files 
 - **Product requirements:** `docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md`
 - **Setup + env vars:** `README.md`
 
-Legacy Claude Code documentation under `docs/ai/claude/` and `.claude-plugin/` is archived and not maintained.
+Legacy Claude Code documentation was removed; see git history if needed.
 
 ## Non‑negotiables (project rules)
 

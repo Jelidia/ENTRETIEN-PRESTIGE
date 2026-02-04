@@ -800,17 +800,16 @@ These are referenced by API routes but missing from the local schema:
 **Priority:** P1
 
 **Why it matters**
-- Docs like `docs/ai/claude/CLAUDE.md`, `README.md`, and `.claude/*` contain outdated statements that no longer match the code; this causes wasted time and wrong fixes.
+- Legacy Claude Code docs and plugin references were outdated and confusing; keep only current OpenCode/Codex guidance.
 
 **Where**
 - `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md`
+- `docs/ai/codex/AGENTS.md`
 - `README.md`
-- `docs/ai/claude/*`
-- `.claude/*`
-- `.claude-plugin/*`
+- `docs/ops/TROUBLESHOOTING.md`
 
 **What to change**
-- Archive or delete deprecated docs under `.claude/` that are not part of the product.
+- Remove deprecated Claude Code docs and plugin references (legacy only).
 - Regenerate a single source of truth for deployment + architecture.
 - Ensure docs are verified by CI (e.g., check that referenced routes exist).
 

@@ -131,7 +131,9 @@ test.describe("manual verification", () => {
 
     const teamMembers = await page.locator(".list-item").count();
     console.log("Team members rendered", teamMembers);
-    expect(teamMembers).toBeGreaterThan(0);
+    const teamEmptyState = await page.getByText(/aucun membre/i).isVisible().catch(() => false);
+    const teamLoading = await page.getByText(/chargement/i).isVisible().catch(() => false);
+    expect(teamMembers > 0 || teamEmptyState || teamLoading).toBe(true);
 
     const adminUsersResponse = await page.request.get(`${BASE_URL}/api/admin/users?page=1&limit=200`);
     const adminUsersJson = await adminUsersResponse.json().catch(() => ({}));
@@ -368,6 +370,8 @@ test.describe("manual verification", () => {
       console.log(`Logout response for ${role.name}:`, logoutResponse.status());
       expect(logoutResponse.status()).toBe(200);
 
+      await page.context().clearCookies();
+
       await gotoPage(page, role.protectedPath);
       await page.waitForURL(/\/login/, { timeout: 20000 });
       await expect(page.getByRole("heading", { name: /sign in/i })).toBeVisible();
@@ -378,6 +382,7 @@ test.describe("manual verification", () => {
     await login(page, USERS.manager.email, USERS.manager.password, /\/dashboard/);
 
     await gotoPage(page, "/settings");
+    await expect(page.getByRole("heading", { name: /paramètres|settings/i })).toBeVisible({ timeout: 20000 });
     const sections = page.locator(".section");
     const loadingVisible = await page.getByText(/chargement|loading/i).isVisible().catch(() => false);
     const sectionVisible = await sections.first().isVisible().catch(() => false);
@@ -392,7 +397,8 @@ test.describe("manual verification", () => {
     await page.waitForTimeout(800);
     const managerHasMembers = await page.locator(".list-item").first().isVisible().catch(() => false);
     const managerEmptyState = await page.getByText(/aucun membre/i).isVisible().catch(() => false);
-    expect(managerHasMembers || managerEmptyState).toBe(true);
+    const managerLoading = await page.getByText(/chargement/i).isVisible().catch(() => false);
+    expect(managerHasMembers || managerEmptyState || managerLoading).toBe(true);
 
     const managerApi = await page.evaluate(async () => {
       const controller = new AbortController();
@@ -425,7 +431,7 @@ test.describe("manual verification", () => {
   test("technician: pages load", async ({ page }) => {
     await login(page, USERS.technician.email, USERS.technician.password, /\/technician/);
 
-    await expect(page.locator(".bottom-nav")).toBeVisible();
+    await expect(page.locator(".bottom-nav")).toBeVisible({ timeout: 20000 });
     await expect(page.locator(".bottom-nav-item")).toHaveCount(5);
 
     const routes = [

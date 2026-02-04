@@ -6,7 +6,7 @@ Full-stack operations platform for Quebec cleaning company with dispatch, CRM, b
 
 **Status:** In progress; see `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` for blockers and readiness.
 
-**AI tooling:** See `docs/ai/codex/AGENTS.md` for the current agent workflow and repo rules (legacy Claude Code docs are archived).
+**AI tooling:** See `docs/ai/codex/AGENTS.md` for the current agent workflow and repo rules (legacy Claude Code docs were removed; see git history if needed).
 
 ---
 
@@ -14,7 +14,7 @@ Full-stack operations platform for Quebec cleaning company with dispatch, CRM, b
 
 ### AI Tooling (OpenCode/Codex)
 
-See `docs/ai/codex/AGENTS.md` for the current agent workflow, available skills, and repo rules. Legacy Claude Code docs are archived and not maintained.
+See `docs/ai/codex/AGENTS.md` for the current agent workflow, available skills, and repo rules. Legacy Claude Code docs were removed; see git history if needed.
 
 ### Standard Setup
 
@@ -598,7 +598,6 @@ See `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` for deploy
 
 - **docs/ai/codex/AGENTS.md** - Primary agent guidance and repo rules (read this first)
 - **README.md** - Setup and overview
-- **docs/ai/claude/** - Archived legacy Claude Code notes (not maintained)
 
 ### For Deployment
 

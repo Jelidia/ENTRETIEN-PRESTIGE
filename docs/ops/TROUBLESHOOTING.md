@@ -9,7 +9,7 @@ This guide covers common issues and their solutions for the Entretien Prestige p
 - [Authentication & Authorization](#authentication--authorization)
 - [Build & TypeScript Errors](#build--typescript-errors)
 - [Testing Issues](#testing-issues)
-- [Legacy Claude Code (Archived)](#legacy-claude-code-archived)
+- [Legacy Claude Code (Removed)](#legacy-claude-code-removed)
 - [Environment & Configuration](#environment--configuration)
 - [Development Server Issues](#development-server-issues)
 - [Integration Issues](#integration-issues)
@@ -414,9 +414,9 @@ beforeEach(() => {
 });
 ```
 
-## Legacy Claude Code (Archived)
+## Legacy Claude Code (Removed)
 
-Legacy Claude Code docs and plugin references are archived and not maintained.
+Legacy Claude Code docs and plugin references were removed from the repo. See git history if needed.
 For current tooling guidance, use `docs/ai/codex/AGENTS.md`.
 
 ## Environment & Configuration
