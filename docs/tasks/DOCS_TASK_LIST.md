@@ -1,5 +1,7 @@
 # Master Task List (single source of truth)
 
+**If you discover new issues, bugs, improvements, or missing features while working on a task, add them to this list immediately and continue your current task. Do not let discoveries block your work-in-progress.**
+
 This file is the only coordination list for work in this repo.
 
 How to use
@@ -18,13 +20,23 @@ Notes
 - EP-P0-DB-05 RLS audit plus role alignment (company isolation is not enough).
 - EP-P0-SEC-02 Replace in-memory rate limiting with a shared production store (remove temporary disable).
 - EP-P0-SEC-07 Decide and enforce registration model (self-signup vs invite-only).
+- EP-P0-FLOW-02 Make job photo uploads work end-to-end (upload + DB record + viewing).
+- EP-P0-FLOW-03 Implement Leads API to match the Sales Leads UI.
 - EP-P0-FLOW-04 Finish customer rating and review workflow (tokens -> rating -> bonus).
 - EP-P0-PAY-01 Harden Stripe payment flow (intent creation, webhook, idempotency, persistence).
 - EP-P0-PAY-02 Define and implement a real payment ledger.
 - EP-P0-PAY-03 Make manual Interac marking safe and auditable.
 
 ## P1 - Engineering, auth, dispatch, messaging, storage
-- Fix build failure: duplicate leadCreateSchema export. [WIP: OpenCode 2026-02-03]
+- Fix build failure: duplicate leadCreateSchema export. 
+- EP-P1-ENG-01 Validate all required environment variables at boot (fail fast).
+- EP-P1-ENG-02 Structured logging + request IDs everywhere (replace console.*).
+- EP-P1-ENG-03 Standardize API response format and error handling.
+- EP-P1-ENG-04 CI pipeline: typecheck + lint + tests + migration sanity.
+- EP-P1-ENG-05 Remove unsafe any usage and tighten validators.
+- EP-P1-ENG-06 Add E2E tests for critical flows (Playwright).
+- EP-P1-ENG-07 Remove stale agent docs/outdated claims; regenerate accurate documentation.
+- EP-P1-ENG-08 Create a production deployment checklist (repeatable + auditable).
 - EP-P1-AUTH-01 Redesign permission keys so technician settings do not equal company settings.
 - EP-P1-AUTH-02 Field-level authorization for jobs and customers.
 - EP-P1-AUTH-03 Define and enforce a job status state machine.
@@ -34,9 +46,11 @@ Notes
 - EP-P1-DISP-02 Replace naive auto-assign with an explainable assignment algorithm.
 - EP-P1-DISP-03 Build employee availability management end-to-end.
 - EP-P1-DISP-04 Weather cancellation safety checks and notifications.
+- EP-P1-MSG-01 Fix SMS send idempotency and message persistence ordering.
+- EP-P1-MSG-02 Inbound SMS webhook: verify signature, dedupe, map messages to correct company.
 - EP-P1-MSG-03 Opt-out and consent compliance for SMS (STOP handling, quiet hours).
 - EP-P1-MSG-04 Email sending requires Resend when enabled and tracks delivery.
-- EP-P1-STOR-01 Stop storing public URLs for sensitive documents. [WIP: OpenCode 2026-02-03]
+- EP-P1-STOR-01 Stop storing public URLs for sensitive documents. 
 - EP-P1-STOR-02 Add file validation and malware scanning hook.
 
 ## P2 - Feature completeness and UX
@@ -80,7 +94,7 @@ Notes
 - Monitoring and logging plan (error tracking, analytics, performance).
 
 ## QA and testing
-- Manual comprehensive test blocked: missing Playwright dependency (install Playwright and rerun npx tsx tests/manual-comprehensive-test.ts). [WIP: opencode 2026-02-03]
+- Manual comprehensive test blocked: missing Playwright dependency (install Playwright and rerun npx tsx tests/manual-comprehensive-test.ts).
 - Run full E2E suite: npm run test:e2e (fix failures).
 - Test core workflows: create lead, customer, team member, job; dispatch calendar (auto-assign, drag-drop).
 
