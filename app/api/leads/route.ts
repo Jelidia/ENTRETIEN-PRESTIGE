@@ -17,7 +17,7 @@ import { logAudit } from "@/lib/audit";
 import { mapLeadRow, splitCustomerName, type LeadRow } from "@/lib/leads";
 
 const leadSelect =
-  "lead_id, first_name, last_name, phone, email, address, status, estimated_job_value, follow_up_date, notes, created_at, sales_rep_id";
+  "lead_id, first_name, last_name, phone, email, address, status, estimated_job_value, follow_up_date, quote_valid_until, notes, created_at, sales_rep_id";
 const defaultPageSize = 100;
 
 export async function GET(request: Request) {
@@ -123,6 +123,7 @@ export async function POST(request: Request) {
       address: parsed.data.address ?? null,
       estimated_job_value: parsed.data.estimated_value ?? null,
       follow_up_date: parsed.data.follow_up_date ?? null,
+      quote_valid_until: parsed.data.quote_valid_until ?? null,
       notes: parsed.data.notes ?? null,
       status: parsed.data.status ?? "new",
       sales_rep_id: salesRepId,

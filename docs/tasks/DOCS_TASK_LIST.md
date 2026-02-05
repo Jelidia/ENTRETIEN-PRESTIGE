@@ -55,7 +55,6 @@ Notes
 - EP-P0-SEC-09 Optional SSO (SAML/OIDC) design & implementation for enterprise tenants.
 
 ### Engineering & data quality
-- EP-P0-ENG-10 Fix npm build errors. [WIP: AI - 7 2026-02-05]
 - EP-P0-ENG-11 CI gating: require typecheck, lint, unit tests and security checks before merge.
 - EP-P0-ENG-12 Add dependency license & SCA policy (allowed licenses).
 - EP-P0-ENG-13 Accessibility (WCAG) audit & remediation plan for public pages and admin UI.
@@ -142,7 +141,6 @@ Notes
 - EP-P1-DISP-11 Reschedule flow: send SMS link → customer selects new slot → confirm + update job.
 
 ### Sales workflow
-- EP-P1-SALES-02 Implémenter l'Expiration des Devis: date de validité sur Leads/Devis ; empêcher conversion si expiré. [WIP: AI - 7 2026-02-05]
 
 ### Ops & restrictions
 - EP-P1-OPS-04 Implémenter les Restrictions Technicien-Client: liste "Techniciens Exclus" sur profil client.
@@ -200,8 +198,6 @@ Notes
 ### Dispatch enhancements
 
 ### UX & UI
-- EP-P2-UX-04 Quick Actions (Call/SMS) in lists. [WIP: AI - 7 2026-02-05]
-- EP-P2-UI-02 Mobile UI audit (iOS/Android). [WIP: AI - 7 2026-02-05]
 ---
 
 ## P3 - Product expansion

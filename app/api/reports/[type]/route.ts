@@ -245,6 +245,7 @@ export async function POST(
       postal_code: parsed.data.postalCode,
       estimated_job_value: parsed.data.estimatedJobValue,
       follow_up_date: parsed.data.followUpDate,
+      quote_valid_until: parsed.data.quoteValidUntil,
       status: parsed.data.status ?? "new",
       notes: parsed.data.notes,
     });

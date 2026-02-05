@@ -13,6 +13,7 @@ export type LeadRow = {
   status: string | null;
   estimated_job_value: number | null;
   follow_up_date: string | null;
+  quote_valid_until: string | null;
   notes: string | null;
   created_at: string | null;
   sales_rep_id?: string | null;
@@ -27,6 +28,7 @@ export type LeadResponse = {
   status: LeadStatus;
   estimated_value: number;
   follow_up_date: string | null;
+  quote_valid_until: string | null;
   notes: string | null;
   created_at: string | null;
 };
@@ -38,6 +40,32 @@ export function normalizeLeadStatus(value: string | null): LeadStatus {
     return value as LeadStatus;
   }
   return "new";
+}
+
+export function parseLeadDate(value?: string | null) {
+  if (!value) {
+    return null;
+  }
+  if (value.includes("T")) {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+  const parts = value.split("-").map((item) => Number(item));
+  if (parts.length === 3 && parts.every((item) => Number.isFinite(item))) {
+    const [year, month, day] = parts;
+    return new Date(year, month - 1, day);
+  }
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+export function isQuoteExpired(quoteValidUntil?: string | null, now = new Date()) {
+  const parsed = parseLeadDate(quoteValidUntil);
+  if (!parsed) {
+    return false;
+  }
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return parsed < today;
 }
 
 export function splitCustomerName(name: string) {
@@ -62,6 +90,7 @@ export function mapLeadRow(row: LeadRow): LeadResponse {
     status: normalizeLeadStatus(row.status),
     estimated_value: row.estimated_job_value ?? 0,
     follow_up_date: row.follow_up_date ?? null,
+    quote_valid_until: row.quote_valid_until ?? null,
     notes: row.notes ?? null,
     created_at: row.created_at ?? null,
   };

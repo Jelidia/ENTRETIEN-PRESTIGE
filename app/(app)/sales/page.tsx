@@ -1,6 +1,7 @@
 "use client";
 
 import TopBar from "@/components/TopBar";
+import { isQuoteExpired } from "@/lib/leads";
 import { normalizePhoneE164 } from "@/lib/smsTemplates";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -47,10 +48,12 @@ type LeadRow = {
   lead_id: string;
   first_name: string;
   last_name: string;
+  phone?: string | null;
   status: string;
-  estimated_job_value?: number;
-  follow_up_date?: string;
-  city?: string;
+  estimated_job_value?: number | null;
+  follow_up_date?: string | null;
+  city?: string | null;
+  quote_valid_until?: string | null;
 };
 
 type TerritoryRow = {
@@ -186,6 +189,16 @@ function formatTimeShort(value?: string | null) {
   return value.length >= 5 ? value.slice(0, 5) : value;
 }
 
+function formatLeadDate(value?: string | null) {
+  if (!value) return "";
+  const raw = value.length <= 10 ? `${value}T00:00:00` : value;
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+  return parsed.toLocaleDateString("fr-CA");
+}
+
 export default function SalesPage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
   const [leads, setLeads] = useState<LeadRow[]>([]);
@@ -213,6 +226,7 @@ export default function SalesPage() {
     city: "",
     estimatedJobValue: "",
     followUpDate: "",
+    quoteValidUntil: "",
     notes: "",
   });
   const [territoryForm, setTerritoryForm] = useState({
@@ -578,6 +592,7 @@ export default function SalesPage() {
         ...leadForm,
         phone: normalizedPhone ?? "",
         estimatedJobValue: leadForm.estimatedJobValue ? Number(leadForm.estimatedJobValue) : undefined,
+        quoteValidUntil: leadForm.quoteValidUntil || undefined,
       }),
     });
     const json = await response.json().catch(() => ({}));
@@ -594,6 +609,7 @@ export default function SalesPage() {
       city: "",
       estimatedJobValue: "",
       followUpDate: "",
+      quoteValidUntil: "",
       notes: "",
     });
     void loadData();
@@ -947,6 +963,16 @@ export default function SalesPage() {
                   ))}
                 </div>
               </div>
+            </div>
+            <div className="form-row">
+              <label className="label" htmlFor="quoteValidUntil">Validité du devis</label>
+              <input
+                id="quoteValidUntil"
+                className="input"
+                type="date"
+                value={leadForm.quoteValidUntil}
+                onChange={(event) => setLeadForm({ ...leadForm, quoteValidUntil: event.target.value })}
+              />
             </div>
             <div className="form-row">
               <label className="label" htmlFor="leadNotes">Notes</label>
@@ -1459,32 +1485,73 @@ export default function SalesPage() {
               <th>Valeur</th>
               <th>Ville</th>
               <th>Relance</th>
+              <th>Validité devis</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {leads.map((lead) => (
-              <tr key={lead.lead_id}>
-                <td>{lead.first_name} {lead.last_name}</td>
-                <td>{lead.status}</td>
-                <td>{lead.estimated_job_value ? `$${lead.estimated_job_value}` : ""}</td>
-                <td>{lead.city ?? ""}</td>
-                <td>{lead.follow_up_date ?? ""}</td>
-              </tr>
-            ))}
+            {leads.map((lead) => {
+              const phoneHref = normalizePhoneE164(lead.phone ?? "");
+              const quoteExpired = isQuoteExpired(lead.quote_valid_until ?? null);
+              const validityLabel = lead.quote_valid_until ? formatLeadDate(lead.quote_valid_until) : "";
+              return (
+                <tr key={lead.lead_id}>
+                  <td>{lead.first_name} {lead.last_name}</td>
+                  <td>{lead.status}</td>
+                  <td>{lead.estimated_job_value ? `$${lead.estimated_job_value}` : ""}</td>
+                  <td>{lead.city ?? ""}</td>
+                  <td>{lead.follow_up_date ? formatLeadDate(lead.follow_up_date) : ""}</td>
+                  <td>
+                    {validityLabel}
+                    {quoteExpired ? (
+                      <span className="badge badge-danger" style={{ marginLeft: 6 }}>Expiré</span>
+                    ) : null}
+                  </td>
+                  <td>
+                    {phoneHref ? (
+                      <div className="table-actions">
+                        <a className="button-ghost" href={`tel:${phoneHref}`}>Appeler</a>
+                        <a className="button-ghost" href={`sms:${phoneHref}`}>SMS</a>
+                      </div>
+                    ) : (
+                      <span className="card-meta">—</span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
         <div className="card-list-mobile" style={{ marginTop: 12 }}>
-          {leads.map((lead) => (
-            <div className="mobile-card" key={lead.lead_id}>
-              <div className="mobile-card-title">{lead.first_name} {lead.last_name}</div>
-              <div className="mobile-card-meta">Statut : {lead.status}</div>
-              <div className="mobile-card-meta">
-                Valeur : {lead.estimated_job_value ? `$${lead.estimated_job_value}` : ""}
+          {leads.map((lead) => {
+            const phoneHref = normalizePhoneE164(lead.phone ?? "");
+            const quoteExpired = isQuoteExpired(lead.quote_valid_until ?? null);
+            return (
+              <div className="mobile-card" key={lead.lead_id}>
+                <div className="mobile-card-title">{lead.first_name} {lead.last_name}</div>
+                <div className="mobile-card-meta">Statut : {lead.status}</div>
+                <div className="mobile-card-meta">
+                  Valeur : {lead.estimated_job_value ? `$${lead.estimated_job_value}` : ""}
+                </div>
+                {lead.phone ? <div className="mobile-card-meta">{lead.phone}</div> : null}
+                <div className="mobile-card-meta">Ville : {lead.city ?? ""}</div>
+                <div className="mobile-card-meta">
+                  Relance : {lead.follow_up_date ? formatLeadDate(lead.follow_up_date) : "-"}
+                </div>
+                {lead.quote_valid_until ? (
+                  <div className="mobile-card-meta">
+                    Validité devis : {formatLeadDate(lead.quote_valid_until)}{quoteExpired ? " (expiré)" : ""}
+                  </div>
+                ) : null}
+                {phoneHref ? (
+                  <div className="mobile-card-actions">
+                    <a className="button-ghost" href={`tel:${phoneHref}`}>Appeler</a>
+                    <a className="button-ghost" href={`sms:${phoneHref}`}>SMS</a>
+                  </div>
+                ) : null}
               </div>
-              <div className="mobile-card-meta">Ville : {lead.city ?? ""}</div>
-              <div className="mobile-card-meta">Relance : {lead.follow_up_date ?? ""}</div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

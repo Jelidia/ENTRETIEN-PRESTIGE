@@ -1625,6 +1625,13 @@ code {
   min-width: var(--min-tap-target);
 }
 
+.touch-device a.button-primary,
+.touch-device a.button-secondary,
+.touch-device a.button-ghost {
+  min-height: var(--min-tap-target);
+  min-width: var(--min-tap-target);
+}
+
 .touch-device .bottom-nav-item {
   min-height: 48px;
   min-width: 60px;
@@ -1644,6 +1651,12 @@ code {
 .os-ios {
   /* Smooth scrolling */
   -webkit-overflow-scrolling: touch;
+}
+
+.os-ios .input,
+.os-ios .select,
+.os-ios .textarea {
+  font-size: 16px;
 }
 
 .os-ios .app-body {

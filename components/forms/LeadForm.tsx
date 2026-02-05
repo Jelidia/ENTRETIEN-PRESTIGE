@@ -56,6 +56,7 @@ export default function LeadForm({ onSuccess, onCancel }: LeadFormProps) {
     estimatedValue: "",
     notes: "",
     followUpDate: "",
+    quoteValidUntil: "",
   });
   const [status, setStatus] = useState("");
   const [statusTone, setStatusTone] = useState<"success" | "error">("error");
@@ -91,6 +92,7 @@ export default function LeadForm({ onSuccess, onCancel }: LeadFormProps) {
           estimated_value: form.estimatedValue ? parseFloat(form.estimatedValue) : 0,
           notes: form.notes || null,
           follow_up_date: form.followUpDate || null,
+          quote_valid_until: form.quoteValidUntil || null,
           status: "new",
         }),
       });
@@ -115,6 +117,7 @@ export default function LeadForm({ onSuccess, onCancel }: LeadFormProps) {
         estimatedValue: "",
         notes: "",
         followUpDate: "",
+        quoteValidUntil: "",
       });
 
       // Call success callback after a brief delay
@@ -230,6 +233,20 @@ export default function LeadForm({ onSuccess, onCancel }: LeadFormProps) {
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="form-row">
+        <label className="label" htmlFor="quoteValidUntil">
+          Validité du devis
+        </label>
+        <input
+          id="quoteValidUntil"
+          className="input"
+          type="date"
+          value={form.quoteValidUntil}
+          onChange={(event) => updateField("quoteValidUntil", event.target.value)}
+          disabled={loading}
+        />
       </div>
 
       <div className="form-row">

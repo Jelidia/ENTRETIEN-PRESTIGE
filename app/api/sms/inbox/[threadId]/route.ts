@@ -35,9 +35,13 @@ async function resolveCustomerIds(
       .eq("sales_rep_id", userId)
       .eq("company_id", companyId);
 
-    const customerIds = [...new Set(
-      jobs?.map((job: { customer_id?: string | null }) => job.customer_id).filter(Boolean) || []
-    )];
+    const customerIds = [
+      ...new Set(
+        (jobs ?? [])
+          .map((job: { customer_id?: string | null }) => job.customer_id)
+          .filter((value): value is string => Boolean(value))
+      ),
+    ];
 
     return customerIds;
   }

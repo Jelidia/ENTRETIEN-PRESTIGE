@@ -16,10 +16,10 @@ import { leadUpdateSchema } from "@/lib/validators";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 import { getRequestIp } from "@/lib/rateLimit";
 import { logAudit } from "@/lib/audit";
-import { mapLeadRow, splitCustomerName, type LeadRow } from "@/lib/leads";
+import { isQuoteExpired, mapLeadRow, splitCustomerName, type LeadRow } from "@/lib/leads";
 
 const leadSelect =
-  "lead_id, first_name, last_name, phone, email, address, status, estimated_job_value, follow_up_date, notes, created_at, sales_rep_id";
+  "lead_id, first_name, last_name, phone, email, address, status, estimated_job_value, follow_up_date, quote_valid_until, notes, created_at, sales_rep_id";
 
 async function fetchLead(
   client: ReturnType<typeof createUserClient>,
@@ -97,6 +97,13 @@ export async function PATCH(
     return notFound("Lead not found", "lead_not_found");
   }
 
+  const nextQuoteValidUntil = parsed.data.quote_valid_until ?? existing.quote_valid_until;
+  if (parsed.data.status === "won" && existing.status !== "won") {
+    if (isQuoteExpired(nextQuoteValidUntil)) {
+      return conflict("quote_expired", "Le devis est expiré. Mettez à jour la date de validité.");
+    }
+  }
+
   const idempotency = await beginIdempotency(client, request, user.id, parsed.data);
   if (idempotency.action === "replay") {
     return NextResponse.json(idempotency.body, { status: idempotency.status });
@@ -131,6 +138,9 @@ export async function PATCH(
   }
   if (parsed.data.follow_up_date !== undefined) {
     updates.follow_up_date = parsed.data.follow_up_date;
+  }
+  if (parsed.data.quote_valid_until !== undefined) {
+    updates.quote_valid_until = parsed.data.quote_valid_until;
   }
   if (parsed.data.notes !== undefined) {
     updates.notes = parsed.data.notes;

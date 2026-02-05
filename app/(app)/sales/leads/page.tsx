@@ -5,20 +5,32 @@ import TopBar from "@/components/TopBar";
 import BottomSheet from "@/components/BottomSheet";
 import Pagination from "@/components/Pagination";
 import LeadForm from "@/components/forms/LeadForm";
+import { isQuoteExpired } from "@/lib/leads";
 import { normalizePhoneE164 } from "@/lib/smsTemplates";
 
 type Lead = {
   lead_id: string;
   customer_name: string;
   phone: string;
-  email: string;
-  address: string;
+  email: string | null;
+  address: string | null;
   status: "new" | "contacted" | "estimated" | "won" | "lost";
   estimated_value: number;
   follow_up_date: string | null;
-  notes: string;
-  created_at: string;
+  quote_valid_until: string | null;
+  notes: string | null;
+  created_at: string | null;
 };
+
+function formatLeadDate(value?: string | null) {
+  if (!value) return "";
+  const raw = value.length <= 10 ? `${value}T00:00:00` : value;
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+  return parsed.toLocaleDateString("fr-CA");
+}
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -32,6 +44,7 @@ export default function LeadsPage() {
   const [actionStatusTone, setActionStatusTone] = useState<"success" | "error">("success");
   const [smsDraft, setSmsDraft] = useState("");
   const [smsSending, setSmsSending] = useState(false);
+  const [quoteValidUntilDraft, setQuoteValidUntilDraft] = useState("");
   const itemsPerPage = 5;
 
   useEffect(() => {
@@ -49,6 +62,7 @@ export default function LeadsPage() {
     setActionStatus("");
     setSmsDraft("");
     setSmsSending(false);
+    setQuoteValidUntilDraft(selectedLead?.quote_valid_until ?? "");
   }, [selectedLead]);
 
   async function loadLeads() {
@@ -61,7 +75,17 @@ export default function LeadsPage() {
     setLoading(false);
   }
 
+  function applyLeadUpdate(updatedLead: Lead) {
+    setLeads((prev) => prev.map((lead) => (lead.lead_id === updatedLead.lead_id ? updatedLead : lead)));
+    setSelectedLead(updatedLead);
+  }
+
   async function updateLeadStatus(leadId: string, newStatus: Lead["status"]) {
+    if (newStatus === "won" && selectedLead && isQuoteExpired(selectedLead.quote_valid_until)) {
+      setActionStatusTone("error");
+      setActionStatus("Devis expiré. Mettez à jour la date de validité pour convertir.");
+      return;
+    }
     setActionStatus("");
     setActionStatusTone("success");
     const res = await fetch(`/api/leads/${leadId}`, {
@@ -71,16 +95,58 @@ export default function LeadsPage() {
     });
 
     if (res.ok) {
-      setLeads((prev) =>
-        prev.map((lead) => (lead.lead_id === leadId ? { ...lead, status: newStatus } : lead))
-      );
-      setSelectedLead((prev) => (prev ? { ...prev, status: newStatus } : prev));
+      const data = await res.json().catch(() => ({}));
+      const updatedLead = data.lead ?? data.data?.lead ?? null;
+      if (updatedLead) {
+        applyLeadUpdate(updatedLead as Lead);
+      } else {
+        setLeads((prev) =>
+          prev.map((lead) => (lead.lead_id === leadId ? { ...lead, status: newStatus } : lead))
+        );
+        setSelectedLead((prev) => (prev ? { ...prev, status: newStatus } : prev));
+      }
       setActionStatus("Statut mis à jour.");
       void loadLeads();
     } else {
       const data = await res.json().catch(() => ({}));
       setActionStatusTone("error");
       setActionStatus(data.error ?? "Échec de la mise à jour du lead");
+    }
+  }
+
+  async function updateLeadQuoteValidity() {
+    if (!selectedLead) return;
+    setActionStatus("");
+    setActionStatusTone("success");
+    const res = await fetch(`/api/leads/${selectedLead.lead_id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ quote_valid_until: quoteValidUntilDraft || null }),
+    });
+
+    if (res.ok) {
+      const data = await res.json().catch(() => ({}));
+      const updatedLead = data.lead ?? data.data?.lead ?? null;
+      if (updatedLead) {
+        applyLeadUpdate(updatedLead as Lead);
+      } else {
+        setLeads((prev) =>
+          prev.map((lead) =>
+            lead.lead_id === selectedLead.lead_id
+              ? { ...lead, quote_valid_until: quoteValidUntilDraft || null }
+              : lead
+          )
+        );
+        setSelectedLead((prev) =>
+          prev ? { ...prev, quote_valid_until: quoteValidUntilDraft || null } : prev
+        );
+      }
+      setActionStatus("Validité du devis mise à jour.");
+      void loadLeads();
+    } else {
+      const data = await res.json().catch(() => ({}));
+      setActionStatusTone("error");
+      setActionStatus(data.error ?? "Échec de la mise à jour de la validité");
     }
   }
 
@@ -163,6 +229,7 @@ export default function LeadsPage() {
     { key: "lost", label: "Perdu", color: "#ef4444" },
   ];
   const selectedTabLabel = tabs.find((tab) => tab.key === selectedTab)?.label ?? "";
+  const quoteExpired = selectedLead ? isQuoteExpired(selectedLead.quote_valid_until) : false;
 
   return (
     <div className="page">
@@ -214,38 +281,73 @@ export default function LeadsPage() {
       {!loading && paginatedLeads.length > 0 && (
         <>
           <div className="list" style={{ marginTop: "20px" }}>
-            {paginatedLeads.map((lead) => (
-              <div
-                key={lead.lead_id}
-                className="list-item"
-                onClick={() => setSelectedLead(lead)}
-                style={{ cursor: "pointer" }}
-              >
-                <div>
-                  <strong>{lead.customer_name}</strong>
-                  <div className="card-meta">{lead.phone}</div>
-                  <div style={{ marginTop: "8px", fontSize: "14px" }}>
-                    Est. ${lead.estimated_value.toLocaleString()}
-                  </div>
-                  {lead.follow_up_date && (
-                    <div className="card-meta" style={{ marginTop: "4px" }}>
-                      Suivi: {new Date(lead.follow_up_date).toLocaleDateString("fr-CA")}
+            {paginatedLeads.map((lead) => {
+              const phoneHref = normalizePhoneE164(lead.phone);
+              const quoteExpired = isQuoteExpired(lead.quote_valid_until);
+              return (
+                <div
+                  key={lead.lead_id}
+                  className="list-item"
+                  onClick={() => setSelectedLead(lead)}
+                  style={{ cursor: "pointer" }}
+                >
+                  <div>
+                    <strong>{lead.customer_name}</strong>
+                    <div className="card-meta">{lead.phone}</div>
+                    <div style={{ marginTop: "8px", fontSize: "14px" }}>
+                      Est. ${lead.estimated_value.toLocaleString()}
                     </div>
-                  )}
+                    {lead.follow_up_date && (
+                      <div className="card-meta" style={{ marginTop: "4px" }}>
+                        Suivi: {formatLeadDate(lead.follow_up_date)}
+                      </div>
+                    )}
+                    {lead.quote_valid_until && (
+                      <div className="card-meta" style={{ marginTop: "4px" }}>
+                        Validité devis: {formatLeadDate(lead.quote_valid_until)}
+                      </div>
+                    )}
+                    {quoteExpired ? (
+                      <div style={{ marginTop: "6px" }}>
+                        <span className="badge badge-danger">Devis expiré</span>
+                      </div>
+                    ) : null}
+                  </div>
+                  <div style={{ display: "grid", gap: "8px", justifyItems: "end" }}>
+                    <span
+                      className="badge"
+                      style={{
+                        background: tabs.find((t) => t.key === lead.status)?.color + "20",
+                        color: tabs.find((t) => t.key === lead.status)?.color,
+                      }}
+                    >
+                      {tabs.find((t) => t.key === lead.status)?.label ?? lead.status}
+                    </span>
+                    {phoneHref ? (
+                      <div
+                        className="list-item-actions"
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        <a
+                          className="button-ghost"
+                          href={`tel:${phoneHref}`}
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          Appeler
+                        </a>
+                        <a
+                          className="button-ghost"
+                          href={`sms:${phoneHref}`}
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          SMS
+                        </a>
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
-                <div>
-                  <span
-                    className="badge"
-                    style={{
-                      background: tabs.find((t) => t.key === lead.status)?.color + "20",
-                      color: tabs.find((t) => t.key === lead.status)?.color,
-                    }}
-                  >
-                    {tabs.find((t) => t.key === lead.status)?.label ?? lead.status}
-                  </span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <Pagination
@@ -296,7 +398,17 @@ export default function LeadsPage() {
               </div>
               {selectedLead.follow_up_date && (
                 <div style={{ marginTop: "8px" }}>
-                  <strong>Suivi:</strong> {new Date(selectedLead.follow_up_date).toLocaleDateString("fr-CA")}
+                  <strong>Suivi:</strong> {formatLeadDate(selectedLead.follow_up_date)}
+                </div>
+              )}
+              {selectedLead.quote_valid_until && (
+                <div style={{ marginTop: "8px" }}>
+                  <strong>Validité du devis :</strong> {formatLeadDate(selectedLead.quote_valid_until)}
+                  {quoteExpired ? (
+                    <span className="badge badge-danger" style={{ marginLeft: "8px" }}>
+                      Expiré
+                    </span>
+                  ) : null}
                 </div>
               )}
             </div>
@@ -339,6 +451,32 @@ export default function LeadsPage() {
               </button>
             </div>
 
+            <h4 style={{ marginTop: "24px" }}>Validité du devis</h4>
+            <div className="form-row">
+              <label className="label" htmlFor="leadQuoteValidUntil">Date de validité</label>
+              <input
+                id="leadQuoteValidUntil"
+                className="input"
+                type="date"
+                value={quoteValidUntilDraft}
+                onChange={(event) => setQuoteValidUntilDraft(event.target.value)}
+              />
+            </div>
+            <div className="table-actions">
+              <button
+                className="button-secondary"
+                type="button"
+                onClick={updateLeadQuoteValidity}
+              >
+                Mettre à jour la validité
+              </button>
+            </div>
+            {quoteExpired ? (
+              <div className="alert">
+                Devis expiré. Mettez à jour la date de validité pour convertir.
+              </div>
+            ) : null}
+
             <h4 style={{ marginTop: "24px" }}>Mettre à jour le statut</h4>
             <div style={{ display: "grid", gap: "8px" }}>
               {tabs
@@ -360,9 +498,10 @@ export default function LeadsPage() {
 
             {selectedLead.status !== "won" && (
               <button
-                className="button-primary"
+                className={`button-primary${quoteExpired ? " disabled" : ""}`}
                 onClick={() => updateLeadStatus(selectedLead.lead_id, "won")}
                 style={{ marginTop: "16px", background: "#10b981" }}
+                disabled={quoteExpired}
               >
                 ✅ CONVERTIR EN TRAVAIL
               </button>
