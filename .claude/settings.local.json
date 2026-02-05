@@ -32,7 +32,10 @@
       "Bash(find:*)",
       "Bash(tail:*)",
       "Bash(dir /b \"C:\\\\Users\\\\adam\\\\.claude\"\" 2>nul || echo \"Directory not found \")",
-      "Bash(npm search:*)"
+      "Bash(npm search:*)",
+      "Bash(for f in app/api/jobs/route.ts app/api/customers/route.ts app/api/invoices/route.ts app/api/search/route.ts app/api/uploads/route.ts app/api/health/route.ts)",
+      "Bash(done)",
+      "Bash(for f in \"app/\\(app\\)/dashboard/page.tsx\" \"app/\\(app\\)/jobs/page.tsx\" \"app/\\(app\\)/customers/page.tsx\" \"app/\\(app\\)/dispatch/page.tsx\" \"app/\\(app\\)/inbox/page.tsx\" \"app/\\(app\\)/team/page.tsx\" \"app/\\(app\\)/invoices/page.tsx\" \"app/\\(app\\)/reports/page.tsx\")"
     ]
   },
   "enabledMcpjsonServers": [

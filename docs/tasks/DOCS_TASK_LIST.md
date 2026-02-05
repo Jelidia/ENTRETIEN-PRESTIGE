@@ -60,7 +60,8 @@ Many AI work on this at the same time so never forget that
 - EP-P0-CODE-03 Clean .gitignore: add tsconfig.tsbuildinfo, .next/, .vercel/, .DS_Store
 - EP-P0-CODE-05 Add Content-Security-Policy and security headers in next.config.js
 - EP-P0-CODE-06 Create unified error handling: lib/errors.ts with ApiError class and standard responses
-- EP-P0-CODE-07 Replace in-memory rate limiter (lib/rateLimit.ts) with Redis/Upstash
+- EP-P0-CODE-04 Upgrade lib/env.ts to use Zod schema validation (currently just a process.env wrapper with no startup validation)
+- EP-P0-CODE-07 Replace in-memory rate limiter (lib/rateLimit.ts) with Redis/Upstash — NOTE: rate limiting is currently DISABLED (returns allowed: true always)
 - EP-P0-CODE-08 Fix Jest/Babel config so test suites can parse TypeScript/JSX (all 33 suites currently fail with SyntaxError)
 - EP-P0-CODE-09 Fix pre-existing TypeScript error in tests/pagesCoverage.test.tsx (DashboardPage arity mismatch)
 
@@ -289,6 +290,8 @@ Many AI work on this at the same time so never forget that
 
 ### Monitoring & Observability
 - EP-P0-OBS-01 Integrate Sentry for error tracking (or PostHog/LogRocket)
+- EP-P0-OBS-02 Replace lib/logger.ts console.log wrapper with real structured logging (pino or winston) — current logger is JSON-over-console, not a proper library
+- EP-P0-OBS-03 Upgrade /api/health to check DB connectivity, Redis, and external services — currently a 12-line stub that only returns `{status:"ok"}`
 - EP-P0-OBS-04 Enable Vercel Analytics or alternative performance monitoring
 - EP-P0-OBS-05 Setup uptime monitoring: Pingdom, UptimeRobot, or BetterStack
 - EP-P0-OBS-06 Create alert rules: critical errors, payment failures, API downtime, permission violations
