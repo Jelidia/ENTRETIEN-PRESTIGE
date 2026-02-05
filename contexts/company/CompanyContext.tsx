@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 export type CompanyInfo = {
   name?: string | null;
@@ -17,7 +17,7 @@ export function CompanyProvider({
   children,
   initialCompany = null,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   initialCompany?: CompanyInfo | null;
 }) {
   const [company, setCompany] = useState<CompanyInfo | null>(initialCompany);

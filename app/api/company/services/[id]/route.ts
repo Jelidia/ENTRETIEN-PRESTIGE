@@ -1,4 +1,4 @@
-import { requirePermission } from "@/lib/auth";
+import { requirePermission, requireRole } from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { companyServiceUpdateSchema } from "@/lib/validators";
@@ -46,7 +46,7 @@ export async function PATCH(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  const auth = await requirePermission(request, "settings");
+  const auth = await requireRole(request, ["admin", "manager"], "settings");
   if ("response" in auth) {
     return auth.response;
   }
@@ -103,7 +103,7 @@ export async function DELETE(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  const auth = await requirePermission(request, "settings");
+  const auth = await requireRole(request, ["admin", "manager"], "settings");
   if ("response" in auth) {
     return auth.response;
   }

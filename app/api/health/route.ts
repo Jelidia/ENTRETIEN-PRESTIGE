@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
+import { ok, validationError } from "@/lib/auth";
 import { emptyQuerySchema } from "@/lib/validators";
 
 export function GET(request: Request) {
   const queryResult = emptyQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
   if (!queryResult.success) {
-    return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
+    return validationError(queryResult.error, "Invalid request");
   }
   const data = { status: "ok", timestamp: new Date().toISOString() };
-  return NextResponse.json({ success: true, data, ...data });
+  return ok(data, { flatten: true });
 }

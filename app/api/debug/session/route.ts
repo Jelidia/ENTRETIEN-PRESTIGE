@@ -1,12 +1,11 @@
-import { NextResponse } from "next/server";
-import { requireRole } from "@/lib/auth";
+import { errorResponse, notFound, ok, requireRole, validationError } from "@/lib/auth";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { createUserClient } from "@/lib/supabaseServer";
 import { emptyQuerySchema } from "@/lib/validators";
 
 export async function GET(request: Request) {
   if (process.env.NODE_ENV !== "development") {
-    return NextResponse.json({ success: false, error: "Not found" }, { status: 404 });
+    return notFound("Not found", "not_found");
   }
 
   const auth = await requireRole(request, ["admin"]);
@@ -16,15 +15,17 @@ export async function GET(request: Request) {
 
   const queryResult = emptyQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
   if (!queryResult.success) {
-    return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
+    return validationError(queryResult.error, "Invalid request");
   }
 
   const token = getAccessTokenFromRequest(request);
 
   if (!token) {
-    return NextResponse.json({ success: false, error: "No session token found",
-      cookies: request.headers.get("cookie"),
-      hasToken: false,
+    return errorResponse(400, "session_missing", "No session token found", {
+      details: {
+        cookies: request.headers.get("cookie"),
+        hasToken: false,
+      },
     });
   }
 
@@ -32,10 +33,12 @@ export async function GET(request: Request) {
   const { data: userData, error: userError } = await client.auth.getUser();
 
   if (userError || !userData.user) {
-    return NextResponse.json({ success: false, error: "Invalid session",
-      details: userError?.message,
-      hasToken: true,
-      tokenValid: false,
+    return errorResponse(401, "session_invalid", "Invalid session", {
+      details: {
+        error: userError?.message,
+        hasToken: true,
+        tokenValid: false,
+      },
     });
   }
 
@@ -46,12 +49,14 @@ export async function GET(request: Request) {
     .single();
 
   if (profileError) {
-    return NextResponse.json({ success: false, error: "Profile fetch failed",
-      details: profileError.message,
-      hasToken: true,
-      tokenValid: true,
-      canReadProfile: false,
-      userId: userData.user.id,
+    return errorResponse(500, "profile_fetch_failed", "Profile fetch failed", {
+      details: {
+        error: profileError.message,
+        hasToken: true,
+        tokenValid: true,
+        canReadProfile: false,
+        userId: userData.user.id,
+      },
     });
   }
 
@@ -72,9 +77,5 @@ export async function GET(request: Request) {
     },
   };
 
-  return NextResponse.json({
-    success: true,
-    data,
-    ...data,
-  });
+  return ok(data, { flatten: true });
 }

@@ -306,7 +306,7 @@ describe("Phase 1: Sales Settings Page", () => {
       total_customers: 50,
       active_customers: 42,
       monthly_revenue: 12500,
-      day_of_week: "monday",
+      polygon_coordinates: [],
     };
 
     mockFetch.mockImplementation((url: RequestInfo | URL) => {
@@ -317,10 +317,16 @@ describe("Phase 1: Sales Settings Page", () => {
           json: () => Promise.resolve(salesUser),
         });
       }
-      if (requestUrl.includes("/api/reports/territories")) {
+      if (requestUrl.includes("/api/maps/territory")) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ data: [mockTerritory] }),
+        });
+      }
+      if (requestUrl.includes(`/api/users/${salesUser.user_id}/availability`)) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ availability: [] }),
         });
       }
       return Promise.reject(new Error("Unknown URL"));
@@ -333,13 +339,13 @@ describe("Phase 1: Sales Settings Page", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Territoire assigné")).toBeInTheDocument();
+      expect(screen.getByText("Carte du territoire")).toBeInTheDocument();
       expect(screen.getByText("Downtown Montreal")).toBeInTheDocument();
       expect(screen.getByText("42 clients actifs • 50 total")).toBeInTheDocument();
     });
   });
 
-  it("should allow updating day of week", async () => {
+  it("should show availability calendar for sales rep", async () => {
     const salesUser = { ...mockUser, role: "sales_rep" };
     const mockTerritory = {
       territory_id: "territory-1",
@@ -348,10 +354,10 @@ describe("Phase 1: Sales Settings Page", () => {
       total_customers: 50,
       active_customers: 42,
       monthly_revenue: 12500,
-      day_of_week: "monday",
+      polygon_coordinates: [],
     };
 
-    mockFetch.mockImplementation((url: RequestInfo | URL, options?: RequestInit) => {
+    mockFetch.mockImplementation((url: RequestInfo | URL) => {
       const requestUrl = getRequestUrl(url);
       if (requestUrl.includes("/api/users/me")) {
         return Promise.resolve({
@@ -359,16 +365,16 @@ describe("Phase 1: Sales Settings Page", () => {
           json: () => Promise.resolve(salesUser),
         });
       }
-      if (requestUrl.includes("/api/reports/territories")) {
-        if (options?.method === "PATCH") {
-          return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve({ success: true }),
-          });
-        }
+      if (requestUrl.includes("/api/maps/territory")) {
         return Promise.resolve({
           ok: true,
           json: () => Promise.resolve({ data: [mockTerritory] }),
+        });
+      }
+      if (requestUrl.includes(`/api/users/${salesUser.user_id}/availability`)) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ availability: [] }),
         });
       }
       return Promise.reject(new Error("Unknown URL"));
@@ -381,19 +387,7 @@ describe("Phase 1: Sales Settings Page", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Downtown Montreal")).toBeInTheDocument();
-    });
-
-    // Select a day
-    const select = screen.getByRole("combobox");
-    fireEvent.change(select, { target: { value: "tuesday" } });
-
-    // Click update button
-    const updateButton = screen.getByText("Mettre à jour le jour");
-    fireEvent.click(updateButton);
-
-    await waitFor(() => {
-      expect(screen.getByText(/Jour de la semaine mis à jour/)).toBeInTheDocument();
+      expect(screen.getByText("Calendrier de disponibilité")).toBeInTheDocument();
     });
   });
 });

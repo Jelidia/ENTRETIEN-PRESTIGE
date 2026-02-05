@@ -12,7 +12,7 @@ export default function JobForm() {
   const [form, setForm] = useState({
     customerId: "",
     serviceType: "",
-    servicePackage: "premium",
+    servicePackage: "",
     scheduledDate: "",
     scheduledStartTime: "",
     scheduledEndTime: "",
@@ -97,16 +97,14 @@ export default function JobForm() {
       </div>
       <div className="form-row">
         <label className="label" htmlFor="servicePackage">Forfait</label>
-        <select
+        <input
           id="servicePackage"
-          className="select"
+          className="input"
           value={form.servicePackage}
           onChange={(event) => updateField("servicePackage", event.target.value)}
-        >
-          <option value="basique">Basique</option>
-          <option value="premium">Premium</option>
-          <option value="prestige">Prestige</option>
-        </select>
+          placeholder="Ex. Standard"
+          required
+        />
       </div>
       <div className="grid-3">
         <div className="form-row">

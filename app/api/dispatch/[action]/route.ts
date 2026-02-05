@@ -75,7 +75,7 @@ export async function POST(
       return NextResponse.json({ success: false, error: "Invalid sales day" }, { status: 400 });
     }
     if (!isWithinNextWeek(parsed.data.salesDayDate)) {
-      return NextResponse.json({ success: false, error: "La date doit etre dans les 7 prochains jours" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "La date doit être dans les 7 prochains jours" }, { status: 400 });
     }
     if (!isValidTimeRange(parsed.data.startTime, parsed.data.endTime)) {
       return NextResponse.json({ success: false, error: "Les heures sont invalides" }, { status: 400 });
@@ -113,7 +113,7 @@ export async function POST(
       .single();
 
     if (error || !data) {
-      return NextResponse.json({ success: false, error: "Impossible de creer la journee" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Impossible de créer la journée" }, { status: 400 });
     }
 
     await logAudit(client, profile.user_id, "sales_day_create", "sales_day", data.sales_day_id, "success", {
@@ -131,6 +131,57 @@ export async function POST(
     const parsed = salesDayAssignSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json({ success: false, error: "Invalid assignment" }, { status: 400 });
+    }
+
+    const { data: day } = await client
+      .from("sales_days")
+      .select("sales_day_date, start_time, end_time")
+      .eq("sales_day_id", parsed.data.salesDayId)
+      .eq("company_id", profile.company_id)
+      .single();
+
+    if (!day) {
+      return NextResponse.json({ success: false, error: "Journée introuvable" }, { status: 404 });
+    }
+    if (!day.start_time || !day.end_time) {
+      return NextResponse.json({ success: false, error: "Heures manquantes" }, { status: 400 });
+    }
+
+    const repIds = parsed.data.assignments.map((assignment) => assignment.salesRepId);
+    const { data: reps } = await client
+      .from("users")
+      .select("user_id, role")
+      .eq("company_id", profile.company_id)
+      .in("user_id", repIds);
+
+    const repMap = new Map((reps ?? []).map((rep) => [rep.user_id, rep.role]));
+    const invalidRep = repIds.find((repId) => repMap.get(repId) !== "sales_rep");
+    if (invalidRep) {
+      return NextResponse.json({ success: false, error: "Vendeur invalide" }, { status: 400 });
+    }
+
+    const availabilityCache = new Map<string, Set<string>>();
+    for (const assignment of parsed.data.assignments) {
+      const startTime = assignment.overrideStartTime ?? day.start_time;
+      const endTime = day.end_time;
+      if (!isValidTimeRange(startTime, endTime)) {
+        return NextResponse.json({ success: false, error: "Les heures sont invalides" }, { status: 400 });
+      }
+      const cacheKey = `${startTime}-${endTime}`;
+      if (!availabilityCache.has(cacheKey)) {
+        const available = await resolveAvailableSalesReps(
+          client,
+          profile.company_id,
+          day.sales_day_date,
+          startTime,
+          endTime
+        );
+        availabilityCache.set(cacheKey, new Set(available.map((rep) => rep.user_id)));
+      }
+      const availableIds = availabilityCache.get(cacheKey);
+      if (!availableIds?.has(assignment.salesRepId)) {
+        return NextResponse.json({ success: false, error: "Vendeur indisponible" }, { status: 400 });
+      }
     }
 
     const idempotency = await beginIdempotency(client, request, profile.user_id, {
@@ -206,7 +257,7 @@ export async function POST(
       .single();
 
     if (!day) {
-      return NextResponse.json({ success: false, error: "Journee introuvable" }, { status: 404 });
+      return NextResponse.json({ success: false, error: "Journée introuvable" }, { status: 404 });
     }
     if (!isValidTimeRange(day.start_time, day.end_time)) {
       return NextResponse.json({ success: false, error: "Les heures sont invalides" }, { status: 400 });
@@ -224,7 +275,7 @@ export async function POST(
       .upsert(rows, { onConflict: "sales_day_id,sales_rep_id" });
 
     if (error) {
-      return NextResponse.json({ success: false, error: "Impossible d'assigner les disponibilites" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Impossible d'assigner les disponibilités" }, { status: 400 });
     }
 
     await logAudit(client, profile.user_id, "sales_day_auto_assign", "sales_day", parsed.data.salesDayId, "success", {
@@ -656,7 +707,7 @@ export async function GET(
         .order("created_at", { ascending: false });
 
       if (error) {
-        return NextResponse.json({ success: false, error: "Impossible de charger les journees" }, { status: 400 });
+        return NextResponse.json({ success: false, error: "Impossible de charger les journées" }, { status: 400 });
       }
 
       return NextResponse.json({ success: true, data: data ?? [] });
@@ -671,7 +722,7 @@ export async function GET(
     }
     const { data, error } = await query.order("sales_day_date", { ascending: true });
     if (error) {
-      return NextResponse.json({ success: false, error: "Impossible de charger les journees" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Impossible de charger les journées" }, { status: 400 });
     }
     return NextResponse.json({ success: true, data: data ?? [] });
   }
@@ -722,7 +773,7 @@ export async function GET(
       return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
     }
     if (!isWithinNextWeek(queryResult.data.date)) {
-      return NextResponse.json({ success: false, error: "La date doit etre dans les 7 prochains jours" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "La date doit être dans les 7 prochains jours" }, { status: 400 });
     }
     if (!isValidTimeRange(queryResult.data.startTime, queryResult.data.endTime)) {
       return NextResponse.json({ success: false, error: "Les heures sont invalides" }, { status: 400 });

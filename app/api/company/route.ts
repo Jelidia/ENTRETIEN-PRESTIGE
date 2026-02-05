@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requirePermission } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { companyUpdateSchema } from "@/lib/validators";
@@ -8,7 +8,7 @@ import { getRequestIp } from "@/lib/rateLimit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 
 export async function GET(request: Request) {
-  const auth = await requirePermission(request, "settings");
+  const auth = await requireRole(request, ["admin", "manager"], "settings");
   if ("response" in auth) {
     return auth.response;
   }
@@ -30,7 +30,7 @@ export async function GET(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const auth = await requirePermission(request, "settings");
+  const auth = await requireRole(request, ["admin", "manager"], "settings");
   if ("response" in auth) {
     return auth.response;
   }

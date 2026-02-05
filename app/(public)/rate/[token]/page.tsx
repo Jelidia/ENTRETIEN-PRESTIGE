@@ -12,6 +12,11 @@ type RatingData = {
   technician_name: string;
 };
 
+function formatServiceLabel(value?: string | null) {
+  if (!value) return "";
+  return value.replace(/_/g, " ");
+}
+
 export default function PublicRatingPage({ params }: { params: { token: string } }) {
   const router = useRouter();
   const [ratingData, setRatingData] = useState<RatingData | null>(null);
@@ -150,7 +155,7 @@ export default function PublicRatingPage({ params }: { params: { token: string }
             </div>
             <div style={styles.infoRow}>
               <span style={styles.label}>Service:</span>
-              <span style={styles.value}>{ratingData.service_type}</span>
+              <span style={styles.value}>{formatServiceLabel(ratingData.service_type)}</span>
             </div>
             <div style={styles.infoRow}>
               <span style={styles.label}>Date:</span>

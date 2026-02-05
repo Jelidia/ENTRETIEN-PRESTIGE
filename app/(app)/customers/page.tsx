@@ -92,6 +92,14 @@ export default function CustomersPage() {
   const [smsForm, setSmsForm] = useState({ to: "", message: "" });
   const [emailForm, setEmailForm] = useState({ to: "", subject: "", html: "" });
   const [smsMessages, setSmsMessages] = useState<SmsRow[]>([]);
+  const [portalForm, setPortalForm] = useState({
+    customerId: "",
+    expiresInDays: "14",
+  });
+  const [portalStatus, setPortalStatus] = useState("");
+  const [portalLink, setPortalLink] = useState("");
+  const [portalExpiry, setPortalExpiry] = useState("");
+  const [portalCustomerName, setPortalCustomerName] = useState("");
 
   useEffect(() => {
     void loadCustomers();
@@ -197,6 +205,47 @@ export default function CustomersPage() {
     }
     setEmailStatus("Courriel envoyé.");
     setEmailForm({ to: "", subject: "", html: "" });
+  }
+
+  async function submitPortalLink(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setPortalStatus("");
+    setPortalLink("");
+    setPortalExpiry("");
+    setPortalCustomerName("");
+    const expiresInDays = Number.parseInt(portalForm.expiresInDays, 10);
+    const payload: { customerId: string; expiresInDays?: number } = {
+      customerId: portalForm.customerId,
+    };
+    if (Number.isFinite(expiresInDays) && expiresInDays > 0) {
+      payload.expiresInDays = expiresInDays;
+    }
+    const response = await fetch("/api/portal", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setPortalStatus(json.error ?? "Impossible de générer le lien");
+      return;
+    }
+    setPortalLink(json.link ?? "");
+    setPortalExpiry(json.expires_at ?? "");
+    setPortalCustomerName(json.customer_name ?? "");
+    setPortalStatus("Lien généré.");
+  }
+
+  async function copyPortalLink() {
+    if (!portalLink) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(portalLink);
+      setPortalStatus("Lien copié.");
+    } catch {
+      setPortalStatus("Copie impossible.");
+    }
   }
 
   return (
@@ -398,6 +447,62 @@ export default function CustomersPage() {
               <button className="button-primary" type="submit">Soumettre la plainte</button>
               {complaintStatus ? <div className="hint">{complaintStatus}</div> : null}
             </form>
+          </div>
+          <div className="card">
+            <h3 className="card-title">Portail client</h3>
+            <form className="form-grid" onSubmit={submitPortalLink}>
+              <div className="form-row">
+                <label className="label" htmlFor="portalCustomer">ID client</label>
+                <input
+                  id="portalCustomer"
+                  className="input"
+                  value={portalForm.customerId}
+                  onChange={(event) => setPortalForm({ ...portalForm, customerId: event.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-row">
+                <label className="label" htmlFor="portalExpiry">Expiration (jours)</label>
+                <input
+                  id="portalExpiry"
+                  className="input"
+                  type="number"
+                  min={1}
+                  max={90}
+                  value={portalForm.expiresInDays}
+                  onChange={(event) => setPortalForm({ ...portalForm, expiresInDays: event.target.value })}
+                />
+              </div>
+              <button className="button-primary" type="submit">Générer le lien</button>
+              {portalStatus ? <div className="hint">{portalStatus}</div> : null}
+            </form>
+            {portalLink ? (
+              <div className="form-grid" style={{ marginTop: 16 }}>
+                <div className="form-row">
+                  <label className="label" htmlFor="portalLink">Lien sécurisé</label>
+                  <textarea
+                    id="portalLink"
+                    className="textarea"
+                    value={portalLink}
+                    readOnly
+                  />
+                </div>
+                <div className="table-actions">
+                  <button className="button-secondary" type="button" onClick={copyPortalLink}>
+                    Copier le lien
+                  </button>
+                  <a className="button-ghost" href={portalLink} target="_blank" rel="noreferrer">
+                    Ouvrir
+                  </a>
+                  {portalExpiry ? (
+                    <span className="tag">Expire le {formatServiceDate(portalExpiry)}</span>
+                  ) : null}
+                </div>
+                {portalCustomerName ? (
+                  <div className="card-meta">Client: {portalCustomerName}</div>
+                ) : null}
+              </div>
+            ) : null}
           </div>
           <div className="card">
             <h3 className="card-title">Communications</h3>

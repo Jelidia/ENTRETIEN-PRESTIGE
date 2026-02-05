@@ -348,8 +348,8 @@ export default function SalesSchedulePage() {
     if (!mapsKey) return "Carte désactivée. Ajoutez NEXT_PUBLIC_GOOGLE_MAPS_API_KEY.";
     if (salesDayMapError) return salesDayMapError;
     if (!salesDayMapReady) return "Chargement de la carte...";
-    if (!selectedSalesDay) return "Selectionnez une journee.";
-    if (!masterPolygonPoints.length && !subPolygonPoints.length) return "Aucune zone a afficher.";
+    if (!selectedSalesDay) return "Sélectionnez une journée.";
+    if (!masterPolygonPoints.length && !subPolygonPoints.length) return "Aucune zone à afficher.";
     return "";
   }, [mapsKey, masterPolygonPoints.length, salesDayMapError, salesDayMapReady, selectedSalesDay, subPolygonPoints.length]);
 
@@ -387,7 +387,7 @@ export default function SalesSchedulePage() {
     const response = await fetch("/api/dispatch/sales-days");
     const json = await response.json().catch(() => ({ data: [] }));
     if (!response.ok) {
-      setSalesDayStatus(json.error ?? "Impossible de charger les journees de vente");
+      setSalesDayStatus(json.error ?? "Impossible de charger les journées de vente");
       return;
     }
     const list = (json.data ?? []) as SalesDayAssignmentResponse[];
@@ -531,9 +531,9 @@ export default function SalesSchedulePage() {
       <div className="card" style={{ marginTop: 16 }}>
         <div className="card-header">
           <div>
-            <h3 className="card-title">Mes journees de vente</h3>
+            <h3 className="card-title">Mes journées de vente</h3>
             <div className="card-meta">
-              {salesDays.length ? "Vos assignations a venir" : "Aucune assignation"}
+              {salesDays.length ? "Vos assignations à venir" : "Aucune assignation"}
             </div>
           </div>
           {salesDays.length ? (
@@ -549,7 +549,7 @@ export default function SalesSchedulePage() {
         {salesDayStatus ? <div className="hint">{salesDayStatus}</div> : null}
         {salesDays.length === 0 ? (
           <div className="card-meta" style={{ marginTop: 12 }}>
-            Aucune journee planifiee.
+            Aucune journée planifiée.
           </div>
         ) : (
           <div style={{ marginTop: 12 }}>
@@ -577,7 +577,7 @@ export default function SalesSchedulePage() {
                   <div style={{ width: "100%" }}>
                     <strong>{formatSalesDayDate(selectedSalesDay.date)}</strong>
                     <div className="card-meta">
-                      Heure de depart : {formatTimeShort(selectedSalesDay.overrideStartTime || selectedSalesDay.startTime)}
+                      Heure de départ : {formatTimeShort(selectedSalesDay.overrideStartTime || selectedSalesDay.startTime)}
                     </div>
                     <div className="card-meta">
                       Adresse : {[
@@ -586,7 +586,7 @@ export default function SalesSchedulePage() {
                         selectedSalesDay.overrideMeetingPostalCode || selectedSalesDay.meetingPostalCode,
                       ]
                         .filter(Boolean)
-                        .join(", ") || "Adresse a confirmer"}
+                        .join(", ") || "Adresse à confirmer"}
                     </div>
                     {(selectedSalesDay.notesOverride || selectedSalesDay.notes) ? (
                       <div className="card-meta" style={{ marginTop: 4 }}>
@@ -599,9 +599,19 @@ export default function SalesSchedulePage() {
             ) : null}
 
             {showSalesDayMap ? (
-              <div className="map-shell" style={{ marginTop: 12 }}>
-                <div className="map-canvas" ref={salesDayMapRef} />
-                {salesDayMapMessage ? <div className="map-overlay">{salesDayMapMessage}</div> : null}
+              <div style={{ marginTop: 12 }}>
+                <div className="map-shell">
+                  <div className="map-canvas" ref={salesDayMapRef} />
+                  {salesDayMapMessage ? <div className="map-overlay">{salesDayMapMessage}</div> : null}
+                </div>
+                <div className="table-actions" style={{ marginTop: 8 }}>
+                  <span className="pill" style={{ backgroundColor: "#bfdbfe", color: "#1e3a8a" }}>
+                    Zone équipe
+                  </span>
+                  <span className="pill" style={{ backgroundColor: "#5eead4", color: "#0f766e" }}>
+                    Zone assignée
+                  </span>
+                </div>
               </div>
             ) : null}
           </div>

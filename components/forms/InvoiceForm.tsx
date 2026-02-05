@@ -27,18 +27,18 @@ export default function InvoiceForm() {
 
     const data = await response.json();
     if (!response.ok) {
-      setStatusMessage(data.error ?? "Unable to create invoice");
+      setStatusMessage(data.error ?? "Impossible de creer la facture");
       return;
     }
 
-    setStatusMessage("Invoice created.");
+    setStatusMessage("Facture creee.");
     window.location.reload();
   }
 
   return (
     <form className="form-grid" onSubmit={handleSubmit}>
       <div className="form-row">
-        <label className="label" htmlFor="customerId">Customer ID</label>
+        <label className="label" htmlFor="customerId">ID client</label>
         <input
           id="customerId"
           className="input"
@@ -48,7 +48,7 @@ export default function InvoiceForm() {
         />
       </div>
       <div className="form-row">
-        <label className="label" htmlFor="invoiceNumber">Invoice number</label>
+        <label className="label" htmlFor="invoiceNumber">Numero de facture</label>
         <input
           id="invoiceNumber"
           className="input"
@@ -59,7 +59,7 @@ export default function InvoiceForm() {
       </div>
       <div className="grid-2">
         <div className="form-row">
-          <label className="label" htmlFor="dueDate">Due date</label>
+          <label className="label" htmlFor="dueDate">Date d'echeance</label>
           <input
             id="dueDate"
             className="input"
@@ -82,21 +82,21 @@ export default function InvoiceForm() {
         </div>
       </div>
       <div className="form-row">
-        <label className="label" htmlFor="status">Status</label>
+        <label className="label" htmlFor="status">Statut</label>
         <select
           id="status"
           className="select"
           value={form.status}
           onChange={(event) => updateField("status", event.target.value)}
         >
-          <option value="draft">Draft</option>
-          <option value="sent">Sent</option>
-          <option value="paid">Paid</option>
-          <option value="overdue">Overdue</option>
+          <option value="draft">Brouillon</option>
+          <option value="sent">Envoyee</option>
+          <option value="paid">Payee</option>
+          <option value="overdue">En retard</option>
         </select>
       </div>
       <button className="button-primary" type="submit">
-        Save invoice
+        Enregistrer la facture
       </button>
       {statusMessage ? <div className="hint">{statusMessage}</div> : null}
     </form>

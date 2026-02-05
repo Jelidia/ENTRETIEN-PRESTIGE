@@ -16,11 +16,16 @@ import {
 
 type TeamUser = {
   user_id: string;
-  full_name: string;
+  full_name: string | null;
   email: string;
   phone?: string | null;
   role: string;
   status: string;
+  address?: string | null;
+  city?: string | null;
+  province?: string | null;
+  postal_code?: string | null;
+  country?: string | null;
   access_permissions?: PermissionMap | null;
 };
 
@@ -29,6 +34,11 @@ type TeamEdit = {
   status: string;
   full_name: string;
   phone: string;
+  address: string;
+  city: string;
+  province: string;
+  postal_code: string;
+  country: string;
 };
 
 type CompanyProfile = {
@@ -187,6 +197,11 @@ export default function AdminManagePage() {
         status: member.status ?? "active",
         full_name: member.full_name ?? "",
         phone: member.phone ?? "",
+        address: member.address ?? "",
+        city: member.city ?? "",
+        province: member.province ?? "",
+        postal_code: member.postal_code ?? "",
+        country: member.country ?? "",
       };
     });
     setTeamEdits(nextEdits);
@@ -379,6 +394,21 @@ export default function AdminManagePage() {
     }
     if (edits.phone !== (member.phone ?? "")) {
       payload.phone = edits.phone;
+    }
+    if (edits.address !== (member.address ?? "")) {
+      payload.address = edits.address;
+    }
+    if (edits.city !== (member.city ?? "")) {
+      payload.city = edits.city;
+    }
+    if (edits.province !== (member.province ?? "")) {
+      payload.province = edits.province;
+    }
+    if (edits.postal_code !== (member.postal_code ?? "")) {
+      payload.postal_code = edits.postal_code;
+    }
+    if (edits.country !== (member.country ?? "")) {
+      payload.country = edits.country;
     }
     if (edits.role && edits.role !== member.role) {
       payload.role = edits.role;
@@ -822,6 +852,50 @@ export default function AdminManagePage() {
                         className="input"
                         value={edits?.phone ?? ""}
                         onChange={(event) => updateTeamEdit(member.user_id, "phone", event.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="form-row">
+                    <label className="label">Adresse</label>
+                    <input
+                      className="input"
+                      value={edits?.address ?? ""}
+                      onChange={(event) => updateTeamEdit(member.user_id, "address", event.target.value)}
+                    />
+                  </div>
+                  <div className="grid-2">
+                    <div className="form-row">
+                      <label className="label">Ville</label>
+                      <input
+                        className="input"
+                        value={edits?.city ?? ""}
+                        onChange={(event) => updateTeamEdit(member.user_id, "city", event.target.value)}
+                      />
+                    </div>
+                    <div className="form-row">
+                      <label className="label">Province</label>
+                      <input
+                        className="input"
+                        value={edits?.province ?? ""}
+                        onChange={(event) => updateTeamEdit(member.user_id, "province", event.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid-2">
+                    <div className="form-row">
+                      <label className="label">Code postal</label>
+                      <input
+                        className="input"
+                        value={edits?.postal_code ?? ""}
+                        onChange={(event) => updateTeamEdit(member.user_id, "postal_code", event.target.value)}
+                      />
+                    </div>
+                    <div className="form-row">
+                      <label className="label">Pays</label>
+                      <input
+                        className="input"
+                        value={edits?.country ?? ""}
+                        onChange={(event) => updateTeamEdit(member.user_id, "country", event.target.value)}
                       />
                     </div>
                   </div>

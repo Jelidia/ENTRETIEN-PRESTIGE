@@ -67,7 +67,7 @@ export async function GET(request: Request) {
   const client = createUserClient(token);
   const { data, error } = await client
     .from("users")
-    .select("user_id, full_name, email, phone, role, status, created_at, access_permissions")
+    .select("user_id, full_name, email, phone, role, status, created_at, access_permissions, address, city, province, postal_code, country")
     .eq("company_id", profile.company_id)
     .order("created_at", { ascending: false })
     .limit(200);

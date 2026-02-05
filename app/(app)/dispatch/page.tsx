@@ -140,7 +140,7 @@ export default function DispatchPage() {
   const [quickCreateForm, setQuickCreateForm] = useState({
     customerId: "",
     serviceType: "",
-    servicePackage: "premium",
+    servicePackage: "",
     scheduledDate: "",
     scheduledStartTime: "",
     scheduledEndTime: "",
@@ -750,6 +750,7 @@ export default function DispatchPage() {
       ...prev,
       customerId: "",
       serviceType: "",
+      servicePackage: "",
       address: "",
       city: "",
       postalCode: "",
@@ -1100,18 +1101,16 @@ export default function DispatchPage() {
                 </div>
                 <div className="form-row">
                   <label className="label" htmlFor="qcPackage">Forfait</label>
-                  <select
+                  <input
                     id="qcPackage"
-                    className="select"
+                    className="input"
                     value={quickCreateForm.servicePackage}
                     onChange={(event) =>
                       setQuickCreateForm((prev) => ({ ...prev, servicePackage: event.target.value }))
                     }
-                  >
-                    <option value="basique">Basique</option>
-                    <option value="premium">Premium</option>
-                    <option value="prestige">Prestige</option>
-                  </select>
+                    placeholder="Ex. Standard"
+                    required
+                  />
                 </div>
               </div>
               <div className="grid-3">

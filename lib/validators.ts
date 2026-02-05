@@ -591,6 +591,11 @@ export const portalLinkQuerySchema = z.object({
   expires_in_days: z.coerce.number().int().min(1).max(90).optional(),
 });
 
+export const portalLinkCreateSchema = z.object({
+  customerId: uuidSchema,
+  expiresInDays: z.number().int().min(1).max(90).optional(),
+});
+
 export const settingsDocumentQuerySchema = z.object({
   type: z.enum(["id_photo", "profile_photo", "contract"]),
 });

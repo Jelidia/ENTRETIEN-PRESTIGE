@@ -1,11 +1,12 @@
 "use client";
 
 import type { PermissionMap } from "@/lib/permissions";
+import type { ReactNode } from "react";
 import BottomNavMobile from "./BottomNavMobile";
 import { CompanyProvider, type CompanyInfo } from "@/contexts/company/CompanyContext";
 
 type AppShellProps = {
-  children: React.ReactNode;
+  children: ReactNode;
   initialPermissions?: PermissionMap | null;
   initialRole?: string | null;
   initialCompany?: CompanyInfo | null;

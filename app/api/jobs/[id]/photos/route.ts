@@ -1,5 +1,15 @@
 import { NextResponse } from "next/server";
-import { requireRole } from "@/lib/auth";
+import {
+  badRequest,
+  conflict,
+  forbidden,
+  notFound,
+  ok,
+  okBody,
+  requireRole,
+  serverError,
+  validationError,
+} from "@/lib/auth";
 import { createAdminClient, createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { photoUploadSchema } from "@/lib/validators";
@@ -85,14 +95,13 @@ export async function GET(
     .maybeSingle();
 
   if (jobError || !job) {
-    return NextResponse.json({ success: false, error: "Job not found" },
-      { status: 404 }
-    );
+    return notFound("Job not found", "job_not_found");
   }
 
   if (profile.role === "technician" && job.technician_id !== user.id) {
-    return NextResponse.json({ success: false, error: "You can only view photos for your assigned jobs" },
-      { status: 403 }
+    return forbidden(
+      "You can only view photos for your assigned jobs",
+      "job_photo_forbidden"
     );
   }
 
@@ -107,9 +116,7 @@ export async function GET(
       ...requestContext,
       action: "fetch_job_photos",
     });
-    return NextResponse.json({ success: false, error: "Unable to fetch photos" },
-      { status: 500 }
-    );
+    return serverError("Unable to fetch photos", "job_photos_load_failed");
   }
 
   // Check if all 8 photos are present
@@ -138,9 +145,7 @@ export async function GET(
       ...requestContext,
       action: "sign_job_photos",
     });
-    return NextResponse.json({ success: false, error: "Unable to sign photo URLs" },
-      { status: 500 }
-    );
+    return serverError("Unable to sign photo URLs", "job_photos_sign_failed");
   }
 
   const photoSet = new Set(
@@ -157,7 +162,7 @@ export async function GET(
     missing,
   };
 
-  return NextResponse.json({ success: true, data, ...data });
+  return ok(data, { flatten: true });
 }
 
 // POST /api/jobs/[id]/photos - Upload a new photo
@@ -187,23 +192,20 @@ export async function POST(
     .maybeSingle();
 
   if (jobError || !job) {
-    return NextResponse.json({ success: false, error: "Job not found" },
-      { status: 404 }
-    );
+    return notFound("Job not found", "job_not_found");
   }
 
   // Technicians can only upload photos for their assigned jobs
   if (profile.role === "technician" && job.technician_id !== user.id) {
-    return NextResponse.json({ success: false, error: "You can only upload photos for your assigned jobs" },
-      { status: 403 }
+    return forbidden(
+      "You can only upload photos for your assigned jobs",
+      "job_photo_forbidden"
     );
   }
 
   const contentType = request.headers.get("content-type") ?? "";
   if (!contentType.includes("multipart/form-data")) {
-    return NextResponse.json({ success: false, error: "Invalid photo upload" },
-      { status: 400 }
-    );
+    return badRequest("invalid_upload", "Invalid photo upload");
   }
 
   const formData = await request.formData();
@@ -212,9 +214,7 @@ export async function POST(
   const file = formData.get("file");
 
   if (!(file instanceof File)) {
-    return NextResponse.json({ success: false, error: "Photo file is required" },
-      { status: 400 }
-    );
+    return badRequest("photo_missing", "Photo file is required");
   }
 
   const validation = photoUploadSchema.safeParse({
@@ -223,21 +223,15 @@ export async function POST(
   });
 
   if (!validation.success) {
-    return NextResponse.json({ success: false, error: "Invalid photo data", details: validation.error.format() },
-      { status: 400 }
-    );
+    return validationError(validation.error, "Invalid photo data");
   }
 
   if (!file.type.startsWith("image/")) {
-    return NextResponse.json({ success: false, error: "Invalid photo type" },
-      { status: 400 }
-    );
+    return badRequest("photo_invalid_type", "Invalid photo type");
   }
 
   if (file.size > maxPhotoSizeBytes) {
-    return NextResponse.json({ success: false, error: "Photo file too large" },
-      { status: 400 }
-    );
+    return badRequest("photo_too_large", "Photo file too large");
   }
 
   const { photo_type, side } = validation.data;
@@ -252,10 +246,10 @@ export async function POST(
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
+    return conflict("idempotency_conflict", "Idempotency key conflict");
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
+    return conflict("idempotency_in_progress", "Request already in progress");
   }
 
   const admin = createAdminClient();
@@ -266,9 +260,7 @@ export async function POST(
       ...requestContext,
       action: "ensure_job_photo_bucket",
     });
-    return NextResponse.json({ success: false, error: "Unable to prepare storage" },
-      { status: 500 }
-    );
+    return serverError("Unable to prepare storage", "job_photo_storage_failed");
   }
 
   const safeName = normalizeFileName(file.name || "photo");
@@ -288,9 +280,7 @@ export async function POST(
       photo_type,
       side,
     });
-    return NextResponse.json({ success: false, error: "Failed to upload photo" },
-      { status: 500 }
-    );
+    return serverError("Failed to upload photo", "job_photo_upload_failed");
   }
 
   const photo_url = storagePath;
@@ -323,9 +313,7 @@ export async function POST(
         photo_type,
         side,
       });
-      return NextResponse.json({ success: false, error: "Failed to update photo" },
-        { status: 500 }
-      );
+      return serverError("Failed to update photo", "job_photo_update_failed");
     }
 
     await logAudit(client, user.id, "job_photo_update", "job", params.id, "success", {
@@ -334,9 +322,10 @@ export async function POST(
       newValues: { photo_type, side },
     });
 
-    const responseBody = { success: true, data: { photo: updated, updated: true }, photo: updated, updated: true };
-    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
-    return NextResponse.json(responseBody);
+    const responseBody = { photo: updated, updated: true };
+    const storedBody = okBody(responseBody, { flatten: true });
+    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, storedBody, 200);
+    return ok(responseBody, { flatten: true });
   }
 
   // Insert new photo
@@ -360,9 +349,7 @@ export async function POST(
       photo_type,
       side,
     });
-    return NextResponse.json({ success: false, error: "Failed to upload photo" },
-      { status: 500 }
-    );
+    return serverError("Failed to upload photo", "job_photo_create_failed");
   }
 
   await logAudit(client, user.id, "job_photo_create", "job", params.id, "success", {
@@ -371,9 +358,10 @@ export async function POST(
     newValues: { photo_type, side },
   });
 
-  const responseBody = { success: true, data: { photo, updated: false }, photo, updated: false };
-  await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 201);
-  return NextResponse.json(responseBody, { status: 201 });
+  const responseBody = { photo, updated: false };
+  const storedBody = okBody(responseBody, { flatten: true });
+  await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, storedBody, 201);
+  return ok(responseBody, { status: 201, flatten: true });
 }
 
 // DELETE /api/jobs/[id]/photos?photo_id=xxx - Delete a photo
@@ -398,9 +386,7 @@ export async function DELETE(
   const photoId = searchParams.get("photo_id");
 
   if (!photoId) {
-    return NextResponse.json({ success: false, error: "Missing photo_id parameter" },
-      { status: 400 }
-    );
+    return badRequest("missing_photo_id", "Missing photo_id parameter");
   }
 
   const idempotency = await beginIdempotency(client, request, profile.user_id, {
@@ -411,10 +397,10 @@ export async function DELETE(
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
+    return conflict("idempotency_conflict", "Idempotency key conflict");
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
+    return conflict("idempotency_in_progress", "Request already in progress");
   }
 
   const { data: photo, error: photoError } = await client
@@ -430,15 +416,11 @@ export async function DELETE(
       action: "fetch_photo_for_delete",
       photo_id: photoId,
     });
-    return NextResponse.json({ success: false, error: "Failed to delete photo" },
-      { status: 500 }
-    );
+    return serverError("Failed to delete photo", "job_photo_delete_failed");
   }
 
   if (!photo) {
-    return NextResponse.json({ success: false, error: "Photo not found" },
-      { status: 404 }
-    );
+    return notFound("Photo not found", "photo_not_found");
   }
 
   const storagePath = resolveStoragePath(photo.photo_url);
@@ -468,9 +450,7 @@ export async function DELETE(
       action: "delete_photo",
       photo_id: photoId,
     });
-    return NextResponse.json({ success: false, error: "Failed to delete photo" },
-      { status: 500 }
-    );
+    return serverError("Failed to delete photo", "job_photo_delete_failed");
   }
 
   await logAudit(client, profile.user_id, "job_photo_delete", "job", params.id, "success", {
@@ -479,7 +459,8 @@ export async function DELETE(
     newValues: { photo_id: photoId },
   });
 
-  const responseBody = { success: true, data: { success: true } };
-  await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
-  return NextResponse.json(responseBody);
+  const responseBody = { ok: true };
+  const storedBody = okBody(responseBody, { flatten: true });
+  await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, storedBody, 200);
+  return ok(responseBody, { flatten: true });
 }

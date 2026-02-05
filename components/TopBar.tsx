@@ -1,14 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import LogoutButton from "./LogoutButton";
 import { useCompany } from "@/contexts/company/CompanyContext";
 
 type TopBarProps = {
   title: string;
   subtitle?: string;
-  actions?: React.ReactNode;
+  actions?: ReactNode;
   showLogout?: boolean;
 };
 

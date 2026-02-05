@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { ok, requireUser, validationError } from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { resolvePermissions } from "@/lib/permissions";
@@ -13,7 +13,7 @@ export async function GET(request: Request) {
 
   const queryResult = emptyQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
   if (!queryResult.success) {
-    return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
+    return validationError(queryResult.error, "Invalid request");
   }
 
   const { profile } = auth;
@@ -42,9 +42,5 @@ export async function GET(request: Request) {
     role: profile.role,
   };
 
-  return NextResponse.json({
-    success: true,
-    data,
-    ...data,
-  });
+  return ok(data, { flatten: true });
 }

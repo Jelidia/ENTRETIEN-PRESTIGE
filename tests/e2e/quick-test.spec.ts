@@ -201,6 +201,7 @@ test.describe("manual verification", () => {
 
     await page.fill("#customerId", String(customerId));
     await page.fill("#serviceType", "Nettoyage spécial");
+    await page.fill("#servicePackage", "Standard");
     await page.fill("#scheduledDate", dateValue);
     await page.fill("#start", "09:00");
     await page.fill("#end", "10:00");

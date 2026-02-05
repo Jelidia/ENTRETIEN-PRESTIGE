@@ -390,15 +390,28 @@ export default function SalesPage() {
   const salesDayMapMessage = useMemo(() => {
     if (!mapsKey) return "Carte désactivée. Ajoutez NEXT_PUBLIC_GOOGLE_MAPS_API_KEY.";
     if (!salesDayMapReady) return "Chargement de la carte...";
-    if (!selectedSalesDayId) return "Selectionnez une journee.";
+    if (!selectedSalesDayId) return "Sélectionnez une journée.";
     if (salesDayZoneType === "sub" && !selectedAssignmentId) {
-      return "Selectionnez un vendeur pour la zone.";
+      return "Sélectionnez un vendeur pour la zone.";
     }
     if (!salesDayPolygonPoints.length) {
       return "Cliquez sur la carte pour dessiner la zone.";
     }
     return "";
   }, [mapsKey, salesDayMapReady, salesDayPolygonPoints.length, salesDayZoneType, selectedAssignmentId, selectedSalesDayId]);
+
+  const availabilityById = useMemo(() => {
+    const map = new Map<string, boolean>();
+    salesDayAvailability.forEach((rep) => {
+      map.set(rep.user_id, rep.available);
+    });
+    return map;
+  }, [salesDayAvailability]);
+
+  const selectedRepAvailability = useMemo(() => {
+    if (!salesDayAssignForm.salesRepId) return null;
+    return availabilityById.get(salesDayAssignForm.salesRepId) ?? null;
+  }, [availabilityById, salesDayAssignForm.salesRepId]);
 
   const selectedSalesDayLabel = useMemo(() => {
     if (!selectedSalesDay) return "";
@@ -410,7 +423,7 @@ export default function SalesPage() {
     const parts = [selectedSalesDay.meeting_address, selectedSalesDay.meeting_city, selectedSalesDay.meeting_postal_code]
       .filter(Boolean)
       .join(", ");
-    return parts || "Adresse a confirmer";
+    return parts || "Adresse à confirmer";
   }, [selectedSalesDay]);
 
   useEffect(() => {
@@ -521,10 +534,10 @@ export default function SalesPage() {
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setLeadStatus(json.error ?? "Impossible de creer le prospect");
+      setLeadStatus(json.error ?? "Impossible de créer le prospect");
       return;
     }
-    setLeadStatus("Prospect cree.");
+    setLeadStatus("Prospect créé.");
     setLeadForm({
       firstName: "",
       lastName: "",
@@ -603,7 +616,7 @@ export default function SalesPage() {
     const response = await fetch(`/api/dispatch/sales-availability?${params.toString()}`);
     const json = await response.json().catch(() => ({ data: [] }));
     if (!response.ok) {
-      setSalesDayStatus(json.error ?? "Impossible de charger les disponibilites");
+      setSalesDayStatus(json.error ?? "Impossible de charger les disponibilités");
       return;
     }
     setSalesDayAvailability(json.data ?? []);
@@ -627,10 +640,10 @@ export default function SalesPage() {
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setSalesDayStatus(json.error ?? "Impossible de creer la journee");
+      setSalesDayStatus(json.error ?? "Impossible de créer la journée");
       return;
     }
-    setSalesDayStatus("Journee creee.");
+    setSalesDayStatus("Journée créée.");
     setSalesDayForm({
       date: "",
       startTime: "",
@@ -650,7 +663,11 @@ export default function SalesPage() {
   async function submitSalesDayAssign(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selectedSalesDayId) {
-      setSalesDayStatus("Selectionnez une journee.");
+      setSalesDayStatus("Sélectionnez une journée.");
+      return;
+    }
+    if (selectedRepAvailability !== true) {
+      setSalesDayStatus("Ce vendeur n'est pas disponible sur ce créneau.");
       return;
     }
     setSalesDayStatus("");
@@ -676,7 +693,7 @@ export default function SalesPage() {
       setSalesDayStatus(json.error ?? "Impossible d'assigner le vendeur");
       return;
     }
-    setSalesDayStatus("Assignation enregistree.");
+    setSalesDayStatus("Assignation enregistrée.");
     setSalesDayAssignForm({
       salesRepId: salesDayAssignForm.salesRepId,
       overrideStartTime: "",
@@ -690,7 +707,7 @@ export default function SalesPage() {
 
   async function autoAssignSalesDay() {
     if (!selectedSalesDayId) {
-      setSalesDayStatus("Selectionnez une journee.");
+      setSalesDayStatus("Sélectionnez une journée.");
       return;
     }
     setSalesDayStatus("");
@@ -701,16 +718,16 @@ export default function SalesPage() {
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setSalesDayStatus(json.error ?? "Impossible d'assigner les disponibilites");
+      setSalesDayStatus(json.error ?? "Impossible d'assigner les disponibilités");
       return;
     }
-    setSalesDayStatus("Assignations automatiques appliquees.");
+    setSalesDayStatus("Assignations automatiques appliquées.");
     void loadSalesDayAssignments(selectedSalesDayId);
   }
 
   async function saveSalesDayZone() {
     if (!selectedSalesDayId) {
-      setSalesDayStatus("Selectionnez une journee.");
+      setSalesDayStatus("Sélectionnez une journée.");
       return;
     }
     if (salesDayPolygonPoints.length < 3) {
@@ -718,7 +735,7 @@ export default function SalesPage() {
       return;
     }
     if (salesDayZoneType === "sub" && !selectedAssignmentId) {
-      setSalesDayStatus("Selectionnez un vendeur.");
+      setSalesDayStatus("Sélectionnez un vendeur.");
       return;
     }
 
@@ -739,7 +756,7 @@ export default function SalesPage() {
       setSalesDayStatus(json.error ?? "Impossible de sauvegarder la zone");
       return;
     }
-    setSalesDayStatus("Zone enregistree.");
+    setSalesDayStatus("Zone enregistrée.");
     void loadData();
     if (salesDayZoneType === "sub") {
       void loadSalesDayAssignments(selectedSalesDayId);
@@ -784,7 +801,7 @@ export default function SalesPage() {
           <form className="form-grid" onSubmit={submitLead}>
             <div className="grid-2">
               <div className="form-row">
-                <label className="label" htmlFor="firstName">Prenom</label>
+                <label className="label" htmlFor="firstName">Prénom</label>
                 <input
                   id="firstName"
                   className="input"
@@ -816,7 +833,7 @@ export default function SalesPage() {
             </div>
             <div className="grid-2">
               <div className="form-row">
-                <label className="label" htmlFor="leadPhone">Telephone</label>
+                <label className="label" htmlFor="leadPhone">Téléphone</label>
                 <input
                   id="leadPhone"
                   className="input"
@@ -836,7 +853,7 @@ export default function SalesPage() {
             </div>
             <div className="grid-2">
               <div className="form-row">
-                <label className="label" htmlFor="leadValue">Valeur estimee</label>
+                <label className="label" htmlFor="leadValue">Valeur estimée</label>
                 <input
                   id="leadValue"
                   className="input"
@@ -971,7 +988,7 @@ export default function SalesPage() {
 
       <div className="grid-2">
         <div className="card">
-          <h3 className="card-title">Creer une journee de vente</h3>
+          <h3 className="card-title">Créer une journée de vente</h3>
           <form className="form-grid" onSubmit={submitSalesDay}>
             <div className="grid-2">
               <div className="form-row">
@@ -988,7 +1005,7 @@ export default function SalesPage() {
                 />
               </div>
               <div className="form-row">
-                <label className="label" htmlFor="salesDayStart">Heure de debut</label>
+                <label className="label" htmlFor="salesDayStart">Heure de début</label>
                 <input
                   id="salesDayStart"
                   className="input"
@@ -1012,7 +1029,7 @@ export default function SalesPage() {
                 />
               </div>
               <div className="form-row">
-                <label className="label" htmlFor="salesDayMeeting">Adresse de depart</label>
+                <label className="label" htmlFor="salesDayMeeting">Adresse de départ</label>
                 <input
                   id="salesDayMeeting"
                   className="input"
@@ -1051,9 +1068,9 @@ export default function SalesPage() {
               />
             </div>
             <div className="card-meta">
-              Planification max 7 jours a l'avance.
+              Planification max 7 jours à l'avance.
             </div>
-            <button className="button-primary" type="submit">Creer la journee</button>
+            <button className="button-primary" type="submit">Créer la journée</button>
           </form>
         </div>
 
@@ -1061,7 +1078,7 @@ export default function SalesPage() {
           <h3 className="card-title">Assignations des vendeurs</h3>
           {salesDays.length === 0 ? (
             <div className="card-meta" style={{ marginTop: 12 }}>
-              Aucune journee planifiee.
+              Aucune journée planifiée.
             </div>
           ) : (
             <div className="form-grid">
@@ -1087,10 +1104,10 @@ export default function SalesPage() {
               ) : null}
 
               <div>
-                <div className="card-label">Disponibilites</div>
+                <div className="card-label">Disponibilités</div>
                 {salesDayAvailability.length === 0 ? (
                   <div className="card-meta" style={{ marginTop: 8 }}>
-                    Aucune disponibilite chargee.
+                    Aucune disponibilité chargée.
                   </div>
                 ) : (
                   <div className="list" style={{ marginTop: 8 }}>
@@ -1142,10 +1159,15 @@ export default function SalesPage() {
                       </option>
                     ))}
                   </select>
+                  {selectedRepAvailability === false ? (
+                    <div className="card-meta" style={{ marginTop: 6 }}>
+                      Ce vendeur est indiqué comme indisponible pour ce créneau.
+                    </div>
+                  ) : null}
                 </div>
                 <div className="grid-2">
                   <div className="form-row">
-                    <label className="label" htmlFor="overrideTime">Heure de depart (optionnel)</label>
+                    <label className="label" htmlFor="overrideTime">Heure de départ (optionnel)</label>
                     <input
                       id="overrideTime"
                       className="input"
@@ -1157,7 +1179,7 @@ export default function SalesPage() {
                     />
                   </div>
                   <div className="form-row">
-                    <label className="label" htmlFor="overrideAddress">Adresse de depart (optionnel)</label>
+                    <label className="label" htmlFor="overrideAddress">Adresse de départ (optionnel)</label>
                     <input
                       id="overrideAddress"
                       className="input"
@@ -1203,30 +1225,50 @@ export default function SalesPage() {
                     }
                   />
                 </div>
-                <button className="button-primary" type="submit">Assigner le vendeur</button>
+                <button
+                  className="button-primary"
+                  type="submit"
+                  disabled={selectedRepAvailability !== true}
+                >
+                  Assigner le vendeur
+                </button>
               </form>
 
               <div>
                 <div className="card-label">Vendeurs assignes</div>
                 {salesDayAssignments.length === 0 ? (
                   <div className="card-meta" style={{ marginTop: 8 }}>
-                    Aucune assignation pour cette journee.
+                    Aucune assignation pour cette journée.
                   </div>
                 ) : (
                   <div className="list" style={{ marginTop: 8 }}>
                     {salesDayAssignments.map((assignment) => {
                       const rep = assignment.sales_rep;
                       const label = rep?.full_name || rep?.email || assignment.sales_rep_id || "Vendeur";
+                      const availability = assignment.sales_rep_id
+                        ? availabilityById.get(assignment.sales_rep_id)
+                        : undefined;
                       return (
                         <div className="list-item list-item-stack" key={assignment.assignment_id}>
                           <div style={{ width: "100%" }}>
                             <strong>{label}</strong>
-                          <div className="card-meta">
+                            <div className="card-meta">
                               {assignment.override_start_time
-                                ? `Depart: ${formatTimeShort(assignment.override_start_time)}`
-                                : "Depart par defaut"}
+                                ? `Départ: ${formatTimeShort(assignment.override_start_time)}`
+                                : "Départ par défaut"}
                             </div>
                           </div>
+                          {availability !== undefined ? (
+                            <span
+                              className="pill"
+                              style={{
+                                backgroundColor: availability ? "#dcfce7" : "#fee2e2",
+                                color: availability ? "#166534" : "#991b1b",
+                              }}
+                            >
+                              {availability ? "Disponible" : "Indisponible"}
+                            </span>
+                          ) : null}
                           <button
                             className="button-ghost"
                             type="button"
@@ -1252,7 +1294,7 @@ export default function SalesPage() {
                     type="button"
                     onClick={() => setSalesDayZoneType("master")}
                   >
-                    Zone equipe
+                    Zone équipe
                   </button>
                   <button
                     className={salesDayZoneType === "sub" ? "button-primary" : "button-secondary"}

@@ -4,11 +4,40 @@
 
 This file is the only coordination list for work in this repo.
 
+First before working give yourself a name., that is not used.
+Many ai work on this at the same time so never forget that
+
+List of name available (take a name from here) : 
+
+- AI - 1
+- AI - 2
+- AI - 3
+- AI - 4
+- AI - 5
+- AI - 6
+- AI - 7
+- AI - 8
+- AI - 9
+
+List of name taken (put the name you choose here) : 
+
+- AI - 1
+
+
+
+
+
+
+
+
+
+
+
 How to use
-- Chose a task yourself and claim it by appending it with: " [WIP: <owner> <YYYY-MM-DD>]" to that line.
-- If a task has any WIP tag, do not work on it.
+- Chose a task yourself and claim it by appending it with: " [: <your name> <YYYY-MM-DD-HOURS-MINUTES>]" to that line.
+- If a task has any tag, do not work on it.
 - When a task is done, delete the entire line.
-- If you stop without finishing, remove your WIP tag so others can take it.
+- If you stop without finishing, remove your tag so others can take it.
 - Keep tasks atomic (one task per line).
 
 Notes
@@ -46,10 +75,11 @@ Notes
 - EP-P0-LEGAL-02 Implémenter le Rapport d'Incident: Formulaire dédié pour les techniciens (photos + description) qui déclenche une alerte critique (SMS/Email) aux managers pour une gestion immédiate des dégâts.
 - EP-P0-LEGAL-03 Implémenter l'Acceptation des CGV: Bloquer le début d'un travail tant que le client n'a pas accepté (signature numérique ou case à cocher) les termes de service (responsabilité, exclusions, paiements).
 ### Product configuration
+- EP-P0-IMPORTANT-01 Nothing should be hardcoded like services or company name; admin/manager must be able to manage company profile and services in-app.
 
 ## P1 - Engineering, auth, dispatch, messaging, storage
 ### Engineering
-- EP-P1-ENG-03 Standardize API response format and error handling. [WIP: OpenCode 2026-02-04]
+- EP-P1-ENG-03 Standardize API response format and error handling. 
 - EP-P1-ENG-05 Remove unsafe any usage and tighten validators.
 - EP-P1-ENG-06 Add E2E tests for critical flows (Playwright).
 - EP-P1-ENG-08 Product gap audit: compare spec + live UI vs code; log missing/mis-implemented features with file refs.
@@ -97,20 +127,19 @@ Notes
 - EP-P2-CUST-02 Implement Customer Language Preference (EN/FR): Add DB field, display "Speak English/French" badge on Tech/Seller view, and update SMS/Email automation to select the matching language template.
 - EP-P2-CUST-03 Implement Customer Merge Tool: Admin tool to combine duplicate customer profiles (merging history/jobs) into a single record (stop having 3 "John Does").
 - EP-P2-CUST-04 Referral Linking UI: Simple "Referred By" picker in Customer creation that links to an existing client and triggers the $50 bonus logic (stop tracking referrals on paper).
-- EP-P2-CUST-05 Implémenter le Portail Client "Magic Link": Interface web sécurisée accessible via lien unique (token) permettant aux clients de télécharger leurs historiques de factures et voir leurs RDV futurs sans contacter le bureau. [WIP: OpenCode 2026-02-04]
 
 ### Sales & territories
-- EP-P2-SALES-01 Add sales territory management UI with map polygon drawing. [WIP: OpenCode 2026-02-04]
-- EP-P2-SALES-02 Implement "Sales Day" logistics flow: create shifts with default meeting point/time, enable per-seller overrides for custom pickup times/addresses, and allow saving instruction sets (notes) as reusable templates. [WIP: OpenCode 2026-02-04]
-- EP-P2-SALES-03 Build hierarchical territory mapping: allow Managers to draw a "Master Polygon" (team zone) and assign "Specific Polygons" (individual sub-zones) to specific sellers for that day. [WIP: OpenCode 2026-02-04]
-- EP-P2-SALES-04 Build Sales Rep mobile schedule card: display the specific assigned pickup time/address (handling overrides) and render the map showing the Master Zone with their specific Sub-Zone highlighted. [WIP: OpenCode 2026-02-04]
+- EP-P2-SALES-01 Add sales territory management UI with map polygon drawing. 
+- EP-P2-SALES-02 Implement "Sales Day" logistics flow: create shifts with default meeting point/time, enable per-seller overrides for custom pickup times/addresses, and allow saving instruction sets (notes) as reusable templates. 
+- EP-P2-SALES-03 Build hierarchical territory mapping: allow Managers to draw a "Master Polygon" (team zone) and assign "Specific Polygons" (individual sub-zones) to specific sellers for that day. 
+- EP-P2-SALES-04 Build Sales Rep mobile schedule card: display the specific assigned pickup time/address (handling overrides) and render the map showing the Master Zone with their specific Sub-Zone highlighted. 
 - EP-P2-SALES-06 Add DB tables + RLS for sales_days and sales_day_assignments; refresh Supabase types.
 - EP-P2-SALES-05 Implémenter l'Ajout de Service sur le Terrain: Permettre aux techniciens d'ajouter des services (Upsell) à un job en cours avec validation immédiate par signature client ou confirmation SMS, mettant à jour la facture en temps réel.
 
 ### GPS & availability
 - EP-P2-GPS-01 Make GPS tracking production-grade.
 - EP-P2-GPS-02 Implémenter le "Lien de Suivi Client": Générer une URL publique temporaire (expirant après le job) envoyée par SMS, permettant au client de voir la position du technicien en approche (style Uber).
-- EP-P2-AVAIL-01 Admin/Manager availability page: team availability grid + overrides. [WIP: OpenCode 2026-02-04]
+- EP-P2-AVAIL-01 Admin/Manager availability page: team availability grid + overrides. 
 - EP-P2-AVAIL-02 Sales rep availability page: self availability edit (days + time windows).
 - EP-P2-AVAIL-03 Technician availability page: self availability edit (days + time windows).
 
@@ -153,11 +182,11 @@ Notes
 - EP-P2-UX-08 Implement Google Places Autocomplete: Add address prediction to all Job/Customer forms to auto-fill fields and capture precise GPS coordinates instantly.
 - EP-P2-UX-10 Implement Smart Notifications: Add "Mark All as Read" button and group similar alerts (e.g., "3 new jobs assigned") into single summary lines to reduce clutter.
 - EP-P2-UX-11 Implement Customer "Quick View" Popover: Show critical tags (VIP, Bad Dog, Gate Codes) in a popup when hovering/tapping a customer name in the Schedule, avoiding full page navigation.
-- EP-P2-UX-15 Implement Mobile Swipe Actions: Add "Swipe Left to Call" and "Swipe Right to Complete" on job list items for one-handed mobile use (stop aiming for tiny buttons).
+- EP-P2-UX-15 Implement Mobile Se Actions: Add "Se Left to Call" and "Se Right to Complete" on job list items for one-handed mobile use (stop aiming for tiny buttons).
 - EP-P2-UX-16 Implement Command Palette (Ctrl+K): A centralized search bar to jump to any page or run actions (e.g., type "New Inv..." -> opens Invoice) instantly.
 - EP-P2-UX-17 Smart Date Pickers: Add "Tomorrow", "Next Week", "First Monday of Month" quick-select chips to all date inputs (stop clicking 'Next' 12 times).
 - EP-P2-UX-18 Drag-and-Drop Multi-Upload: Allow dragging 10 photos at once into the upload zone instead of selecting one by one (stop the upload struggle).
-- EP-P2-UX-19 One-Click "Copy Address": Button to copy the full, formatted address to the clipboard for easy pasting into other apps (stop highlighting text manually).
+- EP-P2-UX-19 One-Click "Copy Address": Button to copy the full, formatted address to the clipboard for easy pasting into other apps (stop highlighting text manually). [WIP: AI - 1 2026-02-04]
 - EP-P2-UX-20 Add Sync Status Indicator: Visual "Cloud Checkmark" or "Offline" badge in the top bar so technicians know if their data is saved (stop losing work).
 - EP-P2-UI-02 Mobile UI audit: fix iOS/Android layout/visibility issues on dispatch, schedule, map, settings, leads, customers.
 - EP-P2-UI-01 Replace manual ID entry with searchable pickers and pagination.
@@ -205,7 +234,7 @@ Notes
 - Testing requirements (unit/integration/e2e coverage list).
 
 ## QA and testing
-- Run full E2E suite: npm run test:e2e (fix failures). [WIP: OpenCode 2026-02-04]
+- Run full E2E suite: npm run test:e2e (fix failures). 
 - Test core workflows: create lead, customer, team member, job; dispatch calendar (auto-assign, drag-drop).
 
 ## Production deployment checklist
