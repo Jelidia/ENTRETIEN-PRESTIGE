@@ -7,21 +7,20 @@ import { threadIdParamSchema } from "@/lib/validators";
 async function resolveCustomerIds(
   client: ReturnType<typeof createUserClient>,
   role: string,
-  userId: string
+  userId: string,
+  companyId: string
 ): Promise<string[] | null> {
   if (role === "technician") {
-    const { data: assignments } = await client
-      .from("job_assignments")
-      .select("job:jobs(customer_id)")
-      .eq("technician_id", userId);
+    const { data: jobs } = await client
+      .from("jobs")
+      .select("customer_id")
+      .eq("technician_id", userId)
+      .eq("company_id", companyId);
 
     const customerIds = [
       ...new Set(
-        (assignments ?? [])
-          .map((assignment: { job?: { customer_id?: string | null } | { customer_id?: string | null }[] | null }) => {
-            const job = Array.isArray(assignment.job) ? assignment.job[0] : assignment.job;
-            return job?.customer_id ?? null;
-          })
+        (jobs ?? [])
+          .map((job: { customer_id?: string | null }) => job.customer_id)
           .filter((value): value is string => Boolean(value))
       ),
     ];
@@ -33,7 +32,8 @@ async function resolveCustomerIds(
     const { data: jobs } = await client
       .from("jobs")
       .select("customer_id")
-      .eq("sales_rep_id", userId);
+      .eq("sales_rep_id", userId)
+      .eq("company_id", companyId);
 
     const customerIds = [...new Set(
       jobs?.map((job: { customer_id?: string | null }) => job.customer_id).filter(Boolean) || []
@@ -43,6 +43,13 @@ async function resolveCustomerIds(
   }
 
   return null;
+}
+
+function lockedResponse() {
+  return NextResponse.json(
+    { success: false, error: "Conversation déjà assignée à un autre membre.", code: "sms_thread_locked" },
+    { status: 423 }
+  );
 }
 
 // Get messages for a specific thread
@@ -65,7 +72,7 @@ export async function GET(
   const { threadId } = paramsResult.data;
   const { profile } = auth;
 
-  const customerIds = await resolveCustomerIds(client, profile.role, profile.user_id);
+  const customerIds = await resolveCustomerIds(client, profile.role, profile.user_id, profile.company_id);
   if (customerIds && customerIds.length === 0) {
     return forbidden("Accès refusé", "sms_thread_forbidden");
   }
@@ -75,6 +82,7 @@ export async function GET(
       .from("sms_messages")
       .select("sms_id")
       .eq("thread_id", threadId)
+      .eq("company_id", profile.company_id)
       .in("customer_id", customerIds)
       .limit(1);
 
@@ -83,10 +91,41 @@ export async function GET(
     }
   }
 
+  const { data: lockRow, error: lockError } = await client
+    .from("sms_messages")
+    .select("sms_id, assigned_to")
+    .eq("thread_id", threadId)
+    .eq("company_id", profile.company_id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (lockError) {
+    return NextResponse.json({ success: false, error: "Impossible de vérifier la conversation." }, { status: 500 });
+  }
+  if (!lockRow) {
+    return NextResponse.json({ success: false, error: "Conversation introuvable" }, { status: 404 });
+  }
+  if (lockRow.assigned_to && lockRow.assigned_to !== profile.user_id) {
+    return lockedResponse();
+  }
+  if (!lockRow.assigned_to) {
+    const { error: assignError } = await client
+      .from("sms_messages")
+      .update({ assigned_to: profile.user_id })
+      .eq("thread_id", threadId)
+      .eq("company_id", profile.company_id)
+      .is("assigned_to", null);
+    if (assignError) {
+      return NextResponse.json({ success: false, error: "Impossible d'assigner la conversation." }, { status: 500 });
+    }
+  }
+
   let query = client
     .from("sms_messages")
     .select("*")
     .eq("thread_id", threadId)
+    .eq("company_id", profile.company_id)
     .order("created_at", { ascending: true });
 
   if (customerIds) {

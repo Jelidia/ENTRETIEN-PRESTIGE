@@ -64,7 +64,7 @@ export default function LoginForm({ redirect }: { redirect?: string }) {
 
     const data = await response.json();
     if (!response.ok) {
-      setError(data.error ?? "Unable to sign in");
+      setError(data.error ?? "Impossible de se connecter");
       setLoading(false);
       return;
     }
@@ -110,11 +110,11 @@ export default function LoginForm({ redirect }: { redirect?: string }) {
           Portail de l'entreprise
         </h2>
         <p style={{ marginTop: 4, fontSize: "14px", color: "#6B7280" }}>
-          Accedez a votre espace de travail
+          Accédez à votre espace de travail
         </p>
       </div>
       <h1 className="auth-title">Connexion</h1>
-      <p className="card-meta">Entrez vos identifiants pour acceder a votre compte.</p>
+      <p className="card-meta">Entrez vos identifiants pour accéder à votre compte.</p>
       {error ? <div className="alert" style={{ marginTop: 16 }}>{error}</div> : null}
       <form className="form-grid" style={{ marginTop: 20 }} onSubmit={handleSubmit}>
         <div className="form-row">
@@ -157,7 +157,7 @@ export default function LoginForm({ redirect }: { redirect?: string }) {
         </button>
       </form>
       <div className="auth-links">
-        <Link href="/forgot-password">Mot de passe oublie?</Link>
+        <Link href="/forgot-password">Mot de passe oublié ?</Link>
       </div>
     </div>
   );

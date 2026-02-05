@@ -83,7 +83,7 @@ export default function ProfilePage() {
   const loadUser = useCallback(async () => {
     try {
       const res = await fetch("/api/access");
-      if (!res.ok) throw new Error("Failed to load user");
+      if (!res.ok) throw new Error("Impossible de charger l'utilisateur");
       const data = await res.json();
 
       // Get full user data
@@ -95,7 +95,7 @@ export default function ProfilePage() {
         await refreshDocumentUrls(userData.data);
       }
     } catch (err) {
-      setError("Failed to load profile");
+      setError("Impossible de charger le profil");
     }
   }, [refreshDocumentUrls]);
 
@@ -132,7 +132,7 @@ export default function ProfilePage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Failed to upload file");
+        setError(data.error || "Impossible de téléverser le fichier");
         return;
       }
 
@@ -150,7 +150,7 @@ export default function ProfilePage() {
       );
       loadUser();
     } catch (err) {
-      setError("An error occurred");
+      setError("Une erreur s'est produite");
     } finally {
       setUploading(false);
     }
@@ -180,7 +180,7 @@ export default function ProfilePage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Failed to change password");
+        setError(data.error || "Impossible de changer le mot de passe");
         return;
       }
 
@@ -192,7 +192,7 @@ export default function ProfilePage() {
         handleLogout();
       }, 2000);
     } catch (err) {
-      setError("An error occurred");
+      setError("Une erreur s'est produite");
     }
   }
 
@@ -211,7 +211,7 @@ export default function ProfilePage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Failed to update name");
+        setError(data.error || "Impossible de mettre à jour le nom");
         return;
       }
 
@@ -219,7 +219,7 @@ export default function ProfilePage() {
       setShowEditName(false);
       loadUser();
     } catch (err) {
-      setError("An error occurred");
+      setError("Une erreur s'est produite");
     }
   }
 

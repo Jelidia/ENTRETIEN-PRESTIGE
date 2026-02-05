@@ -24,7 +24,7 @@ const mono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: "Plateforme d'entreprise",
-  description: "Plateforme d'operations pour equipes de service",
+  description: "Plateforme d'opérations pour équipes de service",
 };
 
 export const viewport: Viewport = {

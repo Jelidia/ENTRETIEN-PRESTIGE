@@ -160,7 +160,6 @@ Notes
 ### Core features
 - EP-P2-JOBS-03 Add Voice Notes to Jobs.
 - EP-P2-CHECK-01 Finish shift checklist workflow with structured items and photos.
-- EP-P2-CUST-01 Implement customer communication timeline connected to jobs/leads. [WIP: AI - 6 2026-02-04]
 - EP-P2-CUST-02 Implement Customer Language Preference (EN/FR).
 - EP-P2-CUST-03 Implement Customer Merge Tool.
 - EP-P2-CUST-04 Referral Linking UI and $50 bonus workflow.
@@ -174,14 +173,13 @@ Notes
 - EP-P2-GPS-02 Implement "Lien de Suivi Client" (public temporary URL).
 
 ### Messaging
-- EP-P2-MSG-03 Implement SMS Access Locking.
+- EP-P2-MSG-03 Implement SMS Access Locking. [WIP: AI - 1 2026-02-04]
 
 ### Payments
 - EP-P2-PAY-05 Implémenter les Pourboires Numériques (balance "Pourboires à verser").
 
 ### Marketing & retention
 - EP-P2-MKT-01 Automatisation de Réactivation (jobs 6/12 mois).
-- EP-P2-MKT-02 Review Gating flow (4-5★ → Google , 1-3★ → support).
 
 ### Admin & ops
 - EP-P2-FLT-01 Implement Vehicle Inspection (Circle Check).
@@ -201,11 +199,11 @@ Notes
 ### Reporting & dashboards
 
 ### Dispatch enhancements
-- EP-P2-DISP-12 Implement "Find Next Available Slot".
 
 ### UX & UI
 - EP-P2-UX-04 Quick Actions (Call/SMS) in lists. [WIP: AI - 2 2026-02-04]
 - EP-P2-UI-02 Mobile UI audit (iOS/Android). [WIP: AI - 1 2026-02-04]
+- EP-P2-I18N-36 Traduire le log de chargement profil technicien. [WIP: AI - 7 2026-02-04]
 ---
 
 ## P3 - Product expansion

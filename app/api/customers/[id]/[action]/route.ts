@@ -135,6 +135,7 @@ export async function GET(
   if ("response" in auth) {
     return auth.response;
   }
+  const { profile } = auth;
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
   const action = params.action;
@@ -143,7 +144,8 @@ export async function GET(
     const { data, error } = await client
       .from("jobs")
       .select("job_id, service_type, status, scheduled_date")
-      .eq("customer_id", params.id);
+      .eq("customer_id", params.id)
+      .eq("company_id", profile.company_id);
     if (error) {
       return serverError("Unable to load jobs", "customer_jobs_load_failed");
     }
@@ -154,7 +156,8 @@ export async function GET(
     const { data, error } = await client
       .from("invoices")
       .select("invoice_id, invoice_number, payment_status, total_amount, due_date")
-      .eq("customer_id", params.id);
+      .eq("customer_id", params.id)
+      .eq("company_id", profile.company_id);
     if (error) {
       return serverError("Unable to load invoices", "customer_invoices_load_failed");
     }

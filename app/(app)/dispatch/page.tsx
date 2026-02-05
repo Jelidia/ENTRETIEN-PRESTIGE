@@ -183,6 +183,7 @@ export default function DispatchPage() {
   const [gpsForm, setGpsForm] = useState({ technicianId: "", start: "", end: "" });
   const [gpsResults, setGpsResults] = useState<GpsRow[]>([]);
   const [selectedDate, setSelectedDate] = useState("");
+  const [slotDuration, setSlotDuration] = useState(60);
   const [mapReady, setMapReady] = useState(false);
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [resizeState, setResizeState] = useState<ResizeState | null>(null);
@@ -213,6 +214,7 @@ export default function DispatchPage() {
 
   const boardRef = useRef<DispatchColumnType[]>([]);
   const columnRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const calendarShellRef = useRef<HTMLDivElement | null>(null);
   const dragPreviewRef = useRef<DragPreview | null>(null);
   const createPreviewRef = useRef<DragPreview | null>(null);
   const rafRef = useRef<number | null>(null);
@@ -1049,6 +1051,64 @@ export default function DispatchPage() {
       })
     : "Répartition";
 
+  const findNextAvailableSlot = useCallback(() => {
+    if (!selectedDate) {
+      setStatus("Sélectionnez une date pour trouver un créneau.");
+      return;
+    }
+    if (!visibleColumns.length) {
+      setStatus("Aucun technicien disponible.");
+      return;
+    }
+    const duration = Math.min(Math.max(Math.round(slotDuration / SNAP_MINUTES) * SNAP_MINUTES, 30), 600);
+    const gridStart = START_HOUR * 60;
+    const gridEnd = END_HOUR * 60;
+
+    let best: { start: number; techKey: string; techLabel: string } | null = null;
+    let bestStart = Number.POSITIVE_INFINITY;
+
+    visibleColumns.forEach((column) => {
+      const jobs = [...column.jobs].sort((a, b) => getJobTimes(a).start - getJobTimes(b).start);
+      let cursor = gridStart;
+      for (const job of jobs) {
+        const { start, end } = getJobTimes(job);
+        if (start - cursor >= duration) {
+          const candidate = { start: cursor, techKey: getTechKey(column), techLabel: column.technician };
+          if (candidate.start < bestStart) {
+            best = candidate;
+            bestStart = candidate.start;
+          }
+          break;
+        }
+        cursor = Math.max(cursor, end);
+      }
+      if (gridEnd - cursor >= duration) {
+        const candidate = { start: cursor, techKey: getTechKey(column), techLabel: column.technician };
+        if (candidate.start < bestStart) {
+          best = candidate;
+          bestStart = candidate.start;
+        }
+      }
+    });
+
+    if (!best) {
+      setStatus("Aucun créneau disponible pour cette durée.");
+      return;
+    }
+
+    const resolvedBest = best as { start: number; techKey: string; techLabel: string };
+
+    const shell = calendarShellRef.current;
+    if (shell) {
+      const offset = (resolvedBest.start - gridStart) * (HOUR_HEIGHT / 60);
+      const top = window.scrollY + shell.getBoundingClientRect().top + offset - 80;
+      window.scrollTo({ top, behavior: "smooth" });
+    }
+
+    const techLabel = resolvedBest.techLabel || "Technicien";
+    setStatus(`Créneau trouvé à ${formatTime(resolvedBest.start)} pour ${techLabel}.`);
+  }, [selectedDate, visibleColumns, slotDuration]);
+
   return (
     <div className="page">
       <TopBar
@@ -1120,9 +1180,26 @@ export default function DispatchPage() {
               Suiv.
             </button>
           </div>
+          <div className="dispatch-controls">
+            <label className="label" htmlFor="slotDuration">Durée (min)</label>
+            <input
+              id="slotDuration"
+              className="input"
+              type="number"
+              min={30}
+              max={600}
+              step={15}
+              value={slotDuration}
+              onChange={(event) => setSlotDuration(Number(event.target.value) || 60)}
+              style={{ width: 90 }}
+            />
+            <button className="button-primary" type="button" onClick={findNextAvailableSlot}>
+              Trouver un créneau
+            </button>
+          </div>
         </div>
 
-        <div className="calendar-shell">
+        <div className="calendar-shell" ref={calendarShellRef}>
           <div className="calendar-header" style={{ gridTemplateColumns: gridTemplate }}>
             <div className="calendar-time-header">Heure</div>
             {visibleColumns.map((column) => (

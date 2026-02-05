@@ -68,7 +68,7 @@ export default function TeamPage() {
     setLoading(true);
     try {
       const res = await fetch("/api/users");
-      if (!res.ok) throw new Error("Failed to load team");
+      if (!res.ok) throw new Error("Impossible de charger l'équipe");
       const data = await res.json();
       const nextMembers = (data.data || []) as TeamMember[];
       setMembers(nextMembers);
@@ -91,7 +91,7 @@ export default function TeamPage() {
         setRolePermissions(mergedPermissions);
       }
     } catch (err) {
-      logger.error("Failed to load company settings", { error: err });
+      logger.error("Impossible de charger les paramètres de l'entreprise", { error: err });
     }
   }
 

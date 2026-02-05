@@ -12,6 +12,7 @@ export async function GET(
   if ("response" in auth) {
     return auth.response;
   }
+  const { profile } = auth;
 
   const paramsResult = idParamSchema.safeParse(params);
   if (!paramsResult.success) {
@@ -23,6 +24,7 @@ export async function GET(
     .from("jobs")
     .select("job_id, service_type, status, scheduled_date, scheduled_start_time")
     .eq("technician_id", paramsResult.data.id)
+    .eq("company_id", profile.company_id)
     .order("scheduled_date", { ascending: true });
 
   if (error) {

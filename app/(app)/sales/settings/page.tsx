@@ -116,7 +116,7 @@ export default function SalesSettingsPage() {
         script.src = `https://maps.googleapis.com/maps/api/js?key=${key}`;
         script.async = true;
         script.onload = () => resolve();
-        script.onerror = () => reject(new Error("Map script failed"));
+        script.onerror = () => reject(new Error("Échec du chargement de la carte"));
         document.body.appendChild(script);
       }),
     [getGoogle]

@@ -15,11 +15,13 @@ import { getRequestContext } from "@/lib/requestId";
 async function resolveThreadId(
   client: ReturnType<typeof createUserClient>,
   customerId: string | null,
-  phoneNumber: string
+  phoneNumber: string,
+  companyId: string
 ) {
   let query = client
     .from("sms_messages")
     .select("thread_id")
+    .eq("company_id", companyId)
     .not("thread_id", "is", null)
     .order("created_at", { ascending: false })
     .limit(1);
@@ -93,6 +95,7 @@ export async function POST(request: Request) {
       customer:customers(customer_id, first_name, last_name, phone, email, sms_opt_in)
     `)
     .eq("job_id", jobId)
+    .eq("company_id", profile.company_id)
     .single();
 
   if (jobError || !job) {
@@ -153,6 +156,7 @@ export async function POST(request: Request) {
         .from("invoices")
         .select("invoice_id, total_amount, payment_method, invoice_number")
         .eq("job_id", jobId)
+        .eq("company_id", profile.company_id)
         .single();
 
       if (invoice) {
@@ -194,7 +198,8 @@ export async function POST(request: Request) {
           const { data: notifyUsers } = await client
             .from("users")
             .select("full_name, phone, role")
-            .in("user_id", notifyUserIds);
+            .in("user_id", notifyUserIds)
+            .eq("company_id", profile.company_id);
 
           if (notifyUsers) {
             for (const user of notifyUsers) {
@@ -291,7 +296,12 @@ export async function POST(request: Request) {
       idempotencyScope = idempotency.scope;
       idempotencyRequestHash = idempotency.requestHash;
 
-      const threadId = await resolveThreadId(client, customerRecord.customer_id ?? null, phoneNumber);
+      const threadId = await resolveThreadId(
+        client,
+        customerRecord.customer_id ?? null,
+        phoneNumber,
+        profile.company_id
+      );
       const createdAt = new Date().toISOString();
       const { data: messageRecord, error: insertError } = await client
         .from("sms_messages")
@@ -335,7 +345,8 @@ export async function POST(request: Request) {
         const { error: statusError } = await client
           .from("sms_messages")
           .update({ status: "failed" })
-          .eq("sms_id", messageRecord.sms_id);
+          .eq("sms_id", messageRecord.sms_id)
+          .eq("company_id", profile.company_id);
         if (statusError) {
           await captureError(statusError, {
             ...requestContext,
@@ -350,7 +361,8 @@ export async function POST(request: Request) {
       const { error: statusError } = await client
         .from("sms_messages")
         .update({ status: "sent" })
-        .eq("sms_id", messageRecord.sms_id);
+        .eq("sms_id", messageRecord.sms_id)
+        .eq("company_id", profile.company_id);
       if (statusError) {
         await captureError(statusError, {
           ...requestContext,

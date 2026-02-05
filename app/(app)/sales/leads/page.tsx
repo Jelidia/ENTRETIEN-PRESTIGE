@@ -168,7 +168,7 @@ export default function LeadsPage() {
     <div className="page">
       <TopBar
         title="Leads et clients"
-        subtitle="Gerer votre pipeline de ventes"
+        subtitle="Gérer votre pipeline de ventes"
         actions={
           <button className="button-primary" onClick={() => setShowCreateForm(true)}>
             + Nouveau lead

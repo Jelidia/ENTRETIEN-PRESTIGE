@@ -42,7 +42,8 @@ function normalizePhoneNumber(phone: string) {
 async function resolveThreadId(
   admin: ReturnType<typeof createAdminClient>,
   customerId: string | null,
-  phoneNumber: string
+  phoneNumber: string,
+  companyId?: string | null
 ) {
   let query = admin
     .from("sms_messages")
@@ -50,6 +51,10 @@ async function resolveThreadId(
     .not("thread_id", "is", null)
     .order("created_at", { ascending: false })
     .limit(1);
+
+  if (companyId) {
+    query = query.eq("company_id", companyId);
+  }
 
   if (customerId) {
     query = query.eq("customer_id", customerId);
@@ -59,6 +64,36 @@ async function resolveThreadId(
 
   const { data } = await query.maybeSingle();
   return data?.thread_id ?? randomUUID();
+}
+
+async function resolveThreadAssignee(
+  admin: ReturnType<typeof createAdminClient>,
+  threadId: string,
+  companyId: string
+) {
+  const { data } = await admin
+    .from("sms_messages")
+    .select("assigned_to")
+    .eq("thread_id", threadId)
+    .eq("company_id", companyId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data?.assigned_to ?? null;
+}
+
+async function assignThreadToUser(
+  admin: ReturnType<typeof createAdminClient>,
+  threadId: string,
+  companyId: string,
+  userId: string
+) {
+  return admin
+    .from("sms_messages")
+    .update({ assigned_to: userId })
+    .eq("thread_id", threadId)
+    .eq("company_id", companyId)
+    .is("assigned_to", null);
 }
 
 export async function POST(
@@ -177,7 +212,8 @@ export async function POST(
       }
     }
 
-    const threadId = await resolveThreadId(admin, customerId ?? null, phoneNumber || from);
+    const threadId = await resolveThreadId(admin, customerId ?? null, phoneNumber || from, companyId);
+    const assignedTo = await resolveThreadAssignee(admin, threadId, companyId);
     await admin.from("sms_messages").insert({
       company_id: companyId,
       customer_id: customerId ?? null,
@@ -186,6 +222,7 @@ export async function POST(
       direction: "inbound",
       twilio_sid: messageSid || null,
       thread_id: threadId,
+      assigned_to: assignedTo,
       is_read: false,
       created_at: new Date().toISOString(),
     });
@@ -239,7 +276,24 @@ export async function POST(
 
   const threadId = parsed.data.threadId
     ? parsed.data.threadId
-    : await resolveThreadId(admin, parsed.data.customerId ?? null, phoneNumber);
+    : await resolveThreadId(admin, parsed.data.customerId ?? null, phoneNumber, profile.company_id);
+  const assignedTo = await resolveThreadAssignee(admin, threadId, profile.company_id);
+  if (assignedTo && assignedTo !== profile.user_id) {
+    return NextResponse.json(
+      { success: false, error: "Conversation déjà assignée à un autre membre." },
+      { status: 423 }
+    );
+  }
+  if (!assignedTo) {
+    const { error: assignError } = await assignThreadToUser(admin, threadId, profile.company_id, profile.user_id);
+    if (assignError) {
+      logger.error("Failed to assign SMS thread", { ...requestContext, error: assignError });
+      return NextResponse.json(
+        { success: false, error: "Impossible d'assigner la conversation." },
+        { status: 500 }
+      );
+    }
+  }
   const idempotency = await beginIdempotency(admin, request, profile.user_id, {
     to: phoneNumber,
     message: parsed.data.message,
@@ -265,6 +319,7 @@ export async function POST(
       direction: "outbound",
       thread_id: threadId,
       status: "queued",
+      assigned_to: assignedTo ?? profile.user_id,
       created_at: createdAt,
     })
     .select("sms_id")
@@ -321,9 +376,11 @@ export async function GET(
 
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
+  const { profile } = auth;
   const { data, error } = await client
     .from("sms_messages")
     .select("sms_id, phone_number, content, direction, status, created_at")
+    .eq("company_id", profile.company_id)
     .order("created_at", { ascending: false })
     .limit(100);
 

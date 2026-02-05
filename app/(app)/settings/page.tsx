@@ -96,7 +96,7 @@ export default function SettingsPage() {
   const loadUser = useCallback(async () => {
     try {
       const res = await fetch("/api/access");
-      if (!res.ok) throw new Error("Failed to load user");
+      if (!res.ok) throw new Error("Impossible de charger l'utilisateur");
       const data = await res.json();
 
       // Get full user data

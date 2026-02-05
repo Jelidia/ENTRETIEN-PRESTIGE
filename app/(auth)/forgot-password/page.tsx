@@ -28,14 +28,14 @@ export default function ForgotPasswordPage() {
       return;
     }
 
-    setMessage("Lien envoye. Verifiez votre courriel.");
+    setMessage("Lien envoyé. Vérifiez votre courriel.");
     setLoading(false);
   }
 
   return (
     <div className="auth-card">
-      <h1 className="auth-title">Reinitialiser le mot de passe</h1>
-      <p className="card-meta">Nous envoyons un lien securise par courriel.</p>
+      <h1 className="auth-title">Réinitialiser le mot de passe</h1>
+      <p className="card-meta">Nous envoyons un lien sécurisé par courriel.</p>
       {error ? <div className="alert" style={{ marginTop: 16 }}>{error}</div> : null}
       {message ? <div className="card" style={{ marginTop: 16 }}>{message}</div> : null}
       <form className="form-grid" style={{ marginTop: 20 }} onSubmit={handleSubmit}>
@@ -55,7 +55,7 @@ export default function ForgotPasswordPage() {
         </button>
       </form>
       <div className="auth-links">
-        <Link href="/login">Retour a la connexion</Link>
+        <Link href="/login">Retour à la connexion</Link>
       </div>
     </div>
   );
