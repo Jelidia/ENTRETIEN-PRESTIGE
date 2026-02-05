@@ -4,21 +4,58 @@ import TopBar from "@/components/TopBar";
 import StatusBadge from "@/components/StatusBadge";
 import JobForm from "@/components/forms/JobForm";
 import { normalizePhoneE164 } from "@/lib/smsTemplates";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type JobRow = {
   job_id: string;
   service_type: string;
+  service_package?: string | null;
   status: string;
   scheduled_date?: string;
+  scheduled_start_time?: string | null;
+  scheduled_end_time?: string | null;
+  address?: string | null;
+  city?: string | null;
+  postal_code?: string | null;
+  description?: string | null;
   estimated_revenue?: number;
+  actual_revenue?: number | null;
+  customer_id?: string | null;
   customer?: { phone?: string | null } | null;
+};
+
+type TechnicianRow = {
+  user_id: string;
+  full_name: string;
+  role: string;
+};
+
+type JobPrefill = {
+  token: string;
+  data: {
+    customerId?: string;
+    serviceType?: string;
+    servicePackage?: string;
+    scheduledDate?: string;
+    scheduledStartTime?: string;
+    scheduledEndTime?: string;
+    address?: string;
+    city?: string;
+    postalCode?: string;
+    estimatedRevenue?: string;
+    description?: string;
+  };
 };
 
 const normalizePhone = (value?: string | null) => (value ? value.replace(/\s+/g, "") : "");
 
 export default function JobsPage() {
   const [jobs, setJobs] = useState<JobRow[]>([]);
+  const [technicians, setTechnicians] = useState<TechnicianRow[]>([]);
+  const [jobLimit, setJobLimit] = useState(50);
+  const [techLimit, setTechLimit] = useState(50);
+  const [clonePrefill, setClonePrefill] = useState<JobPrefill | null>(null);
+  const formCardRef = useRef<HTMLDivElement | null>(null);
   const [assignForm, setAssignForm] = useState({ jobId: "", technicianId: "" });
   const [statusForm, setStatusForm] = useState({ jobId: "", status: "confirmed" });
   const [actionForm, setActionForm] = useState({ jobId: "", action: "complete" });
@@ -34,6 +71,7 @@ export default function JobsPage() {
 
   useEffect(() => {
     void loadJobs();
+    void loadTechnicians();
   }, []);
 
   async function loadJobs() {
@@ -48,11 +86,46 @@ export default function JobsPage() {
     });
   }
 
+  async function loadTechnicians() {
+    const response = await fetch("/api/users");
+    const json = await response.json().catch(() => ({ data: [] }));
+    const data = Array.isArray(json.data) ? json.data : [];
+    setTechnicians(data.filter((user: TechnicianRow) => user.role === "technician"));
+  }
+
+  function handleClone(job: JobRow) {
+    const revenue = job.actual_revenue ?? job.estimated_revenue;
+    setClonePrefill({
+      token: `${job.job_id}-${Date.now()}`,
+      data: {
+        customerId: job.customer_id ?? "",
+        serviceType: job.service_type ?? "",
+        servicePackage: job.service_package ?? "",
+        scheduledDate: "",
+        scheduledStartTime: "",
+        scheduledEndTime: "",
+        address: job.address ?? "",
+        city: job.city ?? "",
+        postalCode: job.postal_code ?? "",
+        estimatedRevenue: revenue !== null && revenue !== undefined ? String(revenue) : "",
+        description: job.description ?? "",
+      },
+    });
+    requestAnimationFrame(() => {
+      formCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
   const selectedCount = selectedJobs.size;
   const allSelected = jobs.length > 0 && selectedCount === jobs.length;
   const selectedRows = useMemo(
     () => jobs.filter((job) => selectedJobs.has(job.job_id)),
     [jobs, selectedJobs]
+  );
+  const visibleJobs = useMemo(() => jobs.slice(0, jobLimit), [jobs, jobLimit]);
+  const visibleTechnicians = useMemo(
+    () => technicians.slice(0, techLimit),
+    [technicians, techLimit]
   );
 
   function toggleJobSelection(jobId: string) {
@@ -200,10 +273,10 @@ export default function JobsPage() {
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setAssignStatus(json.error ?? "Unable to assign job");
+      setAssignStatus(json.error ?? "Impossible d'assigner le travail");
       return;
     }
-    setAssignStatus("Job assigned.");
+    setAssignStatus("Travail assigné.");
     setAssignForm({ jobId: "", technicianId: "" });
     void loadJobs();
   }
@@ -218,10 +291,10 @@ export default function JobsPage() {
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setUpdateStatus(json.error ?? "Unable to update status");
+      setUpdateStatus(json.error ?? "Impossible de mettre à jour le statut");
       return;
     }
-    setUpdateStatus("Status updated.");
+    setUpdateStatus("Statut mis à jour.");
     setStatusForm({ jobId: "", status: "confirmed" });
     void loadJobs();
   }
@@ -236,10 +309,10 @@ export default function JobsPage() {
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setActionStatus(json.error ?? "Unable to update job");
+      setActionStatus(json.error ?? "Impossible de mettre à jour le travail");
       return;
     }
-    setActionStatus(`Job ${actionForm.action} updated.`);
+    setActionStatus("Action appliquée au travail.");
     setActionForm({ jobId: "", action: "complete" });
     void loadJobs();
   }
@@ -255,12 +328,12 @@ export default function JobsPage() {
     try {
       const parsed = JSON.parse(upsellForm.upsells) as unknown;
       if (!Array.isArray(parsed) || !parsed.every(isRecord)) {
-        setUpsellStatus("Upsells JSON is invalid.");
+        setUpsellStatus("JSON des ajouts de service invalide.");
         return;
       }
       upsells = parsed;
     } catch (error) {
-      setUpsellStatus("Upsells JSON is invalid.");
+      setUpsellStatus("JSON des ajouts de service invalide.");
       return;
     }
     const response = await fetch(`/api/jobs/${upsellForm.jobId}/upsell`, {
@@ -273,10 +346,10 @@ export default function JobsPage() {
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setUpsellStatus(json.error ?? "Unable to save upsell");
+      setUpsellStatus(json.error ?? "Impossible d'enregistrer l'ajout de service");
       return;
     }
-    setUpsellStatus("Upsell recorded.");
+    setUpsellStatus("Ajout de service enregistré.");
     setUpsellForm({ jobId: "", upsells: "[]", actualRevenue: "" });
     void loadJobs();
   }
@@ -284,9 +357,9 @@ export default function JobsPage() {
   return (
     <div className="page">
       <TopBar
-        title="Jobs"
-        subtitle="Active jobs and upcoming schedules"
-        actions={<button className="button-primary" type="button">Create job</button>}
+        title="Travaux"
+        subtitle="Travaux actifs et horaires à venir"
+        actions={<button className="button-primary" type="button">Créer un travail</button>}
       />
 
       <div className="grid-2">
@@ -359,11 +432,11 @@ export default function JobsPage() {
                     aria-label="Tout sélectionner"
                   />
                 </th>
-                <th>Job</th>
+                <th>Travail</th>
                 <th>Service</th>
                 <th>Date</th>
-                <th>Status</th>
-                <th>Revenue</th>
+                <th>Statut</th>
+                <th>Revenu</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -390,14 +463,17 @@ export default function JobsPage() {
                     </td>
                     <td>{job.estimated_revenue ? `$${job.estimated_revenue}` : ""}</td>
                     <td>
-                      {phoneHref ? (
-                        <div className="table-actions">
-                          <a className="button-ghost" href={`tel:${phoneHref}`}>Appeler</a>
-                          <a className="button-ghost" href={`sms:${phoneHref}`}>SMS</a>
-                        </div>
-                      ) : (
-                        <span className="card-meta">-</span>
-                      )}
+                      <div className="table-actions">
+                        <button className="button-ghost" type="button" onClick={() => handleClone(job)}>
+                          Dupliquer
+                        </button>
+                        {phoneHref ? (
+                          <>
+                            <a className="button-ghost" href={`tel:${phoneHref}`}>Appeler</a>
+                            <a className="button-ghost" href={`sms:${phoneHref}`}>SMS</a>
+                          </>
+                        ) : null}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -420,7 +496,7 @@ export default function JobsPage() {
                     />
                     <span className="card-meta">Sélectionner</span>
                   </label>
-                  <div className="mobile-card-title">Job #{job.job_id}</div>
+                  <div className="mobile-card-title">Travail #{job.job_id}</div>
                   <div className="mobile-card-meta">{job.service_type}</div>
                   <div className="mobile-card-meta">{job.scheduled_date ?? ""}</div>
                   {phone ? <div className="mobile-card-meta">{phone}</div> : null}
@@ -428,92 +504,140 @@ export default function JobsPage() {
                     <StatusBadge status={job.status} />
                     <span className="tag">{job.estimated_revenue ? `$${job.estimated_revenue}` : ""}</span>
                   </div>
-                  {phoneHref ? (
-                    <div className="table-actions">
-                      <a className="button-ghost" href={`tel:${phoneHref}`}>Appeler</a>
-                      <a className="button-ghost" href={`sms:${phoneHref}`}>SMS</a>
-                    </div>
-                  ) : null}
+                  <div className="table-actions">
+                    <button className="button-ghost" type="button" onClick={() => handleClone(job)}>
+                      Dupliquer
+                    </button>
+                    {phoneHref ? (
+                      <>
+                        <a className="button-ghost" href={`tel:${phoneHref}`}>Appeler</a>
+                        <a className="button-ghost" href={`sms:${phoneHref}`}>SMS</a>
+                      </>
+                    ) : null}
+                  </div>
                 </div>
               );
             })}
           </div>
         </div>
         <div className="stack">
-          <div className="card">
-            <h3 className="card-title">Create job</h3>
-            <JobForm />
+          <div className="card" ref={formCardRef}>
+            <h3 className="card-title">Créer un travail</h3>
+            <JobForm prefill={clonePrefill?.data ?? null} prefillToken={clonePrefill?.token ?? null} />
           </div>
           <div className="card">
-            <h3 className="card-title">Assign technician</h3>
+            <h3 className="card-title">Assigner un technicien</h3>
             <form className="form-grid" onSubmit={submitAssign}>
               <div className="form-row">
-                <label className="label" htmlFor="assignJob">Job ID</label>
+                <label className="label" htmlFor="assignJob">ID du travail</label>
                 <input
                   id="assignJob"
                   className="input"
+                  list="jobs-picker"
                   value={assignForm.jobId}
                   onChange={(event) => setAssignForm({ ...assignForm, jobId: event.target.value })}
                   required
                 />
+                <datalist id="jobs-picker">
+                  {visibleJobs.map((job) => {
+                    const meta = [job.service_type, job.scheduled_date].filter(Boolean).join(" · ");
+                    return (
+                      <option
+                        key={job.job_id}
+                        value={job.job_id}
+                        label={meta || job.job_id}
+                      />
+                    );
+                  })}
+                </datalist>
+                {jobs.length > jobLimit ? (
+                  <button
+                    className="button-ghost"
+                    type="button"
+                    onClick={() => setJobLimit((prev) => prev + 50)}
+                  >
+                    Afficher plus de travaux
+                  </button>
+                ) : null}
               </div>
               <div className="form-row">
-                <label className="label" htmlFor="assignTech">Technician ID</label>
+                <label className="label" htmlFor="assignTech">ID du technicien</label>
                 <input
                   id="assignTech"
                   className="input"
+                  list="tech-picker"
                   value={assignForm.technicianId}
                   onChange={(event) => setAssignForm({ ...assignForm, technicianId: event.target.value })}
                   required
                 />
+                <datalist id="tech-picker">
+                  {visibleTechnicians.map((tech) => (
+                    <option
+                      key={tech.user_id}
+                      value={tech.user_id}
+                      label={tech.full_name || tech.user_id}
+                    />
+                  ))}
+                </datalist>
+                {technicians.length > techLimit ? (
+                  <button
+                    className="button-ghost"
+                    type="button"
+                    onClick={() => setTechLimit((prev) => prev + 50)}
+                  >
+                    Afficher plus de techniciens
+                  </button>
+                ) : null}
               </div>
-              <button className="button-primary" type="submit">Assign job</button>
+              <button className="button-primary" type="submit">Assigner le travail</button>
               {assignStatus ? <div className="hint">{assignStatus}</div> : null}
             </form>
           </div>
           <div className="card">
-            <h3 className="card-title">Update status</h3>
+            <h3 className="card-title">Mettre à jour le statut</h3>
             <form className="form-grid" onSubmit={submitStatus}>
               <div className="form-row">
-                <label className="label" htmlFor="statusJob">Job ID</label>
+                <label className="label" htmlFor="statusJob">ID du travail</label>
                 <input
                   id="statusJob"
                   className="input"
+                  list="jobs-picker"
                   value={statusForm.jobId}
                   onChange={(event) => setStatusForm({ ...statusForm, jobId: event.target.value })}
                   required
                 />
               </div>
               <div className="form-row">
-                <label className="label" htmlFor="statusValue">Status</label>
+                <label className="label" htmlFor="statusValue">Statut</label>
                 <select
                   id="statusValue"
                   className="select"
                   value={statusForm.status}
                   onChange={(event) => setStatusForm({ ...statusForm, status: event.target.value })}
                 >
-                  <option value="created">Created</option>
-                  <option value="quoted">Quoted</option>
-                  <option value="confirmed">Confirmed</option>
-                  <option value="dispatched">Dispatched</option>
-                  <option value="in_progress">In progress</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
-                  <option value="no_show">No show</option>
+                  <option value="created">Créé</option>
+                  <option value="quoted">Proposé</option>
+                  <option value="confirmed">Confirmé</option>
+                  <option value="dispatched">Assigné</option>
+                  <option value="in_progress">En cours</option>
+                  <option value="completed">Terminé</option>
+                  <option value="cancelled">Annulé</option>
+                  <option value="no_show">Absence</option>
                 </select>
               </div>
-              <button className="button-primary" type="submit">Update status</button>
+              <button className="button-primary" type="submit">Mettre à jour</button>
               {updateStatus ? <div className="hint">{updateStatus}</div> : null}
             </form>
           </div>
           <div className="card">
-            <h3 className="card-title">Job actions</h3>
+            <h3 className="card-title">Actions sur travail</h3>
             <form className="form-grid" onSubmit={submitAction}>
               <div className="form-row">
-                <label className="label" htmlFor="actionJob">Job ID</label>
+                <label className="label" htmlFor="actionJob">ID du travail</label>
                 <input
                   id="actionJob"
                   className="input"
+                  list="jobs-picker"
                   value={actionForm.jobId}
                   onChange={(event) => setActionForm({ ...actionForm, jobId: event.target.value })}
                   required
@@ -527,29 +651,30 @@ export default function JobsPage() {
                   value={actionForm.action}
                   onChange={(event) => setActionForm({ ...actionForm, action: event.target.value })}
                 >
-                  <option value="complete">Complete</option>
-                  <option value="no-show">No show</option>
+                  <option value="complete">Terminer</option>
+                  <option value="no-show">Absence</option>
                 </select>
               </div>
-              <button className="button-secondary" type="submit">Apply action</button>
+              <button className="button-secondary" type="submit">Appliquer</button>
               {actionStatus ? <div className="hint">{actionStatus}</div> : null}
             </form>
           </div>
           <div className="card">
-            <h3 className="card-title">Upsell</h3>
+            <h3 className="card-title">Ajout de service</h3>
             <form className="form-grid" onSubmit={submitUpsell}>
               <div className="form-row">
-                <label className="label" htmlFor="upsellJob">Job ID</label>
+                <label className="label" htmlFor="upsellJob">ID du travail</label>
                 <input
                   id="upsellJob"
                   className="input"
+                  list="jobs-picker"
                   value={upsellForm.jobId}
                   onChange={(event) => setUpsellForm({ ...upsellForm, jobId: event.target.value })}
                   required
                 />
               </div>
               <div className="form-row">
-                <label className="label" htmlFor="upsellItems">Upsells JSON</label>
+                <label className="label" htmlFor="upsellItems">Ajouts de service (JSON)</label>
                 <textarea
                   id="upsellItems"
                   className="textarea"
@@ -558,7 +683,7 @@ export default function JobsPage() {
                 />
               </div>
               <div className="form-row">
-                <label className="label" htmlFor="upsellRevenue">Actual revenue</label>
+                <label className="label" htmlFor="upsellRevenue">Revenu réel</label>
                 <input
                   id="upsellRevenue"
                   className="input"
@@ -567,7 +692,7 @@ export default function JobsPage() {
                   onChange={(event) => setUpsellForm({ ...upsellForm, actualRevenue: event.target.value })}
                 />
               </div>
-              <button className="button-ghost" type="submit">Record upsell</button>
+              <button className="button-ghost" type="submit">Enregistrer l'ajout</button>
               {upsellStatus ? <div className="hint">{upsellStatus}</div> : null}
             </form>
           </div>

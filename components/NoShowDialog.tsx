@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import BottomSheet from "./BottomSheet";
 
 type NoShowDialogProps = {
@@ -10,6 +10,9 @@ type NoShowDialogProps = {
   customerName: string;
   customerPhone: string;
 };
+
+type ToastTone = "success" | "error";
+type ToastState = { message: string; tone: ToastTone };
 
 export default function NoShowDialog({
   isOpen,
@@ -21,6 +24,17 @@ export default function NoShowDialog({
   const [step, setStep] = useState<"initial" | "calling" | "skipped">("initial");
   const [contactMethod, setContactMethod] = useState<"call" | "sms" | "none">("none");
   const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState<ToastState | null>(null);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = window.setTimeout(() => setToast(null), 3200);
+    return () => window.clearTimeout(timer);
+  }, [toast]);
+
+  const showToast = (message: string, tone: ToastTone) => {
+    setToast({ message, tone });
+  };
 
   async function handleCall() {
     setStep("calling");
@@ -45,7 +59,7 @@ export default function NoShowDialog({
     setLoading(true);
 
     // Send SMS
-    await fetch("/api/sms/send", {
+    const smsResponse = await fetch("/api/sms/send", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -56,7 +70,7 @@ export default function NoShowDialog({
     });
 
     // Log contact attempt
-    await fetch(`/api/jobs/${jobId}/no-show`, {
+    const logResponse = await fetch(`/api/jobs/${jobId}/no-show`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -66,7 +80,11 @@ export default function NoShowDialog({
     });
 
     setLoading(false);
-    alert("SMS sent to customer");
+    if (!smsResponse.ok || !logResponse.ok) {
+      showToast("Impossible d'envoyer le SMS.", "error");
+      return;
+    }
+    showToast("SMS envoyé au client.", "success");
   }
 
   async function handleSkip() {
@@ -95,33 +113,37 @@ export default function NoShowDialog({
 
       setLoading(false);
       setStep("skipped");
-      alert("Job marked as no-show. Customer and manager notified.");
+      showToast("Travail marqué absent. Le client et le gestionnaire ont été avisés.", "success");
       onClose();
     } else {
       setLoading(false);
-      alert("Failed to mark as no-show");
+      showToast("Impossible de marquer le travail absent.", "error");
     }
   }
 
   return (
-    <BottomSheet isOpen={isOpen} onClose={onClose} title="Customer Not Available" height="75%">
-      <div className="stack">
+    <>
+      {toast ? (
+        <Toast message={toast.message} tone={toast.tone} onClose={() => setToast(null)} />
+      ) : null}
+      <BottomSheet isOpen={isOpen} onClose={onClose} title="Client indisponible" height="75%">
+        <div className="stack">
         {step === "initial" && (
           <>
             <div className="alert" style={{ background: "rgba(245, 158, 11, 0.12)", borderColor: "rgba(245, 158, 11, 0.3)", color: "var(--warning)" }}>
-              <strong>Customer: {customerName}</strong>
-              <div>Phone: {customerPhone}</div>
+              <strong>Client : {customerName}</strong>
+              <div>Téléphone : {customerPhone}</div>
             </div>
 
-            <h3 style={{ marginTop: "16px" }}>Contact Customer</h3>
-            <p className="card-meta">Try calling or texting the customer first.</p>
+            <h3 style={{ marginTop: "16px" }}>Contacter le client</h3>
+            <p className="card-meta">Essayez d&apos;abord d&apos;appeler ou d&apos;envoyer un SMS au client.</p>
 
             <button
               className="button-primary"
               onClick={handleCall}
               style={{ width: "100%", padding: "16px", fontSize: "16px" }}
             >
-              📞 CALL CUSTOMER
+              📞 APPELER LE CLIENT
             </button>
 
             <button
@@ -130,7 +152,7 @@ export default function NoShowDialog({
               disabled={loading}
               style={{ width: "100%", padding: "16px", fontSize: "16px" }}
             >
-              📱 SMS CUSTOMER
+              📱 SMS AU CLIENT
             </button>
           </>
         )}
@@ -139,13 +161,13 @@ export default function NoShowDialog({
           <>
             <div className="card" style={{ padding: "24px", textAlign: "center" }}>
               <div style={{ fontSize: "48px", marginBottom: "16px" }}>⏱️</div>
-              <h3>Waiting for Response...</h3>
-              <p className="card-meta">If customer doesn&apos;t answer within 10 minutes, you can skip to the next job.</p>
+              <h3>En attente de réponse...</h3>
+              <p className="card-meta">Si le client ne répond pas après 10 minutes, vous pouvez passer au prochain travail.</p>
             </div>
 
             <div style={{ marginTop: "24px", padding: "16px", border: "1px dashed var(--line)", borderRadius: "var(--radius-md)", textAlign: "center" }}>
               <p className="card-meta" style={{ marginBottom: "12px" }}>
-                After 10 minutes with no answer:
+                Après 10 minutes sans réponse :
               </p>
               <button
                 className="button-ghost"
@@ -153,7 +175,7 @@ export default function NoShowDialog({
                 disabled={loading}
                 style={{ width: "100%", padding: "14px" }}
               >
-                {loading ? "Processing..." : "SKIP TO NEXT JOB"}
+                {loading ? "Traitement..." : "PASSER AU PROCHAIN TRAVAIL"}
               </button>
             </div>
           </>
@@ -162,14 +184,26 @@ export default function NoShowDialog({
         {step === "skipped" && (
           <div className="card" style={{ padding: "24px", textAlign: "center", background: "var(--surface-muted)" }}>
             <div style={{ fontSize: "48px", marginBottom: "16px" }}>✅</div>
-            <h3>Job Marked as No-Show</h3>
+            <h3>Travail marqué absent</h3>
             <p className="card-meta" style={{ marginTop: "8px" }}>
-              Customer has been notified via SMS.<br />
-              Manager and sales rep have been alerted.
+              Le client a été avisé par SMS.<br />
+              Le gestionnaire et le représentant ont été informés.
             </p>
           </div>
         )}
-      </div>
-    </BottomSheet>
+        </div>
+      </BottomSheet>
+    </>
+  );
+}
+
+function Toast({ message, tone, onClose }: { message: string; tone: ToastTone; onClose: () => void }) {
+  return (
+    <div className={`toast toast-${tone}`} role="status" aria-live="polite">
+      <span>{message}</span>
+      <button type="button" className="toast-close" onClick={onClose}>
+        Fermer
+      </button>
+    </div>
   );
 }

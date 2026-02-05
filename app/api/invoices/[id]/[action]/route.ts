@@ -16,6 +16,7 @@ import { getAccessTokenFromRequest } from "@/lib/session";
 import { invoicePaymentSchema, invoiceSendSchema } from "@/lib/validators";
 import { sendInvoiceEmail } from "@/lib/resend";
 import { sendSms } from "@/lib/twilio";
+import { applySmsPrefix } from "@/lib/smsTemplates";
 import { generateInvoicePdf } from "@/lib/pdf";
 import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
@@ -137,7 +138,16 @@ export async function POST(
       }
     } else {
       try {
-        await sendSms(parsed.data.to, parsed.data.body);
+        const { data: company, error: companyError } = await client
+          .from("companies")
+          .select("name")
+          .eq("company_id", profile.company_id)
+          .maybeSingle();
+        if (companyError) {
+          logger.error("Failed to load SMS prefix", { ...requestContext, error: companyError });
+        }
+        const smsBody = applySmsPrefix(parsed.data.body, company?.name ?? null);
+        await sendSms(parsed.data.to, smsBody);
       } catch (error) {
         return smsUnavailable(error, requestContext);
       }

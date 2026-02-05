@@ -16,6 +16,14 @@ type DispatchJob = {
   scheduledEndTime?: string;
 };
 
+type CustomerOption = {
+  customer_id: string;
+  first_name: string;
+  last_name: string;
+  phone?: string | null;
+  city?: string | null;
+};
+
 type DispatchColumnType = {
   technician: string;
   technicianId?: string;
@@ -159,6 +167,10 @@ export default function DispatchPage() {
   const [board, setBoard] = useState<DispatchColumnType[]>([]);
   const [conflicts, setConflicts] = useState<ConflictRow[]>([]);
   const [status, setStatus] = useState("");
+  const [customers, setCustomers] = useState<CustomerOption[]>([]);
+  const [customerLimit, setCustomerLimit] = useState(25);
+  const [jobLimit, setJobLimit] = useState(100);
+  const [techLimit, setTechLimit] = useState(50);
   const [reassignForm, setReassignForm] = useState({ jobId: "", technicianId: "" });
   const [moveForm, setMoveForm] = useState({
     jobId: "",
@@ -222,6 +234,41 @@ export default function DispatchPage() {
     return map;
   }, [board]);
 
+  const jobOptions = useMemo(() => {
+    const seen = new Set<string>();
+    const result: DispatchJob[] = [];
+    board.forEach((column) => {
+      column.jobs.forEach((job) => {
+        if (seen.has(job.id)) return;
+        seen.add(job.id);
+        result.push(job);
+      });
+    });
+    return result;
+  }, [board]);
+
+  const technicianOptions = useMemo(() => {
+    const seen = new Set<string>();
+    return board
+      .filter((column) => column.technicianId)
+      .map((column) => ({ id: column.technicianId ?? "", name: column.technician }))
+      .filter((item) => {
+        if (!item.id || seen.has(item.id)) return false;
+        seen.add(item.id);
+        return true;
+      });
+  }, [board]);
+
+  const visibleJobs = useMemo(() => jobOptions.slice(0, jobLimit), [jobOptions, jobLimit]);
+  const visibleTechs = useMemo(
+    () => technicianOptions.slice(0, techLimit),
+    [technicianOptions, techLimit]
+  );
+  const visibleCustomers = useMemo(
+    () => customers.slice(0, customerLimit),
+    [customers, customerLimit]
+  );
+
   const gpsMarkers = useMemo<GpsMarker[]>(() => {
     const latestByTech = new Map<string, GpsRow>();
     gpsResults.forEach((point) => {
@@ -275,7 +322,7 @@ export default function DispatchPage() {
       script.src = `https://maps.googleapis.com/maps/api/js?key=${key}`;
       script.async = true;
       script.onload = () => resolve();
-      script.onerror = () => reject(new Error("Map script failed"));
+      script.onerror = () => reject(new Error("Échec du chargement de la carte"));
       document.body.appendChild(script);
     });
   }, [getGoogle]);
@@ -407,6 +454,24 @@ export default function DispatchPage() {
       .catch(() => {
         if (!mounted) return;
         setServices([]);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    fetch("/api/customers")
+      .then((res) => res.json())
+      .then((json) => {
+        if (!mounted) return;
+        const data = Array.isArray(json?.data) ? json.data : [];
+        setCustomers(data);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setCustomers([]);
       });
     return () => {
       mounted = false;
@@ -1226,12 +1291,35 @@ export default function DispatchPage() {
                 <input
                   id="qcCustomer"
                   className="input"
+                  list="dispatch-customers"
                   value={quickCreateForm.customerId}
                   onChange={(event) =>
                     setQuickCreateForm((prev) => ({ ...prev, customerId: event.target.value }))
                   }
                   required
                 />
+                <datalist id="dispatch-customers">
+                  {visibleCustomers.map((customer) => {
+                    const name = `${customer.first_name} ${customer.last_name}`.trim();
+                    const meta = [customer.phone, customer.city].filter(Boolean).join(" · ");
+                    return (
+                      <option
+                        key={customer.customer_id}
+                        value={customer.customer_id}
+                        label={[name, meta].filter(Boolean).join(" — ")}
+                      />
+                    );
+                  })}
+                </datalist>
+                {customers.length > customerLimit ? (
+                  <button
+                    className="button-ghost"
+                    type="button"
+                    onClick={() => setCustomerLimit((prev) => prev + 25)}
+                  >
+                    Afficher plus de clients
+                  </button>
+                ) : null}
               </div>
               <div className="grid-2">
                 <div className="form-row">
@@ -1413,20 +1501,53 @@ export default function DispatchPage() {
               <input
                 id="reassignJob"
                 className="input"
+                list="dispatch-jobs"
                 value={reassignForm.jobId}
                 onChange={(event) => setReassignForm({ ...reassignForm, jobId: event.target.value })}
                 required
               />
+              <datalist id="dispatch-jobs">
+                {visibleJobs.map((job) => {
+                  const meta = [job.service, job.scheduledDate].filter(Boolean).join(" · ");
+                  return (
+                    <option key={job.id} value={job.id} label={meta || job.id} />
+                  );
+                })}
+              </datalist>
+              {jobOptions.length > jobLimit ? (
+                <button
+                  className="button-ghost"
+                  type="button"
+                  onClick={() => setJobLimit((prev) => prev + 100)}
+                >
+                  Afficher plus de jobs
+                </button>
+              ) : null}
             </div>
             <div className="form-row">
               <label className="label" htmlFor="reassignTech">ID technicien</label>
               <input
                 id="reassignTech"
                 className="input"
+                list="dispatch-techs"
                 value={reassignForm.technicianId}
                 onChange={(event) => setReassignForm({ ...reassignForm, technicianId: event.target.value })}
                 required
               />
+              <datalist id="dispatch-techs">
+                {visibleTechs.map((tech) => (
+                  <option key={tech.id} value={tech.id} label={tech.name || tech.id} />
+                ))}
+              </datalist>
+              {technicianOptions.length > techLimit ? (
+                <button
+                  className="button-ghost"
+                  type="button"
+                  onClick={() => setTechLimit((prev) => prev + 50)}
+                >
+                  Afficher plus de techniciens
+                </button>
+              ) : null}
             </div>
             <button className="button-primary" type="submit">Réaffecter</button>
           </form>
@@ -1440,6 +1561,7 @@ export default function DispatchPage() {
               <input
                 id="moveJob"
                 className="input"
+                list="dispatch-jobs"
                 value={moveForm.jobId}
                 onChange={(event) => setMoveForm({ ...moveForm, jobId: event.target.value })}
                 required
@@ -1450,6 +1572,7 @@ export default function DispatchPage() {
               <input
                 id="moveTech"
                 className="input"
+                list="dispatch-techs"
                 value={moveForm.technicianId}
                 onChange={(event) => setMoveForm({ ...moveForm, technicianId: event.target.value })}
                 required
@@ -1571,6 +1694,7 @@ export default function DispatchPage() {
               <input
                 id="gpsTech"
                 className="input"
+                list="dispatch-techs"
                 value={gpsForm.technicianId}
                 onChange={(event) => setGpsForm({ ...gpsForm, technicianId: event.target.value })}
               />

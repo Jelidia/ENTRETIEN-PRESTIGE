@@ -9,6 +9,7 @@ export async function GET(request: Request) {
   if ("response" in auth) {
     return auth.response;
   }
+  const { profile } = auth;
 
   const queryResult = emptyQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
   if (!queryResult.success) {
@@ -17,7 +18,10 @@ export async function GET(request: Request) {
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
 
-  const { data, error } = await client.from("jobs").select("job_id, service_type, status, scheduled_date, estimated_revenue");
+  const { data, error } = await client
+    .from("jobs")
+    .select("job_id, service_type, status, scheduled_date, estimated_revenue")
+    .eq("company_id", profile.company_id);
   if (error || !data) {
     return serverError("Unable to export", "jobs_export_failed");
   }

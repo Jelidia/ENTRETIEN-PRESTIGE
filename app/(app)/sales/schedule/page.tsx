@@ -229,7 +229,7 @@ export default function SalesSchedulePage() {
         script.src = `https://maps.googleapis.com/maps/api/js?key=${key}`;
         script.async = true;
         script.onload = () => resolve();
-        script.onerror = () => reject(new Error("Map script failed"));
+        script.onerror = () => reject(new Error("Échec du chargement de la carte"));
         document.body.appendChild(script);
       }),
     [getGoogle]
@@ -378,7 +378,7 @@ export default function SalesSchedulePage() {
     const response = await fetch("/api/jobs");
     const json = await response.json().catch(() => ({ data: [] }));
     if (!response.ok) {
-      setStatus(json.error ?? "Unable to load schedule");
+      setStatus(json.error ?? "Impossible de charger l'horaire");
       return;
     }
     setJobs(json.data ?? []);
@@ -638,21 +638,68 @@ export default function SalesSchedulePage() {
           <div className="card-meta">Vos prochaines visites s'afficheront ici.</div>
         </div>
       ) : (
-        <div className="list">
-          {upcoming.map((job) => {
-            const phone = job.customer?.phone ?? "";
-            const phoneHref = normalizePhone(phone);
-            return (
-              <div className="list-item" key={job.job_id}>
-                <div>
-                  <strong>{job.service_type || "Service"}</strong>
-                  <div className="card-meta">
+        <>
+          <div className="list table-desktop">
+            {upcoming.map((job) => {
+              const phone = job.customer?.phone ?? "";
+              const phoneHref = normalizePhone(phone);
+              return (
+                <div className="list-item" key={job.job_id}>
+                  <div>
+                    <strong>{job.service_type || "Service"}</strong>
+                    <div className="card-meta">
+                      {formatDate(job.scheduled_date)} · {formatTimeRange(job.scheduled_start_time, job.scheduled_end_time)}
+                    </div>
+                    <div className="card-meta">{job.address ?? "Adresse à confirmer"}</div>
+                    {phone ? <div className="card-meta">{phone}</div> : null}
+                    {(job.address || phoneHref) ? (
+                      <div className="list-item-actions">
+                        {job.address ? (
+                          <button
+                            className="tag"
+                            type="button"
+                            onClick={() => copyAddress(job.address, setStatus)}
+                            aria-label="Copier l'adresse"
+                            title="Copier l'adresse"
+                          >
+                            Copier l'adresse
+                          </button>
+                        ) : null}
+                        {phoneHref ? (
+                          <>
+                            <a className="button-ghost" href={`tel:${phoneHref}`}>Appeler</a>
+                            <a className="button-ghost" href={`sms:${phoneHref}`}>SMS</a>
+                          </>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </div>
+                  <div style={{ display: "grid", gap: "8px", justifyItems: "end" }}>
+                  <StatusBadge status={job.status ?? "Planifié"} />
+                    {job.estimated_revenue ? <span className="tag">${job.estimated_revenue}</span> : null}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="card-list-mobile" style={{ marginTop: 12 }}>
+            {upcoming.map((job) => {
+              const phone = job.customer?.phone ?? "";
+              const phoneHref = normalizePhone(phone);
+              return (
+                <div className="mobile-card" key={job.job_id}>
+                  <div className="mobile-card-title">{job.service_type || "Service"}</div>
+                  <div className="mobile-card-meta">
                     {formatDate(job.scheduled_date)} · {formatTimeRange(job.scheduled_start_time, job.scheduled_end_time)}
                   </div>
-                  <div className="card-meta">{job.address ?? "Adresse à confirmer"}</div>
-                  {phone ? <div className="card-meta">{phone}</div> : null}
+                  <div className="mobile-card-meta">{job.address ?? "Adresse à confirmer"}</div>
+                  {phone ? <div className="mobile-card-meta">{phone}</div> : null}
+                  <div className="table-actions">
+                    <StatusBadge status={job.status ?? "Planifié"} />
+                    {job.estimated_revenue ? <span className="tag">${job.estimated_revenue}</span> : null}
+                  </div>
                   {(job.address || phoneHref) ? (
-                    <div className="list-item-actions">
+                    <div className="table-actions">
                       {job.address ? (
                         <button
                           className="tag"
@@ -673,14 +720,10 @@ export default function SalesSchedulePage() {
                     </div>
                   ) : null}
                 </div>
-                <div style={{ display: "grid", gap: "8px", justifyItems: "end" }}>
-                  <StatusBadge status={job.status ?? "Scheduled"} />
-                  {job.estimated_revenue ? <span className="tag">${job.estimated_revenue}</span> : null}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        </>
       )}
 
       {status ? <div className="hint">{status}</div> : null}

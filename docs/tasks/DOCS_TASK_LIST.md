@@ -158,37 +158,23 @@ Notes
 ## P2 - Feature completeness and UX
 
 ### Core features
-- EP-P2-PRICE-01 Connect pricing engine to job creation and invoicing.
-- EP-P2-PRICE-02 Display "Last Price Paid": show customer's previous job price near quoting field.
-- EP-P2-JOBS-01 Implement job_history logging everywhere.
-- EP-P2-JOBS-02 Implement "Clone Job" Workflow.
 - EP-P2-JOBS-03 Add Voice Notes to Jobs.
 - EP-P2-CHECK-01 Finish shift checklist workflow with structured items and photos.
-- EP-P2-CUST-01 Implement customer communication timeline connected to jobs/leads.
+- EP-P2-CUST-01 Implement customer communication timeline connected to jobs/leads. [WIP: AI - 6 2026-02-04]
 - EP-P2-CUST-02 Implement Customer Language Preference (EN/FR).
 - EP-P2-CUST-03 Implement Customer Merge Tool.
 - EP-P2-CUST-04 Referral Linking UI and $50 bonus workflow.
 
 ### Sales & territories
-- EP-P2-SALES-01 Add sales territory management UI with map polygon drawing.
-- EP-P2-SALES-02 Implement "Sales Day" logistics flow.
-- EP-P2-SALES-03 Build hierarchical territory mapping (Master Polygon + Sub-Polygons).
-- EP-P2-SALES-04 Build Sales Rep mobile schedule card.
 - EP-P2-SALES-06 Add DB tables + RLS for sales_days and sales_day_assignments.
 - EP-P2-SALES-05 Implémenter l'Ajout de Service sur le Terrain (Upsell).
 
 ### GPS & availability
 - EP-P2-GPS-01 Make GPS tracking production-grade.
 - EP-P2-GPS-02 Implement "Lien de Suivi Client" (public temporary URL).
-- EP-P2-AVAIL-01 Admin/Manager availability page.
-- EP-P2-AVAIL-02 Sales rep availability page.
-- EP-P2-AVAIL-03 Technician availability page.
 
 ### Messaging
-- EP-P2-MSG-01 Enforce strict SMS inbox visibility via RLS.
-- EP-P2-MSG-02 Implement SMS Persona & Prefix Logic.
 - EP-P2-MSG-03 Implement SMS Access Locking.
-- EP-P2-MSG-04 Bulk SMS Broadcast UI.
 
 ### Payments
 - EP-P2-PAY-05 Implémenter les Pourboires Numériques (balance "Pourboires à verser").
@@ -204,7 +190,6 @@ Notes
 - EP-P2-ADMIN-03 Build Role Templates (clone permissions).
 - EP-P2-ADMIN-04 Record Change History (Audit Log) – "Last Edited By".
 - EP-P2-ADMIN-05 Global Tag Manager.
-- EP-P2-OPS-02 Implement "Running Late" Trigger.
 - EP-P2-OPS-03 Implement Inventory Low-Stock Alerts.
 - EP-P2-SaaS-02 Commission Builder UI: visual editor for commissions (splits, clawbacks, paliers) + simulator.
 - EP-P2-SaaS-03 Payroll Rules UI: admin UI to configure payroll cycles, deductions, taxes, and simulate pay runs.
@@ -214,18 +199,13 @@ Notes
 - EP-P2-SaaS-07 Tenant feature usage dashboard & alerts.
 
 ### Reporting & dashboards
-- EP-P2-DASH-01 Customizable Dashboard Layout.
 
 ### Dispatch enhancements
 - EP-P2-DISP-12 Implement "Find Next Available Slot".
 
 ### UX & UI
 - EP-P2-UX-04 Quick Actions (Call/SMS) in lists. [WIP: AI - 2 2026-02-04]
-- EP-P2-UI-02 Mobile UI audit (iOS/Android).
-- EP-P2-UI-01 Replace manual ID entry with searchable pickers and pagination.
-- EP-P2-I18N-01 French-first UX copy and Quebec formatting.
-- EP-P2-ENG-01 Human-Readable Error Toasts.
-
+- EP-P2-UI-02 Mobile UI audit (iOS/Android). [WIP: AI - 1 2026-02-04]
 ---
 
 ## P3 - Product expansion

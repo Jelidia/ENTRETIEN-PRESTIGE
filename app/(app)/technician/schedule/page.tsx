@@ -63,7 +63,7 @@ export default function TechnicianSchedulePage() {
     const response = await fetch("/api/jobs");
     const json = await response.json().catch(() => ({ data: [] }));
     if (!response.ok) {
-      setStatus(json.error ?? "Unable to load schedule");
+      setStatus(json.error ?? "Impossible de charger l'horaire");
       return;
     }
     setJobs(json.data ?? []);
@@ -143,16 +143,16 @@ export default function TechnicianSchedulePage() {
     <div className="page">
       <div className="tech-header">
         <div>
-          <div className="card-label">My schedule</div>
-          <div className="tech-title">Upcoming jobs</div>
+          <div className="card-label">Mon horaire</div>
+          <div className="tech-title">Travaux à venir</div>
         </div>
-        <button className="button-ghost" type="button" onClick={loadJobs}>Refresh</button>
+        <button className="button-ghost" type="button" onClick={loadJobs}>Actualiser</button>
       </div>
 
       {upcoming.length === 0 ? (
         <div className="card" style={{ textAlign: "center", padding: "32px" }}>
-          <div className="card-title">No scheduled jobs</div>
-          <div className="card-meta">Your next appointments will show here.</div>
+          <div className="card-title">Aucun travail planifié</div>
+          <div className="card-meta">Vos prochains rendez-vous apparaîtront ici.</div>
         </div>
       ) : (
         <div className="list">
@@ -172,7 +172,7 @@ export default function TechnicianSchedulePage() {
                   <div className="card-meta">
                     {formatDate(job.scheduled_date)} · {formatTimeRange(job.scheduled_start_time, job.scheduled_end_time)}
                   </div>
-                  <div className="card-meta">{job.address ?? "Address pending"}</div>
+                  <div className="card-meta">{job.address ?? "Adresse à confirmer"}</div>
                   {phone ? <div className="card-meta">{phone}</div> : null}
                   <div className="card-meta">Glissez à gauche pour appeler, à droite pour terminer.</div>
                   {(job.address || phoneHref) ? (
@@ -197,7 +197,7 @@ export default function TechnicianSchedulePage() {
                     </div>
                   ) : null}
                 </div>
-                <StatusBadge status={job.status ?? "Scheduled"} />
+                <StatusBadge status={job.status ?? "Planifié"} />
               </div>
             );
           })}

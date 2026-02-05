@@ -1,11 +1,46 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type CompanyService = {
   service_id: string;
   name: string;
   active: boolean;
+};
+
+type CustomerOption = {
+  customer_id: string;
+  first_name: string;
+  last_name: string;
+  phone?: string | null;
+  city?: string | null;
+};
+
+type JobFormValues = {
+  customerId: string;
+  serviceType: string;
+  servicePackage: string;
+  scheduledDate: string;
+  scheduledStartTime: string;
+  scheduledEndTime: string;
+  address: string;
+  city: string;
+  postalCode: string;
+  estimatedRevenue: string;
+  description: string;
+};
+
+type JobFormProps = {
+  prefill?: Partial<JobFormValues> | null;
+  prefillToken?: string | null;
+};
+
+type JobPriceRow = {
+  job_id: string;
+  customer_id?: string | null;
+  scheduled_date?: string | null;
+  actual_revenue?: number | null;
+  estimated_revenue?: number | null;
 };
 
 type QuickDateOption = { label: string; value: string };
@@ -150,22 +185,40 @@ function getQuickDateOptions(baseDate = new Date()): QuickDateOption[] {
   ];
 }
 
-export default function JobForm() {
-  const [form, setForm] = useState({
-    customerId: "",
-    serviceType: "",
-    servicePackage: "",
-    scheduledDate: "",
-    scheduledStartTime: "",
-    scheduledEndTime: "",
-    address: "",
-    city: "",
-    postalCode: "",
-    estimatedRevenue: "",
-    description: "",
-  });
+function formatMoney(value: number) {
+  return new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD" }).format(value);
+}
+
+function formatDate(value?: string | null) {
+  if (!value) return "";
+  const raw = value.length <= 10 ? `${value}T00:00:00` : value;
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleDateString("fr-CA");
+}
+
+const defaultForm: JobFormValues = {
+  customerId: "",
+  serviceType: "",
+  servicePackage: "",
+  scheduledDate: "",
+  scheduledStartTime: "",
+  scheduledEndTime: "",
+  address: "",
+  city: "",
+  postalCode: "",
+  estimatedRevenue: "",
+  description: "",
+};
+
+export default function JobForm({ prefill = null, prefillToken = null }: JobFormProps) {
+  const [form, setForm] = useState<JobFormValues>(() => ({ ...defaultForm, ...(prefill ?? {}) }));
   const [status, setStatus] = useState("");
   const [services, setServices] = useState<CompanyService[]>([]);
+  const [customers, setCustomers] = useState<CustomerOption[]>([]);
+  const [customerLimit, setCustomerLimit] = useState(25);
+  const [jobPrices, setJobPrices] = useState<JobPriceRow[]>([]);
+  const lastPrefillTokenRef = useRef<string | null>(null);
   const quickDates = getQuickDateOptions();
   const addressInputRef = useRef<HTMLInputElement>(null);
 
@@ -199,6 +252,74 @@ export default function JobForm() {
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!prefill || !prefillToken) return;
+    if (lastPrefillTokenRef.current === prefillToken) return;
+    lastPrefillTokenRef.current = prefillToken;
+    setForm({ ...defaultForm, ...prefill });
+    setStatus("");
+  }, [prefill, prefillToken]);
+
+  useEffect(() => {
+    let mounted = true;
+    fetch("/api/jobs")
+      .then((res) => res.json())
+      .then((json) => {
+        if (!mounted) return;
+        const data = Array.isArray(json?.data) ? json.data : [];
+        setJobPrices(data);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setJobPrices([]);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    fetch("/api/customers")
+      .then((res) => res.json())
+      .then((json) => {
+        if (!mounted) return;
+        const data = Array.isArray(json?.data) ? json.data : [];
+        setCustomers(data);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setCustomers([]);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const visibleCustomers = customers.slice(0, customerLimit);
+
+  const lastPriceInfo = useMemo<null | { amount: number; dateLabel: string }>(() => {
+    const customerId = form.customerId.trim();
+    if (!customerId) return null;
+    const matches = jobPrices
+      .filter((job) => job.customer_id === customerId)
+      .map((job) => {
+        const amount = job.actual_revenue ?? job.estimated_revenue;
+        if (amount === null || amount === undefined) return null;
+        const timestamp = job.scheduled_date ? new Date(job.scheduled_date).getTime() : 0;
+        return {
+          amount,
+          timestamp,
+          dateLabel: formatDate(job.scheduled_date ?? undefined),
+        };
+      })
+      .filter(Boolean) as Array<{ amount: number; timestamp: number; dateLabel: string }>;
+
+    if (!matches.length) return null;
+    matches.sort((a, b) => b.timestamp - a.timestamp);
+    return { amount: matches[0].amount, dateLabel: matches[0].dateLabel };
+  }, [form.customerId, jobPrices]);
 
   useEffect(() => {
     const input = addressInputRef.current;
@@ -256,10 +377,33 @@ export default function JobForm() {
         <input
           id="customerId"
           className="input"
+          list="job-form-customers"
           value={form.customerId}
           onChange={(event) => updateField("customerId", event.target.value)}
           required
         />
+        <datalist id="job-form-customers">
+          {visibleCustomers.map((customer) => {
+            const name = `${customer.first_name} ${customer.last_name}`.trim();
+            const meta = [customer.phone, customer.city].filter(Boolean).join(" · ");
+            return (
+              <option
+                key={customer.customer_id}
+                value={customer.customer_id}
+                label={[name, meta].filter(Boolean).join(" — ")}
+              />
+            );
+          })}
+        </datalist>
+        {customers.length > customerLimit ? (
+          <button
+            className="button-ghost"
+            type="button"
+            onClick={() => setCustomerLimit((prev) => prev + 25)}
+          >
+            Afficher plus de clients
+          </button>
+        ) : null}
       </div>
       <div className="form-row">
         <label className="label" htmlFor="serviceType">Type de service</label>
@@ -374,6 +518,12 @@ export default function JobForm() {
           value={form.estimatedRevenue}
           onChange={(event) => updateField("estimatedRevenue", event.target.value)}
         />
+        {lastPriceInfo ? (
+          <div className="hint">
+            Dernier prix payé : {formatMoney(lastPriceInfo.amount)}
+            {lastPriceInfo.dateLabel ? ` · ${lastPriceInfo.dateLabel}` : ""}
+          </div>
+        ) : null}
       </div>
       <div className="form-row">
         <label className="label" htmlFor="description">Description</label>

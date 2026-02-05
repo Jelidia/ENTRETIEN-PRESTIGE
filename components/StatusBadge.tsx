@@ -9,6 +9,8 @@ export default function StatusBadge({ status }: StatusBadgeProps) {
   const isWarning =
     normalized.includes("delay") ||
     normalized.includes("overdue") ||
+    normalized.includes("retard") ||
+    normalized.includes("late") ||
     normalized.includes("unread") ||
     normalized.includes("inactive") ||
     normalized.includes("inactif");

@@ -79,8 +79,8 @@ type CompanyServiceForm = {
 const roleOptions = [
   { value: "admin", label: "Administrateur" },
   { value: "manager", label: "Gestionnaire" },
-  { value: "dispatcher", label: "Repartiteur" },
-  { value: "sales_rep", label: "Representant" },
+  { value: "dispatcher", label: "Répartiteur" },
+  { value: "sales_rep", label: "Représentant" },
   { value: "technician", label: "Technicien" },
 ];
 
@@ -99,16 +99,16 @@ const statusLabels: Record<string, string> = {
 
 const permissionLabels: Record<PermissionKey, string> = {
   dashboard: "Tableau de bord",
-  dispatch: "Repartition",
+  dispatch: "Répartition",
   jobs: "Travaux",
   customers: "Clients",
   invoices: "Factures",
   sales: "Ventes",
-  operations: "Operations",
+  operations: "Opérations",
   reports: "Rapports",
-  team: "Equipe",
+  team: "Équipe",
   notifications: "Notifications",
-  settings: "Parametres",
+  settings: "Paramètres",
   technician: "Vue technicien",
 };
 
@@ -259,11 +259,11 @@ export default function AdminManagePage() {
     const response = await fetch("/api/auth/disable-2fa", { method: "POST" });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setSecurityStatus(json.error ?? "Impossible de desactiver la 2FA");
+      setSecurityStatus(json.error ?? "Impossible de désactiver la 2FA");
       return;
     }
     setOtpAuth("");
-    setSecurityStatus("2FA desactivee.");
+    setSecurityStatus("2FA désactivée.");
   }
 
   function updateTeamEdit(userId: string, key: keyof TeamEdit, value: string) {
@@ -295,10 +295,10 @@ export default function AdminManagePage() {
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setCompanyStatus(json.error ?? "Impossible de mettre a jour l'entreprise");
+      setCompanyStatus(json.error ?? "Impossible de mettre à jour l'entreprise");
       return;
     }
-    setCompanyStatus("Entreprise mise a jour.");
+    setCompanyStatus("Entreprise mise à jour.");
     void loadSettings();
     void refreshCompany();
   }
@@ -345,10 +345,10 @@ export default function AdminManagePage() {
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setServiceStatus(json.error ?? "Impossible de mettre a jour le service");
+      setServiceStatus(json.error ?? "Impossible de mettre à jour le service");
       return;
     }
-    setServiceStatus("Service mis a jour.");
+    setServiceStatus("Service mis à jour.");
     void loadSettings();
   }
 
@@ -360,7 +360,7 @@ export default function AdminManagePage() {
       setServiceStatus(json.error ?? "Impossible de supprimer le service");
       return;
     }
-    setServiceStatus("Service supprime.");
+    setServiceStatus("Service supprimé.");
     void loadSettings();
   }
 
@@ -437,7 +437,7 @@ export default function AdminManagePage() {
       payload.status = edits.status;
     }
     if (!Object.keys(payload).length) {
-      setTeamStatus("Aucune modification a enregistrer.");
+      setTeamStatus("Aucune modification à enregistrer.");
       return;
     }
 
@@ -449,10 +449,10 @@ export default function AdminManagePage() {
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setTeamStatus(json.error ?? "Impossible de mettre a jour le membre");
+      setTeamStatus(json.error ?? "Impossible de mettre à jour le membre");
       return;
     }
-    setTeamStatus("Membre mis a jour.");
+    setTeamStatus("Membre mis à jour.");
     void loadSettings();
   }
 
@@ -465,10 +465,10 @@ export default function AdminManagePage() {
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setRolePermissionsStatus(json.error ?? "Impossible d'enregistrer les acces");
+      setRolePermissionsStatus(json.error ?? "Impossible d'enregistrer les accès");
       return;
     }
-    setRolePermissionsStatus("Acces par role enregistres.");
+    setRolePermissionsStatus("Accès par rôle enregistrés.");
     void loadSettings();
   }
 
@@ -492,10 +492,10 @@ export default function AdminManagePage() {
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setUserOverrideStatus(json.error ?? "Impossible d'enregistrer les acces");
+      setUserOverrideStatus(json.error ?? "Impossible d'enregistrer les accès");
       return;
     }
-    setUserOverrideStatus("Acces personnalises enregistres.");
+    setUserOverrideStatus("Accès personnalisés enregistrés.");
     void loadSettings();
   }
 
@@ -512,10 +512,10 @@ export default function AdminManagePage() {
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setUserOverrideStatus(json.error ?? "Impossible de reinitialiser les acces");
+      setUserOverrideStatus(json.error ?? "Impossible de réinitialiser les accès");
       return;
     }
-    setUserOverrideStatus("Acces reinitialises.");
+    setUserOverrideStatus("Accès réinitialisés.");
     void loadSettings();
   }
 
@@ -523,7 +523,7 @@ export default function AdminManagePage() {
     <div className="page">
       <TopBar
         title="Administration entreprise"
-        subtitle="Controle complet de l'entreprise"
+        subtitle="Contrôle complet de l'entreprise"
       />
 
       <section className="section">
@@ -531,7 +531,7 @@ export default function AdminManagePage() {
           <div>
             <div className="card-label">Entreprise</div>
             <h2 className="section-title">Profil de l'entreprise</h2>
-            <div className="section-subtitle">Identite, coordonnees, taxes et fuseau horaire.</div>
+            <div className="section-subtitle">Identité, coordonnées, taxes et fuseau horaire.</div>
           </div>
         </div>
         <div className="card">
@@ -667,7 +667,7 @@ export default function AdminManagePage() {
           <div>
             <div className="card-label">Services</div>
             <h2 className="section-title">Catalogue des services</h2>
-            <div className="section-subtitle">Creez, modifiez et desactivez les services proposes.</div>
+            <div className="section-subtitle">Créez, modifiez et désactivez les services proposés.</div>
           </div>
         </div>
         <div className="stack">
@@ -839,9 +839,9 @@ export default function AdminManagePage() {
       <section className="section">
         <div className="section-header">
           <div>
-            <div className="card-label">Equipe</div>
+            <div className="card-label">Équipe</div>
             <h2 className="section-title">Gestion des membres</h2>
-            <div className="section-subtitle">Modifiez les roles, coordonnees et statuts.</div>
+            <div className="section-subtitle">Modifiez les rôles, coordonnées et statuts.</div>
           </div>
           <div className="table-actions">
             <Link className="button-secondary" href="/admin/users">Gestion des utilisateurs</Link>
@@ -975,7 +975,7 @@ export default function AdminManagePage() {
         </div>
         <div className="grid-2">
           <div className="card">
-            <h3 className="card-title">Controles de securite</h3>
+            <h3 className="card-title">Contrôles de sécurité</h3>
             <div className="card-meta">La 2FA peut etre activee par utilisateur.</div>
           <div className="list" style={{ marginTop: 12 }}>
             <div className="list-item">
@@ -988,7 +988,7 @@ export default function AdminManagePage() {
             <div className="list-item">
               <div>
                 <strong>Expiration de session</strong>
-                <div className="card-meta">15 minutes pour tous les roles</div>
+                <div className="card-meta">15 minutes pour tous les rôles</div>
               </div>
               <span className="tag">Actif</span>
             </div>
@@ -1006,7 +1006,7 @@ export default function AdminManagePage() {
               Generer la configuration 2FA
             </button>
             <button className="button-ghost" type="button" onClick={handleDisable2fa}>
-              Desactiver la double verification
+              Désactiver la double vérification
             </button>
             {otpAuth ? (
               <div className="card" style={{ padding: 12 }}>
@@ -1018,8 +1018,8 @@ export default function AdminManagePage() {
           </div>
         </div>
           <div className="card">
-            <h3 className="card-title">Regles de notification</h3>
-            <div className="card-meta">Controlez comment l&apos;equipe recoit les mises a jour.</div>
+            <h3 className="card-title">Règles de notification</h3>
+            <div className="card-meta">Contrôlez comment l&apos;équipe reçoit les mises à jour.</div>
             <NotificationSettingsForm />
           </div>
         </div>
@@ -1028,24 +1028,24 @@ export default function AdminManagePage() {
       <section className="section">
         <div className="section-header">
           <div>
-            <div className="card-label">Acces</div>
+            <div className="card-label">Accès</div>
             <h2 className="section-title">Permissions</h2>
-            <div className="section-subtitle">Ajustez ce que chaque role peut voir.</div>
+            <div className="section-subtitle">Ajustez ce que chaque rôle peut voir.</div>
           </div>
         </div>
         <div className="grid-2">
         <div className="card">
           <div className="card-header">
             <div>
-              <h3 className="card-title">Controle d&apos;acces par role</h3>
-              <div className="card-meta">Definir le niveau d&apos;acces par role.</div>
+              <h3 className="card-title">Contrôle d&apos;accès par rôle</h3>
+              <div className="card-meta">Définir le niveau d&apos;accès par rôle.</div>
             </div>
           </div>
           <div className="table-desktop">
             <table className="table">
               <thead>
                 <tr>
-                  <th>Role</th>
+                  <th>Rôle</th>
                   {permissionKeys.map((permission) => (
                     <th key={permission}>{permissionLabels[permission]}</th>
                   ))}
@@ -1092,7 +1092,7 @@ export default function AdminManagePage() {
           </div>
           <div style={{ marginTop: 12, display: "flex", gap: 12, flexWrap: "wrap" }}>
             <button className="button-primary" type="button" onClick={saveRolePermissions}>
-              Sauvegarder les acces
+              Sauvegarder les accès
             </button>
             {rolePermissionsStatus ? <div className="hint">{rolePermissionsStatus}</div> : null}
           </div>
@@ -1101,12 +1101,12 @@ export default function AdminManagePage() {
         <div className="card">
           <div className="card-header">
             <div>
-              <h3 className="card-title">Acces par utilisateur</h3>
-              <div className="card-meta">Accorder un acces specifique a un membre.</div>
+              <h3 className="card-title">Accès par utilisateur</h3>
+              <div className="card-meta">Accorder un accès spécifique à un membre.</div>
             </div>
           </div>
           <div className="form-row">
-            <label className="label" htmlFor="overrideUser">Membre de l&apos;equipe</label>
+              <label className="label" htmlFor="overrideUser">Membre de l&apos;équipe</label>
             <select
               id="overrideUser"
               className="select"
@@ -1123,7 +1123,7 @@ export default function AdminManagePage() {
           </div>
           {selectedUser ? (
             <div className="card-meta" style={{ marginTop: 8 }}>
-              {selectedUser.access_permissions ? "Acces personnalise actif" : "Acces par defaut"}
+              {selectedUser.access_permissions ? "Accès personnalisé actif" : "Accès par défaut"}
             </div>
           ) : null}
           <div className="list" style={{ marginTop: 12 }}>
@@ -1142,7 +1142,7 @@ export default function AdminManagePage() {
           </div>
           <div style={{ marginTop: 12, display: "flex", gap: 12, flexWrap: "wrap" }}>
             <button className="button-primary" type="button" onClick={saveUserOverrides}>
-              Sauvegarder les acces
+              Sauvegarder les accès
             </button>
             <button className="button-secondary" type="button" onClick={clearUserOverrides}>
               Reinitialiser

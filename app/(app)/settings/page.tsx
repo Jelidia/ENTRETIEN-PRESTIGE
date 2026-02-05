@@ -715,7 +715,7 @@ export default function SettingsPage() {
             <div className="card" style={{ marginTop: 16 }}>
               <h2 className="card-title">Administration entreprise</h2>
               <div className="card-meta" style={{ marginBottom: 16 }}>
-                Gerer l'entreprise, les services, les acces et l'equipe.
+                Gérer l'entreprise, les services, les accès et l'équipe.
               </div>
               <Link className="button-primary" href="/admin/manage">
                 Ouvrir le centre d'administration

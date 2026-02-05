@@ -85,12 +85,12 @@ export default function SalesDashboard() {
           subtitle="Impossible de charger les statistiques"
           actions={
             <button className="button-secondary" onClick={loadStats}>
-              ↻ Rafraichir
+              ↻ Rafraîchir
             </button>
           }
         />
         <div className="alert" style={{ marginTop: "16px" }}>
-          {error || "Aucune donnee disponible."}
+          {error || "Aucune donnée disponible."}
         </div>
       </div>
     );
@@ -104,10 +104,10 @@ export default function SalesDashboard() {
     <div className="page">
       <TopBar
         title="Tableau de bord ventes"
-        subtitle="Apercu de votre performance"
+        subtitle="Aperçu de votre performance"
         actions={
           <button className="button-secondary" onClick={loadStats}>
-            ↻ Rafraichir
+            ↻ Rafraîchir
           </button>
         }
       />
@@ -117,7 +117,7 @@ export default function SalesDashboard() {
         <div className="card">
           <div className="card-label">Revenu du mois</div>
           <div className="card-value">${stats.thisMonth.revenue.toLocaleString()}</div>
-          <div className="card-meta">{stats.thisMonth.conversions} travaux gagnes</div>
+          <div className="card-meta">{stats.thisMonth.conversions} travaux gagnés</div>
         </div>
 
         <div className="card">
@@ -148,12 +148,12 @@ export default function SalesDashboard() {
           </div>
           <div>
             <div style={{ fontSize: "18px", fontWeight: 600 }}>
-              sur {stats.leaderboard.totalReps} representants
+              sur {stats.leaderboard.totalReps} représentants
             </div>
             <div className="card-meta" style={{ marginTop: "4px" }}>
               {stats.leaderboard.percentageVsFirst > 0 && `+${stats.leaderboard.percentageVsFirst}% au-dessus du #1`}
               {stats.leaderboard.percentageVsFirst < 0 && `${stats.leaderboard.percentageVsFirst}% en dessous du #1`}
-              {stats.leaderboard.percentageVsFirst === 0 && "Vous etes #1! 🎉"}
+              {stats.leaderboard.percentageVsFirst === 0 && "Vous êtes #1! 🎉"}
             </div>
             <div className="card-meta">
               {stats.leaderboard.percentageVsAverage > 0 && `+${stats.leaderboard.percentageVsAverage}% au-dessus de la moyenne`}
@@ -168,15 +168,15 @@ export default function SalesDashboard() {
       <section className="card" style={{ marginTop: "24px" }}>
         <h3 className="card-title">Pipeline des ventes</h3>
         <div className="card-meta" style={{ marginBottom: "16px" }}>
-          Suivez vos leads par etape
+          Suivez vos leads par étape
         </div>
 
         <div className="pipeline-grid">
           {[
             { label: "Nouveau", count: stats.pipeline.new, color: "#64748b" },
-            { label: "Contacte", count: stats.pipeline.contacted, color: "#3b82f6" },
-            { label: "Estime", count: stats.pipeline.estimated, color: "#f59e0b" },
-            { label: "Gagne", count: stats.pipeline.won, color: "#10b981" },
+            { label: "Contacté", count: stats.pipeline.contacted, color: "#3b82f6" },
+            { label: "Estimé", count: stats.pipeline.estimated, color: "#f59e0b" },
+            { label: "Gagné", count: stats.pipeline.won, color: "#10b981" },
             { label: "Perdu", count: stats.pipeline.lost, color: "#ef4444" },
           ].map((stage) => (
             <div
@@ -211,7 +211,7 @@ export default function SalesDashboard() {
         </div>
 
         {stats.followUps.length === 0 && (
-          <p className="card-meta">Aucun suivi planifie</p>
+          <p className="card-meta">Aucun suivi planifié</p>
         )}
 
         <div className="list">
@@ -220,7 +220,7 @@ export default function SalesDashboard() {
                 <div>
                   <strong>{followUp.customer_name}</strong>
                   <div className="card-meta">
-                    Suivi: {new Date(followUp.follow_up_date).toLocaleDateString("fr-CA")}
+                    Suivi : {new Date(followUp.follow_up_date).toLocaleDateString("fr-CA")}
                   </div>
                 <div style={{ marginTop: "4px" }}>
                   Est. ${followUp.estimated_value.toLocaleString()}

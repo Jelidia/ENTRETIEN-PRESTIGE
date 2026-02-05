@@ -28,10 +28,21 @@ export default function InboxPage() {
   const [replyMessage, setReplyMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [toast, setToast] = useState<ToastState | null>(null);
 
   useEffect(() => {
     loadThreads();
   }, []);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = window.setTimeout(() => setToast(null), 3200);
+    return () => window.clearTimeout(timer);
+  }, [toast]);
+
+  const showToast = (message: string, tone: ToastTone) => {
+    setToast({ message, tone });
+  };
 
   async function loadThreads() {
     setLoading(true);
@@ -82,19 +93,22 @@ export default function InboxPage() {
       // Reload messages
       await loadMessages(selectedThread);
     } else {
-      alert("Echec de l'envoi du message");
+      showToast("Échec de l'envoi du message.", "error");
     }
     setSending(false);
   }
 
   return (
     <div className="page">
+      {toast ? (
+        <Toast message={toast.message} tone={toast.tone} onClose={() => setToast(null)} />
+      ) : null}
       <TopBar
-        title="Boite de reception"
+        title="Boîte de réception"
         subtitle="Conversations SMS bidirectionnelles"
         actions={
           <button className="button-secondary" onClick={loadThreads}>
-            ↻ Rafraichir
+            ↻ Rafraîchir
           </button>
         }
       />
@@ -150,7 +164,7 @@ export default function InboxPage() {
         <div className="card" style={{ display: "flex", flexDirection: "column" }}>
           {!selectedThread && (
             <div style={{ display: "grid", placeItems: "center", height: "100%", color: "var(--ink-500)" }}>
-              Selectionnez une conversation pour voir les messages
+              Sélectionnez une conversation pour voir les messages
             </div>
           )}
 
@@ -204,7 +218,7 @@ export default function InboxPage() {
                 <div style={{ display: "flex", gap: "12px" }}>
                   <textarea
                     className="textarea"
-                    placeholder="Ecrivez votre message..."
+                    placeholder="Écrivez votre message..."
                     value={replyMessage}
                     onChange={(e) => setReplyMessage(e.target.value)}
                     rows={2}
@@ -229,6 +243,20 @@ export default function InboxPage() {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+type ToastTone = "success" | "error";
+type ToastState = { message: string; tone: ToastTone };
+
+function Toast({ message, tone, onClose }: { message: string; tone: ToastTone; onClose: () => void }) {
+  return (
+    <div className={`toast toast-${tone}`} role="status" aria-live="polite">
+      <span>{message}</span>
+      <button type="button" className="toast-close" onClick={onClose}>
+        Fermer
+      </button>
     </div>
   );
 }

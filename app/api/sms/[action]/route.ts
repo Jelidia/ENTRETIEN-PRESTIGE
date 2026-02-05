@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { smsSendSchema } from "@/lib/validators";
 import { sendSms, verifyTwilioSignature } from "@/lib/twilio";
-import { normalizePhoneE164 } from "@/lib/smsTemplates";
+import { applySmsPrefix, normalizePhoneE164 } from "@/lib/smsTemplates";
 import { createAdminClient, createUserClient } from "@/lib/supabaseServer";
 import { requireRole } from "@/lib/auth";
 import { getAccessTokenFromRequest } from "@/lib/session";
@@ -227,6 +227,16 @@ export async function POST(
     return NextResponse.json({ success: false, error: "Customer has opted out of SMS" }, { status: 403 });
   }
 
+  const { data: company, error: companyError } = await admin
+    .from("companies")
+    .select("name")
+    .eq("company_id", profile.company_id)
+    .maybeSingle();
+  if (companyError) {
+    logger.error("Failed to load SMS prefix", { ...requestContext, error: companyError });
+  }
+  const messageWithPrefix = applySmsPrefix(parsed.data.message, company?.name ?? null);
+
   const threadId = parsed.data.threadId
     ? parsed.data.threadId
     : await resolveThreadId(admin, parsed.data.customerId ?? null, phoneNumber);
@@ -251,7 +261,7 @@ export async function POST(
       company_id: profile.company_id,
       customer_id: parsed.data.customerId ?? null,
       phone_number: phoneNumber,
-      content: parsed.data.message,
+      content: messageWithPrefix,
       direction: "outbound",
       thread_id: threadId,
       status: "queued",
@@ -266,7 +276,7 @@ export async function POST(
     return NextResponse.json(responseBody, { status: 500 });
   }
   try {
-    await sendSms(phoneNumber, parsed.data.message);
+    await sendSms(phoneNumber, messageWithPrefix);
   } catch (error) {
     const { error: statusError } = await admin
       .from("sms_messages")

@@ -1182,7 +1182,7 @@ export default function SalesPage() {
           ) : (
             <div className="form-grid">
               <div className="form-row">
-                <label className="label" htmlFor="salesDaySelect">Journee</label>
+                <label className="label" htmlFor="salesDaySelect">Journée</label>
                 <select
                   id="salesDaySelect"
                   className="select"

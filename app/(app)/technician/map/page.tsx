@@ -64,7 +64,7 @@ export default function TechnicianMapPage() {
     const response = await fetch("/api/gps/history");
     const json = await response.json().catch(() => ({ data: [] }));
     if (!response.ok) {
-      setStatus(json.error ?? "Unable to load GPS");
+      setStatus(json.error ?? "Impossible de charger le GPS");
       return;
     }
     const sorted = (json.data ?? []).slice().sort((a: GpsRow, b: GpsRow) =>
@@ -109,7 +109,7 @@ export default function TechnicianMapPage() {
       script.src = `https://maps.googleapis.com/maps/api/js?key=${key}`;
       script.async = true;
       script.onload = () => resolve();
-      script.onerror = () => reject(new Error("Map script failed"));
+      script.onerror = () => reject(new Error("Échec du chargement de la carte"));
       document.body.appendChild(script);
     });
   }, [getGoogle]);
@@ -151,7 +151,7 @@ export default function TechnicianMapPage() {
       const marker = new maps.Marker({
         position,
         map: mapInstance.current,
-        label: index === path.length - 1 ? "Now" : "",
+        label: index === path.length - 1 ? "Maintenant" : "",
       });
       markers.current.push(marker);
     });
@@ -178,7 +178,7 @@ export default function TechnicianMapPage() {
     }
     void loadGoogleMaps(mapsKey)
       .then(() => initMap())
-      .catch(() => setStatus("Unable to load maps"));
+      .catch(() => setStatus("Impossible de charger la carte"));
   }, [initMap, loadGoogleMaps, mapsKey]);
 
   useEffect(() => {
@@ -187,9 +187,9 @@ export default function TechnicianMapPage() {
   }, [mapReady, renderMarkers]);
 
   const mapMessage = useMemo(() => {
-    if (!mapsKey) return "Map disabled. Add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY.";
-    if (!mapReady) return "Loading map...";
-    if (!points.length) return "No GPS points yet. Tap Share location to start.";
+    if (!mapsKey) return "Carte désactivée. Ajoutez NEXT_PUBLIC_GOOGLE_MAPS_API_KEY.";
+    if (!mapReady) return "Chargement de la carte...";
+    if (!points.length) return "Aucun point GPS pour l'instant. Utilisez Partager la position pour commencer.";
     return "";
   }, [mapsKey, mapReady, points.length]);
 
@@ -197,12 +197,12 @@ export default function TechnicianMapPage() {
     <div className="page">
       <div className="tech-header">
         <div>
-          <div className="card-label">Live map</div>
-          <div className="tech-title">Route & locations</div>
+          <div className="card-label">Carte en direct</div>
+          <div className="tech-title">Trajet et positions</div>
         </div>
         <div className="table-actions">
-          <button className="button-ghost" type="button" onClick={shareLocation}>Share location</button>
-          <button className="button-ghost" type="button" onClick={loadPoints}>Refresh</button>
+          <button className="button-ghost" type="button" onClick={shareLocation}>Partager la position</button>
+          <button className="button-ghost" type="button" onClick={loadPoints}>Actualiser</button>
         </div>
       </div>
 
@@ -212,13 +212,13 @@ export default function TechnicianMapPage() {
       </div>
 
       <div className="card">
-        <h3 className="card-title">Recent GPS points</h3>
+        <h3 className="card-title">Points GPS récents</h3>
         <div className="list" style={{ marginTop: 12 }}>
           {points.map((point) => (
             <div className="list-item" key={point.location_id}>
               <div>
                 <strong>{point.latitude.toFixed(5)}, {point.longitude.toFixed(5)}</strong>
-                <div className="card-meta">{new Date(point.timestamp).toLocaleString()}</div>
+                <div className="card-meta">{new Date(point.timestamp).toLocaleString("fr-CA")}</div>
               </div>
               <span className="tag">GPS</span>
             </div>

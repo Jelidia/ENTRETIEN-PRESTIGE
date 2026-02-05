@@ -1,11 +1,52 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { forbidden, requireUser } from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 import { threadIdParamSchema } from "@/lib/validators";
+
+async function resolveCustomerIds(
+  client: ReturnType<typeof createUserClient>,
+  role: string,
+  userId: string
+): Promise<string[] | null> {
+  if (role === "technician") {
+    const { data: assignments } = await client
+      .from("job_assignments")
+      .select("job:jobs(customer_id)")
+      .eq("technician_id", userId);
+
+    const customerIds = [
+      ...new Set(
+        (assignments ?? [])
+          .map((assignment: { job?: { customer_id?: string | null } | { customer_id?: string | null }[] | null }) => {
+            const job = Array.isArray(assignment.job) ? assignment.job[0] : assignment.job;
+            return job?.customer_id ?? null;
+          })
+          .filter((value): value is string => Boolean(value))
+      ),
+    ];
+
+    return customerIds;
+  }
+
+  if (role === "sales_rep") {
+    const { data: jobs } = await client
+      .from("jobs")
+      .select("customer_id")
+      .eq("sales_rep_id", userId);
+
+    const customerIds = [...new Set(
+      jobs?.map((job: { customer_id?: string | null }) => job.customer_id).filter(Boolean) || []
+    )];
+
+    return customerIds;
+  }
+
+  return null;
+}
 
 // Mark thread messages as read
 export async function POST(
@@ -38,11 +79,35 @@ export async function POST(
     return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
   }
 
-  const { error } = await client
+  const customerIds = await resolveCustomerIds(client, profile.role, profile.user_id);
+  if (customerIds && customerIds.length === 0) {
+    return forbidden("Accès refusé", "sms_thread_forbidden");
+  }
+
+  if (customerIds) {
+    const { data: allowed } = await client
+      .from("sms_messages")
+      .select("sms_id")
+      .eq("thread_id", threadId)
+      .in("customer_id", customerIds)
+      .limit(1);
+
+    if (!allowed || allowed.length === 0) {
+      return forbidden("Accès refusé", "sms_thread_forbidden");
+    }
+  }
+
+  let query = client
     .from("sms_messages")
     .update({ is_read: true })
     .eq("thread_id", threadId)
     .eq("direction", "inbound");
+
+  if (customerIds) {
+    query = query.in("customer_id", customerIds);
+  }
+
+  const { error } = await query;
 
   if (error) {
     return NextResponse.json({ success: false, error: "Failed to mark as read", details: error.message },

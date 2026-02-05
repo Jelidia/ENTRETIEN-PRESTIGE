@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import AvailabilityCalendar from "@/components/AvailabilityCalendar";
 import { logger } from "@/lib/logger";
 
 type AccessResponse = {
@@ -9,6 +10,7 @@ type AccessResponse = {
 };
 
 type UserProfile = {
+  user_id: string;
   full_name: string;
   email: string;
   phone: string;
@@ -120,6 +122,8 @@ export default function TechnicianProfilePage() {
           </button>
         </div>
       </div>
+
+      {profile ? <AvailabilityCalendar userId={profile.user_id} /> : null}
 
       {status ? <div className="hint">{status}</div> : null}
     </div>

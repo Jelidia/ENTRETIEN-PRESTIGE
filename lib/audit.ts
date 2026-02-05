@@ -10,6 +10,13 @@ type AuditOptions = {
   reason?: string | null;
 };
 
+type JobHistoryEntry = {
+  fieldName: string;
+  oldValue?: string | null;
+  newValue?: string | null;
+  reason?: string | null;
+};
+
 export async function logAudit(
   client: Pick<SupabaseClient, "from">,
   userId: string | null,
@@ -31,4 +38,23 @@ export async function logAudit(
     user_agent: options?.userAgent ?? null,
     reason: options?.reason ?? null,
   });
+}
+
+export async function logJobHistory(
+  client: Pick<SupabaseClient, "from">,
+  jobId: string,
+  changedBy: string | null,
+  entries: JobHistoryEntry[]
+) {
+  if (!entries.length) return;
+  await client.from("job_history").insert(
+    entries.map((entry) => ({
+      job_id: jobId,
+      changed_by: changedBy,
+      field_name: entry.fieldName,
+      old_value: entry.oldValue ?? null,
+      new_value: entry.newValue ?? null,
+      reason: entry.reason ?? null,
+    }))
+  );
 }

@@ -10,9 +10,10 @@ import {
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { jobCreateSchema } from "@/lib/validators";
-import { logAudit } from "@/lib/audit";
+import { logAudit, logJobHistory } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
+import { calculatePrice, isQuebecHoliday } from "@/lib/pricing";
 
 export async function GET(request: Request) {
   const auth = await requirePermission(request, "jobs");
@@ -26,8 +27,9 @@ export async function GET(request: Request) {
   let query = client
     .from("jobs")
     .select(
-      "job_id, service_type, status, scheduled_date, scheduled_start_time, scheduled_end_time, address, estimated_revenue, actual_revenue, customer_id, customer:customers(phone)"
+      "job_id, service_type, service_package, status, scheduled_date, scheduled_start_time, scheduled_end_time, address, city, postal_code, description, estimated_revenue, actual_revenue, customer_id, customer:customers(phone)"
     )
+    .eq("company_id", profile.company_id)
     .order("scheduled_date", { ascending: true })
     .limit(100);
 
@@ -71,6 +73,26 @@ export async function POST(request: Request) {
   if (idempotency.action === "in_progress") {
     return conflict("idempotency_in_progress", "Request already in progress");
   }
+  const parsedRevenue = parsed.data.estimatedRevenue ? Number(parsed.data.estimatedRevenue) : null;
+  let estimatedRevenue = Number.isFinite(parsedRevenue) ? parsedRevenue : null;
+  if (estimatedRevenue === null) {
+    const startTime = parsed.data.scheduledStartTime || "09:00";
+    const scheduledDateTime = new Date(`${parsed.data.scheduledDate}T${startTime}`);
+    const safeDate = Number.isNaN(scheduledDateTime.getTime()) ? new Date() : scheduledDateTime;
+    const { count } = await client
+      .from("jobs")
+      .select("job_id", { count: "exact", head: true })
+      .eq("company_id", profile.company_id)
+      .eq("customer_id", parsed.data.customerId)
+      .is("deleted_at", null);
+    const pricing = calculatePrice({
+      serviceType: parsed.data.serviceType,
+      datetime: safeDate,
+      isHoliday: isQuebecHoliday(safeDate),
+      customerJobCount: count ?? 0,
+    });
+    estimatedRevenue = Number(pricing.finalPrice.toFixed(2));
+  }
   const { data, error } = await client
     .from("jobs")
     .insert({
@@ -85,9 +107,7 @@ export async function POST(request: Request) {
       address: parsed.data.address,
       city: parsed.data.city,
       postal_code: parsed.data.postalCode,
-      estimated_revenue: parsed.data.estimatedRevenue
-        ? Number(parsed.data.estimatedRevenue)
-        : null,
+      estimated_revenue: estimatedRevenue,
       created_by: user.id,
       updated_by: user.id,
       status: "created",
@@ -98,6 +118,26 @@ export async function POST(request: Request) {
   if (error || !data) {
     return serverError("Unable to create job", "job_create_failed");
   }
+
+  await logJobHistory(client, data.job_id, user.id, [
+    { fieldName: "status", oldValue: null, newValue: "created", reason: "create" },
+    { fieldName: "scheduled_date", oldValue: null, newValue: parsed.data.scheduledDate },
+    {
+      fieldName: "scheduled_start_time",
+      oldValue: null,
+      newValue: parsed.data.scheduledStartTime ?? null,
+    },
+    {
+      fieldName: "scheduled_end_time",
+      oldValue: null,
+      newValue: parsed.data.scheduledEndTime ?? null,
+    },
+    {
+      fieldName: "estimated_revenue",
+      oldValue: null,
+      newValue: estimatedRevenue !== null ? estimatedRevenue.toFixed(2) : null,
+    },
+  ]);
 
   await logAudit(client, user.id, "create_job", "job", data.job_id, "success", {
     ipAddress: ip,

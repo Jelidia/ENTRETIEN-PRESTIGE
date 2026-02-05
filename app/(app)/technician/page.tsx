@@ -168,13 +168,39 @@ export default function TechnicianPage() {
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setStatus(json.error ?? "Unable to update job");
+      setStatus(json.error ?? "Impossible de mettre à jour le travail");
       return;
     }
-    setStatus(`Job ${jobId} updated.`);
+    setStatus(`Travail ${jobId} mis à jour.`);
     if (action === "check-out") {
       setCompletedJobId(jobId);
     }
+    void loadJobs();
+  }
+
+  async function handleRunningLate(jobId: string) {
+    setStatus("");
+    const response = await fetch(`/api/jobs/${jobId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "En retard" }),
+    });
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setStatus(json.error ?? "Impossible de signaler le retard.");
+      return;
+    }
+    const smsResponse = await fetch("/api/sms/triggers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ event: "running_late", jobId }),
+    });
+    const smsJson = await smsResponse.json().catch(() => ({}));
+    if (!smsResponse.ok) {
+      setStatus(smsJson.error ?? "Retard signalé, mais le SMS n'a pas été envoyé.");
+      return;
+    }
+    setStatus("Retard signalé au client.");
     void loadJobs();
   }
 
@@ -228,7 +254,7 @@ export default function TechnicianPage() {
     return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(nextJob.address)}`;
   }, [nextJob]);
 
-  const todayLabel = new Date().toLocaleDateString("en-CA", {
+  const todayLabel = new Date().toLocaleDateString("fr-CA", {
     weekday: "short",
     month: "short",
     day: "numeric",
@@ -239,38 +265,38 @@ export default function TechnicianPage() {
     <div className="page">
       <div className="tech-header">
         <div>
-          <div className="card-label">{"Today's jobs"}</div>
+          <div className="card-label">Travaux d'aujourd'hui</div>
           <div className="tech-title">{todayLabel}</div>
         </div>
-        <a className="button-ghost" href="/notifications">Alerts</a>
+        <a className="button-ghost" href="/notifications">Alertes</a>
       </div>
 
       <div className="tech-gps">
-        <span className="pill">GPS {location ? "On" : "Off"}</span>
+        <span className="pill">GPS {location ? "activé" : "désactivé"}</span>
         {location ? (
           <div className="tech-gps-meta">
             {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)} · ±{Math.round(location.accuracy)}m
           </div>
         ) : (
-          <div className="tech-gps-meta">Enable location to improve routing.</div>
+          <div className="tech-gps-meta">Activez la localisation pour améliorer l'itinéraire.</div>
         )}
       </div>
 
       <div className="tech-stats">
         <div className="card">
-          <div className="card-label">Today</div>
+          <div className="card-label">Aujourd'hui</div>
           <div className="card-value">{stats.totalJobs}</div>
-          <div className="card-meta">Jobs scheduled</div>
+          <div className="card-meta">Travaux planifiés</div>
         </div>
         <div className="card">
-          <div className="card-label">Revenue</div>
+          <div className="card-label">Revenus</div>
           <div className="card-value">${stats.revenuePotential.toFixed(0)}</div>
-          <div className="card-meta">Potential earnings</div>
+          <div className="card-meta">Revenus potentiels</div>
         </div>
         <div className="card">
-          <div className="card-label">Time window</div>
+          <div className="card-label">Plage horaire</div>
           <div className="card-value">{stats.timeWindow || "--"}</div>
-          <div className="card-meta">Estimated schedule</div>
+          <div className="card-meta">Horaire estimé</div>
         </div>
       </div>
 
@@ -312,8 +338,16 @@ export default function TechnicianPage() {
                 </div>
               ) : null}
               <div className="table-actions">
-                <button className="button-secondary" type="button" onClick={() => handleCheck(job.job_id, "check-in")}>Check in</button>
-                <button className="button-ghost" type="button" onClick={() => handleCheck(job.job_id, "check-out")}>Check out</button>
+                <button className="button-secondary" type="button" onClick={() => handleCheck(job.job_id, "check-in")}>Débuter</button>
+                <button className="button-ghost" type="button" onClick={() => handleCheck(job.job_id, "check-out")}>Terminer</button>
+                <button
+                  className="button-ghost"
+                  type="button"
+                  onClick={() => handleRunningLate(job.job_id)}
+                  disabled={!isActiveStatus(job.status)}
+                >
+                  En retard
+                </button>
               </div>
               <div className="mobile-card-meta">Glissez à gauche pour appeler, à droite pour terminer.</div>
             </div>
@@ -327,7 +361,7 @@ export default function TechnicianPage() {
           <div className="card-title">Naviguer vers le prochain rendez-vous</div>
           <div className="card-meta">
             {formatRange(nextJob.scheduled_start_time, nextJob.scheduled_end_time)}
-            {nextJob.address ? ` · ${nextJob.address}` : " · Adresse a confirmer"}
+            {nextJob.address ? ` · ${nextJob.address}` : " · Adresse à confirmer"}
           </div>
           <div className="table-actions" style={{ marginTop: 12 }}>
             {nextJobMapUrl ? (
@@ -335,7 +369,7 @@ export default function TechnicianPage() {
                 Naviguer
               </a>
             ) : (
-              <span className="tag">Adresse a confirmer</span>
+              <span className="tag">Adresse à confirmer</span>
             )}
             <button className="button-ghost" type="button" onClick={() => setCompletedJobId(null)}>
               Masquer
@@ -345,17 +379,17 @@ export default function TechnicianPage() {
       ) : null}
 
       <div className="tech-actions">
-        <a className="button-secondary" href="/technician/schedule">Schedule</a>
-        <a className="button-secondary" href="/technician/equipment">Equipment</a>
-        <a className="button-secondary" href="/technician/earnings">Earnings</a>
-        <a className="button-secondary" href="/technician/profile">Settings</a>
+        <a className="button-secondary" href="/technician/schedule">Horaire</a>
+        <a className="button-secondary" href="/technician/equipment">Équipement</a>
+        <a className="button-secondary" href="/technician/earnings">Revenus</a>
+        <a className="button-secondary" href="/technician/profile">Paramètres</a>
       </div>
 
       <div className="card tech-shift">
-        <h3 className="card-title">End of shift</h3>
+        <h3 className="card-title">Fin de quart</h3>
         <div className="table-actions">
-          <button className="button-primary" type="button" onClick={() => setStatus("Shift ended.")}>End shift</button>
-          <button className="button-ghost" type="button">Shift photo</button>
+          <button className="button-primary" type="button" onClick={() => setStatus("Quart terminé.")}>Terminer le quart</button>
+          <button className="button-ghost" type="button">Photo du quart</button>
         </div>
       </div>
 

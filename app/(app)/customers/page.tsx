@@ -3,7 +3,8 @@
 import TopBar from "@/components/TopBar";
 import StatusBadge from "@/components/StatusBadge";
 import CustomerForm from "@/components/forms/CustomerForm";
-import { useEffect, useState } from "react";
+import { normalizePhoneE164 } from "@/lib/smsTemplates";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type CustomerRow = {
   customer_id: string;
@@ -16,6 +17,13 @@ type CustomerRow = {
   account_balance?: number;
 };
 
+type JobOption = {
+  job_id: string;
+  service_type?: string | null;
+  scheduled_date?: string | null;
+  customer_id?: string | null;
+};
+
 type SmsRow = {
   sms_id: string;
   phone_number: string;
@@ -23,6 +31,14 @@ type SmsRow = {
   direction: string;
   status: string;
   created_at: string;
+};
+
+type TimelineEvent = {
+  id: string;
+  title: string;
+  detail: string;
+  timestamp: number;
+  timestampLabel: string;
 };
 
 const statusLabels: Record<string, string> = {
@@ -71,9 +87,18 @@ const formatServiceDate = (value?: string | null) => {
 };
 
 const normalizePhone = (value?: string | null) => (value ? value.replace(/\s+/g, "") : "");
+const normalizePhoneDigits = (value?: string | null) => (value ? value.replace(/\D/g, "") : "");
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<CustomerRow[]>([]);
+  const [jobs, setJobs] = useState<JobOption[]>([]);
+  const [customerLimit, setCustomerLimit] = useState(25);
+  const [jobLimit, setJobLimit] = useState(50);
+  const [filterQuery, setFilterQuery] = useState("");
+  const [selectedCustomers, setSelectedCustomers] = useState<Set<string>>(new Set());
+  const [bulkMessage, setBulkMessage] = useState("");
+  const [bulkStatus, setBulkStatus] = useState("");
+  const [bulkLoading, setBulkLoading] = useState(false);
   const [quickViewId, setQuickViewId] = useState<string | null>(null);
   const [blacklistStatus, setBlacklistStatus] = useState("");
   const [complaintStatus, setComplaintStatus] = useState("");
@@ -111,7 +136,16 @@ export default function CustomersPage() {
 
   useEffect(() => {
     void loadCustomers();
+    void loadJobs();
   }, []);
+
+  useEffect(() => {
+    setSelectedCustomers((prev) => {
+      if (!prev.size) return prev;
+      const validIds = new Set(customers.map((customer) => customer.customer_id));
+      return new Set(Array.from(prev).filter((id) => validIds.has(id)));
+    });
+  }, [customers]);
 
   async function loadCustomers() {
     const response = await fetch("/api/customers");
@@ -123,6 +157,108 @@ export default function CustomersPage() {
       setSmsMessages(smsJson.data ?? []);
     }
   }
+
+  async function loadJobs() {
+    const response = await fetch("/api/jobs");
+    const json = await response.json().catch(() => ({ data: [] }));
+    const data = Array.isArray(json.data) ? json.data : [];
+    setJobs(data);
+  }
+
+  const visibleCustomers = useMemo(() => customers.slice(0, customerLimit), [customers, customerLimit]);
+  const visibleJobs = useMemo(() => jobs.slice(0, jobLimit), [jobs, jobLimit]);
+  const filteredCustomers = useMemo(() => {
+    const trimmed = filterQuery.trim().toLowerCase();
+    if (!trimmed) return customers;
+    return customers.filter((customer) => {
+      const haystack = [
+        customer.first_name,
+        customer.last_name,
+        customer.phone,
+        typeLabels[customer.customer_type],
+        statusLabels[customer.status],
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(trimmed);
+    });
+  }, [customers, filterQuery]);
+
+  const smsByPhone = useMemo(() => {
+    const map = new Map<string, SmsRow[]>();
+    smsMessages.forEach((sms) => {
+      const key = normalizePhoneDigits(sms.phone_number);
+      if (!key) return;
+      const list = map.get(key) ?? [];
+      list.push(sms);
+      map.set(key, list);
+    });
+    return map;
+  }, [smsMessages]);
+
+  const jobsByCustomer = useMemo(() => {
+    const map = new Map<string, JobOption[]>();
+    jobs.forEach((job) => {
+      if (!job.customer_id) return;
+      const list = map.get(job.customer_id) ?? [];
+      list.push(job);
+      map.set(job.customer_id, list);
+    });
+    return map;
+  }, [jobs]);
+
+  const getCustomerTimeline = useCallback(
+    (customer: CustomerRow): TimelineEvent[] => {
+      const events: TimelineEvent[] = [];
+      const phoneKey = normalizePhoneDigits(customer.phone);
+      const smsList = phoneKey ? smsByPhone.get(phoneKey) ?? [] : [];
+      smsList.forEach((sms) => {
+        const createdAt = new Date(sms.created_at);
+        const timestamp = Number.isNaN(createdAt.getTime()) ? 0 : createdAt.getTime();
+        const directionLabel = directionLabels[sms.direction] ?? sms.direction;
+        events.push({
+          id: `sms-${sms.sms_id}`,
+          title: `SMS ${directionLabel}`,
+          detail: sms.content,
+          timestamp,
+          timestampLabel: Number.isNaN(createdAt.getTime()) ? sms.created_at : createdAt.toLocaleString("fr-CA"),
+        });
+      });
+
+      const jobList = jobsByCustomer.get(customer.customer_id) ?? [];
+      jobList.forEach((job) => {
+        const dateLabel = formatServiceDate(job.scheduled_date) || "Date à confirmer";
+        const timestamp = job.scheduled_date ? new Date(`${job.scheduled_date}T00:00:00`).getTime() : 0;
+        const serviceLabel = job.service_type || "Travail";
+        events.push({
+          id: `job-${job.job_id}`,
+          title: `Travail · ${serviceLabel}`,
+          detail: `Prévu le ${dateLabel}`,
+          timestamp,
+          timestampLabel: dateLabel,
+        });
+      });
+
+      events.sort((a, b) => b.timestamp - a.timestamp);
+      return events.slice(0, 6);
+    },
+    [jobsByCustomer, smsByPhone]
+  );
+
+  useEffect(() => {
+    setSelectedCustomers((prev) => {
+      if (!prev.size) return prev;
+      const validIds = new Set(filteredCustomers.map((customer) => customer.customer_id));
+      return new Set(Array.from(prev).filter((id) => validIds.has(id)));
+    });
+  }, [filteredCustomers]);
+
+  const selectedCount = useMemo(
+    () => filteredCustomers.filter((customer) => selectedCustomers.has(customer.customer_id)).length,
+    [filteredCustomers, selectedCustomers]
+  );
+  const allSelected = filteredCustomers.length > 0 && selectedCount === filteredCustomers.length;
 
   async function submitBlacklist(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -198,6 +334,88 @@ export default function CustomersPage() {
     void loadCustomers();
   }
 
+  function toggleCustomerSelection(customerId: string) {
+    setSelectedCustomers((prev) => {
+      const next = new Set(prev);
+      if (next.has(customerId)) {
+        next.delete(customerId);
+      } else {
+        next.add(customerId);
+      }
+      return next;
+    });
+  }
+
+  function toggleAllCustomers() {
+    setSelectedCustomers((prev) => {
+      if (filteredCustomers.length === 0) return prev;
+      const next = new Set(prev);
+      const hasAll = filteredCustomers.every((customer) => next.has(customer.customer_id));
+      if (hasAll) {
+        filteredCustomers.forEach((customer) => next.delete(customer.customer_id));
+        return next;
+      }
+      filteredCustomers.forEach((customer) => next.add(customer.customer_id));
+      return next;
+    });
+  }
+
+  async function bulkSendSms() {
+    if (!selectedCount) {
+      setBulkStatus("Aucun client sélectionné.");
+      return;
+    }
+    if (!bulkMessage.trim()) {
+      setBulkStatus("Ajoutez un message SMS.");
+      return;
+    }
+    const selectedRows = filteredCustomers.filter((customer) => selectedCustomers.has(customer.customer_id));
+    const targets = selectedRows
+      .map((customer) => ({
+        id: customer.customer_id,
+        phone: normalizePhoneE164(customer.phone ?? ""),
+      }))
+      .filter((target) => Boolean(target.phone)) as Array<{ id: string; phone: string }>;
+    const invalidCount = selectedRows.length - targets.length;
+    if (!targets.length) {
+      setBulkStatus("Aucun numéro valide pour l'envoi.");
+      return;
+    }
+
+    const uniqueTargets = Array.from(
+      new Map(targets.map((target) => [target.phone, target])).values()
+    );
+
+    setBulkLoading(true);
+    setBulkStatus("");
+    let successCount = 0;
+    await Promise.all(
+      uniqueTargets.map(async (target) => {
+        try {
+          const response = await fetch("/api/sms/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ to: target.phone, message: bulkMessage.trim() }),
+          });
+          if (response.ok) {
+            successCount += 1;
+          }
+        } catch {
+          return null;
+        }
+        return null;
+      })
+    );
+    const suffix = invalidCount ? ` · ${invalidCount} sans numéro valide.` : "";
+    setBulkStatus(
+      successCount === uniqueTargets.length
+        ? `SMS envoyés à ${successCount} clients.${suffix}`
+        : `SMS envoyés: ${successCount}/${uniqueTargets.length}.${suffix}`
+    );
+    setBulkLoading(false);
+    void loadCustomers();
+  }
+
   async function submitEmail(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setEmailStatus("");
@@ -265,9 +483,68 @@ export default function CustomersPage() {
       />
       <div className="stack">
         <div className="card">
+          <div
+            className="table-actions"
+            style={{ justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap" }}
+          >
+            <input
+              className="input"
+              style={{ flex: "1 1 220px", minWidth: 220 }}
+              placeholder="Rechercher un client (nom, téléphone, statut)"
+              value={filterQuery}
+              onChange={(event) => setFilterQuery(event.target.value)}
+            />
+            <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <input
+                type="checkbox"
+                checked={allSelected}
+                onChange={toggleAllCustomers}
+                disabled={bulkLoading || filteredCustomers.length === 0}
+                aria-label="Tout sélectionner"
+              />
+              <span className="card-meta">Tout sélectionner (filtre)</span>
+            </label>
+            {selectedCount ? <span className="tag">{selectedCount} sélectionnés</span> : null}
+          </div>
+          {selectedCount ? (
+            <div className="stack" style={{ marginBottom: 12 }}>
+              <div className="form-row">
+                <label className="label" htmlFor="bulkSmsMessage">Message SMS (diffusion)</label>
+                <textarea
+                  id="bulkSmsMessage"
+                  className="textarea"
+                  value={bulkMessage}
+                  onChange={(event) => setBulkMessage(event.target.value)}
+                  rows={2}
+                  placeholder="Ex. Fermeture exceptionnelle lundi prochain."
+                  disabled={bulkLoading}
+                />
+              </div>
+              <div className="table-actions">
+                <button
+                  className="button-secondary"
+                  type="button"
+                  onClick={bulkSendSms}
+                  disabled={bulkLoading}
+                >
+                  Diffuser le SMS
+                </button>
+              </div>
+              {bulkStatus ? <div className="hint">{bulkStatus}</div> : null}
+            </div>
+          ) : null}
           <table className="table table-desktop">
             <thead>
               <tr>
+                <th>
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={toggleAllCustomers}
+                    disabled={bulkLoading || filteredCustomers.length === 0}
+                    aria-label="Tout sélectionner"
+                  />
+                </th>
                 <th>Nom</th>
                 <th>Type</th>
                 <th>Statut</th>
@@ -277,7 +554,7 @@ export default function CustomersPage() {
               </tr>
             </thead>
             <tbody>
-              {customers.map((customer) => {
+              {filteredCustomers.map((customer) => {
                 const typeLabel = typeLabels[customer.customer_type] ?? customer.customer_type;
                 const statusLabel = statusLabels[customer.status] ?? customer.status;
                 const phone = customer.phone ?? "";
@@ -285,8 +562,18 @@ export default function CustomersPage() {
                 const lastServiceLabel = formatServiceDate(customer.last_service_date) || "-";
                 const balanceLabel = formatBalance(customer.account_balance);
                 const isQuickViewOpen = quickViewId === customer.customer_id;
+                const timeline = isQuickViewOpen ? getCustomerTimeline(customer) : [];
                 return (
                   <tr key={customer.customer_id}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={selectedCustomers.has(customer.customer_id)}
+                        onChange={() => toggleCustomerSelection(customer.customer_id)}
+                        disabled={bulkLoading}
+                        aria-label={`Sélectionner le client ${customer.first_name} ${customer.last_name}`}
+                      />
+                    </td>
                     <td>{customer.first_name} {customer.last_name}</td>
                     <td>{typeLabel}</td>
                     <td>
@@ -319,6 +606,18 @@ export default function CustomersPage() {
                             <div className="card-meta">Dernier service : {lastServiceLabel}</div>
                             <div className="card-meta">Solde : {balanceLabel}</div>
                             <div className="card-meta">Téléphone : {phone || "-"}</div>
+                            <div className="card-label" style={{ marginTop: 6 }}>Historique</div>
+                            {timeline.length ? (
+                              timeline.map((event) => (
+                                <div key={event.id}>
+                                  <div className="card-meta"><strong>{event.title}</strong></div>
+                                  <div className="card-meta">{event.detail}</div>
+                                  <div className="card-meta">{event.timestampLabel}</div>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="card-meta">Aucune interaction récente.</div>
+                            )}
                           </div>
                         ) : null}
                       </div>
@@ -329,7 +628,7 @@ export default function CustomersPage() {
             </tbody>
           </table>
           <div className="card-list-mobile" style={{ marginTop: 12 }}>
-            {customers.map((customer) => {
+            {filteredCustomers.map((customer) => {
               const typeLabel = typeLabels[customer.customer_type] ?? customer.customer_type;
               const statusLabel = statusLabels[customer.status] ?? customer.status;
               const phone = customer.phone ?? "";
@@ -337,8 +636,19 @@ export default function CustomersPage() {
               const lastServiceLabel = formatServiceDate(customer.last_service_date) || "-";
               const balanceLabel = formatBalance(customer.account_balance);
               const isQuickViewOpen = quickViewId === customer.customer_id;
+              const timeline = isQuickViewOpen ? getCustomerTimeline(customer) : [];
               return (
                 <div className="mobile-card" key={customer.customer_id}>
+                  <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedCustomers.has(customer.customer_id)}
+                      onChange={() => toggleCustomerSelection(customer.customer_id)}
+                      disabled={bulkLoading}
+                      aria-label={`Sélectionner le client ${customer.first_name} ${customer.last_name}`}
+                    />
+                    <span className="card-meta">Sélectionner</span>
+                  </label>
                   <div className="mobile-card-title">
                     {customer.first_name} {customer.last_name}
                   </div>
@@ -372,6 +682,18 @@ export default function CustomersPage() {
                       <div className="card-meta">Dernier service : {lastServiceLabel}</div>
                       <div className="card-meta">Solde : {balanceLabel}</div>
                       <div className="card-meta">Téléphone : {phone || "-"}</div>
+                      <div className="card-label" style={{ marginTop: 6 }}>Historique</div>
+                      {timeline.length ? (
+                        timeline.map((event) => (
+                          <div key={event.id}>
+                            <div className="card-meta"><strong>{event.title}</strong></div>
+                            <div className="card-meta">{event.detail}</div>
+                            <div className="card-meta">{event.timestampLabel}</div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="card-meta">Aucune interaction récente.</div>
+                      )}
                     </div>
                   ) : null}
                 </div>
@@ -392,10 +714,33 @@ export default function CustomersPage() {
                 <input
                   id="blacklistCustomer"
                   className="input"
+                  list="customers-picker"
                   value={blacklistForm.customerId}
                   onChange={(event) => setBlacklistForm({ ...blacklistForm, customerId: event.target.value })}
                   required
                 />
+                <datalist id="customers-picker">
+                  {visibleCustomers.map((customer) => {
+                    const name = `${customer.first_name} ${customer.last_name}`.trim();
+                    const meta = [customer.phone, customer.customer_type].filter(Boolean).join(" · ");
+                    return (
+                      <option
+                        key={customer.customer_id}
+                        value={customer.customer_id}
+                        label={[name, meta].filter(Boolean).join(" — ")}
+                      />
+                    );
+                  })}
+                </datalist>
+                {customers.length > customerLimit ? (
+                  <button
+                    className="button-ghost"
+                    type="button"
+                    onClick={() => setCustomerLimit((prev) => prev + 25)}
+                  >
+                    Afficher plus de clients
+                  </button>
+                ) : null}
               </div>
               <div className="stack">
                 <div className="form-row">
@@ -466,6 +811,7 @@ export default function CustomersPage() {
                 <input
                   id="complaintCustomer"
                   className="input"
+                  list="customers-picker"
                   value={complaintForm.customerId}
                   onChange={(event) => setComplaintForm({ ...complaintForm, customerId: event.target.value })}
                   required
@@ -476,10 +822,28 @@ export default function CustomersPage() {
                 <input
                   id="complaintJob"
                   className="input"
+                  list="jobs-picker"
                   value={complaintForm.jobId}
                   onChange={(event) => setComplaintForm({ ...complaintForm, jobId: event.target.value })}
                   required
                 />
+                <datalist id="jobs-picker">
+                  {visibleJobs.map((job) => {
+                    const meta = [job.service_type, job.scheduled_date].filter(Boolean).join(" · ");
+                    return (
+                      <option key={job.job_id} value={job.job_id} label={meta || job.job_id} />
+                    );
+                  })}
+                </datalist>
+                {jobs.length > jobLimit ? (
+                  <button
+                    className="button-ghost"
+                    type="button"
+                    onClick={() => setJobLimit((prev) => prev + 50)}
+                  >
+                    Afficher plus de jobs
+                  </button>
+                ) : null}
               </div>
               <div className="form-row">
                 <label className="label" htmlFor="complaintType">Type de plainte</label>
@@ -530,6 +894,7 @@ export default function CustomersPage() {
                 <input
                   id="portalCustomer"
                   className="input"
+                  list="customers-picker"
                   value={portalForm.customerId}
                   onChange={(event) => setPortalForm({ ...portalForm, customerId: event.target.value })}
                   required

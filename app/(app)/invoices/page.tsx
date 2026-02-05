@@ -18,13 +18,14 @@ export default function InvoicesPage() {
   const { company } = useCompany();
   const companyName = company?.name ?? "Entreprise";
   const defaultSubject = useMemo(() => `Facture de ${companyName}`, [companyName]);
-  const defaultBody = "Bonjour, votre facture est prete. Merci pour votre confiance.";
+  const defaultBody = "Bonjour, votre facture est prête. Merci pour votre confiance.";
   const [invoices, setInvoices] = useState<InvoiceRow[]>([]);
   const [sendStatus, setSendStatus] = useState("");
   const [paymentStatus, setPaymentStatus] = useState("");
   const [selectedInvoices, setSelectedInvoices] = useState<Set<string>>(new Set());
   const [bulkStatus, setBulkStatus] = useState("");
   const [bulkLoading, setBulkLoading] = useState(false);
+  const [invoiceLimit, setInvoiceLimit] = useState(50);
   const [sendForm, setSendForm] = useState({
     invoiceId: "",
     to: "",
@@ -64,6 +65,7 @@ export default function InvoicesPage() {
 
   const selectedCount = selectedInvoices.size;
   const allSelected = invoices.length > 0 && selectedCount === invoices.length;
+  const visibleInvoices = useMemo(() => invoices.slice(0, invoiceLimit), [invoices, invoiceLimit]);
 
   function toggleInvoiceSelection(invoiceId: string) {
     setSelectedInvoices((prev) => {
@@ -138,7 +140,7 @@ export default function InvoicesPage() {
       setSendStatus(json.error ?? "Impossible d'envoyer la facture");
       return;
     }
-    setSendStatus("Facture envoyee.");
+    setSendStatus("Facture envoyée.");
     setSendForm({ invoiceId: "", to: "", subject: sendForm.subject, body: sendForm.body, channel: "email" });
     void loadInvoices();
   }
@@ -159,7 +161,7 @@ export default function InvoicesPage() {
       setPaymentStatus(json.error ?? "Impossible d'enregistrer le paiement");
       return;
     }
-    setPaymentStatus("Paiement enregistre.");
+    setPaymentStatus("Paiement enregistré.");
     setPaymentForm({ invoiceId: "", status: "paid", paidAmount: "" });
     void loadInvoices();
   }
@@ -223,7 +225,7 @@ export default function InvoicesPage() {
                   />
                 </th>
                 <th>Facture</th>
-                <th>Date d'echeance</th>
+                <th>Date d'échéance</th>
                 <th>Statut</th>
                 <th>Total</th>
                 <th>PDF</th>
@@ -249,7 +251,7 @@ export default function InvoicesPage() {
                   <td>{invoice.total_amount ? `$${invoice.total_amount}` : "$0"}</td>
                   <td>
                     <a className="button-ghost" href={`/api/invoices/${invoice.invoice_id}/pdf`}>
-                      Telecharger
+                      Télécharger
                     </a>
                   </td>
                 </tr>
@@ -286,7 +288,7 @@ export default function InvoicesPage() {
         </div>
         <div className="stack">
           <div className="card">
-            <h3 className="card-title">Creer une facture</h3>
+            <h3 className="card-title">Créer une facture</h3>
             <InvoiceForm />
           </div>
           <div className="card">
@@ -297,10 +299,32 @@ export default function InvoicesPage() {
                 <input
                   id="sendInvoiceId"
                   className="input"
+                  list="invoice-picker"
                   value={sendForm.invoiceId}
                   onChange={(event) => setSendForm({ ...sendForm, invoiceId: event.target.value })}
                   required
                 />
+                <datalist id="invoice-picker">
+                  {visibleInvoices.map((invoice) => {
+                    const label = [invoice.invoice_number, invoice.due_date].filter(Boolean).join(" · ");
+                    return (
+                      <option
+                        key={invoice.invoice_id}
+                        value={invoice.invoice_id}
+                        label={label || invoice.invoice_id}
+                      />
+                    );
+                  })}
+                </datalist>
+                {invoices.length > invoiceLimit ? (
+                  <button
+                    className="button-ghost"
+                    type="button"
+                    onClick={() => setInvoiceLimit((prev) => prev + 50)}
+                  >
+                    Afficher plus de factures
+                  </button>
+                ) : null}
               </div>
               <div className="form-row">
                 <label className="label" htmlFor="sendTo">Destinataire</label>
@@ -356,6 +380,7 @@ export default function InvoicesPage() {
                 <input
                   id="paymentInvoiceId"
                   className="input"
+                  list="invoice-picker"
                   value={paymentForm.invoiceId}
                   onChange={(event) => setPaymentForm({ ...paymentForm, invoiceId: event.target.value })}
                   required
@@ -370,13 +395,13 @@ export default function InvoicesPage() {
                     value={paymentForm.status}
                     onChange={(event) => setPaymentForm({ ...paymentForm, status: event.target.value })}
                   >
-                    <option value="paid">Payee</option>
-                    <option value="partially_paid">Partielle</option>
+                    <option value="paid">Payée</option>
+                    <option value="partially_paid">Partiellement payée</option>
                     <option value="overdue">En retard</option>
                   </select>
                 </div>
                 <div className="form-row">
-                  <label className="label" htmlFor="paidAmount">Montant paye</label>
+                  <label className="label" htmlFor="paidAmount">Montant payé</label>
                   <input
                     id="paidAmount"
                     className="input"

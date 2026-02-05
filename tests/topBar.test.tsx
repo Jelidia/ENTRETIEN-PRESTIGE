@@ -192,7 +192,6 @@ describe("NoShowDialog", () => {
 
   beforeEach(() => {
     vi.stubGlobal("fetch", fetchMock);
-    vi.stubGlobal("alert", vi.fn());
     originalLocation = window.location;
     delete (window as unknown as { location?: Location }).location;
     (window as unknown as { location: { href: string } }).location = { href: "" };
@@ -220,9 +219,9 @@ describe("NoShowDialog", () => {
     );
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: "📞 CALL CUSTOMER" }));
+    await user.click(screen.getByRole("button", { name: "📞 APPELER LE CLIENT" }));
 
-    expect(await screen.findByText("Waiting for Response...")).toBeInTheDocument();
+    expect(await screen.findByText("En attente de réponse...")).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
       `/api/jobs/${jobId}/no-show`,
       expect.objectContaining({ method: "POST" })
@@ -246,10 +245,10 @@ describe("NoShowDialog", () => {
     );
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: "📱 SMS CUSTOMER" }));
+    await user.click(screen.getByRole("button", { name: "📱 SMS AU CLIENT" }));
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-    expect(window.alert).toHaveBeenCalledWith("SMS sent to customer");
+    expect(await screen.findByText("SMS envoyé au client.")).toBeInTheDocument();
   });
 
   it("marks job as no-show and closes on success", async () => {
@@ -269,14 +268,14 @@ describe("NoShowDialog", () => {
     );
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: "📞 CALL CUSTOMER" }));
-    await screen.findByText("Waiting for Response...");
-    await user.click(screen.getByRole("button", { name: "SKIP TO NEXT JOB" }));
+    await user.click(screen.getByRole("button", { name: "📞 APPELER LE CLIENT" }));
+    await screen.findByText("En attente de réponse...");
+    await user.click(screen.getByRole("button", { name: "PASSER AU PROCHAIN TRAVAIL" }));
 
     await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
-    expect(window.alert).toHaveBeenCalledWith(
-      "Job marked as no-show. Customer and manager notified."
-    );
+    expect(
+      await screen.findByText("Travail marqué absent. Le client et le gestionnaire ont été avisés.")
+    ).toBeInTheDocument();
   });
 
   it("shows an alert when marking no-show fails", async () => {
@@ -300,14 +299,16 @@ describe("NoShowDialog", () => {
     );
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: "📞 CALL CUSTOMER" }));
-    await screen.findByText("Waiting for Response...");
-    await user.click(screen.getByRole("button", { name: "SKIP TO NEXT JOB" }));
+    await user.click(screen.getByRole("button", { name: "📞 APPELER LE CLIENT" }));
+    await screen.findByText("En attente de réponse...");
+    await user.click(screen.getByRole("button", { name: "PASSER AU PROCHAIN TRAVAIL" }));
 
-    expect(screen.getByRole("button", { name: "Processing..." })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Traitement..." })).toBeInTheDocument();
 
     resolveSkip({ ok: false, json: async () => ({}) });
-    await waitFor(() => expect(window.alert).toHaveBeenCalledWith("Failed to mark as no-show"));
+    await waitFor(() =>
+      expect(screen.getByText("Impossible de marquer le travail absent.")).toBeInTheDocument()
+    );
     expect(onClose).not.toHaveBeenCalled();
   });
 });

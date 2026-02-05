@@ -11,10 +11,10 @@ type ChecklistItem = {
 };
 
 const baseItems: Omit<ChecklistItem, "checked" | "notes">[] = [
-  { id: "ladder", label: "Ladder", requiresPhoto: true },
-  { id: "supplies", label: "Cleaning supplies", requiresPhoto: false },
-  { id: "vehicle", label: "Vehicle condition", requiresPhoto: true },
-  { id: "safety", label: "Safety equipment", requiresPhoto: false },
+  { id: "ladder", label: "Échelle", requiresPhoto: true },
+  { id: "supplies", label: "Fournitures de nettoyage", requiresPhoto: false },
+  { id: "vehicle", label: "État du véhicule", requiresPhoto: true },
+  { id: "safety", label: "Équipement de sécurité", requiresPhoto: false },
 ];
 
 function buildItems() {
@@ -43,13 +43,13 @@ export default function TechnicianEquipmentPage() {
     const items = type === "start" ? startItems : endItems;
     const ready = type === "start" ? startReady : endReady;
     if (!ready) {
-      setStatus("Please complete every item before submitting.");
+      setStatus("Veuillez compléter chaque élément avant d'envoyer.");
       return;
     }
     const profileRes = await fetch("/api/users/me");
     const profileJson = await profileRes.json().catch(() => null);
     if (!profileRes.ok || !profileJson?.user_id) {
-      setStatus(profileJson?.error ?? "Unable to load profile");
+      setStatus(profileJson?.error ?? "Impossible de charger le profil");
       return;
     }
 
@@ -89,23 +89,23 @@ export default function TechnicianEquipmentPage() {
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setStatus(json.error ?? "Unable to submit checklist");
+      setStatus(json.error ?? "Impossible d'envoyer la checklist");
       return;
     }
-    setStatus(type === "start" ? "Start checklist submitted." : "End checklist submitted.");
+    setStatus(type === "start" ? "Checklist de début envoyée." : "Checklist de fin envoyée.");
   }
 
   return (
     <div className="page">
       <div className="tech-header">
         <div>
-          <div className="card-label">Equipment check</div>
-          <div className="tech-title">Start and end of shift</div>
+          <div className="card-label">Vérification de l'équipement</div>
+          <div className="tech-title">Début et fin de quart</div>
         </div>
       </div>
 
       <div className="card">
-        <h3 className="card-title">Start of shift</h3>
+        <h3 className="card-title">Début de quart</h3>
         <div className="stack">
           {startItems.map((item) => (
             <div key={item.id} className="card-muted" style={{ padding: "12px" }}>
@@ -120,7 +120,7 @@ export default function TechnicianEquipmentPage() {
                   />
                   <span>{item.label}</span>
                 </label>
-                {item.requiresPhoto ? <span className="tag">Photo required</span> : null}
+                {item.requiresPhoto ? <span className="tag">Photo requise</span> : null}
               </div>
               <textarea
                 className="textarea"
@@ -133,12 +133,12 @@ export default function TechnicianEquipmentPage() {
           ))}
         </div>
         <button className="button-primary" type="button" disabled={!startReady} onClick={() => submitChecklist("start")}>
-          Submit check-in
+          Soumettre le début de quart
         </button>
       </div>
 
       <div className="card">
-        <h3 className="card-title">End of shift</h3>
+        <h3 className="card-title">Fin de quart</h3>
         <div className="stack">
           {endItems.map((item) => (
             <div key={item.id} className="card-muted" style={{ padding: "12px" }}>
@@ -153,7 +153,7 @@ export default function TechnicianEquipmentPage() {
                   />
                   <span>{item.label}</span>
                 </label>
-                {item.requiresPhoto ? <span className="tag">Photo required</span> : null}
+                {item.requiresPhoto ? <span className="tag">Photo requise</span> : null}
               </div>
               <textarea
                 className="textarea"
@@ -166,7 +166,7 @@ export default function TechnicianEquipmentPage() {
           ))}
         </div>
         <button className="button-primary" type="button" disabled={!endReady} onClick={() => submitChecklist("end")}>
-          Submit check-out
+          Soumettre la fin de quart
         </button>
       </div>
 

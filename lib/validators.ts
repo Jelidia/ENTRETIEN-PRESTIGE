@@ -658,7 +658,7 @@ export const mapsTerritoryQuerySchema = z.object({
 });
 
 export const smsTriggerBodySchema = z.object({
-  event: z.enum(["job_scheduled", "reminder_24h", "reminder_1h", "job_completed", "no_show"]),
+  event: z.enum(["job_scheduled", "reminder_24h", "reminder_1h", "job_completed", "no_show", "running_late"]),
   jobId: uuidSchema,
   customData: jsonRecordSchema.optional(),
 });

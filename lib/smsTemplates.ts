@@ -34,6 +34,10 @@ export const smsTemplates = {
   noShow: () =>
     `Désolé, vous n'étiez pas disponible. Veuillez nous texter pour reprogrammer.`,
 
+  // Running late notification to customer
+  runningLate: (data: { customerName: string }) =>
+    `Bonjour ${data.customerName}, nous sommes en retard et arriverons sous peu. Merci pour votre patience.`,
+
   // Late payment reminder (3 days)
   latePayment3Days: (data: { invoiceNumber: string; amount: string }) =>
     `Rappel: Votre facture #${data.invoiceNumber} de ${data.amount} est en retard. Veuillez payer dès que possible. Merci!`,
@@ -54,6 +58,18 @@ export const smsTemplates = {
   ratingRequest: (data: { customerName: string; ratingLink: string }) =>
     `Bonjour ${data.customerName}, comment était votre service? Cliquez ici pour noter: ${data.ratingLink}`,
 };
+
+export function applySmsPrefix(message: string, prefix?: string | null): string {
+  const trimmed = message.trim();
+  if (!prefix) return trimmed;
+  const safePrefix = prefix.trim();
+  if (!safePrefix) return trimmed;
+  const tag = `[${safePrefix}]`;
+  if (trimmed.startsWith(`${tag} `) || trimmed.startsWith(tag)) {
+    return trimmed;
+  }
+  return `${tag} ${trimmed}`;
+}
 
 export function normalizePhoneE164(phone: string): string | null {
   const trimmed = phone.trim();

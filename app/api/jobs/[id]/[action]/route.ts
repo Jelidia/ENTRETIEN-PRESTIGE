@@ -17,9 +17,30 @@ import {
   jobUpsellSchema,
 } from "@/lib/validators";
 import { createNotification } from "@/lib/notifications";
-import { logAudit } from "@/lib/audit";
+import { logAudit, logJobHistory } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
+
+type JobSnapshot = {
+  status: string | null;
+  technician_id: string | null;
+  actual_revenue: number | null;
+  upsells: unknown[] | null;
+};
+
+async function fetchJobSnapshot(
+  client: ReturnType<typeof createUserClient>,
+  jobId: string,
+  companyId: string
+) {
+  const { data } = await client
+    .from("jobs")
+    .select("status, technician_id, actual_revenue, upsells")
+    .eq("job_id", jobId)
+    .eq("company_id", companyId)
+    .maybeSingle();
+  return (data as JobSnapshot | null) ?? null;
+}
 
 export async function POST(
   request: Request,
@@ -43,6 +64,8 @@ export async function POST(
       return validationError(parsed.error, "Invalid assignment");
     }
 
+    const snapshot = await fetchJobSnapshot(client, params.id, profile.company_id);
+
     const idempotency = await beginIdempotency(client, request, user.id, {
       action: "assign",
       payload: parsed.data,
@@ -60,11 +83,27 @@ export async function POST(
     const { error } = await client
       .from("jobs")
       .update({ technician_id: parsed.data.technicianId, status: "dispatched" })
-      .eq("job_id", params.id);
+      .eq("job_id", params.id)
+      .eq("company_id", profile.company_id);
 
     if (error) {
       return serverError("Unable to assign job", "job_assign_failed");
     }
+
+    await logJobHistory(client, params.id, user.id, [
+      {
+        fieldName: "technician_id",
+        oldValue: snapshot?.technician_id ?? null,
+        newValue: parsed.data.technicianId,
+        reason: "assign",
+      },
+      {
+        fieldName: "status",
+        oldValue: snapshot?.status ?? null,
+        newValue: "dispatched",
+        reason: "assign",
+      },
+    ]);
 
     await client.from("job_assignments").insert({
       job_id: params.id,
@@ -99,6 +138,8 @@ export async function POST(
       return validationError(parsed.error, "Invalid check-in");
     }
 
+    const snapshot = await fetchJobSnapshot(client, params.id, profile.company_id);
+
     const idempotency = await beginIdempotency(client, request, user.id, {
       action: "check-in",
       payload: parsed.data,
@@ -127,7 +168,17 @@ export async function POST(
     await client
       .from("jobs")
       .update({ status: "in_progress", actual_start_time: new Date().toISOString() })
-      .eq("job_id", params.id);
+      .eq("job_id", params.id)
+      .eq("company_id", profile.company_id);
+
+    await logJobHistory(client, params.id, user.id, [
+      {
+        fieldName: "status",
+        oldValue: snapshot?.status ?? null,
+        newValue: "in_progress",
+        reason: "check-in",
+      },
+    ]);
 
     await logAudit(client, user.id, "job_check_in", "job", params.id, "success", {
       ipAddress: ip,
@@ -145,6 +196,8 @@ export async function POST(
     if (!parsed.success) {
       return validationError(parsed.error, "Invalid check-out");
     }
+
+    const snapshot = await fetchJobSnapshot(client, params.id, profile.company_id);
 
     const idempotency = await beginIdempotency(client, request, user.id, {
       action: "check-out",
@@ -174,7 +227,17 @@ export async function POST(
     await client
       .from("jobs")
       .update({ status: "completed", actual_end_time: new Date().toISOString() })
-      .eq("job_id", params.id);
+      .eq("job_id", params.id)
+      .eq("company_id", profile.company_id);
+
+    await logJobHistory(client, params.id, user.id, [
+      {
+        fieldName: "status",
+        oldValue: snapshot?.status ?? null,
+        newValue: "completed",
+        reason: "check-out",
+      },
+    ]);
 
     await logAudit(client, user.id, "job_check_out", "job", params.id, "success", {
       ipAddress: ip,
@@ -188,6 +251,7 @@ export async function POST(
   }
 
   if (action === "complete") {
+    const snapshot = await fetchJobSnapshot(client, params.id, profile.company_id);
     const idempotency = await beginIdempotency(client, request, user.id, { action: "complete" });
     if (idempotency.action === "replay") {
       return NextResponse.json(idempotency.body, { status: idempotency.status });
@@ -201,12 +265,23 @@ export async function POST(
     await client
       .from("jobs")
       .update({ status: "completed", updated_by: user.id })
-      .eq("job_id", params.id);
+      .eq("job_id", params.id)
+      .eq("company_id", profile.company_id);
+
+    await logJobHistory(client, params.id, user.id, [
+      {
+        fieldName: "status",
+        oldValue: snapshot?.status ?? null,
+        newValue: "completed",
+        reason: "complete",
+      },
+    ]);
 
     const { data: job } = await client
       .from("jobs")
       .select("customer_id, estimated_revenue, actual_revenue")
       .eq("job_id", params.id)
+      .eq("company_id", profile.company_id)
       .single();
 
     const invoiceNumber = `INV-${Date.now()}`;
@@ -233,6 +308,7 @@ export async function POST(
   }
 
   if (action === "no-show") {
+    const snapshot = await fetchJobSnapshot(client, params.id, profile.company_id);
     const idempotency = await beginIdempotency(client, request, user.id, { action: "no-show" });
     if (idempotency.action === "replay") {
       return NextResponse.json(idempotency.body, { status: idempotency.status });
@@ -246,7 +322,17 @@ export async function POST(
     await client
       .from("jobs")
       .update({ status: "no_show", updated_by: user.id })
-      .eq("job_id", params.id);
+      .eq("job_id", params.id)
+      .eq("company_id", profile.company_id);
+
+    await logJobHistory(client, params.id, user.id, [
+      {
+        fieldName: "status",
+        oldValue: snapshot?.status ?? null,
+        newValue: "no_show",
+        reason: "no-show",
+      },
+    ]);
 
     await createNotification(admin, {
       userId: user.id,
@@ -273,6 +359,8 @@ export async function POST(
       return validationError(parsed.error, "Invalid upsell");
     }
 
+    const snapshot = await fetchJobSnapshot(client, params.id, profile.company_id);
+
     const idempotency = await beginIdempotency(client, request, user.id, {
       action: "upsell",
       payload: parsed.data,
@@ -290,7 +378,26 @@ export async function POST(
     await client
       .from("jobs")
       .update({ upsells: parsed.data.upsells, actual_revenue: parsed.data.actualRevenue })
-      .eq("job_id", params.id);
+      .eq("job_id", params.id)
+      .eq("company_id", profile.company_id);
+
+    await logJobHistory(client, params.id, user.id, [
+      {
+        fieldName: "upsells",
+        oldValue: snapshot?.upsells ? JSON.stringify(snapshot.upsells) : null,
+        newValue: JSON.stringify(parsed.data.upsells),
+        reason: "upsell",
+      },
+      {
+        fieldName: "actual_revenue",
+        oldValue:
+          snapshot?.actual_revenue !== null && snapshot?.actual_revenue !== undefined
+            ? String(snapshot.actual_revenue)
+            : null,
+        newValue: String(parsed.data.actualRevenue),
+        reason: "upsell",
+      },
+    ]);
 
     await logAudit(client, user.id, "job_upsell", "job", params.id, "success", {
       ipAddress: ip,

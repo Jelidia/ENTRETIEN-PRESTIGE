@@ -49,14 +49,14 @@ export default function AdminUsersPage() {
           router.push("/dashboard");
           return;
         }
-        throw new Error("Failed to load users");
+        throw new Error("Impossible de charger les utilisateurs");
       }
       const data = await res.json();
       setUsers(data.data.users);
       setTotal(data.data.total);
       setPages(data.data.pages);
     } catch (err) {
-      setError("Failed to load users");
+      setError("Impossible de charger les utilisateurs");
     } finally {
       setLoading(false);
     }
@@ -80,7 +80,7 @@ export default function AdminUsersPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Failed to create user");
+        setError(data.error || "Impossible de créer l'utilisateur");
         return;
       }
 
@@ -88,7 +88,7 @@ export default function AdminUsersPage() {
       setFormData({ email: "", password: "", fullName: "", role: "technician", status: "active" });
       loadUsers();
     } catch (err) {
-      setError("An error occurred");
+      setError("Une erreur s'est produite");
     }
   }
 
@@ -112,7 +112,7 @@ export default function AdminUsersPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Failed to update user");
+        setError(data.error || "Impossible de mettre à jour l'utilisateur");
         return;
       }
 
@@ -120,7 +120,7 @@ export default function AdminUsersPage() {
       setSelectedUser(null);
       loadUsers();
     } catch (err) {
-      setError("An error occurred");
+      setError("Une erreur s'est produite");
     }
   }
 
@@ -134,7 +134,7 @@ export default function AdminUsersPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || "Failed to delete user");
+        setError(data.error || "Impossible de supprimer l'utilisateur");
         return;
       }
 
@@ -142,7 +142,7 @@ export default function AdminUsersPage() {
       setSelectedUser(null);
       loadUsers();
     } catch (err) {
-      setError("An error occurred");
+      setError("Une erreur s'est produite");
     }
   }
 
@@ -196,7 +196,7 @@ export default function AdminUsersPage() {
         <table className="table">
           <thead>
             <tr style={{ borderBottom: "2px solid #e5e7eb" }}>
-              <th style={{ padding: 12, textAlign: "left", fontWeight: 600 }}>Email</th>
+              <th style={{ padding: 12, textAlign: "left", fontWeight: 600 }}>Courriel</th>
               <th style={{ padding: 12, textAlign: "left", fontWeight: 600 }}>Nom complet</th>
               <th style={{ padding: 12, textAlign: "left", fontWeight: 600 }}>Rôle</th>
               <th style={{ padding: 12, textAlign: "left", fontWeight: 600 }}>Statut</th>
@@ -299,7 +299,7 @@ export default function AdminUsersPage() {
             <h2 style={{ fontSize: 20, fontWeight: "bold", marginBottom: 16 }}>Nouvel utilisateur</h2>
             <form onSubmit={handleCreate}>
               <div className="form-row">
-                <label className="label">Email</label>
+                <label className="label">Courriel</label>
                 <input
                   type="email"
                   className="input"
@@ -370,7 +370,7 @@ export default function AdminUsersPage() {
             <h2 style={{ fontSize: 20, fontWeight: "bold", marginBottom: 16 }}>Modifier l&apos;utilisateur</h2>
             <form onSubmit={handleUpdate}>
               <div className="form-row">
-                <label className="label">Email</label>
+                <label className="label">Courriel</label>
                 <input
                   type="email"
                   className="input"

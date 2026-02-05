@@ -75,12 +75,12 @@ export default function LeadsPage() {
         prev.map((lead) => (lead.lead_id === leadId ? { ...lead, status: newStatus } : lead))
       );
       setSelectedLead((prev) => (prev ? { ...prev, status: newStatus } : prev));
-      setActionStatus("Statut mis a jour.");
+      setActionStatus("Statut mis à jour.");
       void loadLeads();
     } else {
       const data = await res.json().catch(() => ({}));
       setActionStatusTone("error");
-      setActionStatus(data.error ?? "Echec de la mise a jour du lead");
+      setActionStatus(data.error ?? "Échec de la mise à jour du lead");
     }
   }
 
@@ -88,7 +88,7 @@ export default function LeadsPage() {
     const normalizedPhone = normalizePhoneE164(phone);
     if (!normalizedPhone) {
       setActionStatusTone("error");
-      setActionStatus("Telephone invalide. Utilisez le format (514) 555-0123.");
+      setActionStatus("Téléphone invalide. Utilisez le format (514) 555-0123.");
       return;
     }
     window.location.href = `tel:${normalizedPhone}`;
@@ -116,7 +116,7 @@ export default function LeadsPage() {
     const normalizedPhone = normalizePhoneE164(selectedLead.phone);
     if (!normalizedPhone) {
       setActionStatusTone("error");
-      setActionStatus("Telephone invalide. Utilisez le format (514) 555-0123.");
+      setActionStatus("Téléphone invalide. Utilisez le format (514) 555-0123.");
       return;
     }
     setSmsSending(true);
@@ -145,7 +145,7 @@ export default function LeadsPage() {
       });
     } else {
       setActionStatusTone("error");
-      setActionStatus(data.error ?? "Echec de l'envoi du SMS");
+      setActionStatus(data.error ?? "Échec de l'envoi du SMS");
     }
     setSmsSending(false);
   }
@@ -285,11 +285,11 @@ export default function LeadsPage() {
         >
           <div className="stack">
             <div className="card-muted" style={{ padding: "16px" }}>
-              <div><strong>Telephone:</strong> {selectedLead.phone}</div>
+              <div><strong>Téléphone :</strong> {selectedLead.phone}</div>
               <div style={{ marginTop: "8px" }}><strong>Courriel:</strong> {selectedLead.email || "N/A"}</div>
               <div style={{ marginTop: "8px" }}><strong>Adresse:</strong> {selectedLead.address || "N/A"}</div>
               <div style={{ marginTop: "8px" }}>
-                <strong>Valeur estimee:</strong> ${selectedLead.estimated_value.toLocaleString()}
+                <strong>Valeur estimée :</strong> ${selectedLead.estimated_value.toLocaleString()}
               </div>
               <div style={{ marginTop: "8px" }}>
                 <strong>Statut:</strong> {tabs.find((tab) => tab.key === selectedLead.status)?.label ?? selectedLead.status}
@@ -339,7 +339,7 @@ export default function LeadsPage() {
               </button>
             </div>
 
-            <h4 style={{ marginTop: "24px" }}>Mettre a jour le statut</h4>
+            <h4 style={{ marginTop: "24px" }}>Mettre à jour le statut</h4>
             <div style={{ display: "grid", gap: "8px" }}>
               {tabs
                 .filter((tab) => tab.key !== selectedLead.status)
@@ -353,7 +353,7 @@ export default function LeadsPage() {
                       color: tab.color,
                     }}
                   >
-                    Passer a {tab.label}
+                    Passer à {tab.label}
                   </button>
                 ))}
             </div>

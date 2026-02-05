@@ -43,7 +43,7 @@ export default function NotificationsPage() {
       const response = await fetch(`/api/notifications/${id}/read`, { method: "POST" });
       const json = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setStatus(json.error ?? "Impossible de mettre a jour");
+        setStatus(json.error ?? "Impossible de mettre à jour");
         return;
       }
     }
@@ -99,7 +99,7 @@ export default function NotificationsPage() {
     <div className="page">
       <TopBar
         title="Notifications"
-        subtitle="Alertes et mises a jour recentes"
+        subtitle="Alertes et mises à jour récentes"
         actions={(
           <button
             className={`button-secondary${unreadIds.length === 0 ? " disabled" : ""}`}

@@ -25,7 +25,7 @@ export default function TechnicianCustomersPage() {
     const response = await fetch("/api/customers");
     const json = await response.json().catch(() => ({ data: [] }));
     if (!response.ok) {
-      setStatus(json.error ?? "Unable to load customers");
+      setStatus(json.error ?? "Impossible de charger les clients");
       return;
     }
     setCustomers(json.data ?? []);
@@ -35,10 +35,10 @@ export default function TechnicianCustomersPage() {
     <div className="page">
       <div className="tech-header">
         <div>
-          <div className="card-label">Customers</div>
-          <div className="tech-title">Assigned customers</div>
+          <div className="card-label">Clients</div>
+          <div className="tech-title">Clients assignés</div>
         </div>
-        <button className="button-secondary" type="button">Add customer</button>
+        <button className="button-secondary" type="button">Ajouter un client</button>
       </div>
 
       <div className="tech-jobs">
@@ -46,7 +46,7 @@ export default function TechnicianCustomersPage() {
           <div className="mobile-card" key={customer.customer_id}>
             <div className="mobile-card-title">{customer.first_name} {customer.last_name}</div>
             <div className="mobile-card-meta">{customer.customer_type}</div>
-            <div className="mobile-card-meta">Last service: {customer.last_service_date ?? ""}</div>
+            <div className="mobile-card-meta">Dernier service : {customer.last_service_date ?? ""}</div>
             <div className="table-actions">
               <StatusBadge status={customer.status} />
               <span className="tag">{customer.account_balance ? `$${customer.account_balance}` : "$0"}</span>

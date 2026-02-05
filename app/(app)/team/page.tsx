@@ -266,13 +266,13 @@ export default function TeamPage() {
       <section className="card" style={{ marginTop: 24 }}>
         <div className="card-header">
           <div>
-            <h3 className="card-title">Disponibilites</h3>
-            <div className="card-meta">Selectionnez un membre pour voir sa grille.</div>
+            <h3 className="card-title">Disponibilités</h3>
+            <div className="card-meta">Sélectionnez un membre pour voir sa grille.</div>
           </div>
         </div>
         {members.length === 0 ? (
           <div className="card-meta" style={{ marginTop: 12 }}>
-            Aucun membre d'equipe disponible.
+            Aucun membre d'équipe disponible.
           </div>
         ) : (
           <>
@@ -295,7 +295,7 @@ export default function TeamPage() {
               <div style={{ marginTop: 16 }}>
                 <AvailabilityCalendar userId={availabilityMemberId} />
                 <div className="card-meta" style={{ marginTop: 8 }}>
-                  Disponibilite hebdomadaire (max 7 jours d'avance).
+                  Disponibilité hebdomadaire (max 7 jours d'avance).
                 </div>
               </div>
             ) : null}

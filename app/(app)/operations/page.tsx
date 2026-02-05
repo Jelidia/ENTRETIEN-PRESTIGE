@@ -2,7 +2,7 @@
 
 import TopBar from "@/components/TopBar";
 import StatusBadge from "@/components/StatusBadge";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type QuickDateOption = { label: string; value: string };
 
@@ -64,10 +64,36 @@ type ChecklistRow = {
   shift_status: string;
 };
 
+type JobOption = {
+  job_id: string;
+  service_type?: string | null;
+  scheduled_date?: string | null;
+};
+
+type CustomerOption = {
+  customer_id: string;
+  first_name: string;
+  last_name: string;
+  phone?: string | null;
+  city?: string | null;
+};
+
+type TechnicianOption = {
+  user_id: string;
+  full_name: string;
+  role: string;
+};
+
 export default function OperationsPage() {
   const [incidents, setIncidents] = useState<IncidentRow[]>([]);
   const [qualityIssues, setQualityIssues] = useState<QualityRow[]>([]);
   const [checklists, setChecklists] = useState<ChecklistRow[]>([]);
+  const [jobs, setJobs] = useState<JobOption[]>([]);
+  const [customers, setCustomers] = useState<CustomerOption[]>([]);
+  const [technicians, setTechnicians] = useState<TechnicianOption[]>([]);
+  const [jobLimit, setJobLimit] = useState(50);
+  const [customerLimit, setCustomerLimit] = useState(25);
+  const [techLimit, setTechLimit] = useState(50);
   const [incidentStatus, setIncidentStatus] = useState("");
   const [qualityStatus, setQualityStatus] = useState("");
   const [checklistStatus, setChecklistStatus] = useState("");
@@ -97,6 +123,7 @@ export default function OperationsPage() {
 
   useEffect(() => {
     void loadData();
+    void loadPickers();
   }, []);
 
   async function loadData() {
@@ -112,6 +139,33 @@ export default function OperationsPage() {
     setQualityIssues(qualityJson.data ?? []);
     setChecklists(checklistJson.data ?? []);
   }
+
+  async function loadPickers() {
+    const [jobsRes, customersRes, usersRes] = await Promise.all([
+      fetch("/api/jobs"),
+      fetch("/api/customers"),
+      fetch("/api/users"),
+    ]);
+    const jobsJson = await jobsRes.json().catch(() => ({ data: [] }));
+    const customersJson = await customersRes.json().catch(() => ({ data: [] }));
+    const usersJson = await usersRes.json().catch(() => ({ data: [] }));
+    const jobsData = Array.isArray(jobsJson.data) ? jobsJson.data : [];
+    const customersData = Array.isArray(customersJson.data) ? customersJson.data : [];
+    const usersData = Array.isArray(usersJson.data) ? usersJson.data : [];
+    setJobs(jobsData);
+    setCustomers(customersData);
+    setTechnicians(usersData.filter((user: TechnicianOption) => user.role === "technician"));
+  }
+
+  const visibleJobs = useMemo(() => jobs.slice(0, jobLimit), [jobs, jobLimit]);
+  const visibleCustomers = useMemo(
+    () => customers.slice(0, customerLimit),
+    [customers, customerLimit]
+  );
+  const visibleTechs = useMemo(
+    () => technicians.slice(0, techLimit),
+    [technicians, techLimit]
+  );
 
   async function submitIncident(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -249,18 +303,49 @@ export default function OperationsPage() {
               <input
                 id="incidentJob"
                 className="input"
+                list="operations-jobs"
                 value={incidentForm.jobId}
                 onChange={(event) => setIncidentForm({ ...incidentForm, jobId: event.target.value })}
               />
+              <datalist id="operations-jobs">
+                {visibleJobs.map((job) => {
+                  const meta = [job.service_type, job.scheduled_date].filter(Boolean).join(" · ");
+                  return <option key={job.job_id} value={job.job_id} label={meta || job.job_id} />;
+                })}
+              </datalist>
+              {jobs.length > jobLimit ? (
+                <button
+                  className="button-ghost"
+                  type="button"
+                  onClick={() => setJobLimit((prev) => prev + 50)}
+                >
+                  Afficher plus de jobs
+                </button>
+              ) : null}
             </div>
             <div className="form-row">
               <label className="label" htmlFor="incidentTech">ID du technicien</label>
               <input
                 id="incidentTech"
                 className="input"
+                list="operations-techs"
                 value={incidentForm.technicianId}
                 onChange={(event) => setIncidentForm({ ...incidentForm, technicianId: event.target.value })}
               />
+              <datalist id="operations-techs">
+                {visibleTechs.map((tech) => (
+                  <option key={tech.user_id} value={tech.user_id} label={tech.full_name || tech.user_id} />
+                ))}
+              </datalist>
+              {technicians.length > techLimit ? (
+                <button
+                  className="button-ghost"
+                  type="button"
+                  onClick={() => setTechLimit((prev) => prev + 50)}
+                >
+                  Afficher plus de techniciens
+                </button>
+              ) : null}
             </div>
             <div className="form-row">
               <label className="label" htmlFor="incidentDesc">Description</label>
@@ -324,6 +409,7 @@ export default function OperationsPage() {
               <input
                 id="qualityJob"
                 className="input"
+                list="operations-jobs"
                 value={qualityForm.jobId}
                 onChange={(event) => setQualityForm({ ...qualityForm, jobId: event.target.value })}
                 required
@@ -334,10 +420,33 @@ export default function OperationsPage() {
               <input
                 id="qualityCustomer"
                 className="input"
+                list="operations-customers"
                 value={qualityForm.customerId}
                 onChange={(event) => setQualityForm({ ...qualityForm, customerId: event.target.value })}
                 required
               />
+              <datalist id="operations-customers">
+                {visibleCustomers.map((customer) => {
+                  const name = `${customer.first_name} ${customer.last_name}`.trim();
+                  const meta = [customer.phone, customer.city].filter(Boolean).join(" · ");
+                  return (
+                    <option
+                      key={customer.customer_id}
+                      value={customer.customer_id}
+                      label={[name, meta].filter(Boolean).join(" — ")}
+                    />
+                  );
+                })}
+              </datalist>
+              {customers.length > customerLimit ? (
+                <button
+                  className="button-ghost"
+                  type="button"
+                  onClick={() => setCustomerLimit((prev) => prev + 25)}
+                >
+                  Afficher plus de clients
+                </button>
+              ) : null}
             </div>
             <div className="form-row">
               <label className="label" htmlFor="qualityType">Type de plainte</label>
@@ -384,6 +493,7 @@ export default function OperationsPage() {
               <input
                 id="checklistTech"
                 className="input"
+                list="operations-techs"
                 value={checklistForm.technicianId}
                 onChange={(event) => setChecklistForm({ ...checklistForm, technicianId: event.target.value })}
                 required

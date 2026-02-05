@@ -66,6 +66,7 @@ describe("smsTemplates", () => {
     ).toContain("https://pay");
     expect(smsTemplates.jobCompletedCash()).toContain("Service terminé");
     expect(smsTemplates.noShow()).toContain("reprogrammer");
+    expect(smsTemplates.runningLate({ customerName: "Nora" })).toContain("Nora");
     expect(smsTemplates.latePayment3Days({ invoiceNumber: "INV-3", amount: "$40" })).toContain("INV-3");
     expect(smsTemplates.latePayment7Days({ invoiceNumber: "INV-4", amount: "$50" })).toContain("INV-4");
     expect(smsTemplates.latePayment14Days({ invoiceNumber: "INV-5", amount: "$60" })).toContain("INV-5");

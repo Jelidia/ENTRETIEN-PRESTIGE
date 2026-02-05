@@ -37,10 +37,10 @@ export default function SalesEarningsPage() {
     setStatus("");
     const profileRes = await fetch("/api/users/me");
     const profileJson = await profileRes.json().catch(() => null);
-    if (!profileRes.ok || !profileJson?.user_id) {
-      setStatus(profileJson?.error ?? "Unable to load profile");
-      return;
-    }
+      if (!profileRes.ok || !profileJson?.user_id) {
+        setStatus(profileJson?.error ?? "Impossible de charger le profil");
+        return;
+      }
     setProfile(profileJson as Profile);
 
     const [commissionRes, payrollRes] = await Promise.all([
@@ -50,7 +50,7 @@ export default function SalesEarningsPage() {
     const commissionJson = await commissionRes.json().catch(() => ({ data: [] }));
     const payrollJson = await payrollRes.json().catch(() => ({ data: [] }));
     if (!commissionRes.ok || !payrollRes.ok) {
-      setStatus(commissionJson.error ?? payrollJson.error ?? "Unable to load earnings");
+      setStatus(commissionJson.error ?? payrollJson.error ?? "Impossible de charger les revenus");
       return;
     }
     const employeeId = (profileJson as Profile).user_id;
@@ -74,45 +74,45 @@ export default function SalesEarningsPage() {
   return (
     <div className="page">
       <TopBar
-        title="Earnings"
-        subtitle="Pending vs confirmed commission"
+        title="Revenus"
+        subtitle="Commissions en attente vs confirmées"
         actions={
           <button className="button-ghost" type="button" onClick={loadData}>
-            Refresh
+            Rafraîchir
           </button>
         }
       />
 
       <div className="earnings-grid">
         <div className="card">
-          <div className="card-label">Estimated</div>
+          <div className="card-label">Estimé</div>
           <div className="card-value">${totals.estimated.toFixed(0)}</div>
-          <div className="card-meta">Pending confirmation</div>
+          <div className="card-meta">En attente de confirmation</div>
         </div>
         <div className="card">
-          <div className="card-label">Confirmed</div>
+          <div className="card-label">Confirmé</div>
           <div className="card-value">${totals.confirmed.toFixed(0)}</div>
-          <div className="card-meta">Approved by manager</div>
+          <div className="card-meta">Approuvé par le gestionnaire</div>
         </div>
         <div className="card">
-          <div className="card-label">Last payout</div>
+          <div className="card-label">Dernier paiement</div>
           <div className="card-value">${totals.lastPay.toFixed(0)}</div>
-          <div className="card-meta">Most recent payment</div>
+          <div className="card-meta">Paiement le plus récent</div>
         </div>
       </div>
 
       <div className="card">
-        <h3 className="card-title">Commission history</h3>
+        <h3 className="card-title">Historique des commissions</h3>
         <div className="list" style={{ marginTop: 12 }}>
           {commissions.length === 0 ? (
-            <div className="card-meta">No commissions yet.</div>
+            <div className="card-meta">Aucune commission pour l'instant.</div>
           ) : (
             commissions.map((row) => (
               <div className="list-item" key={row.commission_id}>
                 <div>
                   <strong>Commission {row.commission_id.slice(0, 6)}</strong>
                   <div className="card-meta">
-                    Est. {row.estimated_commission ?? 0} · Confirmed {row.confirmed_commission ?? 0}
+                    Est. {row.estimated_commission ?? 0} · Confirmé {row.confirmed_commission ?? 0}
                   </div>
                 </div>
                 <span className="tag">{row.status}</span>
@@ -122,7 +122,7 @@ export default function SalesEarningsPage() {
         </div>
       </div>
 
-      {profile ? null : <div className="hint">Loading profile...</div>}
+      {profile ? null : <div className="hint">Chargement du profil...</div>}
       {status ? <div className="hint">{status}</div> : null}
     </div>
   );

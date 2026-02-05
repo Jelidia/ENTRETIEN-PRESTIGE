@@ -15,7 +15,7 @@ import {
   salesDayAvailabilityQuerySchema,
   salesDayQuerySchema,
 } from "@/lib/validators";
-import { logAudit } from "@/lib/audit";
+import { logAudit, logJobHistory } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 
@@ -48,6 +48,28 @@ type SalesDayAssignmentRow = {
 };
 
 type SalesClient = ReturnType<typeof createUserClient>;
+
+type JobHistorySnapshot = {
+  status: string | null;
+  technician_id: string | null;
+  scheduled_date: string | null;
+  scheduled_start_time: string | null;
+  scheduled_end_time: string | null;
+};
+
+async function fetchJobHistorySnapshot(
+  client: SalesClient,
+  jobId: string,
+  companyId: string
+) {
+  const { data } = await client
+    .from("jobs")
+    .select("status, technician_id, scheduled_date, scheduled_start_time, scheduled_end_time")
+    .eq("job_id", jobId)
+    .eq("company_id", companyId)
+    .maybeSingle();
+  return (data as JobHistorySnapshot | null) ?? null;
+}
 
 export async function POST(
   request: Request,
@@ -375,6 +397,8 @@ export async function POST(
       return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
     }
 
+    const snapshot = await fetchJobHistorySnapshot(client, parsed.data.jobId, profile.company_id);
+
     const idempotency = await beginIdempotency(client, request, profile.user_id, {
       action: "reassign",
       payload: parsed.data,
@@ -392,11 +416,27 @@ export async function POST(
     const { error } = await client
       .from("jobs")
       .update({ technician_id: parsed.data.technicianId, status: "dispatched" })
-      .eq("job_id", parsed.data.jobId);
+      .eq("job_id", parsed.data.jobId)
+      .eq("company_id", profile.company_id);
 
     if (error) {
       return NextResponse.json({ success: false, error: "Unable to reassign" }, { status: 400 });
     }
+
+    await logJobHistory(client, parsed.data.jobId, profile.user_id, [
+      {
+        fieldName: "technician_id",
+        oldValue: snapshot?.technician_id ?? null,
+        newValue: parsed.data.technicianId,
+        reason: "dispatch_reassign",
+      },
+      {
+        fieldName: "status",
+        oldValue: snapshot?.status ?? null,
+        newValue: "dispatched",
+        reason: "dispatch_reassign",
+      },
+    ]);
 
     await logAudit(client, profile.user_id, "dispatch_reassign", "job", parsed.data.jobId, "success", {
       ipAddress: ip,
@@ -414,6 +454,8 @@ export async function POST(
     if (!parsed.success) {
       return NextResponse.json({ success: false, error: "Invalid schedule" }, { status: 400 });
     }
+
+    const snapshot = await fetchJobHistorySnapshot(client, parsed.data.jobId, profile.company_id);
 
     const idempotency = await beginIdempotency(client, request, profile.user_id, {
       action: "schedule",
@@ -442,11 +484,43 @@ export async function POST(
     const { error } = await client
       .from("jobs")
       .update(updates)
-      .eq("job_id", parsed.data.jobId);
+      .eq("job_id", parsed.data.jobId)
+      .eq("company_id", profile.company_id);
 
     if (error) {
       return NextResponse.json({ success: false, error: "Unable to update schedule" }, { status: 400 });
     }
+
+    const historyEntries = [
+      {
+        fieldName: "scheduled_date",
+        oldValue: snapshot?.scheduled_date ?? null,
+        newValue: parsed.data.scheduledDate,
+        reason: "dispatch_schedule",
+      },
+      {
+        fieldName: "scheduled_start_time",
+        oldValue: snapshot?.scheduled_start_time ?? null,
+        newValue: parsed.data.scheduledStartTime,
+        reason: "dispatch_schedule",
+      },
+      {
+        fieldName: "scheduled_end_time",
+        oldValue: snapshot?.scheduled_end_time ?? null,
+        newValue: parsed.data.scheduledEndTime,
+        reason: "dispatch_schedule",
+      },
+    ];
+    if (parsed.data.technicianId) {
+      historyEntries.push({
+        fieldName: "technician_id",
+        oldValue: snapshot?.technician_id ?? null,
+        newValue: parsed.data.technicianId,
+        reason: "dispatch_schedule",
+      });
+    }
+
+    await logJobHistory(client, parsed.data.jobId, profile.user_id, historyEntries);
 
     await logAudit(client, profile.user_id, "dispatch_schedule", "job", parsed.data.jobId, "success", {
       ipAddress: ip,
@@ -473,13 +547,15 @@ export async function POST(
     const { data: technicians } = await client
       .from("users")
       .select("user_id")
+      .eq("company_id", profile.company_id)
       .eq("role", "technician")
       .limit(10);
 
     const { data: jobs } = await client
       .from("jobs")
-      .select("job_id")
+      .select("job_id, status, technician_id")
       .is("technician_id", null)
+      .eq("company_id", profile.company_id)
       .limit(10);
 
     if (!technicians || !jobs) {
@@ -491,7 +567,22 @@ export async function POST(
       await client
         .from("jobs")
         .update({ technician_id: tech.user_id, status: "dispatched" })
-        .eq("job_id", jobs[i].job_id);
+        .eq("job_id", jobs[i].job_id)
+        .eq("company_id", profile.company_id);
+      await logJobHistory(client, jobs[i].job_id, profile.user_id, [
+        {
+          fieldName: "technician_id",
+          oldValue: jobs[i].technician_id ?? null,
+          newValue: tech.user_id,
+          reason: "dispatch_auto_assign",
+        },
+        {
+          fieldName: "status",
+          oldValue: jobs[i].status ?? null,
+          newValue: "dispatched",
+          reason: "dispatch_auto_assign",
+        },
+      ]);
     }
 
     await logAudit(client, profile.user_id, "dispatch_auto_assign", "job", null, "success", {
@@ -516,6 +607,13 @@ export async function POST(
       return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
     }
 
+    const { data: affectedJobs } = await client
+      .from("jobs")
+      .select("job_id, status")
+      .eq("company_id", profile.company_id)
+      .gte("scheduled_date", parsed.data.startDate)
+      .lte("scheduled_date", parsed.data.endDate);
+
     const idempotency = await beginIdempotency(client, request, profile.user_id, {
       action: "weather-cancel",
       payload: parsed.data,
@@ -534,10 +632,26 @@ export async function POST(
       .from("jobs")
       .update({ status: "cancelled" })
       .gte("scheduled_date", parsed.data.startDate)
-      .lte("scheduled_date", parsed.data.endDate);
+      .lte("scheduled_date", parsed.data.endDate)
+      .eq("company_id", profile.company_id);
 
     if (error) {
       return NextResponse.json({ success: false, error: "Unable to cancel jobs" }, { status: 400 });
+    }
+
+    if (affectedJobs?.length) {
+      await Promise.all(
+        affectedJobs.map((job) =>
+          logJobHistory(client, job.job_id, profile.user_id, [
+            {
+              fieldName: "status",
+              oldValue: job.status ?? null,
+              newValue: "cancelled",
+              reason: "weather_cancel",
+            },
+          ])
+        )
+      );
     }
 
     await logAudit(client, profile.user_id, "dispatch_weather_cancel", "job", null, "success", {

@@ -1,8 +1,49 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { forbidden, requireUser } from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { threadIdParamSchema } from "@/lib/validators";
+
+async function resolveCustomerIds(
+  client: ReturnType<typeof createUserClient>,
+  role: string,
+  userId: string
+): Promise<string[] | null> {
+  if (role === "technician") {
+    const { data: assignments } = await client
+      .from("job_assignments")
+      .select("job:jobs(customer_id)")
+      .eq("technician_id", userId);
+
+    const customerIds = [
+      ...new Set(
+        (assignments ?? [])
+          .map((assignment: { job?: { customer_id?: string | null } | { customer_id?: string | null }[] | null }) => {
+            const job = Array.isArray(assignment.job) ? assignment.job[0] : assignment.job;
+            return job?.customer_id ?? null;
+          })
+          .filter((value): value is string => Boolean(value))
+      ),
+    ];
+
+    return customerIds;
+  }
+
+  if (role === "sales_rep") {
+    const { data: jobs } = await client
+      .from("jobs")
+      .select("customer_id")
+      .eq("sales_rep_id", userId);
+
+    const customerIds = [...new Set(
+      jobs?.map((job: { customer_id?: string | null }) => job.customer_id).filter(Boolean) || []
+    )];
+
+    return customerIds;
+  }
+
+  return null;
+}
 
 // Get messages for a specific thread
 export async function GET(
@@ -22,12 +63,37 @@ export async function GET(
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
   const { threadId } = paramsResult.data;
+  const { profile } = auth;
 
-  const { data: messages, error } = await client
+  const customerIds = await resolveCustomerIds(client, profile.role, profile.user_id);
+  if (customerIds && customerIds.length === 0) {
+    return forbidden("Accès refusé", "sms_thread_forbidden");
+  }
+
+  if (customerIds) {
+    const { data: allowed } = await client
+      .from("sms_messages")
+      .select("sms_id")
+      .eq("thread_id", threadId)
+      .in("customer_id", customerIds)
+      .limit(1);
+
+    if (!allowed || allowed.length === 0) {
+      return forbidden("Accès refusé", "sms_thread_forbidden");
+    }
+  }
+
+  let query = client
     .from("sms_messages")
     .select("*")
     .eq("thread_id", threadId)
     .order("created_at", { ascending: true });
+
+  if (customerIds) {
+    query = query.in("customer_id", customerIds);
+  }
+
+  const { data: messages, error } = await query;
 
   if (error) {
     return NextResponse.json({ success: false, error: "Failed to load messages", details: error.message },

@@ -4,7 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { sendSms } from "@/lib/twilio";
-import { smsTemplates, formatPhoneNumber } from "@/lib/smsTemplates";
+import { applySmsPrefix, formatPhoneNumber, smsTemplates } from "@/lib/smsTemplates";
 import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
@@ -219,6 +219,11 @@ export async function POST(request: Request) {
         }
       break;
 
+    case "running_late":
+      message = smsTemplates.runningLate({ customerName });
+      shouldSendSms = true;
+      break;
+
     default:
       return NextResponse.json({ success: false, error: "Unknown event type" },
         { status: 400 }
@@ -236,7 +241,7 @@ export async function POST(request: Request) {
 
     const { data: company, error: companyError } = await client
       .from("companies")
-      .select("timezone")
+      .select("timezone, name")
       .eq("company_id", job.company_id)
       .maybeSingle();
     if (companyError) {
@@ -247,6 +252,7 @@ export async function POST(request: Request) {
       });
     }
     const timeZone = company?.timezone ?? DEFAULT_TIMEZONE;
+    const prefixedMessage = applySmsPrefix(message, company?.name ?? null);
     if (isWithinQuietHours(new Date(), timeZone)) {
       return NextResponse.json({
         success: true,
@@ -293,7 +299,7 @@ export async function POST(request: Request) {
           company_id: job.company_id,
           customer_id: customerRecord.customer_id ?? null,
           phone_number: phoneNumber,
-          content: message,
+          content: prefixedMessage,
           direction: "outbound",
           status: "queued",
           related_job_id: jobId,
@@ -324,7 +330,7 @@ export async function POST(request: Request) {
       }
 
       try {
-        await sendSms(phoneNumber, message);
+        await sendSms(phoneNumber, prefixedMessage);
       } catch (error) {
         const { error: statusError } = await client
           .from("sms_messages")
