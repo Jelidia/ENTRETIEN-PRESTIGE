@@ -11,7 +11,10 @@ type JobRow = {
   status: string;
   scheduled_date?: string;
   estimated_revenue?: number;
+  customer?: { phone?: string | null } | null;
 };
+
+const normalizePhone = (value?: string | null) => (value ? value.replace(/\s+/g, "") : "");
 
 export default function JobsPage() {
   const [jobs, setJobs] = useState<JobRow[]>([]);
@@ -143,34 +146,60 @@ export default function JobsPage() {
                 <th>Date</th>
                 <th>Status</th>
                 <th>Revenue</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {jobs.map((job) => (
-                <tr key={job.job_id}>
-                  <td>{job.job_id}</td>
-                  <td>{job.service_type}</td>
-                  <td>{job.scheduled_date ?? ""}</td>
-                  <td>
-                    <StatusBadge status={job.status} />
-                  </td>
-                  <td>{job.estimated_revenue ? `$${job.estimated_revenue}` : ""}</td>
-                </tr>
-              ))}
+              {jobs.map((job) => {
+                const phone = job.customer?.phone ?? "";
+                const phoneHref = normalizePhone(phone);
+                return (
+                  <tr key={job.job_id}>
+                    <td>{job.job_id}</td>
+                    <td>{job.service_type}</td>
+                    <td>{job.scheduled_date ?? ""}</td>
+                    <td>
+                      <StatusBadge status={job.status} />
+                    </td>
+                    <td>{job.estimated_revenue ? `$${job.estimated_revenue}` : ""}</td>
+                    <td>
+                      {phoneHref ? (
+                        <div className="table-actions">
+                          <a className="button-ghost" href={`tel:${phoneHref}`}>Appeler</a>
+                          <a className="button-ghost" href={`sms:${phoneHref}`}>SMS</a>
+                        </div>
+                      ) : (
+                        <span className="card-meta">-</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
           <div className="card-list-mobile" style={{ marginTop: 12 }}>
-            {jobs.map((job) => (
-              <div className="mobile-card" key={job.job_id}>
-                <div className="mobile-card-title">Job #{job.job_id}</div>
-                <div className="mobile-card-meta">{job.service_type}</div>
-                <div className="mobile-card-meta">{job.scheduled_date ?? ""}</div>
-                <div className="table-actions">
-                  <StatusBadge status={job.status} />
-                  <span className="tag">{job.estimated_revenue ? `$${job.estimated_revenue}` : ""}</span>
+            {jobs.map((job) => {
+              const phone = job.customer?.phone ?? "";
+              const phoneHref = normalizePhone(phone);
+              return (
+                <div className="mobile-card" key={job.job_id}>
+                  <div className="mobile-card-title">Job #{job.job_id}</div>
+                  <div className="mobile-card-meta">{job.service_type}</div>
+                  <div className="mobile-card-meta">{job.scheduled_date ?? ""}</div>
+                  {phone ? <div className="mobile-card-meta">{phone}</div> : null}
+                  <div className="table-actions">
+                    <StatusBadge status={job.status} />
+                    <span className="tag">{job.estimated_revenue ? `$${job.estimated_revenue}` : ""}</span>
+                  </div>
+                  {phoneHref ? (
+                    <div className="table-actions">
+                      <a className="button-ghost" href={`tel:${phoneHref}`}>Appeler</a>
+                      <a className="button-ghost" href={`sms:${phoneHref}`}>SMS</a>
+                    </div>
+                  ) : null}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
         <div className="stack">

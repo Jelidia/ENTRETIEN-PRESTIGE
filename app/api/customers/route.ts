@@ -23,7 +23,7 @@ export async function GET(request: Request) {
   const client = createUserClient(token ?? "");
   const { data, error } = await client
     .from("customers")
-    .select("customer_id, first_name, last_name, status, customer_type, last_service_date, account_balance")
+    .select("customer_id, first_name, last_name, phone, status, customer_type, last_service_date, account_balance")
     .order("created_at", { ascending: false })
     .limit(100);
 

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import LogoutButton from "./LogoutButton";
 import { useCompany } from "@/contexts/company/CompanyContext";
 
@@ -14,8 +14,20 @@ type TopBarProps = {
 
 export default function TopBar({ title, subtitle, actions, showLogout = true }: TopBarProps) {
   const [logoError, setLogoError] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
   const { company } = useCompany();
   const companyName = useMemo(() => company?.name ?? "Entreprise", [company?.name]);
+
+  useEffect(() => {
+    const updateOnline = () => setIsOnline(navigator.onLine);
+    updateOnline();
+    window.addEventListener("online", updateOnline);
+    window.addEventListener("offline", updateOnline);
+    return () => {
+      window.removeEventListener("online", updateOnline);
+      window.removeEventListener("offline", updateOnline);
+    };
+  }, []);
 
   return (
     <div className="top-bar">
@@ -57,6 +69,15 @@ export default function TopBar({ title, subtitle, actions, showLogout = true }: 
           </div>
       </div>
       <div className="top-actions" style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+        <span
+          className="pill"
+          style={{
+            backgroundColor: isOnline ? "#dcfce7" : "#fee2e2",
+            color: isOnline ? "#166534" : "#991b1b",
+          }}
+        >
+          {isOnline ? "En ligne" : "Hors ligne"}
+        </span>
         {actions}
         {showLogout && <LogoutButton />}
       </div>

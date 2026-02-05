@@ -13,6 +13,7 @@ type JobRow = {
   scheduled_end_time?: string;
   address?: string;
   estimated_revenue?: number;
+  customer?: { phone?: string | null } | null;
 };
 
 type SalesDaySchedule = {
@@ -138,6 +139,19 @@ function formatTimeShort(value?: string | null) {
   if (!value) return "";
   return value.length >= 5 ? value.slice(0, 5) : value;
 }
+
+function copyAddress(value?: string | null, onResult?: (message: string) => void) {
+  if (!value) {
+    onResult?.("Adresse indisponible.");
+    return;
+  }
+  void navigator.clipboard
+    .writeText(value)
+    .then(() => onResult?.("Adresse copiée."))
+    .catch(() => onResult?.("Copie impossible."));
+}
+
+const normalizePhone = (value?: string | null) => (value ? value.replace(/\s+/g, "") : "");
 
 function normalizePolygonCoordinates(value: unknown): MapCenter[] {
   if (!Array.isArray(value)) return [];
@@ -625,21 +639,47 @@ export default function SalesSchedulePage() {
         </div>
       ) : (
         <div className="list">
-          {upcoming.map((job) => (
-            <div className="list-item" key={job.job_id}>
-              <div>
-                <strong>{job.service_type || "Service"}</strong>
-                <div className="card-meta">
-                  {formatDate(job.scheduled_date)} · {formatTimeRange(job.scheduled_start_time, job.scheduled_end_time)}
+          {upcoming.map((job) => {
+            const phone = job.customer?.phone ?? "";
+            const phoneHref = normalizePhone(phone);
+            return (
+              <div className="list-item" key={job.job_id}>
+                <div>
+                  <strong>{job.service_type || "Service"}</strong>
+                  <div className="card-meta">
+                    {formatDate(job.scheduled_date)} · {formatTimeRange(job.scheduled_start_time, job.scheduled_end_time)}
+                  </div>
+                  <div className="card-meta">{job.address ?? "Adresse à confirmer"}</div>
+                  {phone ? <div className="card-meta">{phone}</div> : null}
+                  {(job.address || phoneHref) ? (
+                    <div className="list-item-actions">
+                      {job.address ? (
+                        <button
+                          className="tag"
+                          type="button"
+                          onClick={() => copyAddress(job.address, setStatus)}
+                          aria-label="Copier l'adresse"
+                          title="Copier l'adresse"
+                        >
+                          Copier l'adresse
+                        </button>
+                      ) : null}
+                      {phoneHref ? (
+                        <>
+                          <a className="button-ghost" href={`tel:${phoneHref}`}>Appeler</a>
+                          <a className="button-ghost" href={`sms:${phoneHref}`}>SMS</a>
+                        </>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </div>
-                <div className="card-meta">{job.address ?? "Adresse à confirmer"}</div>
+                <div style={{ display: "grid", gap: "8px", justifyItems: "end" }}>
+                  <StatusBadge status={job.status ?? "Scheduled"} />
+                  {job.estimated_revenue ? <span className="tag">${job.estimated_revenue}</span> : null}
+                </div>
               </div>
-              <div style={{ display: "grid", gap: "8px", justifyItems: "end" }}>
-                <StatusBadge status={job.status ?? "Scheduled"} />
-                {job.estimated_revenue ? <span className="tag">${job.estimated_revenue}</span> : null}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

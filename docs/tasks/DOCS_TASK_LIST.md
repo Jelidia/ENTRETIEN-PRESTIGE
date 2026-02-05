@@ -9,10 +9,6 @@ Many ai work on this at the same time so never forget that
 
 List of name available (take a name from here) : 
 
-- AI - 1
-- AI - 2
-- AI - 3
-- AI - 4
 - AI - 5
 - AI - 6
 - AI - 7
@@ -21,7 +17,10 @@ List of name available (take a name from here) :
 
 List of name taken (put the name you choose here) : 
 
-- AI - 1
+ - AI - 1
+ - AI - 2
+ - AI - 3
+ - AI - 4
 
 
 
@@ -56,7 +55,7 @@ Notes
 - EP-P0-SEC-07 Decide and enforce registration model (self-signup vs invite-only).
 
 ### Engineering & data quality
-- EP-P0-ENG-09 Implémenter la Normalisation E.164: Forcer le formatage strict des numéros de téléphone à l'entrée (API/Front) pour garantir 100% de délivrabilité des SMS Twilio et éviter les erreurs silencieuses.
+ - EP-P0-ENG-09 Implémenter la Normalisation E.164: Forcer le formatage strict des numéros de téléphone à l'entrée (API/Front) pour garantir 100% de délivrabilité des SMS Twilio et éviter les erreurs silencieuses.
 ### Core flows
 - EP-P0-FLOW-02 Make job photo uploads work end-to-end (upload + DB record + viewing).
 - EP-P0-FLOW-03 Implement Leads API to match the Sales Leads UI.
@@ -175,19 +174,15 @@ Notes
 ### UX & UI
 - EP-P2-UX-01 Fix Job Assignment UX: Add "Reassign" and "Move Time" buttons to Job Cards (stop just relying on drag-drop).
 - EP-P2-UX-03 Mobile UI Fix: Convert Customer/Job tables to "Card Views" on mobile to prevent horizontal scrolling.
-- EP-P2-UX-04 Add "Quick Actions" (Call/SMS) directly to Customer and Job list rows.
 - EP-P2-UX-05 Implement Global Search Bar: Unified search input in TopNav that queries Customers, Jobs, and Leads simultaneously with categorized results.
 - EP-P2-UX-06 Implement "Continuous Job Flow": After completing a job, display a "Navigate to Next Job" prompt that auto-loads the next scheduled assignment's GPS details.
 - EP-P2-UX-07 Implement Bulk Actions for Tables: Add checkboxes to Job and Invoice lists with bulk operations (e.g., "Bulk Approve", "Bulk Send SMS", "Bulk Archive").
 - EP-P2-UX-08 Implement Google Places Autocomplete: Add address prediction to all Job/Customer forms to auto-fill fields and capture precise GPS coordinates instantly.
-- EP-P2-UX-10 Implement Smart Notifications: Add "Mark All as Read" button and group similar alerts (e.g., "3 new jobs assigned") into single summary lines to reduce clutter.
 - EP-P2-UX-11 Implement Customer "Quick View" Popover: Show critical tags (VIP, Bad Dog, Gate Codes) in a popup when hovering/tapping a customer name in the Schedule, avoiding full page navigation.
 - EP-P2-UX-15 Implement Mobile Se Actions: Add "Se Left to Call" and "Se Right to Complete" on job list items for one-handed mobile use (stop aiming for tiny buttons).
 - EP-P2-UX-16 Implement Command Palette (Ctrl+K): A centralized search bar to jump to any page or run actions (e.g., type "New Inv..." -> opens Invoice) instantly.
 - EP-P2-UX-17 Smart Date Pickers: Add "Tomorrow", "Next Week", "First Monday of Month" quick-select chips to all date inputs (stop clicking 'Next' 12 times).
 - EP-P2-UX-18 Drag-and-Drop Multi-Upload: Allow dragging 10 photos at once into the upload zone instead of selecting one by one (stop the upload struggle).
-- EP-P2-UX-19 One-Click "Copy Address": Button to copy the full, formatted address to the clipboard for easy pasting into other apps (stop highlighting text manually). [WIP: AI - 1 2026-02-04]
-- EP-P2-UX-20 Add Sync Status Indicator: Visual "Cloud Checkmark" or "Offline" badge in the top bar so technicians know if their data is saved (stop losing work).
 - EP-P2-UI-02 Mobile UI audit: fix iOS/Android layout/visibility issues on dispatch, schedule, map, settings, leads, customers.
 - EP-P2-UI-01 Replace manual ID entry with searchable pickers and pagination.
 - EP-P2-I18N-01 French-first UX copy and Quebec formatting.

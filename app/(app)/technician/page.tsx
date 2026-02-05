@@ -13,6 +13,7 @@ type JobRow = {
   address?: string;
   estimated_revenue?: number;
   customer_id?: string;
+  customer?: { phone?: string | null } | null;
 };
 
 export default function TechnicianPage() {
@@ -71,6 +72,19 @@ export default function TechnicianPage() {
     const safeEnd = end ? end.slice(0, 5) : "";
     return safeStart && safeEnd ? `${safeStart} - ${safeEnd}` : safeStart || safeEnd;
   }
+
+  function copyAddress(value?: string | null) {
+    if (!value) {
+      setStatus("Adresse indisponible.");
+      return;
+    }
+    void navigator.clipboard
+      .writeText(value)
+      .then(() => setStatus("Adresse copiée."))
+      .catch(() => setStatus("Copie impossible."));
+  }
+
+  const normalizePhone = (value?: string | null) => (value ? value.replace(/\s+/g, "") : "");
 
   async function handleCheck(jobId: string, action: "check-in" | "check-out") {
     setStatus("");
@@ -177,21 +191,43 @@ export default function TechnicianPage() {
       </div>
 
       <div className="tech-jobs">
-        {jobs.map((job) => (
-          <div className="mobile-card" key={job.job_id}>
-            <div className="mobile-card-title">{formatRange(job.scheduled_start_time, job.scheduled_end_time)}</div>
-            <div className="mobile-card-meta">{job.service_type}</div>
-            <div className="mobile-card-meta">{job.address ?? job.customer_id ?? ""}</div>
-            <div className="table-actions">
-              <StatusBadge status={job.status} />
-              {job.estimated_revenue ? <span className="tag">${job.estimated_revenue}</span> : null}
+        {jobs.map((job) => {
+          const phone = job.customer?.phone ?? "";
+          const phoneHref = normalizePhone(phone);
+          return (
+            <div className="mobile-card" key={job.job_id}>
+              <div className="mobile-card-title">{formatRange(job.scheduled_start_time, job.scheduled_end_time)}</div>
+              <div className="mobile-card-meta">{job.service_type}</div>
+              <div className="mobile-card-meta">{job.address ?? job.customer_id ?? ""}</div>
+              {phone ? <div className="mobile-card-meta">{phone}</div> : null}
+              <div className="table-actions">
+                <StatusBadge status={job.status} />
+                {job.estimated_revenue ? <span className="tag">${job.estimated_revenue}</span> : null}
+                {job.address ? (
+                  <button
+                    className="tag"
+                    type="button"
+                    onClick={() => copyAddress(job.address)}
+                    aria-label="Copier l'adresse"
+                    title="Copier l'adresse"
+                  >
+                    Copier l'adresse
+                  </button>
+                ) : null}
+              </div>
+              {phoneHref ? (
+                <div className="table-actions">
+                  <a className="button-ghost" href={`tel:${phoneHref}`}>Appeler</a>
+                  <a className="button-ghost" href={`sms:${phoneHref}`}>SMS</a>
+                </div>
+              ) : null}
+              <div className="table-actions">
+                <button className="button-secondary" type="button" onClick={() => handleCheck(job.job_id, "check-in")}>Check in</button>
+                <button className="button-ghost" type="button" onClick={() => handleCheck(job.job_id, "check-out")}>Check out</button>
+              </div>
             </div>
-            <div className="table-actions">
-              <button className="button-secondary" type="button" onClick={() => handleCheck(job.job_id, "check-in")}>Check in</button>
-              <button className="button-ghost" type="button" onClick={() => handleCheck(job.job_id, "check-out")}>Check out</button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="tech-actions">

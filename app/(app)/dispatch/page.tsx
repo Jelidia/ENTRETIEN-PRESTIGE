@@ -1002,7 +1002,27 @@ export default function DispatchPage() {
                           {formatTime(start)} - {formatTime(end)}
                         </div>
                         <div className="calendar-event-title">{formatServiceLabel(job.service)}</div>
-                        <div className="calendar-event-meta">{job.address}</div>
+                        <div
+                          className="calendar-event-meta"
+                          style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6 }}
+                        >
+                          <span>{job.address}</span>
+                          {job.address ? (
+                            <button
+                              className="tag"
+                              type="button"
+                              onPointerDown={(event) => event.stopPropagation()}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                copyAddress(job.address, setStatus);
+                              }}
+                              aria-label="Copier l'adresse"
+                              title="Copier l'adresse"
+                            >
+                              Copier
+                            </button>
+                          ) : null}
+                        </div>
                         <div
                           className="calendar-event-handle"
                           role="presentation"
@@ -1479,6 +1499,17 @@ function formatConflictWindow(start?: string, end?: string) {
 function formatServiceLabel(value?: string) {
   if (!value) return "";
   return value.replace(/_/g, " ");
+}
+
+function copyAddress(value?: string | null, onResult?: (message: string) => void) {
+  if (!value) {
+    onResult?.("Adresse indisponible.");
+    return;
+  }
+  void navigator.clipboard
+    .writeText(value)
+    .then(() => onResult?.("Adresse copiée."))
+    .catch(() => onResult?.("Copie impossible."));
 }
 
 function getJobTimes(job: DispatchJob) {

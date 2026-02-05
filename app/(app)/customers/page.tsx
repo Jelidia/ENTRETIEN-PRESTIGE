@@ -9,6 +9,7 @@ type CustomerRow = {
   customer_id: string;
   first_name: string;
   last_name: string;
+  phone?: string | null;
   status: string;
   customer_type: string;
   last_service_date?: string;
@@ -68,6 +69,8 @@ const formatServiceDate = (value?: string | null) => {
   }
   return parsed.toLocaleDateString("fr-CA");
 };
+
+const normalizePhone = (value?: string | null) => (value ? value.replace(/\s+/g, "") : "");
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<CustomerRow[]>([]);
@@ -265,12 +268,15 @@ export default function CustomersPage() {
                 <th>Statut</th>
                 <th>Dernier service</th>
                 <th>Solde</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {customers.map((customer) => {
                 const typeLabel = typeLabels[customer.customer_type] ?? customer.customer_type;
                 const statusLabel = statusLabels[customer.status] ?? customer.status;
+                const phone = customer.phone ?? "";
+                const phoneHref = normalizePhone(phone);
                 return (
                   <tr key={customer.customer_id}>
                     <td>{customer.first_name} {customer.last_name}</td>
@@ -280,6 +286,16 @@ export default function CustomersPage() {
                     </td>
                     <td>{formatServiceDate(customer.last_service_date)}</td>
                     <td>{formatBalance(customer.account_balance)}</td>
+                    <td>
+                      {phoneHref ? (
+                        <div className="table-actions">
+                          <a className="button-ghost" href={`tel:${phoneHref}`}>Appeler</a>
+                          <a className="button-ghost" href={`sms:${phoneHref}`}>SMS</a>
+                        </div>
+                      ) : (
+                        <span className="card-meta">-</span>
+                      )}
+                    </td>
                   </tr>
                 );
               })}
@@ -289,17 +305,26 @@ export default function CustomersPage() {
             {customers.map((customer) => {
               const typeLabel = typeLabels[customer.customer_type] ?? customer.customer_type;
               const statusLabel = statusLabels[customer.status] ?? customer.status;
+              const phone = customer.phone ?? "";
+              const phoneHref = normalizePhone(phone);
               return (
                 <div className="mobile-card" key={customer.customer_id}>
                   <div className="mobile-card-title">
                     {customer.first_name} {customer.last_name}
                   </div>
                   <div className="mobile-card-meta">{typeLabel}</div>
+                  {phone ? <div className="mobile-card-meta">{phone}</div> : null}
                   <div className="mobile-card-meta">Dernier service : {formatServiceDate(customer.last_service_date)}</div>
                   <div className="table-actions">
                     <StatusBadge status={statusLabel} />
                     <span className="tag">{formatBalance(customer.account_balance)}</span>
                   </div>
+                  {phoneHref ? (
+                    <div className="table-actions">
+                      <a className="button-ghost" href={`tel:${phoneHref}`}>Appeler</a>
+                      <a className="button-ghost" href={`sms:${phoneHref}`}>SMS</a>
+                    </div>
+                  ) : null}
                 </div>
               );
             })}
