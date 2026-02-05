@@ -1,7 +1,7 @@
-﻿# ENTRETIEN PRESTIGE - SYSTEM INSTRUCTIONS
+﻿# FIELD SERVICE MANAGEMENT PLATFORM - SYSTEM INSTRUCTIONS
 
 ## Project Context
-- Type: Quebec cleaning ERP
+- Type: Multi-tenant field service management platform (any industry)
 - Tech: Next.js 14, TypeScript, Supabase, Tailwind CSS
 - Status: 90% complete, actively in development
 
@@ -125,5 +125,5 @@ Let me investigate and fix that... [manually debugs]
 
 ### Reference Files
 - CLAUDE.md (your architecture)
-- ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md (requirements)
+- docs/tasks/DOCS_TASK_LIST.md (requirements & task tracking)
 - AUDIT_RESULTS.md (current status)

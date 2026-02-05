@@ -2,11 +2,13 @@ import { test } from '@playwright/test';
 
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
 
+const DEFAULT_PASSWORD = process.env.PLAYWRIGHT_PASSWORD ?? 'DemoPassword2026!';
+
 const USERS = [
-  { email: 'jelidiadam12@gmail.com', password: 'Prestige2026!', role: 'admin' },
-  { email: 'youssef.takhi@hotmail.com', password: 'Prestige2026!', role: 'manager' },
-  { email: 'jelidiadam12+2@gmail.com', password: 'Prestige2026!', role: 'sales' },
-  { email: 'jelidiadam12+1@gmail.com', password: 'Prestige2026!', role: 'technician' },
+  { email: 'jelidiadam12@gmail.com', password: DEFAULT_PASSWORD, role: 'admin' },
+  { email: 'youssef.takhi@hotmail.com', password: DEFAULT_PASSWORD, role: 'manager' },
+  { email: 'jelidiadam12+2@gmail.com', password: DEFAULT_PASSWORD, role: 'sales' },
+  { email: 'jelidiadam12+1@gmail.com', password: DEFAULT_PASSWORD, role: 'technician' },
 ];
 
 for (const user of USERS) {

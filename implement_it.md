@@ -1,7 +1,7 @@
 This setup matches OpenCode’s documented conventions for **agents** (primary + subagents) ([OpenCode][1]), **skills** (one folder per skill with `SKILL.md` at `.opencode/skills/<name>/SKILL.md`) ([OpenCode][2]), **commands** (markdown files + shell output injection via `!`backticks) ([OpenCode][3]), and “**allow everything**” via `permission: "allow"` in `opencode.jsonc`. ([OpenCode][4])
 
 ````md
-# OpenCode Bootstrap — Entretien Prestige (Codex 5.2)
+# OpenCode Bootstrap — Field Service Platform (Codex 5.2)
 
 Use this doc once to get your repo fully configured with:
 - a primary agent (`ep`)
@@ -10,7 +10,7 @@ Use this doc once to get your repo fully configured with:
 - helpful commands
 - `opencode.jsonc` set to `permission: "allow"`
 
-> Windows note (recommended): put your repo in a non-OneDrive path without spaces (ex: `C:\dev\entretien-prestige\`) to avoid file-locking/sync issues and path edge cases.
+> Windows note (recommended): put your repo in a non-OneDrive path without spaces (ex: `C:\dev\field-service-platform\`) to avoid file-locking/sync issues and path edge cases.
 
 ---
 
@@ -80,7 +80,7 @@ FILES TO CREATE/OVERWRITE are below. Use their exact content.
 
 ```md
 ---
-description: Entretien Prestige (primary) — mobile-first fr-CA, multi-tenant safe, low-token, fast diffs.
+description: Field Service Platform (primary) — mobile-first fr-CA, multi-tenant safe, low-token, fast diffs.
 mode: primary
 model: openai/gpt-5.2-codex
 temperature: 0.2
@@ -92,7 +92,7 @@ permission:
 steps: 24
 ---
 
-You are the default coding agent for the Entretien Prestige repo.
+You are the default coding agent for the Field Service Platform repo.
 
 ## Mission
 - Ship correct, minimal diffs that match repo conventions and the spec.

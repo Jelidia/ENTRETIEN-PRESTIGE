@@ -45,8 +45,10 @@ type InvoicePdfData = {
   notes?: string;
 };
 
-const GST_RATE = 0.05; // 5% Federal GST
-const QST_RATE = 0.09975; // 9.975% Quebec PST
+// Tax rates are no longer hardcoded — callers should load rates from
+// the company's tax_settings table and pass gst_rate / qst_rate in the data.
+// When no rate is provided, default to 0 (no tax line rendered as $0.00).
+const DEFAULT_TAX_RATE = 0;
 
 export async function generateInvoicePdf(data: InvoicePdfData) {
   const pdfDoc = await PDFDocument.create();
@@ -224,15 +226,15 @@ export async function generateInvoicePdf(data: InvoicePdfData) {
   yPosition -= 18;
 
   // GST
-  const gstAmount = data.gst_amount ?? data.subtotal * GST_RATE;
-  const gstRate = (data.gst_rate ?? GST_RATE) * 100;
+  const gstAmount = data.gst_amount ?? data.subtotal * (data.gst_rate ?? DEFAULT_TAX_RATE);
+  const gstRate = (data.gst_rate ?? DEFAULT_TAX_RATE) * 100;
   page.drawText(`TPS/GST (${gstRate.toFixed(2)}%):`, { x: totalsX, y: yPosition, size: 10, font, color: textColor });
   page.drawText(`$${gstAmount.toFixed(2)}`, { x: 480, y: yPosition, size: 10, font, color: textColor });
   yPosition -= 18;
 
   // QST
-  const qstAmount = data.qst_amount ?? data.subtotal * QST_RATE;
-  const qstRate = (data.qst_rate ?? QST_RATE) * 100;
+  const qstAmount = data.qst_amount ?? data.subtotal * (data.qst_rate ?? DEFAULT_TAX_RATE);
+  const qstRate = (data.qst_rate ?? DEFAULT_TAX_RATE) * 100;
   page.drawText(`TVQ/QST (${qstRate.toFixed(3)}%):`, { x: totalsX, y: yPosition, size: 10, font, color: textColor });
   page.drawText(`$${qstAmount.toFixed(2)}`, { x: 480, y: yPosition, size: 10, font, color: textColor });
   yPosition -= 25;

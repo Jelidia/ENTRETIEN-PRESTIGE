@@ -12,7 +12,7 @@ type ChecklistItem = {
 
 const baseItems: Omit<ChecklistItem, "checked" | "notes">[] = [
   { id: "ladder", label: "Échelle", requiresPhoto: true },
-  { id: "supplies", label: "Fournitures de nettoyage", requiresPhoto: false },
+  { id: "supplies", label: "Fournitures de travail", requiresPhoto: false },
   { id: "vehicle", label: "État du véhicule", requiresPhoto: true },
   { id: "safety", label: "Équipement de sécurité", requiresPhoto: false },
 ];

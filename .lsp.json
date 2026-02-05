@@ -1,8 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/lsp.json",
   "version": "1.0.0",
-  "name": "entretien-prestige-lsp",
-  "description": "Language Server Protocol configuration for Entretien Prestige",
+  "name": "field-service-platform-lsp",
+  "description": "Language Server Protocol configuration for Field Service Platform",
   "servers": {
     "typescript": {
       "language": ["typescript", "typescriptreact"],
@@ -248,7 +248,7 @@
     "workspaceFolders": [
       {
         "uri": "file://${PWD}",
-        "name": "entretien-prestige"
+        "name": "field-service-platform"
       }
     ]
   }

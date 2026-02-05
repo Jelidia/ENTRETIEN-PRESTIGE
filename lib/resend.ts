@@ -2,7 +2,7 @@ import { Resend } from "resend";
 import { getEnv, isProd } from "./env";
 
 const resendApiKey = getEnv("RESEND_API_KEY");
-const resendFrom = getEnv("RESEND_FROM_EMAIL", "no-reply@entretienprestige.com");
+const resendFrom = getEnv("RESEND_FROM_EMAIL", "no-reply@example.com");
 const emailFlag = getEnv("FEATURE_EMAIL").toLowerCase();
 const emailEnabled = emailFlag ? emailFlag === "true" : isProd();
 

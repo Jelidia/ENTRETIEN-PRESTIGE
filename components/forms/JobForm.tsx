@@ -412,7 +412,7 @@ export default function JobForm({ prefill = null, prefillToken = null }: JobForm
           className="input"
           value={form.serviceType}
           onChange={(event) => updateField("serviceType", event.target.value)}
-          placeholder="Ex. Lavage de vitres"
+          placeholder="Ex. Type de service"
           required
           list="company-service-types"
         />

@@ -53,7 +53,7 @@ const SEED_USERS: SeedUser[] = [
   },
 ];
 
-const PASSWORD = "Prestige2026!";
+const PASSWORD = process.env.SEED_DEFAULT_PASSWORD || "DemoPassword2026!";
 
 export async function POST(request: Request) {
   try {
@@ -72,16 +72,16 @@ export async function POST(request: Request) {
     let { data: company } = await admin
       .from("companies")
       .select("company_id")
-      .eq("name", "Entretien Prestige")
+      .eq("name", process.env.SEED_COMPANY_NAME || "Demo Company")
       .single();
 
     if (!company) {
       const { data: newCompany, error: companyError } = await admin
         .from("companies")
         .insert({
-          name: "Entretien Prestige",
-          legal_name: "Entretien Prestige Inc.",
-          email: "info@entretien-prestige.ca",
+          name: process.env.SEED_COMPANY_NAME || "Demo Company",
+          legal_name: process.env.SEED_COMPANY_LEGAL_NAME || "Demo Company Inc.",
+          email: process.env.SEED_COMPANY_EMAIL || "info@demo-company.com",
           phone: "514-555-0000",
           address: "123 Rue Principale",
           city: "Laval",

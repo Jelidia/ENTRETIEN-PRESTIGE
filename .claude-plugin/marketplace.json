@@ -1,38 +1,39 @@
 {
-  "name": "entretien-prestige-dev",
-  "displayName": "Entretien Prestige Development Environment",
+  "name": "field-service-platform-dev",
+  "displayName": "Field Service Platform Development Environment",
   "version": "1.0.0",
-  "description": "Complete development environment for Entretien Prestige - a mobile-first ERP system for Quebec cleaning companies built with Next.js, TypeScript, and Supabase",
-  "longDescription": "This plugin provides a comprehensive development environment for the Entretien Prestige project, including specialized agents for feature development, database architecture, testing, bug fixing, deployment, and code review. It enforces Quebec French UI standards, mobile-first design (640px), 100% test coverage, and Row Level Security for multi-tenancy.\n\nIncludes 6 specialized agents, 10 custom skills, 3 output styles, comprehensive hooks system, and complete MCP/LSP integrations.",
-  "icon": "🧹",
+  "description": "Complete development environment for a multi-tenant field service management platform built with Next.js, TypeScript, and Supabase",
+  "longDescription": "This plugin provides a comprehensive development environment for the Field Service Management Platform, including specialized agents for feature development, database architecture, testing, bug fixing, deployment, and code review. It enforces Quebec French UI standards, mobile-first design (640px), 100% test coverage, and Row Level Security for multi-tenancy.\n\nIncludes 6 specialized agents, 10 custom skills, 3 output styles, comprehensive hooks system, and complete MCP/LSP integrations.",
+  "icon": "🔧",
   "category": "development",
   "tags": [
     "next.js",
     "typescript",
     "supabase",
-    "erp",
+    "field-service",
+    "multi-tenant",
     "french",
     "mobile-first",
     "testing",
     "enterprise"
   ],
   "author": {
-    "name": "Entretien Prestige Development Team",
-    "email": "dev@entretien-prestige.com",
-    "url": "https://entretien-prestige.com"
+    "name": "Field Service Platform Development Team",
+    "email": "dev@example.com",
+    "url": "https://example.com"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/entretien-prestige"
+    "url": "https://github.com/your-org/field-service-platform"
   },
   "bugs": {
-    "url": "https://github.com/your-org/entretien-prestige/issues"
+    "url": "https://github.com/your-org/field-service-platform/issues"
   },
-  "homepage": "https://github.com/your-org/entretien-prestige#readme",
+  "homepage": "https://github.com/your-org/field-service-platform#readme",
   "license": "UNLICENSED",
   "visibility": "team",
   "team": {
-    "organization": "entretien-prestige",
+    "organization": "field-service-platform",
     "members": [
       "admin",
       "developer",
@@ -124,8 +125,8 @@
     ]
   },
   "support": {
-    "documentation": "https://github.com/your-org/entretien-prestige/wiki",
-    "issues": "https://github.com/your-org/entretien-prestige/issues",
-    "slack": "#entretien-prestige-dev"
+    "documentation": "https://github.com/your-org/field-service-platform/wiki",
+    "issues": "https://github.com/your-org/field-service-platform/issues",
+    "slack": "#field-service-platform-dev"
   }
 }

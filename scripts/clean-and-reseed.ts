@@ -73,7 +73,7 @@ async function cleanAndReseed() {
   const { data: company } = await admin
     .from("companies")
     .select("company_id")
-    .eq("name", "Entretien Prestige")
+    .eq("name", process.env.SEED_COMPANY_NAME || "Demo Company")
     .single();
 
   if (!company) {
@@ -175,7 +175,7 @@ async function cleanAndReseed() {
   if (users) {
     console.table(users);
     console.log(`\n✅ ${users.length} users recreated successfully!`);
-    console.log("\n🔑 Password for all: Prestige2026!");
+    console.log("\n🔑 Password for all: DemoPassword2026!");
     console.log("\n✅ You can now log in!");
   }
 }

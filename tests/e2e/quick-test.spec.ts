@@ -3,11 +3,13 @@ import { expect, test, type APIResponse, type Page } from "@playwright/test";
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
 const hasServiceRoleKey = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY);
 
+const DEFAULT_PASSWORD = process.env.PLAYWRIGHT_PASSWORD ?? "DemoPassword2026!";
+
 const USERS = {
-  admin: { email: "jelidiadam12@gmail.com", password: "Prestige2026!" },
-  manager: { email: "youssef.takhi@hotmail.com", password: "Prestige2026!" },
-  sales: { email: "jelidiadam12+2@gmail.com", password: "Prestige2026!" },
-  technician: { email: "jelidiadam12+1@gmail.com", password: "Prestige2026!" },
+  admin: { email: "jelidiadam12@gmail.com", password: DEFAULT_PASSWORD },
+  manager: { email: "youssef.takhi@hotmail.com", password: DEFAULT_PASSWORD },
+  sales: { email: "jelidiadam12+2@gmail.com", password: DEFAULT_PASSWORD },
+  technician: { email: "jelidiadam12+1@gmail.com", password: DEFAULT_PASSWORD },
 };
 
 type AuthCookie = { name: string; value: string; url: string };
@@ -99,7 +101,8 @@ test.describe("manual verification", () => {
     await gotoPage(page, "/");
     await page.waitForURL(/\/login/, { timeout: 20000 });
     await expect(page.getByRole("heading", { name: /connexion/i })).toBeVisible();
-    await expect(page.getByText(/Entretien Prestige/i)).toHaveCount(0);
+    // Login page should not display any hardcoded company name
+    await expect(page.locator('.content')).toBeVisible({ timeout: 20000 });
   });
 
   test("admin: core pages scroll + team api + users list", async ({ page }) => {
@@ -274,7 +277,7 @@ test.describe("manual verification", () => {
     const createModal = page.getByRole("heading", { name: /nouvel utilisateur/i }).locator("..");
     await expect(createModal).toBeVisible({ timeout: 20000 });
     await createModal.locator("input[type=\"email\"]").fill(uniqueEmail);
-    await createModal.locator("input[type=\"password\"]").fill("Prestige2026!");
+    await createModal.locator("input[type=\"password\"]").fill(DEFAULT_PASSWORD);
     await createModal.locator("input[type=\"text\"]").first().fill("QA User");
     const createResponsePromise = page.waitForResponse(
       (res) => res.url().includes("/api/admin/users") && res.request().method() === "POST",

@@ -34,7 +34,7 @@ test('Check users in database', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
 
   const response = await page.request.post(`${BASE_URL}/api/auth/login`, {
-    data: { email: "jelidiadam12@gmail.com", password: "Prestige2026!" },
+    data: { email: "jelidiadam12@gmail.com", password: process.env.PLAYWRIGHT_PASSWORD ?? "DemoPassword2026!" },
   });
   expect(response.ok()).toBe(true);
   const cookies = extractAuthCookies(response);

@@ -1,12 +1,12 @@
-# Entretien Prestige
+# Field Service Management Platform
 
-**Mobile-First ERP for Professional Cleaning Services**
+**Mobile-First Multi-Tenant Operations Platform for Field Service Companies**
 
-Full-stack operations platform for Quebec cleaning company with dispatch, CRM, billing, SMS automation, sales pipeline, and commission tracking.
+Full-stack operations platform for field service businesses of all types (cleaning, HVAC, plumbing, landscaping, electrical, pest control, etc.) with dispatch, CRM, billing, SMS automation, sales pipeline, and commission tracking. Each company configures its own service types, pricing rules, tax rates, templates, and branding.
 
-**Status:** In progress; see `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` for blockers and readiness.
+**Status:** In progress; see `docs/tasks/DOCS_TASK_LIST.md` for the full task backlog and priorities.
 
-**AI tooling:** See `docs/ai/codex/AGENTS.md` for the current agent workflow and repo rules (legacy Claude Code docs were removed; see git history if needed).
+**AI tooling:** See `docs/ai/codex/AGENTS.md` for the current agent workflow and repo rules.
 
 ---
 
@@ -199,7 +199,7 @@ npm run typecheck    # Type check without building
 ## 📁 Project Structure
 
 ```
-entretien-prestige/
+field-service-platform/
 ├── app/
 │   ├── (app)/                   # Authenticated app routes
 │   ├── (auth)/                  # Auth routes
@@ -272,61 +272,32 @@ Bonjour {customerName}, votre service est prévu le {date} à {time}...
 
 ### Dynamic Pricing
 
-**Pricing factors:**
-1. **Base:** Size (sq ft) + windows
-2. **Evening/weekend:** +20% (after 5pm or Sat/Sun)
-3. **Holiday:** +15% (Quebec statutory holidays)
-4. **Volume discount:** -10% (5+ completed jobs)
-5. **Subscription:** -10% (permanent)
-6. **Loyalty:** 100 points = $10 off
+Pricing is configurable per company via the `pricing_profiles` and `service_types` tables. Each company defines its own:
+- **Service types** with custom names, base prices, and units
+- **Surcharge rules** (evening/weekend, holiday, rush, etc.)
+- **Discount rules** (volume, subscription, loyalty, etc.)
+- **Tax rates** per region (GST, QST, HST, PST, VAT, etc.)
 
-**Service types:**
-- **Basique:** $0.10/sq ft, $8/window, $80 minimum
-- **Premium:** $0.15/sq ft, $12/window, $120 minimum
-- **Prestige:** $0.20/sq ft, $15/window, $150 minimum
-
-**Example:**
-```typescript
-import { calculatePrice } from "@/lib/pricing";
-
-const price = calculatePrice({
-  sqft: 2500,
-  windows: 12,
-  serviceType: "premium",
-  datetime: new Date("2026-01-30T18:00:00"),  // Friday 6pm
-  customerJobCount: 7,
-});
-// Returns: Base (375) + Evening (75) - Volume (37.5) = $412.50
-```
+The `lib/pricing.ts` module provides a default pricing engine with configurable parameters.
+Companies customize these rules through the Settings > Pricing page.
 
 ### Quality Control
 
-**Mandatory photos:**
-- Before/after photos (2 sets)
-- 4 sides per set: front, back, left, right
-- 8 photos minimum total
-- Cannot complete job without all photos
-
-**Customer ratings:**
-- SMS link sent after job completion (no login)
-- 1-5 star rating system
-- **1-3 stars:** Internal only, triggers manager follow-up
-- **4-5 stars:** Redirect to Google Maps + $5 bonus to tech (if name mentioned)
-
-**Re-work protocol:**
-- Track rework jobs in separate table
-- Commission adjustments (0%, 50%, or 100% deduction)
-- Assign to original or different technician
-- Manager approval required
+**Configurable per company:**
+- Photo requirements (before/after, number of angles) — set via company settings
+- Customer rating system (SMS-based, no login required)
+- Rating thresholds and follow-up rules configurable per company
+- Re-work tracking with configurable commission adjustments
+- Manager approval workflows
 
 ### Commission Tracking
 
-**Commission model:**
+**Fully configurable per company via `commission_profiles` table:**
 - Sales rep: % of job value (configurable per service type)
 - Technician: $ per job OR % (configurable)
-- Multi-tech jobs: Split percentages (50/50, 30/70, custom)
-- Google review bonus: $5 for 4-5★ rating with name mention
-- Rework deductions: Manager sets penalty amount
+- Multi-tech jobs: configurable split percentages
+- Review bonuses: configurable amount and criteria
+- Rework deductions: manager-configurable penalty rules
 
 **Visibility:**
 - Pending earnings (job completed, not paid)
@@ -588,7 +559,7 @@ ERROR_TRACKING_ENDPOINT=
 - [ ] Verify mobile layout (640px max width)
 - [ ] Check browser console for errors
 
-See `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` for deployment status and remaining work.
+See `docs/tasks/DOCS_TASK_LIST.md` for deployment status and remaining work.
 
 ---
 
@@ -598,15 +569,12 @@ See `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` for deploy
 
 - **docs/ai/codex/AGENTS.md** - Primary agent guidance and repo rules (read this first)
 - **README.md** - Setup and overview
+- **docs/tasks/DOCS_TASK_LIST.md** - Full task backlog and priorities
 
 ### For Deployment
 
-- **docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md** - Implementation status and deployment checklist
+- **docs/tasks/DOCS_TASK_LIST.md** - Production deployment checklist (at the bottom)
 - **docs/ops/TROUBLESHOOTING.md** - Database migration troubleshooting
-
-### For Business
-
-- **docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md** - Complete project specification (48+ requirements)
 
 ### API Documentation
 
@@ -627,7 +595,7 @@ See `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` for deploy
 - `GET /api/sms/inbox` - Fetch inbox threads
 - `POST /api/sms/inbox/[threadId]/read` - Mark conversation as read
 
-**See `docs/ai/codex/AGENTS.md` for current API patterns and repo rules.**
+**See `docs/ai/codex/AGENTS.md` for API patterns and repo rules.**
 
 ---
 
@@ -743,21 +711,16 @@ SELECT company_id FROM jobs WHERE job_id = 'yyy';
 
 ## 📞 Support
 
-**Project:** Entretien Prestige
-**Location:** Grand Montréal, Quebec, Canada
+**Project:** Field Service Management Platform
 **Version:** 1.0 (In Development)
-**Specification:** Version 2.0 - Final (January 27, 2026)
-**Status:** NOT READY FOR PRODUCTION (critical bugs found - see `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md`)
+**Status:** NOT READY FOR PRODUCTION — see `docs/tasks/DOCS_TASK_LIST.md` for remaining work
 
 **For technical questions:**
 - See `docs/ai/codex/AGENTS.md` - Primary agent guidance
 - See `docs/ops/TROUBLESHOOTING.md` - Debugging playbook
 
-**For business requirements:**
-- See `docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md` - Full specification
-
 **For deployment:**
-- See `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` - Status and checklist
+- See `docs/tasks/DOCS_TASK_LIST.md` - Full task backlog and deployment checklist
 
 ---
 

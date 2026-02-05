@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document explains the Row Level Security (RLS) implementation for Entretien Prestige, which uses JWT custom claims to avoid infinite recursion and ensure proper multi-tenancy isolation.
+This document explains the Row Level Security (RLS) implementation for the Field Service Management Platform, which uses JWT custom claims to avoid infinite recursion and ensure proper multi-tenancy isolation.
 
 ## Architecture
 

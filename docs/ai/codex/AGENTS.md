@@ -1,17 +1,18 @@
-# AGENTS.md — Entretien Prestige (OpenCode/Codex)
+# AGENTS.md — Field Service Management Platform (OpenCode/Codex)
 
 This file is the **high‑signal, always‑on** project context for coding agents.
 
 - Keep it **short and accurate** (agents will see it often).
 - Put deep details in other docs and point to them.
 
-If you need deeper context, prefer **targeted reads** (don’t paste huge files by default).
+If you need deeper context, prefer **targeted reads** (don't paste huge files by default).
 
 ## Repo snapshot
 
-**Product:** Quebec cleaning company ERP
+**Product:** Multi-tenant field service management platform (supports any industry: cleaning, HVAC, plumbing, landscaping, electrical, pest control, etc.)
 **Stack:** Next.js 14 (App Router) + TypeScript + Supabase (Postgres + RLS) + Tailwind
-**UI language:** Quebec French (code in English)
+**UI language:** Quebec French default, bilingual (code in English)
+**Multi-tenancy:** All data is scoped by `company_id`. Each company configures its own service types, pricing, tax rates, templates, and branding. Nothing is hardcoded to a single company or industry.
 
 ### Key directories
 
@@ -30,11 +31,10 @@ If you need deeper context, prefer **targeted reads** (don’t paste huge files 
 ## Authoritative docs
 
 - **Agent workflow + repo rules:** `docs/ai/codex/AGENTS.md` (this file)
-- **Deployment readiness + blockers:** `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md`
-- **Product requirements:** `docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md`
+- **Task backlog + deployment checklist:** `docs/tasks/DOCS_TASK_LIST.md`
 - **Setup + env vars:** `README.md`
 
-Legacy Claude Code documentation was removed; see git history if needed.
+Legacy spec files and Claude Code documentation were removed; see git history if needed.
 
 ## Non‑negotiables (project rules)
 
@@ -108,15 +108,11 @@ node scripts/test-login-flow.ts
 node scripts/verify-users-exist.ts
 ```
 
-## “If you only read 3 docs”
+## "If you only read 3 docs"
 
 1. `README.md` — setup + env vars + operational overview
-2. `docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md` — full product specification
-3. `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md` — deployment readiness + blockers
-
-Troubleshooting: `docs/ops/TROUBLESHOOTING.md`.
-
-Task coordination: `docs/tasks/DOCS_TASK_LIST.md` (single source of truth).
+2. `docs/tasks/DOCS_TASK_LIST.md` — full task backlog, priorities, and deployment checklist (single source of truth)
+3. `docs/ops/TROUBLESHOOTING.md` — debugging and migration playbook
 
 ## OpenCode/Codex quality-of-life
 

@@ -10,7 +10,7 @@
       "Bash(npm install)",
       "Bash(npm run lint)",
       "Bash(if exist \"supabase\\\\migrations\\\\20260131170659_remote_schema.sql\" del \"supabase\\\\migrations\\\\20260131170659_remote_schema.sql\")",
-      "Bash(curl -X POST https://entretien-prestige.vercel.app/api/admin/seed-users -H \"Content-Type: application/json\" -d '{\"\"secret\"\": \"\"DELETE_ME_AFTER_SEEDING_2026\"\"}')",
+      "Bash(curl -X POST ${NEXT_PUBLIC_BASE_URL}/api/admin/seed-users -H \"Content-Type: application/json\" -d '{\"\"secret\"\": \"\"DELETE_ME_AFTER_SEEDING_2026\"\"}')",
       "Bash(npm test:*)",
       "mcp__supabase__execute_sql",
       "Bash(timeout /t 5)",

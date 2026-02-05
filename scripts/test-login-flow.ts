@@ -21,7 +21,7 @@ try {
 }
 
 const BASE_URL = "http://localhost:3000";
-const PASSWORD = "Prestige2026!";
+const PASSWORD = process.env.SEED_DEFAULT_PASSWORD || "DemoPassword2026!";
 
 const TEST_USERS = [
   { email: "jelidiadam12@gmail.com", role: "admin", expectedDashboard: "/dashboard" },

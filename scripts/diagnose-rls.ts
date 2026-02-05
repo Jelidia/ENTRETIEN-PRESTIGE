@@ -38,7 +38,7 @@ async function diagnose() {
   console.log("1️⃣ Testing login with admin user...");
   const { data: loginData, error: loginError } = await admin.auth.signInWithPassword({
     email: "jelidiadam12@gmail.com",
-    password: "Prestige2026!",
+    password: process.env.SEED_DEFAULT_PASSWORD || "DemoPassword2026!",
   });
 
   if (loginError || !loginData.session) {

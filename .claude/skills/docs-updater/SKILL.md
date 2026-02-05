@@ -1,6 +1,6 @@
 ---
 name: docs-updater
-description: Update docs/ai/codex/AGENTS.md, README.md, and docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md after completing features. Keeps documentation synchronized with codebase changes.
+description: Update docs/ai/codex/AGENTS.md, README.md, and docs/tasks/DOCS_TASK_LIST.md after completing features. Keeps documentation synchronized with codebase changes.
 argument-hint: "What changed (e.g., 'Update docs: added loyalty points redemption feature')"
 user-invocable: true
 disable-model-invocation: false
@@ -28,16 +28,15 @@ After completing features, fixing bugs, or making significant changes to the cod
 ## What it does
 1. Reads current documentation files
 2. Updates relevant sections with completed work
-3. Increments progress percentages in docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
+3. Updates task status in docs/tasks/DOCS_TASK_LIST.md
 4. Updates architecture and repo rules in docs/ai/codex/AGENTS.md
-5. Updates feature status from ⚠️ to ✅
+5. Updates feature status from pending to completed
 6. Maintains consistent formatting
 
 ## Quality checks
 - Update "Current Status" date to today
 - Increment completion percentage if features added
-- Mark incomplete features as ⚠️ or ❌
-- Mark completed features as ✅
+- Mark completed features appropriately
 - Update API endpoint counts
 - Add new routes to "Critical Files" section
 - Keep examples concise and accurate
@@ -54,22 +53,21 @@ After completing features, fixing bugs, or making significant changes to the cod
 - Setup instructions
 - New environment variables
 
-### docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md
-- Progress percentage (~XX% complete)
-- Feature completion status
-- New completed items marked ✅
+### docs/tasks/DOCS_TASK_LIST.md
+- Task completion status
+- New completed items
 - Known issues or blockers
 
 ## Example output
 ```markdown
 ## Current Status (2026-01-28)
 
-**Overall Progress:** ~80% Complete ✅ (+10% from last update)
+**Overall Progress:** ~80% Complete (+10% from last update)
 
-**Foundation:** 100% complete ✅
+**Foundation:** 100% complete
 - Authentication, database, RLS, rate limiting, permissions all working
 
-**Newly Completed:** ✅
+**Newly Completed:**
 - Admin user management panel (CRUD with French UI)
 - User settings page (documents, security, profile tabs)
 - File upload API (contract, ID photo, profile photo)

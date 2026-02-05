@@ -78,7 +78,7 @@ beforeEach(() => {
       postal_code: "H1H1H1",
     },
     companies: {
-      name: "Entretien Prestige",
+      name: "Demo Company",
       email: "info@example.com",
       phone: "555-0102",
       address: "456 Rue Service",

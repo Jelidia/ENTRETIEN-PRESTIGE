@@ -1,35 +1,60 @@
-// Dynamic Pricing Calculator for Entretien Prestige
-// Includes: size, time, holiday, volume discounts
+// Dynamic Pricing Calculator — Field Service Management Platform
+// Pricing rules, service prices, and holidays are loaded from DB per company.
+// Hardcoded values serve only as fallback defaults when no DB config is available.
+
+import { createAdminClient } from "./supabaseServer";
 
 type PricingParams = {
-  sqft?: number; // Square footage
-  windows?: number; // Number of windows
-  serviceType: string; // "basique" | "premium" | "prestige"
-  datetime: Date; // When the job is scheduled
-  isHoliday?: boolean; // Holiday surcharge
-  customerJobCount?: number; // Total jobs for this customer (for volume discount)
+  sqft?: number;
+  windows?: number;
+  serviceType: string;
+  datetime: Date;
+  isHoliday?: boolean;
+  customerJobCount?: number;
 };
 
-// Base pricing per service type
-const BASE_PRICES = {
-  basique: {
-    sqft: 0.15, // $0.15 per sq ft
-    window: 5.0, // $5 per window
-    minimum: 150, // $150 minimum
-  },
-  premium: {
-    sqft: 0.25,
-    window: 8.0,
-    minimum: 250,
-  },
-  prestige: {
-    sqft: 0.35,
-    window: 12.0,
-    minimum: 400,
-  },
+type ServicePricing = {
+  sqft: number;
+  window: number;
+  minimum: number;
 };
 
-export function calculatePrice(params: PricingParams): {
+type PricingConfig = {
+  services?: Record<string, ServicePricing>;
+  eveningSurcharge?: number;
+  holidaySurcharge?: number;
+  volumeDiscount?: number;
+  volumeMinJobs?: number;
+  holidays?: string[]; // ISO date strings
+};
+
+// Fallback defaults — used only when no company config is loaded
+const DEFAULT_SERVICES: Record<string, ServicePricing> = {
+  "standard service": { sqft: 0.15, window: 5.0, minimum: 150 },
+  "premium service": { sqft: 0.25, window: 8.0, minimum: 250 },
+  "emergency service": { sqft: 0.35, window: 12.0, minimum: 400 },
+};
+
+const DEFAULT_EVENING_SURCHARGE = 0.20;
+const DEFAULT_HOLIDAY_SURCHARGE = 0.15;
+const DEFAULT_VOLUME_DISCOUNT = 0.10;
+const DEFAULT_VOLUME_MIN_JOBS = 5;
+
+const DEFAULT_HOLIDAYS = [
+  "2026-01-01",
+  "2026-04-10",
+  "2026-05-18",
+  "2026-06-24",
+  "2026-07-01",
+  "2026-09-07",
+  "2026-10-12",
+  "2026-12-25",
+];
+
+export function calculatePrice(
+  params: PricingParams,
+  config?: PricingConfig,
+): {
   basePrice: number;
   timeSurcharge: number;
   holidaySurcharge: number;
@@ -37,8 +62,14 @@ export function calculatePrice(params: PricingParams): {
   finalPrice: number;
   breakdown: string[];
 } {
-  const serviceType = params.serviceType.toLowerCase() as keyof typeof BASE_PRICES;
-  const pricing = BASE_PRICES[serviceType] || BASE_PRICES.basique;
+  const services = config?.services ?? DEFAULT_SERVICES;
+  const eveningSurcharge = config?.eveningSurcharge ?? DEFAULT_EVENING_SURCHARGE;
+  const holidaySurcharge = config?.holidaySurcharge ?? DEFAULT_HOLIDAY_SURCHARGE;
+  const volumeDiscount = config?.volumeDiscount ?? DEFAULT_VOLUME_DISCOUNT;
+  const volumeMinJobs = config?.volumeMinJobs ?? DEFAULT_VOLUME_MIN_JOBS;
+
+  const serviceKey = params.serviceType.toLowerCase();
+  const pricing = services[serviceKey] ?? Object.values(services)[0] ?? DEFAULT_SERVICES["standard service"];
 
   // Calculate base price
   let basePrice = pricing.minimum;
@@ -53,38 +84,38 @@ export function calculatePrice(params: PricingParams): {
   }
 
   const breakdown: string[] = [];
-  breakdown.push(`Base price (${serviceType}): $${basePrice.toFixed(2)}`);
+  breakdown.push(`Base price (${serviceKey}): $${basePrice.toFixed(2)}`);
 
-  // Time-based surcharge (+20% for evening/weekend)
-  let timeSurcharge = 0;
+  // Time-based surcharge (evening/weekend)
+  let timeSurchargeAmount = 0;
   if (isEveningOrWeekend(params.datetime)) {
-    timeSurcharge = basePrice * 0.20;
-    breakdown.push(`Evening/Weekend surcharge (+20%): $${timeSurcharge.toFixed(2)}`);
+    timeSurchargeAmount = basePrice * eveningSurcharge;
+    breakdown.push(`Evening/Weekend surcharge (+${(eveningSurcharge * 100).toFixed(0)}%): $${timeSurchargeAmount.toFixed(2)}`);
   }
 
-  // Holiday surcharge (+15%)
-  let holidaySurcharge = 0;
+  // Holiday surcharge
+  let holidaySurchargeAmount = 0;
   if (params.isHoliday) {
-    const priceWithTime = basePrice + timeSurcharge;
-    holidaySurcharge = priceWithTime * 0.15;
-    breakdown.push(`Holiday surcharge (+15%): $${holidaySurcharge.toFixed(2)}`);
+    const priceWithTime = basePrice + timeSurchargeAmount;
+    holidaySurchargeAmount = priceWithTime * holidaySurcharge;
+    breakdown.push(`Holiday surcharge (+${(holidaySurcharge * 100).toFixed(0)}%): $${holidaySurchargeAmount.toFixed(2)}`);
   }
 
-  // Volume discount (5+ jobs = 10% off)
-  let volumeDiscount = 0;
-  if (params.customerJobCount && params.customerJobCount >= 5) {
-    const priceBeforeDiscount = basePrice + timeSurcharge + holidaySurcharge;
-    volumeDiscount = priceBeforeDiscount * 0.10;
-    breakdown.push(`Volume discount 5+ jobs (-10%): -$${volumeDiscount.toFixed(2)}`);
+  // Volume discount
+  let volumeDiscountAmount = 0;
+  if (params.customerJobCount && params.customerJobCount >= volumeMinJobs) {
+    const priceBeforeDiscount = basePrice + timeSurchargeAmount + holidaySurchargeAmount;
+    volumeDiscountAmount = priceBeforeDiscount * volumeDiscount;
+    breakdown.push(`Volume discount ${volumeMinJobs}+ jobs (-${(volumeDiscount * 100).toFixed(0)}%): -$${volumeDiscountAmount.toFixed(2)}`);
   }
 
-  const finalPrice = basePrice + timeSurcharge + holidaySurcharge - volumeDiscount;
+  const finalPrice = basePrice + timeSurchargeAmount + holidaySurchargeAmount - volumeDiscountAmount;
 
   return {
     basePrice,
-    timeSurcharge,
-    holidaySurcharge,
-    volumeDiscount,
+    timeSurcharge: timeSurchargeAmount,
+    holidaySurcharge: holidaySurchargeAmount,
+    volumeDiscount: volumeDiscountAmount,
     finalPrice,
     breakdown,
   };
@@ -94,43 +125,101 @@ function isEveningOrWeekend(date: Date): boolean {
   const hour = date.getHours();
   const day = date.getDay();
 
-  // Weekend: Saturday (6) or Sunday (0)
-  if (day === 0 || day === 6) {
-    return true;
-  }
-
-  // Evening: after 5 PM (17:00)
-  if (hour >= 17) {
-    return true;
-  }
+  if (day === 0 || day === 6) return true;
+  if (hour >= 17) return true;
 
   return false;
 }
 
-// Quebec holidays (2026)
-const QUEBEC_HOLIDAYS_2026 = [
-  "2026-01-01", // New Year's Day
-  "2026-04-10", // Good Friday
-  "2026-05-18", // National Patriots' Day
-  "2026-06-24", // Saint-Jean-Baptiste Day
-  "2026-07-01", // Canada Day
-  "2026-09-07", // Labour Day
-  "2026-10-12", // Thanksgiving
-  "2026-12-25", // Christmas
-];
-
-export function isQuebecHoliday(date: Date): boolean {
+export function isHoliday(date: Date, holidays?: string[]): boolean {
   const dateStr = date.toISOString().split("T")[0];
-  return QUEBEC_HOLIDAYS_2026.includes(dateStr);
+  const list = holidays ?? DEFAULT_HOLIDAYS;
+  return list.includes(dateStr);
+}
+
+/** @deprecated Use isHoliday() instead */
+export function isQuebecHoliday(date: Date): boolean {
+  return isHoliday(date);
 }
 
 // Calculate subscription discount (10% permanent)
 export function calculateSubscriptionPrice(basePrice: number): number {
-  return basePrice * 0.90; // 10% discount
+  return basePrice * 0.90;
 }
 
 // Calculate loyalty points redemption
 export function calculateLoyaltyDiscount(points: number): number {
-  // 100 points = $10 off
   return Math.floor(points / 100) * 10;
+}
+
+/**
+ * Load pricing configuration for a company from the database.
+ * Returns a PricingConfig that can be passed to calculatePrice().
+ */
+export async function loadCompanyPricing(companyId: string): Promise<PricingConfig> {
+  const supabase = createAdminClient();
+
+  const [servicesRes, rulesRes, holidaysRes] = await Promise.all([
+    supabase
+      .from("company_services")
+      .select("name, default_price")
+      .eq("company_id", companyId)
+      .eq("active", true)
+      .order("sort_order"),
+    supabase
+      .from("pricing_rules")
+      .select("rule_key, rule_value, conditions")
+      .eq("company_id", companyId)
+      .eq("is_active", true),
+    supabase
+      .from("holidays")
+      .select("holiday_date")
+      .eq("company_id", companyId),
+  ]);
+
+  const services: Record<string, ServicePricing> = {};
+  if (servicesRes.data) {
+    for (const svc of servicesRes.data) {
+      services[svc.name.toLowerCase()] = {
+        sqft: 0,
+        window: 0,
+        minimum: Number(svc.default_price) || 0,
+      };
+    }
+  }
+
+  let eveningSurcharge: number | undefined;
+  let holidaySurcharge: number | undefined;
+  let volumeDiscount: number | undefined;
+  let volumeMinJobs: number | undefined;
+
+  if (rulesRes.data) {
+    for (const rule of rulesRes.data) {
+      switch (rule.rule_key) {
+        case "evening_surcharge":
+          eveningSurcharge = Number(rule.rule_value);
+          break;
+        case "holiday_surcharge":
+          holidaySurcharge = Number(rule.rule_value);
+          break;
+        case "volume_discount":
+          volumeDiscount = Number(rule.rule_value);
+          if (rule.conditions && typeof rule.conditions === "object" && "min_jobs" in rule.conditions) {
+            volumeMinJobs = Number((rule.conditions as Record<string, unknown>).min_jobs);
+          }
+          break;
+      }
+    }
+  }
+
+  const holidays = holidaysRes.data?.map((h) => h.holiday_date) ?? [];
+
+  return {
+    services: Object.keys(services).length > 0 ? services : undefined,
+    eveningSurcharge,
+    holidaySurcharge,
+    volumeDiscount,
+    volumeMinJobs,
+    holidays,
+  };
 }

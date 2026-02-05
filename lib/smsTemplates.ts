@@ -1,4 +1,8 @@
-// SMS Templates for Entretien Prestige (French - Quebec)
+// SMS Templates — Field Service Management Platform (French - Quebec defaults)
+// Per-company templates are loaded from the sms_templates table.
+// The hardcoded templates below serve as fallback defaults only.
+
+import { createAdminClient } from "./supabaseServer";
 
 export type SMSTemplate = {
   key: string;
@@ -12,7 +16,7 @@ export const smsTemplates = {
 
   // 24 hour reminder
   reminder24h: (data: { time: string; date: string }) =>
-    `Rappel: Votre nettoyage est demain à ${data.time}. Nous avons hâte de vous servir!`,
+    `Rappel: Votre rendez-vous est demain à ${data.time}. Nous avons hâte de vous servir!`,
 
   // 1 hour reminder
   reminder1h: (data: { time: string }) =>
@@ -58,6 +62,80 @@ export const smsTemplates = {
   ratingRequest: (data: { customerName: string; ratingLink: string }) =>
     `Bonjour ${data.customerName}, comment était votre service? Cliquez ici pour noter: ${data.ratingLink}`,
 };
+
+// Map from DB template_key to the smsTemplates function key
+const TEMPLATE_KEY_MAP: Record<string, keyof typeof smsTemplates> = {
+  job_scheduled: "jobScheduled",
+  reminder_24h: "reminder24h",
+  reminder_1h: "reminder1h",
+  job_completed_interac: "jobCompletedInterac",
+  job_completed_stripe: "jobCompletedStripe",
+  job_completed_cash: "jobCompletedCash",
+  no_show: "noShow",
+  running_late: "runningLate",
+  late_payment_3d: "latePayment3Days",
+  late_payment_7d: "latePayment7Days",
+  late_payment_14d: "latePayment14Days",
+  availability_reminder: "availabilityReminder",
+  rating_request: "ratingRequest",
+};
+
+/**
+ * Interpolate {{variable}} placeholders in a template body.
+ */
+export function interpolateTemplate(body: string, data: Record<string, unknown>): string {
+  return body.replace(/\{\{(\w+)\}\}/g, (_match, key: string) => {
+    const value = data[key];
+    return value != null ? String(value) : "";
+  });
+}
+
+type CompanyTemplates = Record<string, string>; // template_key → body
+
+/**
+ * Load custom SMS templates for a company from the database.
+ * Returns a map of template_key → body text (with {{variable}} placeholders).
+ */
+export async function loadCompanyTemplates(companyId: string): Promise<CompanyTemplates> {
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from("sms_templates")
+    .select("template_key, body")
+    .eq("company_id", companyId)
+    .eq("is_active", true);
+
+  const templates: CompanyTemplates = {};
+  if (data) {
+    for (const row of data) {
+      templates[row.template_key] = row.body;
+    }
+  }
+  return templates;
+}
+
+/**
+ * Get a rendered SMS message for a given template key.
+ * If the company has a custom template in the DB, it's used with interpolation.
+ * Otherwise, falls back to the hardcoded default template function.
+ */
+export function renderSmsTemplate(
+  templateKey: string,
+  data: Record<string, unknown>,
+  companyTemplates?: CompanyTemplates,
+): string | null {
+  // Check for company-specific DB template first
+  if (companyTemplates && companyTemplates[templateKey]) {
+    return interpolateTemplate(companyTemplates[templateKey], data);
+  }
+
+  // Fall back to hardcoded default
+  const fnKey = TEMPLATE_KEY_MAP[templateKey];
+  if (fnKey && typeof smsTemplates[fnKey] === "function") {
+    return (smsTemplates[fnKey] as (d: Record<string, unknown>) => string)(data);
+  }
+
+  return null;
+}
 
 export function applySmsPrefix(message: string, prefix?: string | null): string {
   const trimmed = message.trim();

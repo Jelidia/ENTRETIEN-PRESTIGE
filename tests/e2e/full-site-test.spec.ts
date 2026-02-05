@@ -2,11 +2,13 @@ import { test, expect, type APIResponse, type Page } from '@playwright/test';
 
 const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
 
+const DEFAULT_PASSWORD = process.env.PLAYWRIGHT_PASSWORD ?? 'DemoPassword2026!';
+
 const USERS = {
-  admin: { email: 'jelidiadam12@gmail.com', password: 'Prestige2026!', expectedDashboard: '/dashboard' },
-  manager: { email: 'youssef.takhi@hotmail.com', password: 'Prestige2026!', expectedDashboard: '/dashboard' },
-  sales: { email: 'jelidiadam12+2@gmail.com', password: 'Prestige2026!', expectedDashboard: '/sales/dashboard' },
-  technician: { email: 'jelidiadam12+1@gmail.com', password: 'Prestige2026!', expectedDashboard: '/technician' },
+  admin: { email: 'jelidiadam12@gmail.com', password: DEFAULT_PASSWORD, expectedDashboard: '/dashboard' },
+  manager: { email: 'youssef.takhi@hotmail.com', password: DEFAULT_PASSWORD, expectedDashboard: '/dashboard' },
+  sales: { email: 'jelidiadam12+2@gmail.com', password: DEFAULT_PASSWORD, expectedDashboard: '/sales/dashboard' },
+  technician: { email: 'jelidiadam12+1@gmail.com', password: DEFAULT_PASSWORD, expectedDashboard: '/technician' },
 };
 
 type AuthCookie = { name: string; value: string; url: string };

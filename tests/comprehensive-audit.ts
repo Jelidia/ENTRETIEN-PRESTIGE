@@ -11,7 +11,7 @@ import * as path from 'path';
 const BASE_URL = 'http://localhost:3000';
 const TEST_USER = {
   email: 'jelidiadam12@gmail.com',
-  password: 'Prestige2026!',
+  password: process.env.PLAYWRIGHT_PASSWORD ?? 'DemoPassword2026!',
   role: 'admin'
 };
 

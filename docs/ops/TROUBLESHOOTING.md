@@ -1,6 +1,6 @@
-# Troubleshooting Guide - Entretien Prestige
+# Troubleshooting Guide - Field Service Management Platform
 
-This guide covers common issues and their solutions for the Entretien Prestige project.
+This guide covers common issues and their solutions for the Field Service Management Platform.
 
 ## Table of Contents
 
@@ -688,13 +688,13 @@ wsl --shutdown
 **Solutions:**
 ```bash
 # Work in WSL filesystem (not /mnt/c/)
-cd ~/projects/entretien-prestige
+cd ~/projects/field-service-platform
 
 # Clone repo in WSL
-git clone https://github.com/... ~/projects/entretien-prestige
+git clone https://github.com/... ~/projects/field-service-platform
 
 # Access from Windows
-# \\wsl$\Ubuntu\home\username\projects\entretien-prestige
+# \\wsl$\Ubuntu\home\username\projects\field-service-platform
 ```
 
 ### Issue: Can't Access Windows Environment Variables
@@ -766,15 +766,12 @@ Include:
 ### Documentation Locations
 
 - **Project docs:** `docs/ai/codex/AGENTS.md`, `README.md`
-- **Spec:** `docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md`
+- **Task backlog:** `docs/tasks/DOCS_TASK_LIST.md`
 - **Migrations:** `/supabase/migrations/`
-- **Deployment:** `docs/spec/ENTRETIEN_PRESTIGE_MASTER_PRODUCTION_READY_BACKLOG.md`
 
 ### Community Support
 
 - GitHub Issues: Report bugs and feature requests
-- Slack: #entretien-prestige-dev
-- Email: dev@entretien-prestige.com
 
 ---
 

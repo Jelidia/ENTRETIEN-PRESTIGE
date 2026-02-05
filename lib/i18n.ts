@@ -1,5 +1,5 @@
 /**
- * Internationalization (i18n) for Entretien Prestige
+ * Internationalization (i18n) — Field Service Management Platform
  * Default: French (fr)
  * Supported: French (fr), English (en)
  */

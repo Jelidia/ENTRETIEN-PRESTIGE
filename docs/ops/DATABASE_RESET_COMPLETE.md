@@ -23,12 +23,12 @@
 ### 3. Seeded Database with Test Data
 - **Migration**: `20260131171000_seed_initial_data.sql`
 - **⚠️ WARNING**: This migration TRUNCATES (deletes) ALL existing data
-- Created company: **Entretien Prestige** (Laval, QC)
+- Created company: **Demo Company** (Laval, QC)
 - Created 4 test users with hashed passwords
 
 ## Test Users Created
 
-All users have the password: **`Prestige2026!`**
+All users have the password: **`DemoPassword2026!`**
 
 | Email                        | Phone        | Role       | Department      |
 |------------------------------|--------------|------------|-----------------|
@@ -40,9 +40,9 @@ All users have the password: **`Prestige2026!`**
 ## How to Test Login
 
 ### Option 1: Via Your Dashboard
-1. Go to your dashboard: https://entretien-prestige.vercel.app/
+1. Go to your dashboard: https://your-app.vercel.app/
 2. Try logging in with any of the emails above
-3. Password for all: `Prestige2026!`
+3. Password for all: `DemoPassword2026!`
 4. **Note**: 2FA is DISABLED for all seed users for easier testing
 
 ### Option 2: Via Supabase SQL Editor
@@ -65,18 +65,18 @@ SELECT name, city, province, status FROM companies;
 SELECT
   email,
   role,
-  (password_hash = extensions.crypt('Prestige2026!', password_hash)) as password_is_valid
+  (password_hash = extensions.crypt('DemoPassword2026!', password_hash)) as password_is_valid
 FROM users;
 ```
 
 ### Option 3: Via Your API
 ```bash
 # Test login endpoint
-curl -X POST https://entretien-prestige.vercel.app/api/auth/login \
+curl -X POST https://your-app.vercel.app/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "jelidiadam12@gmail.com",
-    "password": "Prestige2026!"
+    "password": "DemoPassword2026!"
   }'
 ```
 
@@ -97,7 +97,7 @@ curl -X POST https://entretien-prestige.vercel.app/api/auth/login \
 ### Problem: Login fails with "Invalid password"
 **Possible causes**:
 1. Password hashing isn't working → Check if pgcrypto extension is enabled
-2. Wrong password → Make sure you're using `Prestige2026!` exactly
+2. Wrong password → Make sure you're using `DemoPassword2026!` exactly
 3. `password_hash` column is NULL → Run verification query above
 
 ## How Password Hashing Works
@@ -106,7 +106,7 @@ The system uses bcrypt via PostgreSQL's `pgcrypto` extension:
 
 ```sql
 -- Storing a password (on user creation)
-password_hash = extensions.crypt('Prestige2026!', extensions.gen_salt('bf'))
+password_hash = extensions.crypt('DemoPassword2026!', extensions.gen_salt('bf'))
 
 -- Verifying a password (on login)
 password_hash = extensions.crypt(user_input_password, password_hash)
@@ -166,7 +166,7 @@ if (data) {
 - [x] Password column added to users table
 - [x] RLS policies created for all tables
 - [x] Helper functions created (get_user_company_id, get_user_role)
-- [x] Company "Entretien Prestige" created
+- [x] Company "Demo Company" created
 - [x] 4 test users created with hashed passwords
 - [x] All migrations pushed to remote database
 - [ ] Login tested via dashboard (YOU SHOULD TEST THIS NOW)

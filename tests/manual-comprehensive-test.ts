@@ -10,7 +10,7 @@ import { chromium, Browser, Page } from 'playwright';
 const BASE_URL = 'http://localhost:3000';
 const TEST_USER = {
   email: 'jelidiadam12@gmail.com',
-  password: 'Prestige2026!',
+  password: process.env.PLAYWRIGHT_PASSWORD ?? 'DemoPassword2026!',
 };
 
 interface TestResult {

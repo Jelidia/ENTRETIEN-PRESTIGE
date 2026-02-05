@@ -16,7 +16,7 @@ We need to create users via the Supabase Admin API, which will create them in BO
 2. Click "Add user" → "Create new user"
 3. Create each user with:
    - Email: (from the list below)
-   - Password: `Prestige2026!`
+   - Password: `DemoPassword2026!`
    - Auto Confirm: ✅ YES
    - User metadata: Leave empty for now
 

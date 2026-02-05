@@ -184,14 +184,14 @@ export async function POST(request: Request) {
           message = smsTemplates.jobCompletedInterac({
             invoiceNumber: invoice.invoice_number || invoice.invoice_id.substring(0, 8),
             amount,
-            email: process.env.NEXT_PUBLIC_COMPANY_EMAIL || "accounting@entretien-prestige.ca",
+            email: process.env.NEXT_PUBLIC_COMPANY_EMAIL || "accounting@example.com",
           });
         } else if (invoice.payment_method === "credit_card") {
           // Generate Stripe payment link (you'd need to implement this)
           const paymentLink =
             typeof customData?.paymentLink === "string" && customData.paymentLink
               ? customData.paymentLink
-              : "https://pay.entretien-prestige.ca/invoice/" + invoice.invoice_id;
+              : (process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000") + "/portal/pay/" + invoice.invoice_id;
           message = smsTemplates.jobCompletedStripe({
             invoiceNumber: invoice.invoice_number || invoice.invoice_id.substring(0, 8),
             amount,

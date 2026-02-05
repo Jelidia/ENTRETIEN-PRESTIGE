@@ -5,7 +5,7 @@
 
 ## Executive Summary
 
-The Entretien Prestige application has been successfully secured with Row Level Security (RLS) using a **Defense in Depth** approach. All critical security issues have been resolved, and the system is now production-ready from a security perspective.
+The Field Service Management Platform has been successfully secured with Row Level Security (RLS) using a **Defense in Depth** approach. All critical security issues have been resolved, and the system is now production-ready from a security perspective.
 
 ## What Was Accomplished
 
@@ -21,7 +21,7 @@ The Entretien Prestige application has been successfully secured with Row Level 
 
 **Result:**
 ```
-✅ 1 company: Entretien Prestige
+✅ 1 company: Demo Company
 ✅ 4 users with matching Auth + Profile records:
    - jelidiadam12@gmail.com (admin)
    - youssef.takhi@hotmail.com (manager)

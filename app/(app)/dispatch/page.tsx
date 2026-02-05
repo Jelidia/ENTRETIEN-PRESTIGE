@@ -1408,7 +1408,7 @@ export default function DispatchPage() {
                     onChange={(event) =>
                       setQuickCreateForm((prev) => ({ ...prev, serviceType: event.target.value }))
                     }
-                    placeholder="Ex. Lavage de vitres"
+                    placeholder="Ex. Type de service"
                     required
                     list="dispatch-service-types"
                   />

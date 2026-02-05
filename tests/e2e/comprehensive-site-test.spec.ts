@@ -1,7 +1,7 @@
 import { test, expect, type APIResponse, type Page } from '@playwright/test';
 
 /**
- * Comprehensive test suite for Entretien Prestige
+ * Comprehensive test suite for the Field Service Management Platform
  * Tests all pages, buttons, forms, and workflows
  */
 
@@ -10,7 +10,7 @@ const BASE_URL = process.env.PLAYWRIGHT_BASE_URL ?? process.env.NEXT_PUBLIC_BASE
 // Test credentials (adjust based on your test data)
 const TEST_ADMIN = {
   email: process.env.PLAYWRIGHT_ADMIN_EMAIL ?? "jelidiadam12@gmail.com",
-  password: process.env.PLAYWRIGHT_ADMIN_PASSWORD ?? "Prestige2026!",
+  password: process.env.PLAYWRIGHT_ADMIN_PASSWORD ?? "DemoPassword2026!",
 };
 
 type AuthCookie = { name: string; value: string; url: string };

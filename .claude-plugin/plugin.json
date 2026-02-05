@@ -1,19 +1,18 @@
 {
-  "name": "entretien-prestige-dev",
+  "name": "field-service-platform-dev",
   "version": "1.0.0",
-  "description": "Complete Claude Code development environment for Entretien Prestige - Quebec cleaning company ERP system",
-  "author": "Entretien Prestige Development Team",
-  "repository": "https://github.com/Jelidia/ENTRETIEN-PRESTIGE",
+  "description": "Complete Claude Code development environment for a multi-tenant field service management platform",
+  "author": "Field Service Platform Development Team",
+  "repository": "https://github.com/your-org/field-service-platform",
   "license": "UNLICENSED",
   "private": true,
   "keywords": [
     "next.js",
     "typescript",
     "supabase",
-    "erp",
     "field-service",
+    "multi-tenant",
     "quebec",
-    "cleaning",
     "french-ui",
     "mobile-first"
   ],
@@ -174,7 +173,7 @@
   "context": {
     "alwaysInclude": [
       "docs/ai/claude/CLAUDE.md",
-      "docs/spec/ENTRETIEN_PRESTIGE_FINAL_SPEC (1).md",
+      "docs/tasks/DOCS_TASK_LIST.md",
       "docs/status/COMMIT_READY.md"
     ],
     "documentation": [
