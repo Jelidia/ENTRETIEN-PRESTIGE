@@ -14,6 +14,9 @@ type JobRow = {
   customer?: { phone?: string | null } | null;
 };
 
+const SWIPE_THRESHOLD = 60;
+const SWIPE_VERTICAL_LIMIT = 40;
+
 function formatDate(value: string) {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
@@ -49,6 +52,7 @@ const normalizePhone = (value?: string | null) => (value ? value.replace(/\s+/g,
 export default function TechnicianSchedulePage() {
   const [jobs, setJobs] = useState<JobRow[]>([]);
   const [status, setStatus] = useState("");
+  const [swipeStart, setSwipeStart] = useState<{ id: string; x: number; y: number } | null>(null);
 
   useEffect(() => {
     void loadJobs();
@@ -66,6 +70,74 @@ export default function TechnicianSchedulePage() {
   }
 
   const upcoming = useMemo(() => jobs.slice(0, 10), [jobs]);
+
+  function isActiveStatus(value?: string | null) {
+    if (!value) return true;
+    const normalized = value.toLowerCase();
+    return !normalized.includes("complete") && !normalized.includes("cancel");
+  }
+
+  async function completeJob(jobId: string) {
+    setStatus("");
+    const response = await fetch(`/api/jobs/${jobId}/complete`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setStatus(json.error ?? "Impossible de terminer le travail");
+      return;
+    }
+    setStatus("Travail terminé.");
+    void loadJobs();
+  }
+
+  function handleSwipeStart(event: React.TouchEvent<HTMLDivElement>, jobId: string) {
+    const target = event.target as HTMLElement | null;
+    if (target?.closest("button, a")) {
+      return;
+    }
+    const touch = event.touches[0];
+    if (!touch) return;
+    setSwipeStart({ id: jobId, x: touch.clientX, y: touch.clientY });
+  }
+
+  function handleSwipeMove(event: React.TouchEvent<HTMLDivElement>) {
+    if (!swipeStart) return;
+    const touch = event.touches[0];
+    if (!touch) return;
+    const dx = Math.abs(touch.clientX - swipeStart.x);
+    const dy = Math.abs(touch.clientY - swipeStart.y);
+    if (dy > SWIPE_VERTICAL_LIMIT && dy > dx) {
+      setSwipeStart(null);
+    }
+  }
+
+  function handleSwipeEnd(event: React.TouchEvent<HTMLDivElement>, job: JobRow, phoneHref: string) {
+    if (!swipeStart || swipeStart.id !== job.job_id) return;
+    const touch = event.changedTouches[0];
+    if (!touch) return;
+    const dx = touch.clientX - swipeStart.x;
+    const dy = touch.clientY - swipeStart.y;
+    setSwipeStart(null);
+    if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dy) > SWIPE_VERTICAL_LIMIT) {
+      return;
+    }
+    if (dx < 0) {
+      if (!phoneHref) {
+        setStatus("Aucun numéro à appeler.");
+        return;
+      }
+      window.location.href = `tel:${phoneHref}`;
+      return;
+    }
+    if (!isActiveStatus(job.status)) {
+      setStatus("Travail déjà terminé.");
+      return;
+    }
+    void completeJob(job.job_id);
+  }
 
   return (
     <div className="page">
@@ -88,7 +160,13 @@ export default function TechnicianSchedulePage() {
             const phone = job.customer?.phone ?? "";
             const phoneHref = normalizePhone(phone);
             return (
-              <div className="list-item" key={job.job_id}>
+              <div
+                className="list-item"
+                key={job.job_id}
+                onTouchStart={(event) => handleSwipeStart(event, job.job_id)}
+                onTouchMove={handleSwipeMove}
+                onTouchEnd={(event) => handleSwipeEnd(event, job, phoneHref)}
+              >
                 <div>
                   <strong>{job.service_type || "Service"}</strong>
                   <div className="card-meta">
@@ -96,6 +174,7 @@ export default function TechnicianSchedulePage() {
                   </div>
                   <div className="card-meta">{job.address ?? "Address pending"}</div>
                   {phone ? <div className="card-meta">{phone}</div> : null}
+                  <div className="card-meta">Glissez à gauche pour appeler, à droite pour terminer.</div>
                   {(job.address || phoneHref) ? (
                     <div className="list-item-actions">
                       {job.address ? (

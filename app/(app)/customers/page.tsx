@@ -74,6 +74,7 @@ const normalizePhone = (value?: string | null) => (value ? value.replace(/\s+/g,
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<CustomerRow[]>([]);
+  const [quickViewId, setQuickViewId] = useState<string | null>(null);
   const [blacklistStatus, setBlacklistStatus] = useState("");
   const [complaintStatus, setComplaintStatus] = useState("");
   const [smsStatus, setSmsStatus] = useState("");
@@ -103,6 +104,10 @@ export default function CustomersPage() {
   const [portalLink, setPortalLink] = useState("");
   const [portalExpiry, setPortalExpiry] = useState("");
   const [portalCustomerName, setPortalCustomerName] = useState("");
+
+  const toggleQuickView = (customerId: string) => {
+    setQuickViewId((prev) => (prev === customerId ? null : customerId));
+  };
 
   useEffect(() => {
     void loadCustomers();
@@ -277,6 +282,9 @@ export default function CustomersPage() {
                 const statusLabel = statusLabels[customer.status] ?? customer.status;
                 const phone = customer.phone ?? "";
                 const phoneHref = normalizePhone(phone);
+                const lastServiceLabel = formatServiceDate(customer.last_service_date) || "-";
+                const balanceLabel = formatBalance(customer.account_balance);
+                const isQuickViewOpen = quickViewId === customer.customer_id;
                 return (
                   <tr key={customer.customer_id}>
                     <td>{customer.first_name} {customer.last_name}</td>
@@ -284,17 +292,36 @@ export default function CustomersPage() {
                     <td>
                       <StatusBadge status={statusLabel} />
                     </td>
-                    <td>{formatServiceDate(customer.last_service_date)}</td>
-                    <td>{formatBalance(customer.account_balance)}</td>
+                    <td>{lastServiceLabel}</td>
+                    <td>{balanceLabel}</td>
                     <td>
-                      {phoneHref ? (
+                      <div className="quick-view-wrap">
                         <div className="table-actions">
-                          <a className="button-ghost" href={`tel:${phoneHref}`}>Appeler</a>
-                          <a className="button-ghost" href={`sms:${phoneHref}`}>SMS</a>
+                          <button
+                            className="button-ghost"
+                            type="button"
+                            onClick={() => toggleQuickView(customer.customer_id)}
+                          >
+                            {isQuickViewOpen ? "Fermer" : "Aperçu"}
+                          </button>
+                          {phoneHref ? (
+                            <>
+                              <a className="button-ghost" href={`tel:${phoneHref}`}>Appeler</a>
+                              <a className="button-ghost" href={`sms:${phoneHref}`}>SMS</a>
+                            </>
+                          ) : null}
                         </div>
-                      ) : (
-                        <span className="card-meta">-</span>
-                      )}
+                        {isQuickViewOpen ? (
+                          <div className="quick-view-panel quick-view-popover">
+                            <div className="card-label">Aperçu rapide</div>
+                            <div className="card-meta">Type : {typeLabel}</div>
+                            <div className="card-meta">Statut : {statusLabel}</div>
+                            <div className="card-meta">Dernier service : {lastServiceLabel}</div>
+                            <div className="card-meta">Solde : {balanceLabel}</div>
+                            <div className="card-meta">Téléphone : {phone || "-"}</div>
+                          </div>
+                        ) : null}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -307,6 +334,9 @@ export default function CustomersPage() {
               const statusLabel = statusLabels[customer.status] ?? customer.status;
               const phone = customer.phone ?? "";
               const phoneHref = normalizePhone(phone);
+              const lastServiceLabel = formatServiceDate(customer.last_service_date) || "-";
+              const balanceLabel = formatBalance(customer.account_balance);
+              const isQuickViewOpen = quickViewId === customer.customer_id;
               return (
                 <div className="mobile-card" key={customer.customer_id}>
                   <div className="mobile-card-title">
@@ -314,15 +344,34 @@ export default function CustomersPage() {
                   </div>
                   <div className="mobile-card-meta">{typeLabel}</div>
                   {phone ? <div className="mobile-card-meta">{phone}</div> : null}
-                  <div className="mobile-card-meta">Dernier service : {formatServiceDate(customer.last_service_date)}</div>
+                  <div className="mobile-card-meta">Dernier service : {lastServiceLabel}</div>
                   <div className="table-actions">
                     <StatusBadge status={statusLabel} />
-                    <span className="tag">{formatBalance(customer.account_balance)}</span>
+                    <span className="tag">{balanceLabel}</span>
                   </div>
-                  {phoneHref ? (
-                    <div className="table-actions">
-                      <a className="button-ghost" href={`tel:${phoneHref}`}>Appeler</a>
-                      <a className="button-ghost" href={`sms:${phoneHref}`}>SMS</a>
+                  <div className="table-actions">
+                    <button
+                      className="button-ghost"
+                      type="button"
+                      onClick={() => toggleQuickView(customer.customer_id)}
+                    >
+                      {isQuickViewOpen ? "Fermer" : "Aperçu"}
+                    </button>
+                    {phoneHref ? (
+                      <>
+                        <a className="button-ghost" href={`tel:${phoneHref}`}>Appeler</a>
+                        <a className="button-ghost" href={`sms:${phoneHref}`}>SMS</a>
+                      </>
+                    ) : null}
+                  </div>
+                  {isQuickViewOpen ? (
+                    <div className="quick-view-panel">
+                      <div className="card-label">Aperçu rapide</div>
+                      <div className="card-meta">Type : {typeLabel}</div>
+                      <div className="card-meta">Statut : {statusLabel}</div>
+                      <div className="card-meta">Dernier service : {lastServiceLabel}</div>
+                      <div className="card-meta">Solde : {balanceLabel}</div>
+                      <div className="card-meta">Téléphone : {phone || "-"}</div>
                     </div>
                   ) : null}
                 </div>

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { smsSendSchema } from "@/lib/validators";
 import { sendSms, verifyTwilioSignature } from "@/lib/twilio";
-import { formatPhoneNumber } from "@/lib/smsTemplates";
+import { normalizePhoneE164 } from "@/lib/smsTemplates";
 import { createAdminClient, createUserClient } from "@/lib/supabaseServer";
 import { requireRole } from "@/lib/auth";
 import { getAccessTokenFromRequest } from "@/lib/session";
@@ -36,8 +36,7 @@ function getOptAction(message: string) {
 }
 
 function normalizePhoneNumber(phone: string) {
-  const normalized = phone ? formatPhoneNumber(phone) : "";
-  return normalized && normalized !== "+" ? normalized : phone;
+  return normalizePhoneE164(phone) ?? phone;
 }
 
 async function resolveThreadId(

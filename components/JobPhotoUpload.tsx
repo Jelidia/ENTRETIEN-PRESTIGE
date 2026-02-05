@@ -31,10 +31,14 @@ const PHOTO_TYPES: { value: PhotoType; label: string; labelFr: string }[] = [
   { value: "after", label: "After", labelFr: "Après" },
 ];
 
+const MAX_UPLOAD_FILES = 10;
+const MAX_UPLOAD_SIZE = 5 * 1024 * 1024;
+
 export default function JobPhotoUpload({ jobId, onComplete }: JobPhotoUploadProps) {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState("");
   const [complete, setComplete] = useState(false);
   const [missing, setMissing] = useState<Array<{ photo_type: PhotoType; side: PhotoSide }>>([]);
@@ -50,7 +54,7 @@ export default function JobPhotoUpload({ jobId, onComplete }: JobPhotoUploadProp
     const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
-      setError(data.error ?? "Failed to load photos");
+      setError(data.error ?? "Impossible de charger les photos");
       setLoading(false);
       return null;
     }
@@ -75,58 +79,110 @@ export default function JobPhotoUpload({ jobId, onComplete }: JobPhotoUploadProp
     void loadPhotos();
   }, [loadPhotos]);
 
-  async function handleFileSelect(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  async function uploadPhoto(file: File, photoType: PhotoType, side: PhotoSide) {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("photo_type", photoType);
+    formData.append("side", side);
 
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
-      setError("Please select an image file");
-      return;
+    const uploadRes = await fetch(`/api/jobs/${jobId}/photos`, {
+      method: "POST",
+      body: formData,
+    });
+
+    const uploadData = await uploadRes.json().catch(() => ({}));
+
+    if (!uploadRes.ok) {
+      throw new Error(uploadData.error ?? "Impossible de téléverser la photo");
     }
+  }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setError("Image must be smaller than 5MB");
+  async function handleFiles(files: FileList | File[]) {
+    const list = Array.from(files ?? []);
+    if (!list.length) return;
+
+    const limited = list.slice(0, MAX_UPLOAD_FILES);
+    const isBatch = limited.length > 1;
+    const targets = isBatch
+      ? [...missing]
+      : [{ photo_type: selectedType, side: selectedSide }];
+
+    if (isBatch && targets.length === 0) {
+      setError("Toutes les photos requises sont déjà téléversées.");
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
       return;
     }
 
     setUploading(true);
     setError("");
 
+    let uploadedAny = false;
+    let finalError = "";
+
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("photo_type", selectedType);
-      formData.append("side", selectedSide);
-
-      const uploadRes = await fetch(`/api/jobs/${jobId}/photos`, {
-        method: "POST",
-        body: formData,
-      });
-
-      const uploadData = await uploadRes.json().catch(() => ({}));
-
-      if (!uploadRes.ok) {
-        throw new Error(uploadData.error ?? "Failed to upload photo");
-      }
-
-      // Reload photos
-      const updated = await loadPhotos();
-
-      // Auto-advance to next missing photo
-      const nextMissing = updated?.missing?.[0];
-      if (nextMissing) {
-        setSelectedType(nextMissing.photo_type);
-        setSelectedSide(nextMissing.side);
+      for (const file of limited) {
+        if (!file.type.startsWith("image/")) {
+          throw new Error("Veuillez choisir un fichier image.");
+        }
+        if (file.size > MAX_UPLOAD_SIZE) {
+          throw new Error("L'image doit faire moins de 5 Mo.");
+        }
+        const target = isBatch ? targets.shift() : targets[0];
+        if (!target) {
+          throw new Error("Il n'y a plus d'emplacements manquants.");
+        }
+        await uploadPhoto(file, target.photo_type, target.side);
+        uploadedAny = true;
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to upload photo");
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+      finalError = err instanceof Error ? err.message : "Impossible de téléverser la photo.";
+    }
+
+    const updated = uploadedAny ? await loadPhotos() : null;
+    const nextMissing = updated?.missing?.[0];
+    if (nextMissing) {
+      setSelectedType(nextMissing.photo_type);
+      setSelectedSide(nextMissing.side);
+    }
+
+    if (!finalError && list.length > MAX_UPLOAD_FILES) {
+      finalError = `Maximum ${MAX_UPLOAD_FILES} photos à la fois.`;
+    }
+
+    if (finalError) {
+      setError(finalError);
+    }
+
+    setUploading(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
+
+  async function handleFileSelect(event: React.ChangeEvent<HTMLInputElement>) {
+    const files = event.target.files;
+    if (!files?.length) return;
+    await handleFiles(files);
+  }
+
+  function handleDragOver(event: React.DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    if (uploading) return;
+    setDragActive(true);
+  }
+
+  function handleDragLeave() {
+    setDragActive(false);
+  }
+
+  function handleDrop(event: React.DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    if (uploading) return;
+    setDragActive(false);
+    if (event.dataTransfer.files?.length) {
+      void handleFiles(event.dataTransfer.files);
     }
   }
 
@@ -148,7 +204,7 @@ export default function JobPhotoUpload({ jobId, onComplete }: JobPhotoUploadProp
 
     if (!res.ok) {
       const data = await res.json();
-      setError(data.error ?? "Failed to delete photo");
+      setError(data.error ?? "Impossible de supprimer la photo");
       return;
     }
 
@@ -223,6 +279,37 @@ export default function JobPhotoUpload({ jobId, onComplete }: JobPhotoUploadProp
         </div>
 
         <div className="form-row">
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => fileInputRef.current?.click()}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                fileInputRef.current?.click();
+              }
+            }}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            aria-disabled={uploading}
+            style={{
+              border: `2px dashed ${dragActive ? "#2563eb" : "#cbd5e1"}`,
+              borderRadius: "12px",
+              padding: "16px",
+              textAlign: "center",
+              background: dragActive ? "rgba(37, 99, 235, 0.08)" : "rgba(148, 163, 184, 0.08)",
+              cursor: uploading ? "not-allowed" : "pointer",
+              opacity: uploading ? 0.6 : 1,
+              transition: "all 0.2s ease",
+            }}
+          >
+            <div style={{ fontWeight: 600 }}>Glissez jusqu'à 10 photos ici</div>
+            <div className="card-meta">Ou cliquez pour sélectionner. Les lots remplissent les photos manquantes.</div>
+          </div>
+        </div>
+
+        <div className="form-row">
           <input
             ref={fileInputRef}
             type="file"
@@ -230,6 +317,7 @@ export default function JobPhotoUpload({ jobId, onComplete }: JobPhotoUploadProp
             capture="environment"
             onChange={handleFileSelect}
             disabled={uploading}
+            multiple
             style={{ display: "none" }}
           />
           <button

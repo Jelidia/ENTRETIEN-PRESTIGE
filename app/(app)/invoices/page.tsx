@@ -22,6 +22,9 @@ export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<InvoiceRow[]>([]);
   const [sendStatus, setSendStatus] = useState("");
   const [paymentStatus, setPaymentStatus] = useState("");
+  const [selectedInvoices, setSelectedInvoices] = useState<Set<string>>(new Set());
+  const [bulkStatus, setBulkStatus] = useState("");
+  const [bulkLoading, setBulkLoading] = useState(false);
   const [sendForm, setSendForm] = useState({
     invoiceId: "",
     to: "",
@@ -50,7 +53,71 @@ export default function InvoicesPage() {
   async function loadInvoices() {
     const response = await fetch("/api/invoices");
     const json = await response.json().catch(() => ({ data: [] }));
-    setInvoices(json.data ?? []);
+    const data = Array.isArray(json.data) ? json.data : [];
+    setInvoices(data);
+    setSelectedInvoices((prev) => {
+      if (!prev.size) return prev;
+      const validIds = new Set(data.map((invoice: InvoiceRow) => invoice.invoice_id));
+      return new Set(Array.from(prev).filter((id) => validIds.has(id)));
+    });
+  }
+
+  const selectedCount = selectedInvoices.size;
+  const allSelected = invoices.length > 0 && selectedCount === invoices.length;
+
+  function toggleInvoiceSelection(invoiceId: string) {
+    setSelectedInvoices((prev) => {
+      const next = new Set(prev);
+      if (next.has(invoiceId)) {
+        next.delete(invoiceId);
+      } else {
+        next.add(invoiceId);
+      }
+      return next;
+    });
+  }
+
+  function toggleAllInvoices() {
+    setSelectedInvoices((prev) => {
+      if (invoices.length === 0) return prev;
+      if (prev.size === invoices.length) return new Set();
+      return new Set(invoices.map((invoice) => invoice.invoice_id));
+    });
+  }
+
+  async function bulkUpdatePaymentStatus(nextStatus: string) {
+    if (!selectedCount) {
+      setBulkStatus("Aucune facture sélectionnée.");
+      return;
+    }
+    setBulkLoading(true);
+    setBulkStatus("");
+    let successCount = 0;
+    await Promise.all(
+      Array.from(selectedInvoices).map(async (invoiceId) => {
+        try {
+          const res = await fetch(`/api/invoices/${invoiceId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ payment_status: nextStatus }),
+          });
+          if (res.ok) {
+            successCount += 1;
+          }
+        } catch {
+          return null;
+        }
+        return null;
+      })
+    );
+    setBulkStatus(
+      successCount === selectedCount
+        ? `Statut mis à jour pour ${successCount} factures.`
+        : `Statut mis à jour pour ${successCount}/${selectedCount} factures.`
+    );
+    setBulkLoading(false);
+    setSelectedInvoices(new Set());
+    void loadInvoices();
   }
 
   async function submitSend(event: React.FormEvent<HTMLFormElement>) {
@@ -107,9 +174,54 @@ export default function InvoicesPage() {
 
       <div className="grid-2">
         <div className="card">
-          <table className="table">
+          <div className="table-actions" style={{ justifyContent: "space-between", marginBottom: 12 }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <input
+                type="checkbox"
+                checked={allSelected}
+                onChange={toggleAllInvoices}
+                disabled={bulkLoading || invoices.length === 0}
+                aria-label="Tout sélectionner"
+              />
+              <span className="card-meta">Tout sélectionner</span>
+            </label>
+            {selectedCount ? <span className="tag">{selectedCount} sélectionnées</span> : null}
+          </div>
+          {selectedCount ? (
+            <div className="stack" style={{ marginBottom: 12 }}>
+              <div className="table-actions" style={{ flexWrap: "wrap" }}>
+                <button
+                  className="button-secondary"
+                  type="button"
+                  onClick={() => bulkUpdatePaymentStatus("paid")}
+                  disabled={bulkLoading}
+                >
+                  Marquer payées
+                </button>
+                <button
+                  className="button-ghost"
+                  type="button"
+                  onClick={() => bulkUpdatePaymentStatus("overdue")}
+                  disabled={bulkLoading}
+                >
+                  Marquer en retard
+                </button>
+              </div>
+              {bulkStatus ? <div className="hint">{bulkStatus}</div> : null}
+            </div>
+          ) : null}
+          <table className="table table-desktop">
             <thead>
               <tr>
+                <th>
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={toggleAllInvoices}
+                    disabled={bulkLoading || invoices.length === 0}
+                    aria-label="Tout sélectionner"
+                  />
+                </th>
                 <th>Facture</th>
                 <th>Date d'echeance</th>
                 <th>Statut</th>
@@ -120,6 +232,15 @@ export default function InvoicesPage() {
             <tbody>
               {invoices.map((invoice) => (
                 <tr key={invoice.invoice_id}>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={selectedInvoices.has(invoice.invoice_id)}
+                      onChange={() => toggleInvoiceSelection(invoice.invoice_id)}
+                      disabled={bulkLoading}
+                      aria-label={`Sélectionner la facture ${invoice.invoice_number}`}
+                    />
+                  </td>
                   <td>{invoice.invoice_number}</td>
                   <td>{invoice.due_date ?? ""}</td>
                   <td>
@@ -135,6 +256,33 @@ export default function InvoicesPage() {
               ))}
             </tbody>
           </table>
+          <div className="card-list-mobile" style={{ marginTop: 12 }}>
+            {invoices.map((invoice) => (
+              <div className="mobile-card" key={invoice.invoice_id}>
+                <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedInvoices.has(invoice.invoice_id)}
+                    onChange={() => toggleInvoiceSelection(invoice.invoice_id)}
+                    disabled={bulkLoading}
+                    aria-label={`Sélectionner la facture ${invoice.invoice_number}`}
+                  />
+                  <span className="card-meta">Sélectionner</span>
+                </label>
+                <div className="mobile-card-title">Facture {invoice.invoice_number}</div>
+                <div className="mobile-card-meta">Échéance : {invoice.due_date ?? ""}</div>
+                <div className="table-actions">
+                  <StatusBadge status={invoice.payment_status} />
+                  <span className="tag">{invoice.total_amount ? `$${invoice.total_amount}` : "$0"}</span>
+                </div>
+                <div className="table-actions">
+                  <a className="button-ghost" href={`/api/invoices/${invoice.invoice_id}/pdf`}>
+                    Télécharger
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
         <div className="stack">
           <div className="card">

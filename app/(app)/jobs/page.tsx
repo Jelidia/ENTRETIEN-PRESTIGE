@@ -3,7 +3,8 @@
 import TopBar from "@/components/TopBar";
 import StatusBadge from "@/components/StatusBadge";
 import JobForm from "@/components/forms/JobForm";
-import { useEffect, useState } from "react";
+import { normalizePhoneE164 } from "@/lib/smsTemplates";
+import { useEffect, useMemo, useState } from "react";
 
 type JobRow = {
   job_id: string;
@@ -26,6 +27,10 @@ export default function JobsPage() {
   const [updateStatus, setUpdateStatus] = useState("");
   const [actionStatus, setActionStatus] = useState("");
   const [upsellStatus, setUpsellStatus] = useState("");
+  const [selectedJobs, setSelectedJobs] = useState<Set<string>>(new Set());
+  const [bulkMessage, setBulkMessage] = useState("");
+  const [bulkStatus, setBulkStatus] = useState("");
+  const [bulkLoading, setBulkLoading] = useState(false);
 
   useEffect(() => {
     void loadJobs();
@@ -34,7 +39,155 @@ export default function JobsPage() {
   async function loadJobs() {
     const response = await fetch("/api/jobs");
     const json = await response.json().catch(() => ({ data: [] }));
-    setJobs(json.data ?? []);
+    const data = Array.isArray(json.data) ? json.data : [];
+    setJobs(data);
+    setSelectedJobs((prev) => {
+      if (!prev.size) return prev;
+      const validIds = new Set(data.map((job: JobRow) => job.job_id));
+      return new Set(Array.from(prev).filter((id) => validIds.has(id)));
+    });
+  }
+
+  const selectedCount = selectedJobs.size;
+  const allSelected = jobs.length > 0 && selectedCount === jobs.length;
+  const selectedRows = useMemo(
+    () => jobs.filter((job) => selectedJobs.has(job.job_id)),
+    [jobs, selectedJobs]
+  );
+
+  function toggleJobSelection(jobId: string) {
+    setSelectedJobs((prev) => {
+      const next = new Set(prev);
+      if (next.has(jobId)) {
+        next.delete(jobId);
+      } else {
+        next.add(jobId);
+      }
+      return next;
+    });
+  }
+
+  function toggleAllJobs() {
+    setSelectedJobs((prev) => {
+      if (jobs.length === 0) return prev;
+      if (prev.size === jobs.length) return new Set();
+      return new Set(jobs.map((job) => job.job_id));
+    });
+  }
+
+  async function bulkUpdateStatus(nextStatus: string) {
+    if (!selectedCount) {
+      setBulkStatus("Aucun travail sélectionné.");
+      return;
+    }
+    setBulkLoading(true);
+    setBulkStatus("");
+    let successCount = 0;
+    await Promise.all(
+      Array.from(selectedJobs).map(async (jobId) => {
+        try {
+          const res = await fetch(`/api/jobs/${jobId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: nextStatus }),
+          });
+          if (res.ok) {
+            successCount += 1;
+          }
+        } catch {
+          return null;
+        }
+        return null;
+      })
+    );
+    setBulkStatus(
+      successCount === selectedCount
+        ? `Statut mis à jour pour ${successCount} travaux.`
+        : `Statut mis à jour pour ${successCount}/${selectedCount} travaux.`
+    );
+    setBulkLoading(false);
+    setSelectedJobs(new Set());
+    void loadJobs();
+  }
+
+  async function bulkSendSms() {
+    if (!selectedCount) {
+      setBulkStatus("Aucun travail sélectionné.");
+      return;
+    }
+    if (!bulkMessage.trim()) {
+      setBulkStatus("Ajoutez un message SMS.");
+      return;
+    }
+    const targets = selectedRows
+      .map((job) => ({
+        jobId: job.job_id,
+        phone: normalizePhoneE164(job.customer?.phone ?? ""),
+      }))
+      .filter((target) => Boolean(target.phone)) as Array<{ jobId: string; phone: string }>;
+    const invalidCount = selectedRows.length - targets.length;
+    if (!targets.length) {
+      setBulkStatus("Aucun numéro valide pour l'envoi.");
+      return;
+    }
+    setBulkLoading(true);
+    setBulkStatus("");
+    let successCount = 0;
+    await Promise.all(
+      targets.map(async (target) => {
+        try {
+          const res = await fetch("/api/sms/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ to: target.phone, message: bulkMessage.trim() }),
+          });
+          if (res.ok) {
+            successCount += 1;
+          }
+        } catch {
+          return null;
+        }
+        return null;
+      })
+    );
+    const suffix = invalidCount ? ` · ${invalidCount} sans numéro valide.` : "";
+    setBulkStatus(
+      successCount === targets.length
+        ? `SMS envoyés à ${successCount} clients.${suffix}`
+        : `SMS envoyés: ${successCount}/${targets.length}.${suffix}`
+    );
+    setBulkLoading(false);
+  }
+
+  async function bulkArchiveJobs() {
+    if (!selectedCount) {
+      setBulkStatus("Aucun travail sélectionné.");
+      return;
+    }
+    setBulkLoading(true);
+    setBulkStatus("");
+    let successCount = 0;
+    await Promise.all(
+      Array.from(selectedJobs).map(async (jobId) => {
+        try {
+          const res = await fetch(`/api/jobs/${jobId}`, { method: "DELETE" });
+          if (res.ok) {
+            successCount += 1;
+          }
+        } catch {
+          return null;
+        }
+        return null;
+      })
+    );
+    setBulkStatus(
+      successCount === selectedCount
+        ? `Travaux archivés (${successCount}).`
+        : `Travaux archivés: ${successCount}/${selectedCount}.`
+    );
+    setBulkLoading(false);
+    setSelectedJobs(new Set());
+    void loadJobs();
   }
 
   async function submitAssign(event: React.FormEvent<HTMLFormElement>) {
@@ -138,9 +291,74 @@ export default function JobsPage() {
 
       <div className="grid-2">
         <div className="card">
+          <div className="table-actions" style={{ justifyContent: "space-between", marginBottom: 12 }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <input
+                type="checkbox"
+                checked={allSelected}
+                onChange={toggleAllJobs}
+                disabled={bulkLoading || jobs.length === 0}
+                aria-label="Tout sélectionner"
+              />
+              <span className="card-meta">Tout sélectionner</span>
+            </label>
+            {selectedCount ? <span className="tag">{selectedCount} sélectionnés</span> : null}
+          </div>
+          {selectedCount ? (
+            <div className="stack" style={{ marginBottom: 12 }}>
+              <div className="table-actions" style={{ flexWrap: "wrap" }}>
+                <button
+                  className="button-secondary"
+                  type="button"
+                  onClick={() => bulkUpdateStatus("confirmed")}
+                  disabled={bulkLoading}
+                >
+                  Approuver
+                </button>
+                <button
+                  className="button-ghost"
+                  type="button"
+                  onClick={bulkSendSms}
+                  disabled={bulkLoading}
+                >
+                  Envoyer SMS
+                </button>
+                <button
+                  className="button-ghost"
+                  type="button"
+                  onClick={bulkArchiveJobs}
+                  disabled={bulkLoading}
+                >
+                  Archiver
+                </button>
+              </div>
+              <div className="form-row">
+                <label className="label" htmlFor="bulkSms">Message SMS (collectif)</label>
+                <textarea
+                  id="bulkSms"
+                  className="textarea"
+                  value={bulkMessage}
+                  onChange={(event) => setBulkMessage(event.target.value)}
+                  rows={2}
+                  placeholder="Ex. Votre rendez-vous est confirmé."
+                  disabled={bulkLoading}
+                />
+              </div>
+              {bulkStatus ? <div className="hint">{bulkStatus}</div> : null}
+            </div>
+          ) : null}
           <table className="table table-desktop">
             <thead>
               <tr>
+                <th>
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={toggleAllJobs}
+                    disabled={bulkLoading || jobs.length === 0}
+                    aria-label="Tout sélectionner"
+                  />
+                </th>
                 <th>Job</th>
                 <th>Service</th>
                 <th>Date</th>
@@ -155,6 +373,15 @@ export default function JobsPage() {
                 const phoneHref = normalizePhone(phone);
                 return (
                   <tr key={job.job_id}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={selectedJobs.has(job.job_id)}
+                        onChange={() => toggleJobSelection(job.job_id)}
+                        disabled={bulkLoading}
+                        aria-label={`Sélectionner le travail ${job.job_id}`}
+                      />
+                    </td>
                     <td>{job.job_id}</td>
                     <td>{job.service_type}</td>
                     <td>{job.scheduled_date ?? ""}</td>
@@ -183,6 +410,16 @@ export default function JobsPage() {
               const phoneHref = normalizePhone(phone);
               return (
                 <div className="mobile-card" key={job.job_id}>
+                  <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedJobs.has(job.job_id)}
+                      onChange={() => toggleJobSelection(job.job_id)}
+                      disabled={bulkLoading}
+                      aria-label={`Sélectionner le travail ${job.job_id}`}
+                    />
+                    <span className="card-meta">Sélectionner</span>
+                  </label>
                   <div className="mobile-card-title">Job #{job.job_id}</div>
                   <div className="mobile-card-meta">{job.service_type}</div>
                   <div className="mobile-card-meta">{job.scheduled_date ?? ""}</div>

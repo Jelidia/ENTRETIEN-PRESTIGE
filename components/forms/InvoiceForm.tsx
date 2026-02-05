@@ -2,6 +2,45 @@
 
 import { useState } from "react";
 
+type QuickDateOption = { label: string; value: string };
+
+function toDateInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function addDays(baseDate: Date, days: number) {
+  const next = new Date(baseDate);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function getFirstMonday(baseDate: Date) {
+  const base = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate());
+  const year = base.getFullYear();
+  const month = base.getMonth();
+  const firstOfMonth = new Date(year, month, 1);
+  const offset = (8 - firstOfMonth.getDay()) % 7;
+  let firstMonday = new Date(year, month, 1 + offset);
+  if (firstMonday < base) {
+    const nextMonth = new Date(year, month + 1, 1);
+    const nextOffset = (8 - nextMonth.getDay()) % 7;
+    firstMonday = new Date(nextMonth.getFullYear(), nextMonth.getMonth(), 1 + nextOffset);
+  }
+  return firstMonday;
+}
+
+function getQuickDateOptions(baseDate = new Date()): QuickDateOption[] {
+  const base = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate());
+  return [
+    { label: "Demain", value: toDateInputValue(addDays(base, 1)) },
+    { label: "Semaine prochaine", value: toDateInputValue(addDays(base, 7)) },
+    { label: "Premier lundi du mois", value: toDateInputValue(getFirstMonday(base)) },
+  ];
+}
+
 export default function InvoiceForm() {
   const [form, setForm] = useState({
     customerId: "",
@@ -11,6 +50,7 @@ export default function InvoiceForm() {
     status: "draft",
   });
   const [statusMessage, setStatusMessage] = useState("");
+  const quickDates = getQuickDateOptions();
 
   function updateField(key: string, value: string) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -68,6 +108,18 @@ export default function InvoiceForm() {
             onChange={(event) => updateField("dueDate", event.target.value)}
             required
           />
+          <div className="table-actions" style={{ marginTop: 6 }}>
+            {quickDates.map((option) => (
+              <button
+                key={option.label}
+                className="tag"
+                type="button"
+                onClick={() => updateField("dueDate", option.value)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="form-row">
           <label className="label" htmlFor="totalAmount">Total</label>

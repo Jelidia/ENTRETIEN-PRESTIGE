@@ -32,8 +32,8 @@ describe("smsTemplates", () => {
     expect(formatPhoneNumber("514-555-1234")).toBe("+15145551234");
     expect(formatPhoneNumber("15145551234")).toBe("+15145551234");
     expect(formatPhoneNumber("+15145551234")).toBe("+15145551234");
-    expect(formatPhoneNumber("(514) 555-1234 x9")).toBe("+51455512349");
-    expect(formatPhoneNumber("+44 20 1234 5678")).toBe("+44 20 1234 5678");
+    expect(formatPhoneNumber("(514) 555-1234 x9")).toBe("");
+    expect(formatPhoneNumber("+44 20 1234 5678")).toBe("+442012345678");
   });
 
   it("renders a sample job scheduled template", () => {

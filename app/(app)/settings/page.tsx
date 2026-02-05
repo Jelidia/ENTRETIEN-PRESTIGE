@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import TopBar from "@/components/TopBar";
+import { normalizePhoneE164 } from "@/lib/smsTemplates";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { Language } from "@/lib/i18n";
 
@@ -268,12 +269,18 @@ export default function SettingsPage() {
     e.preventDefault();
     setError("");
     setSuccess("");
+    const trimmedPhone = editPhone.trim();
+    const normalizedPhone = trimmedPhone ? normalizePhoneE164(trimmedPhone) : "";
+    if (trimmedPhone && !normalizedPhone) {
+      setError("Téléphone invalide. Utilisez le format (514) 555-0123.");
+      return;
+    }
 
     try {
       const res = await fetch("/api/settings/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: editPhone }),
+        body: JSON.stringify({ phone: trimmedPhone ? normalizedPhone : null }),
       });
 
       const data = await res.json();
@@ -806,9 +813,9 @@ export default function SettingsPage() {
                   className="input"
                   value={editPhone}
                   onChange={(e) => setEditPhone(e.target.value)}
-                  placeholder="+1 (514) 555-0123"
+                  placeholder="(514) 555-0123"
                 />
-                <div className="hint">Format: +1 (XXX) XXX-XXXX</div>
+                <div className="hint">Format: (514) 555-0123</div>
               </div>
               <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
                 <button type="submit" className="button-primary">{t("common.save")}</button>

@@ -16,10 +16,15 @@ type JobRow = {
   customer?: { phone?: string | null } | null;
 };
 
+const SWIPE_THRESHOLD = 60;
+const SWIPE_VERTICAL_LIMIT = 40;
+
 export default function TechnicianPage() {
   const [jobs, setJobs] = useState<JobRow[]>([]);
   const [status, setStatus] = useState("");
+  const [completedJobId, setCompletedJobId] = useState<string | null>(null);
   const [location, setLocation] = useState<{ latitude: number; longitude: number; accuracy: number } | null>(null);
+  const [swipeStart, setSwipeStart] = useState<{ id: string; x: number; y: number } | null>(null);
 
   const loadJobs = useCallback(async () => {
     const response = await fetch("/api/jobs");
@@ -73,6 +78,23 @@ export default function TechnicianPage() {
     return safeStart && safeEnd ? `${safeStart} - ${safeEnd}` : safeStart || safeEnd;
   }
 
+  function getJobTimestamp(job: JobRow) {
+    const datePart = job.scheduled_date ?? "";
+    const timePart = job.scheduled_start_time ?? "00:00";
+    const iso = datePart.length > 10 ? datePart : `${datePart}T${timePart}`;
+    const parsed = new Date(iso);
+    if (Number.isNaN(parsed.getTime())) {
+      return 0;
+    }
+    return parsed.getTime();
+  }
+
+  function isActiveStatus(value?: string | null) {
+    if (!value) return true;
+    const normalized = value.toLowerCase();
+    return !normalized.includes("complete") && !normalized.includes("cancel");
+  }
+
   function copyAddress(value?: string | null) {
     if (!value) {
       setStatus("Adresse indisponible.");
@@ -85,6 +107,52 @@ export default function TechnicianPage() {
   }
 
   const normalizePhone = (value?: string | null) => (value ? value.replace(/\s+/g, "") : "");
+
+  function handleSwipeStart(event: React.TouchEvent<HTMLDivElement>, jobId: string) {
+    const target = event.target as HTMLElement | null;
+    if (target?.closest("button, a")) {
+      return;
+    }
+    const touch = event.touches[0];
+    if (!touch) return;
+    setSwipeStart({ id: jobId, x: touch.clientX, y: touch.clientY });
+  }
+
+  function handleSwipeMove(event: React.TouchEvent<HTMLDivElement>) {
+    if (!swipeStart) return;
+    const touch = event.touches[0];
+    if (!touch) return;
+    const dx = Math.abs(touch.clientX - swipeStart.x);
+    const dy = Math.abs(touch.clientY - swipeStart.y);
+    if (dy > SWIPE_VERTICAL_LIMIT && dy > dx) {
+      setSwipeStart(null);
+    }
+  }
+
+  function handleSwipeEnd(event: React.TouchEvent<HTMLDivElement>, job: JobRow, phoneHref: string) {
+    if (!swipeStart || swipeStart.id !== job.job_id) return;
+    const touch = event.changedTouches[0];
+    if (!touch) return;
+    const dx = touch.clientX - swipeStart.x;
+    const dy = touch.clientY - swipeStart.y;
+    setSwipeStart(null);
+    if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dy) > SWIPE_VERTICAL_LIMIT) {
+      return;
+    }
+    if (dx < 0) {
+      if (!phoneHref) {
+        setStatus("Aucun numéro à appeler.");
+        return;
+      }
+      window.location.href = `tel:${phoneHref}`;
+      return;
+    }
+    if (!isActiveStatus(job.status)) {
+      setStatus("Travail déjà terminé.");
+      return;
+    }
+    void handleCheck(job.job_id, "check-out");
+  }
 
   async function handleCheck(jobId: string, action: "check-in" | "check-out") {
     setStatus("");
@@ -104,6 +172,9 @@ export default function TechnicianPage() {
       return;
     }
     setStatus(`Job ${jobId} updated.`);
+    if (action === "check-out") {
+      setCompletedJobId(jobId);
+    }
     void loadJobs();
   }
 
@@ -143,6 +214,19 @@ export default function TechnicianPage() {
       timeWindow: earliest && latest ? `${earliest.slice(0, 5)} - ${latest.slice(0, 5)}` : "",
     };
   }, [jobs]);
+
+  const nextJob = useMemo(() => {
+    if (!completedJobId) return null;
+    const sorted = jobs.slice().sort((a, b) => getJobTimestamp(a) - getJobTimestamp(b));
+    const currentIndex = sorted.findIndex((job) => job.job_id === completedJobId);
+    if (currentIndex === -1) return null;
+    return sorted.slice(currentIndex + 1).find((job) => isActiveStatus(job.status)) ?? null;
+  }, [completedJobId, jobs]);
+
+  const nextJobMapUrl = useMemo(() => {
+    if (!nextJob?.address) return "";
+    return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(nextJob.address)}`;
+  }, [nextJob]);
 
   const todayLabel = new Date().toLocaleDateString("en-CA", {
     weekday: "short",
@@ -195,7 +279,13 @@ export default function TechnicianPage() {
           const phone = job.customer?.phone ?? "";
           const phoneHref = normalizePhone(phone);
           return (
-            <div className="mobile-card" key={job.job_id}>
+            <div
+              className="mobile-card"
+              key={job.job_id}
+              onTouchStart={(event) => handleSwipeStart(event, job.job_id)}
+              onTouchMove={handleSwipeMove}
+              onTouchEnd={(event) => handleSwipeEnd(event, job, phoneHref)}
+            >
               <div className="mobile-card-title">{formatRange(job.scheduled_start_time, job.scheduled_end_time)}</div>
               <div className="mobile-card-meta">{job.service_type}</div>
               <div className="mobile-card-meta">{job.address ?? job.customer_id ?? ""}</div>
@@ -225,10 +315,34 @@ export default function TechnicianPage() {
                 <button className="button-secondary" type="button" onClick={() => handleCheck(job.job_id, "check-in")}>Check in</button>
                 <button className="button-ghost" type="button" onClick={() => handleCheck(job.job_id, "check-out")}>Check out</button>
               </div>
+              <div className="mobile-card-meta">Glissez à gauche pour appeler, à droite pour terminer.</div>
             </div>
           );
         })}
       </div>
+
+      {nextJob ? (
+        <div className="card">
+          <div className="card-label">Prochain travail</div>
+          <div className="card-title">Naviguer vers le prochain rendez-vous</div>
+          <div className="card-meta">
+            {formatRange(nextJob.scheduled_start_time, nextJob.scheduled_end_time)}
+            {nextJob.address ? ` · ${nextJob.address}` : " · Adresse a confirmer"}
+          </div>
+          <div className="table-actions" style={{ marginTop: 12 }}>
+            {nextJobMapUrl ? (
+              <a className="button-primary" href={nextJobMapUrl} target="_blank" rel="noreferrer">
+                Naviguer
+              </a>
+            ) : (
+              <span className="tag">Adresse a confirmer</span>
+            )}
+            <button className="button-ghost" type="button" onClick={() => setCompletedJobId(null)}>
+              Masquer
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       <div className="tech-actions">
         <a className="button-secondary" href="/technician/schedule">Schedule</a>

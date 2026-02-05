@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import LogoutButton from "./LogoutButton";
+import GlobalSearch from "./search/GlobalSearch";
 import { useCompany } from "@/contexts/company/CompanyContext";
 
 type TopBarProps = {
@@ -69,6 +70,7 @@ export default function TopBar({ title, subtitle, actions, showLogout = true }: 
           </div>
       </div>
       <div className="top-actions" style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+        <GlobalSearch />
         <span
           className="pill"
           style={{

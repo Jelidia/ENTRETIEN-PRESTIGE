@@ -5,6 +5,7 @@ import TopBar from "@/components/TopBar";
 import BottomSheet from "@/components/BottomSheet";
 import Pagination from "@/components/Pagination";
 import LeadForm from "@/components/forms/LeadForm";
+import { normalizePhoneE164 } from "@/lib/smsTemplates";
 
 type Lead = {
   lead_id: string;
@@ -27,6 +28,10 @@ export default function LeadsPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [actionStatus, setActionStatus] = useState("");
+  const [actionStatusTone, setActionStatusTone] = useState<"success" | "error">("success");
+  const [smsDraft, setSmsDraft] = useState("");
+  const [smsSending, setSmsSending] = useState(false);
   const itemsPerPage = 5;
 
   useEffect(() => {
@@ -40,6 +45,12 @@ export default function LeadsPage() {
     setCurrentPage(1);
   }, [selectedTab, leads]);
 
+  useEffect(() => {
+    setActionStatus("");
+    setSmsDraft("");
+    setSmsSending(false);
+  }, [selectedLead]);
+
   async function loadLeads() {
     setLoading(true);
     const res = await fetch("/api/leads");
@@ -51,6 +62,8 @@ export default function LeadsPage() {
   }
 
   async function updateLeadStatus(leadId: string, newStatus: Lead["status"]) {
+    setActionStatus("");
+    setActionStatusTone("success");
     const res = await fetch(`/api/leads/${leadId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -58,15 +71,27 @@ export default function LeadsPage() {
     });
 
     if (res.ok) {
-      loadLeads();
-      setSelectedLead(null);
+      setLeads((prev) =>
+        prev.map((lead) => (lead.lead_id === leadId ? { ...lead, status: newStatus } : lead))
+      );
+      setSelectedLead((prev) => (prev ? { ...prev, status: newStatus } : prev));
+      setActionStatus("Statut mis a jour.");
+      void loadLeads();
     } else {
-      alert("Echec de la mise a jour du lead");
+      const data = await res.json().catch(() => ({}));
+      setActionStatusTone("error");
+      setActionStatus(data.error ?? "Echec de la mise a jour du lead");
     }
   }
 
   async function callCustomer(phone: string) {
-    window.location.href = `tel:${phone}`;
+    const normalizedPhone = normalizePhoneE164(phone);
+    if (!normalizedPhone) {
+      setActionStatusTone("error");
+      setActionStatus("Telephone invalide. Utilisez le format (514) 555-0123.");
+      return;
+    }
+    window.location.href = `tel:${normalizedPhone}`;
     // Log the call attempt
     if (selectedLead) {
       await fetch(`/api/leads/${selectedLead.lead_id}/activity`, {
@@ -80,34 +105,49 @@ export default function LeadsPage() {
     }
   }
 
-  async function sendSMS(phone: string) {
-    const message = prompt("Entrer le message a envoyer:");
-    if (!message) return;
+  async function sendSMS() {
+    if (!selectedLead) return;
+    const message = smsDraft.trim();
+    if (!message) {
+      setActionStatusTone("error");
+      setActionStatus("Message requis.");
+      return;
+    }
+    const normalizedPhone = normalizePhoneE164(selectedLead.phone);
+    if (!normalizedPhone) {
+      setActionStatusTone("error");
+      setActionStatus("Telephone invalide. Utilisez le format (514) 555-0123.");
+      return;
+    }
+    setSmsSending(true);
 
     const res = await fetch("/api/sms/send", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        to: phone,
+        to: normalizedPhone,
         message,
       }),
     });
+    const data = await res.json().catch(() => ({}));
 
     if (res.ok) {
-      alert("SMS envoye avec succes");
-      if (selectedLead) {
-        await fetch(`/api/leads/${selectedLead.lead_id}/activity`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            type: "sms",
-            notes: message,
-          }),
-        });
-      }
+      setActionStatusTone("success");
+      setActionStatus("SMS envoye.");
+      setSmsDraft("");
+      await fetch(`/api/leads/${selectedLead.lead_id}/activity`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "sms",
+          notes: message,
+        }),
+      });
     } else {
-      alert("Echec de l'envoi du SMS");
+      setActionStatusTone("error");
+      setActionStatus(data.error ?? "Echec de l'envoi du SMS");
     }
+    setSmsSending(false);
   }
 
   const paginatedLeads = filteredLeads.slice(
@@ -276,11 +316,26 @@ export default function LeadsPage() {
               >
                 📞 APPEL
               </button>
+            </div>
+
+            <div className="form-row" style={{ marginTop: "16px" }}>
+              <label className="label" htmlFor="leadSmsMessage">Message SMS</label>
+              <textarea
+                id="leadSmsMessage"
+                className="textarea"
+                value={smsDraft}
+                onChange={(event) => setSmsDraft(event.target.value)}
+                rows={3}
+              />
+            </div>
+            <div className="table-actions">
               <button
                 className="button-secondary"
-                onClick={() => sendSMS(selectedLead.phone)}
+                type="button"
+                onClick={sendSMS}
+                disabled={smsSending}
               >
-                📱 SMS
+                {smsSending ? "Envoi..." : "Envoyer le SMS"}
               </button>
             </div>
 
@@ -312,6 +367,11 @@ export default function LeadsPage() {
                 ✅ CONVERTIR EN TRAVAIL
               </button>
             )}
+            {actionStatus ? (
+              <div className={actionStatusTone === "success" ? "hint" : "alert"}>
+                {actionStatus}
+              </div>
+            ) : null}
           </div>
         </BottomSheet>
       )}

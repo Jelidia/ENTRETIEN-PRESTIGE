@@ -116,11 +116,57 @@ const END_HOUR = 19;
 const HOUR_HEIGHT = 72;
 const SNAP_MINUTES = 15;
 
+type QuickDateOption = { label: string; value: string };
+
+function toDateInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function addDays(baseDate: Date, days: number) {
+  const next = new Date(baseDate);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function getFirstMonday(baseDate: Date) {
+  const base = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate());
+  const year = base.getFullYear();
+  const month = base.getMonth();
+  const firstOfMonth = new Date(year, month, 1);
+  const offset = (8 - firstOfMonth.getDay()) % 7;
+  let firstMonday = new Date(year, month, 1 + offset);
+  if (firstMonday < base) {
+    const nextMonth = new Date(year, month + 1, 1);
+    const nextOffset = (8 - nextMonth.getDay()) % 7;
+    firstMonday = new Date(nextMonth.getFullYear(), nextMonth.getMonth(), 1 + nextOffset);
+  }
+  return firstMonday;
+}
+
+function getQuickDateOptions(baseDate = new Date()): QuickDateOption[] {
+  const base = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate());
+  return [
+    { label: "Demain", value: toDateInputValue(addDays(base, 1)) },
+    { label: "Semaine prochaine", value: toDateInputValue(addDays(base, 7)) },
+    { label: "Premier lundi du mois", value: toDateInputValue(getFirstMonday(base)) },
+  ];
+}
+
 export default function DispatchPage() {
   const [board, setBoard] = useState<DispatchColumnType[]>([]);
   const [conflicts, setConflicts] = useState<ConflictRow[]>([]);
   const [status, setStatus] = useState("");
   const [reassignForm, setReassignForm] = useState({ jobId: "", technicianId: "" });
+  const [moveForm, setMoveForm] = useState({
+    jobId: "",
+    technicianId: "",
+    scheduledDate: "",
+    scheduledStartTime: "",
+    scheduledEndTime: "",
+  });
   const [weatherForm, setWeatherForm] = useState({ startDate: "", endDate: "" });
   const [gpsForm, setGpsForm] = useState({ technicianId: "", start: "", end: "" });
   const [gpsResults, setGpsResults] = useState<GpsRow[]>([]);
@@ -151,6 +197,7 @@ export default function DispatchPage() {
     description: "",
   });
   const [services, setServices] = useState<CompanyService[]>([]);
+  const quickDates = getQuickDateOptions();
 
   const boardRef = useRef<DispatchColumnType[]>([]);
   const columnRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -161,6 +208,8 @@ export default function DispatchPage() {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstance = useRef<GoogleMapInstance | null>(null);
   const gpsMarkersRef = useRef<GoogleMarkerInstance[]>([]);
+  const reassignCardRef = useRef<HTMLDivElement | null>(null);
+  const moveCardRef = useRef<HTMLDivElement | null>(null);
   const mapsKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
 
   const techNameById = useMemo(() => {
@@ -604,6 +653,27 @@ export default function DispatchPage() {
     void loadDispatch();
   }
 
+  const prefillReassign = useCallback((jobId: string, technicianId?: string) => {
+    setReassignForm({ jobId, technicianId: technicianId ?? "" });
+    reassignCardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, []);
+
+  const prefillMove = useCallback(
+    (job: DispatchJob, technicianId?: string) => {
+      const { start, end } = getJobTimes(job);
+      const date = job.scheduledDate ?? selectedDate ?? new Date().toISOString().slice(0, 10);
+      setMoveForm({
+        jobId: job.id,
+        technicianId: technicianId ?? "",
+        scheduledDate: date,
+        scheduledStartTime: formatTime(start),
+        scheduledEndTime: formatTime(end),
+      });
+      moveCardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    },
+    [selectedDate]
+  );
+
   async function submitReassign(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setStatus("");
@@ -619,6 +689,46 @@ export default function DispatchPage() {
     }
     setStatus("Travail réaffecté.");
     setReassignForm({ jobId: "", technicianId: "" });
+    void loadDispatch();
+  }
+
+  async function submitMove(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setStatus("");
+    if (
+      !moveForm.jobId ||
+      !moveForm.technicianId ||
+      !moveForm.scheduledDate ||
+      !moveForm.scheduledStartTime ||
+      !moveForm.scheduledEndTime
+    ) {
+      setStatus("Veuillez remplir tous les champs pour déplacer l'horaire.");
+      return;
+    }
+    const response = await fetch("/api/dispatch/schedule", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jobId: moveForm.jobId,
+        technicianId: moveForm.technicianId,
+        scheduledDate: moveForm.scheduledDate,
+        scheduledStartTime: moveForm.scheduledStartTime,
+        scheduledEndTime: moveForm.scheduledEndTime,
+      }),
+    });
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setStatus(json.error ?? "Impossible de déplacer l'horaire");
+      return;
+    }
+    setStatus("Horaire mis à jour.");
+    setMoveForm({
+      jobId: "",
+      technicianId: "",
+      scheduledDate: "",
+      scheduledStartTime: "",
+      scheduledEndTime: "",
+    });
     void loadDispatch();
   }
 
@@ -1023,6 +1133,30 @@ export default function DispatchPage() {
                             </button>
                           ) : null}
                         </div>
+                        <div className="list-item-actions" style={{ marginTop: 6 }}>
+                          <button
+                            className="tag"
+                            type="button"
+                            onPointerDown={(event) => event.stopPropagation()}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              prefillReassign(job.id, column.technicianId);
+                            }}
+                          >
+                            Réaffecter
+                          </button>
+                          <button
+                            className="tag"
+                            type="button"
+                            onPointerDown={(event) => event.stopPropagation()}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              prefillMove(job, column.technicianId);
+                            }}
+                          >
+                            Déplacer l'horaire
+                          </button>
+                        </div>
                         <div
                           className="calendar-event-handle"
                           role="presentation"
@@ -1146,6 +1280,20 @@ export default function DispatchPage() {
                     }
                     required
                   />
+                  <div className="table-actions" style={{ marginTop: 6 }}>
+                    {quickDates.map((option) => (
+                      <button
+                        key={option.label}
+                        className="tag"
+                        type="button"
+                        onClick={() =>
+                          setQuickCreateForm((prev) => ({ ...prev, scheduledDate: option.value }))
+                        }
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 <div className="form-row">
                   <label className="label" htmlFor="qcStart">Début</label>
@@ -1257,7 +1405,7 @@ export default function DispatchPage() {
       ) : null}
 
       <div className="stack">
-        <div className="card">
+        <div className="card" ref={reassignCardRef}>
           <h3 className="card-title">Réaffecter un travail</h3>
           <form className="form-grid" onSubmit={submitReassign}>
             <div className="form-row">
@@ -1284,6 +1432,84 @@ export default function DispatchPage() {
           </form>
         </div>
 
+        <div className="card" ref={moveCardRef}>
+          <h3 className="card-title">Déplacer un horaire</h3>
+          <form className="form-grid" onSubmit={submitMove}>
+            <div className="form-row">
+              <label className="label" htmlFor="moveJob">ID du travail</label>
+              <input
+                id="moveJob"
+                className="input"
+                value={moveForm.jobId}
+                onChange={(event) => setMoveForm({ ...moveForm, jobId: event.target.value })}
+                required
+              />
+            </div>
+            <div className="form-row">
+              <label className="label" htmlFor="moveTech">ID technicien</label>
+              <input
+                id="moveTech"
+                className="input"
+                value={moveForm.technicianId}
+                onChange={(event) => setMoveForm({ ...moveForm, technicianId: event.target.value })}
+                required
+              />
+            </div>
+            <div className="stack">
+              <div className="form-row">
+                <label className="label" htmlFor="moveDate">Date</label>
+                <input
+                  id="moveDate"
+                  className="input"
+                  type="date"
+                  value={moveForm.scheduledDate}
+                  onChange={(event) => setMoveForm({ ...moveForm, scheduledDate: event.target.value })}
+                  required
+                />
+                <div className="table-actions" style={{ marginTop: 6 }}>
+                  {quickDates.map((option) => (
+                    <button
+                      key={option.label}
+                      className="tag"
+                      type="button"
+                      onClick={() => setMoveForm({ ...moveForm, scheduledDate: option.value })}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="form-row">
+                <label className="label" htmlFor="moveStart">Heure de début</label>
+                <input
+                  id="moveStart"
+                  className="input"
+                  type="time"
+                  value={moveForm.scheduledStartTime}
+                  onChange={(event) =>
+                    setMoveForm({ ...moveForm, scheduledStartTime: event.target.value })
+                  }
+                  required
+                />
+              </div>
+              <div className="form-row">
+                <label className="label" htmlFor="moveEnd">Heure de fin</label>
+                <input
+                  id="moveEnd"
+                  className="input"
+                  type="time"
+                  value={moveForm.scheduledEndTime}
+                  onChange={(event) =>
+                    setMoveForm({ ...moveForm, scheduledEndTime: event.target.value })
+                  }
+                  required
+                />
+              </div>
+            </div>
+            <button className="button-primary" type="submit">Mettre à jour l'horaire</button>
+          </form>
+        </div>
+
         <div className="card">
           <h3 className="card-title">Annulation météo</h3>
           <form className="form-grid" onSubmit={submitWeather}>
@@ -1297,6 +1523,18 @@ export default function DispatchPage() {
                 onChange={(event) => setWeatherForm({ ...weatherForm, startDate: event.target.value })}
                 required
               />
+              <div className="table-actions" style={{ marginTop: 6 }}>
+                {quickDates.map((option) => (
+                  <button
+                    key={option.label}
+                    className="tag"
+                    type="button"
+                    onClick={() => setWeatherForm({ ...weatherForm, startDate: option.value })}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="form-row">
               <label className="label" htmlFor="endDate">Date de fin</label>
@@ -1308,6 +1546,18 @@ export default function DispatchPage() {
                 onChange={(event) => setWeatherForm({ ...weatherForm, endDate: event.target.value })}
                 required
               />
+              <div className="table-actions" style={{ marginTop: 6 }}>
+                {quickDates.map((option) => (
+                  <button
+                    key={option.label}
+                    className="tag"
+                    type="button"
+                    onClick={() => setWeatherForm({ ...weatherForm, endDate: option.value })}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
             </div>
             <button className="button-secondary" type="submit">Annuler les travaux</button>
           </form>

@@ -55,17 +55,25 @@ export const smsTemplates = {
     `Bonjour ${data.customerName}, comment était votre service? Cliquez ici pour noter: ${data.ratingLink}`,
 };
 
+export function normalizePhoneE164(phone: string): string | null {
+  const trimmed = phone.trim();
+  if (!trimmed) return null;
+  const hasPlus = trimmed.startsWith("+");
+  const digits = trimmed.replace(/\D/g, "");
+  if (!digits) return null;
+  if (hasPlus) {
+    if (digits.length < 10 || digits.length > 15) return null;
+    return `+${digits}`;
+  }
+  if (digits.length === 10) {
+    return `+1${digits}`;
+  }
+  if (digits.length === 11 && digits.startsWith("1")) {
+    return `+${digits}`;
+  }
+  return null;
+}
+
 export function formatPhoneNumber(phone: string): string {
-  // Ensure E.164 format: +1XXXXXXXXXX
-  const cleaned = phone.replace(/\D/g, '');
-  if (cleaned.length === 10) {
-    return `+1${cleaned}`;
-  }
-  if (cleaned.length === 11 && cleaned.startsWith('1')) {
-    return `+${cleaned}`;
-  }
-  if (phone.startsWith('+')) {
-    return phone;
-  }
-  return `+${cleaned}`;
+  return normalizePhoneE164(phone) ?? "";
 }

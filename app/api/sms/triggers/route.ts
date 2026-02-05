@@ -199,12 +199,20 @@ export async function POST(request: Request) {
           if (notifyUsers) {
             for (const user of notifyUsers) {
               if (user && (user.role === "manager" || user.role === "sales_rep")) {
-                if (user.phone) {
-                  await sendSms(
-                    formatPhoneNumber(user.phone),
-                    `No-show: ${customerName} n'était pas disponible pour le rendez-vous (Job #${jobId.substring(0, 8)})`
-                  );
-                }
+                  if (user.phone) {
+                    const normalizedPhone = formatPhoneNumber(user.phone);
+                    if (!normalizedPhone) {
+                      await captureError(new Error("Invalid phone for manager notification"), {
+                        ...requestContext,
+                        action: "no_show_notify_manager",
+                      });
+                      continue;
+                    }
+                    await sendSms(
+                      normalizedPhone,
+                      `No-show: ${customerName} n'était pas disponible pour le rendez-vous (Job #${jobId.substring(0, 8)})`
+                    );
+                  }
               }
             }
           }
@@ -248,6 +256,14 @@ export async function POST(request: Request) {
     }
 
     const phoneNumber = formatPhoneNumber(customerRecord.phone);
+    if (!phoneNumber) {
+      await captureError(new Error("Invalid customer phone"), {
+        ...requestContext,
+        action: "sms_trigger_invalid_phone",
+        customer_id: customerRecord.customer_id ?? null,
+      });
+      return NextResponse.json({ success: false, error: "Numéro de téléphone invalide" }, { status: 400 });
+    }
     let idempotencyScope = "";
     let idempotencyRequestHash = "";
 

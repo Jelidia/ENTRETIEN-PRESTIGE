@@ -2,6 +2,7 @@
 
 import TopBar from "@/components/TopBar";
 import Link from "next/link";
+import { normalizePhoneE164 } from "@/lib/smsTemplates";
 import NotificationSettingsForm from "@/components/forms/NotificationSettingsForm";
 import { useEffect, useMemo, useState } from "react";
 import { useCompany } from "@/contexts/company/CompanyContext";
@@ -278,10 +279,19 @@ export default function AdminManagePage() {
 
   async function saveCompanyProfile() {
     setCompanyStatus("");
+    const trimmedPhone = (companyForm.phone ?? "").trim();
+    const normalizedPhone = trimmedPhone ? normalizePhoneE164(trimmedPhone) : "";
+    if (trimmedPhone && !normalizedPhone) {
+      setCompanyStatus("Téléphone invalide. Utilisez le format (514) 555-0123.");
+      return;
+    }
     const response = await fetch("/api/company", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(companyForm),
+      body: JSON.stringify({
+        ...companyForm,
+        phone: trimmedPhone ? normalizedPhone : null,
+      }),
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
@@ -393,7 +403,17 @@ export default function AdminManagePage() {
       payload.full_name = edits.full_name;
     }
     if (edits.phone !== (member.phone ?? "")) {
-      payload.phone = edits.phone;
+      const trimmedPhone = (edits.phone ?? "").trim();
+      if (!trimmedPhone) {
+        payload.phone = "";
+      } else {
+        const normalizedPhone = normalizePhoneE164(trimmedPhone);
+        if (!normalizedPhone) {
+          setTeamStatus("Téléphone invalide. Utilisez le format (514) 555-0123.");
+          return;
+        }
+        payload.phone = normalizedPhone;
+      }
     }
     if (edits.address !== (member.address ?? "")) {
       payload.address = edits.address;

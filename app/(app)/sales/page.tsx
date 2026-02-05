@@ -1,7 +1,47 @@
 "use client";
 
 import TopBar from "@/components/TopBar";
+import { normalizePhoneE164 } from "@/lib/smsTemplates";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+type QuickDateOption = { label: string; value: string };
+
+function toDateInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function addDays(baseDate: Date, days: number) {
+  const next = new Date(baseDate);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function getFirstMonday(baseDate: Date) {
+  const base = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate());
+  const year = base.getFullYear();
+  const month = base.getMonth();
+  const firstOfMonth = new Date(year, month, 1);
+  const offset = (8 - firstOfMonth.getDay()) % 7;
+  let firstMonday = new Date(year, month, 1 + offset);
+  if (firstMonday < base) {
+    const nextMonth = new Date(year, month + 1, 1);
+    const nextOffset = (8 - nextMonth.getDay()) % 7;
+    firstMonday = new Date(nextMonth.getFullYear(), nextMonth.getMonth(), 1 + nextOffset);
+  }
+  return firstMonday;
+}
+
+function getQuickDateOptions(baseDate = new Date()): QuickDateOption[] {
+  const base = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate());
+  return [
+    { label: "Demain", value: toDateInputValue(addDays(base, 1)) },
+    { label: "Semaine prochaine", value: toDateInputValue(addDays(base, 7)) },
+    { label: "Premier lundi du mois", value: toDateInputValue(getFirstMonday(base)) },
+  ];
+}
 
 type LeadRow = {
   lead_id: string;
@@ -157,6 +197,7 @@ export default function SalesPage() {
   const [leadStatus, setLeadStatus] = useState("");
   const [territoryStatus, setTerritoryStatus] = useState("");
   const [salesDayStatus, setSalesDayStatus] = useState("");
+  const quickDates = getQuickDateOptions();
   const [polygonPoints, setPolygonPoints] = useState<MapCenter[]>([]);
   const [salesDayPolygonPoints, setSalesDayPolygonPoints] = useState<MapCenter[]>([]);
   const [mapReady, setMapReady] = useState(false);
@@ -524,11 +565,18 @@ export default function SalesPage() {
   async function submitLead(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLeadStatus("");
+    const trimmedPhone = leadForm.phone.trim();
+    const normalizedPhone = trimmedPhone ? normalizePhoneE164(trimmedPhone) : "";
+    if (trimmedPhone && !normalizedPhone) {
+      setLeadStatus("Téléphone invalide. Utilisez le format (514) 555-0123.");
+      return;
+    }
     const response = await fetch("/api/reports/leads", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...leadForm,
+        phone: normalizedPhone ?? "",
         estimatedJobValue: leadForm.estimatedJobValue ? Number(leadForm.estimatedJobValue) : undefined,
       }),
     });
@@ -774,7 +822,7 @@ export default function SalesPage() {
       <div className="grid-2">
         <div className="card">
           <h3 className="card-title">Classement</h3>
-          <table className="table">
+          <table className="table table-desktop">
             <thead>
               <tr>
                 <th>Rang</th>
@@ -794,6 +842,20 @@ export default function SalesPage() {
               ))}
             </tbody>
           </table>
+          <div className="card-list-mobile" style={{ marginTop: 12 }}>
+            {leaderboard.map((rep) => (
+              <div className="mobile-card" key={rep.rank}>
+                <div className="mobile-card-title">Rang {rep.rank}</div>
+                <div className="mobile-card-meta">
+                  Revenus : {rep.total_revenue ? `$${rep.total_revenue}` : "$0"}
+                </div>
+                <div className="mobile-card-meta">Prospects : {rep.leads_generated ?? 0}</div>
+                <div className="mobile-card-meta">
+                  Conversion : {rep.conversion_rate ? `${rep.conversion_rate}%` : "0%"}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="card">
@@ -839,6 +901,7 @@ export default function SalesPage() {
                   className="input"
                   value={leadForm.phone}
                   onChange={(event) => setLeadForm({ ...leadForm, phone: event.target.value })}
+                  placeholder="(514) 555-0123"
                 />
               </div>
               <div className="form-row">
@@ -871,6 +934,18 @@ export default function SalesPage() {
                   value={leadForm.followUpDate}
                   onChange={(event) => setLeadForm({ ...leadForm, followUpDate: event.target.value })}
                 />
+                <div className="table-actions" style={{ marginTop: 6 }}>
+                  {quickDates.map((option) => (
+                    <button
+                      key={option.label}
+                      className="tag"
+                      type="button"
+                      onClick={() => setLeadForm({ ...leadForm, followUpDate: option.value })}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
             <div className="form-row">
@@ -891,7 +966,7 @@ export default function SalesPage() {
       <div className="grid-2">
         <div className="card">
           <h3 className="card-title">Territoires</h3>
-          <table className="table">
+          <table className="table table-desktop">
             <thead>
               <tr>
                 <th>Nom</th>
@@ -911,6 +986,18 @@ export default function SalesPage() {
               ))}
             </tbody>
           </table>
+          <div className="card-list-mobile" style={{ marginTop: 12 }}>
+            {territories.map((territory) => (
+              <div className="mobile-card" key={territory.territory_id}>
+                <div className="mobile-card-title">{territory.territory_name}</div>
+                <div className="mobile-card-meta">
+                  Revenus : {territory.monthly_revenue ? `$${territory.monthly_revenue}` : "$0"}
+                </div>
+                <div className="mobile-card-meta">Clients : {territory.total_customers ?? 0}</div>
+                <div className="mobile-card-meta">Actifs : {territory.active_customers ?? 0}</div>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="card">
@@ -1003,6 +1090,18 @@ export default function SalesPage() {
                   onChange={(event) => setSalesDayForm({ ...salesDayForm, date: event.target.value })}
                   required
                 />
+                <div className="table-actions" style={{ marginTop: 6 }}>
+                  {quickDates.map((option) => (
+                    <button
+                      key={option.label}
+                      className="tag"
+                      type="button"
+                      onClick={() => setSalesDayForm({ ...salesDayForm, date: option.value })}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div className="form-row">
                 <label className="label" htmlFor="salesDayStart">Heure de début</label>
@@ -1352,7 +1451,7 @@ export default function SalesPage() {
 
       <div className="card">
         <h3 className="card-title">Pipeline des prospects</h3>
-        <table className="table">
+        <table className="table table-desktop">
           <thead>
             <tr>
               <th>Prospect</th>
@@ -1374,6 +1473,19 @@ export default function SalesPage() {
             ))}
           </tbody>
         </table>
+        <div className="card-list-mobile" style={{ marginTop: 12 }}>
+          {leads.map((lead) => (
+            <div className="mobile-card" key={lead.lead_id}>
+              <div className="mobile-card-title">{lead.first_name} {lead.last_name}</div>
+              <div className="mobile-card-meta">Statut : {lead.status}</div>
+              <div className="mobile-card-meta">
+                Valeur : {lead.estimated_job_value ? `$${lead.estimated_job_value}` : ""}
+              </div>
+              <div className="mobile-card-meta">Ville : {lead.city ?? ""}</div>
+              <div className="mobile-card-meta">Relance : {lead.follow_up_date ?? ""}</div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

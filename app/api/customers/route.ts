@@ -19,11 +19,13 @@ export async function GET(request: Request) {
   if ("response" in auth) {
     return auth.response;
   }
+  const { profile } = auth;
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
   const { data, error } = await client
     .from("customers")
     .select("customer_id, first_name, last_name, phone, status, customer_type, last_service_date, account_balance")
+    .eq("company_id", profile.company_id)
     .order("created_at", { ascending: false })
     .limit(100);
 

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizePhoneE164 } from "@/lib/smsTemplates";
 
 type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
@@ -20,11 +21,37 @@ const polygonCoordinateSchema = z.union([
   z.object({ lat: z.number(), lng: z.number() }),
   z.tuple([z.number(), z.number()]),
 ]);
+const phoneErrorMessage = "Téléphone invalide. Utilisez le format (514) 555-0123.";
+const phoneE164Schema = z.string().trim().transform((value, ctx) => {
+  const normalized = normalizePhoneE164(value);
+  if (!normalized) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: phoneErrorMessage });
+    return z.NEVER;
+  }
+  return normalized;
+});
+const phoneOptionalSchema = z.preprocess(
+  (value) => {
+    if (value === null || value === undefined) return undefined;
+    if (typeof value === "string" && !value.trim()) return undefined;
+    return value;
+  },
+  phoneE164Schema.optional()
+);
+const phoneNullableSchema = z.preprocess(
+  (value) => {
+    if (value === null) return null;
+    if (value === undefined) return undefined;
+    if (typeof value === "string" && !value.trim()) return null;
+    return value;
+  },
+  phoneE164Schema.nullable().optional()
+);
 const seedAccountSchema = z.object({
   role: z.enum(["admin", "technician", "sales_rep"]),
   fullName: z.string().min(2),
   email: z.string().email(),
-  phone: z.string().optional(),
+  phone: phoneOptionalSchema,
 });
 
 // Password schema with complexity requirements
@@ -39,7 +66,7 @@ export const registerSchema = z.object({
   companyName: z.string().min(2),
   fullName: z.string().min(2),
   email: z.string().email(),
-  phone: z.string().min(7).optional(),
+  phone: phoneOptionalSchema,
   password: passwordSchema,
 });
 
@@ -150,7 +177,7 @@ export const customerCreateSchema = z.object({
   firstName: z.string().min(2),
   lastName: z.string().min(2),
   email: z.string().email().optional(),
-  phone: z.string().min(7).optional(),
+  phone: phoneOptionalSchema,
   type: z.string().optional(),
   address: z.string().optional(),
   city: z.string().optional(),
@@ -159,7 +186,7 @@ export const customerCreateSchema = z.object({
 
 export const customerUpdateSchema = z.object({
   email: z.string().email().optional(),
-  phone: z.string().optional(),
+  phone: phoneOptionalSchema,
   status: z.string().optional(),
   customer_type: z.string().optional(),
   address: z.string().optional(),
@@ -221,7 +248,7 @@ export const paymentRefundSchema = z.object({
 });
 
 export const smsSendSchema = z.object({
-  to: z.string().min(7),
+  to: phoneE164Schema,
   message: z.string().min(1),
   threadId: z.string().optional(),
   customerId: z.string().optional(),
@@ -257,7 +284,7 @@ export const geofenceCreateSchema = z.object({
 export const userCreateSchema = z.object({
   fullName: z.string().min(2),
   email: z.string().email(),
-  phone: z.string().optional(),
+  phone: phoneOptionalSchema,
   role: z.string().min(2),
   password: passwordSchema,
   accessPermissions: permissionMapSchema.optional(),
@@ -275,7 +302,7 @@ export const userCreateSchema = z.object({
 
 export const userUpdateSchema = z.object({
   full_name: z.string().min(2).optional(),
-  phone: z.string().optional(),
+  phone: phoneOptionalSchema,
   role: z.string().optional(),
   status: z.string().optional(),
   access_permissions: permissionMapSchema.nullable().optional(),
@@ -295,7 +322,7 @@ export const companyUpdateSchema = z.object({
   name: z.string().min(2).optional(),
   legal_name: z.string().optional(),
   email: z.string().email().optional(),
-  phone: z.string().optional(),
+  phone: phoneOptionalSchema,
   address: z.string().optional(),
   city: z.string().optional(),
   province: z.string().optional(),
@@ -338,7 +365,7 @@ export const seedAccountsSchema = z.object({
 export const reportLeadCreateSchema = z.object({
   firstName: z.string().min(2),
   lastName: z.string().min(2),
-  phone: z.string().optional(),
+  phone: phoneOptionalSchema,
   email: z.string().email().optional(),
   address: z.string().optional(),
   city: z.string().optional(),
@@ -494,7 +521,7 @@ export const availabilityUpdateSchema = z.object({
 export const profileUpdateSchema = z.object({
   fullName: z.string().min(2).max(100).optional(),
   email: z.string().email().optional(),
-  phone: z.string().min(10).max(20).optional().nullable(),
+  phone: phoneNullableSchema,
 }).refine((data) => data.fullName || data.email || data.phone !== undefined, {
   message: "At least one field must be provided for update",
 });
@@ -504,26 +531,26 @@ const uuidSchema = z.string().uuid();
 const leadStatusSchema = z.enum(["new", "contacted", "estimated", "won", "lost"]);
 
 export const leadCreateSchema = z.object({
-  customer_name: z.string().min(2),
-  phone: z.string().min(7),
+  customer_name: z.string().trim().min(2),
+  phone: phoneE164Schema,
   email: z.string().email().nullable().optional(),
-  address: z.string().min(2).nullable().optional(),
+  address: z.string().trim().min(2).nullable().optional(),
   estimated_value: z.number().min(0).optional(),
   follow_up_date: z.string().nullable().optional(),
-  notes: z.string().nullable().optional(),
+  notes: z.string().trim().nullable().optional(),
   status: leadStatusSchema.optional(),
   sales_rep_id: uuidSchema.nullable().optional(),
 });
 
 export const leadUpdateSchema = z
   .object({
-    customer_name: z.string().min(2).optional(),
-    phone: z.string().min(7).optional(),
+    customer_name: z.string().trim().min(2).optional(),
+    phone: phoneOptionalSchema,
     email: z.string().email().nullable().optional(),
-    address: z.string().nullable().optional(),
+    address: z.string().trim().nullable().optional(),
     estimated_value: z.number().min(0).optional(),
     follow_up_date: z.string().nullable().optional(),
-    notes: z.string().nullable().optional(),
+    notes: z.string().trim().nullable().optional(),
     status: leadStatusSchema.optional(),
     lost_reason: z.string().nullable().optional(),
     sales_rep_id: uuidSchema.nullable().optional(),
@@ -535,13 +562,17 @@ export const leadUpdateSchema = z
 export const leadsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).optional(),
   page_size: z.coerce.number().int().min(1).max(50).optional(),
-  search: z.string().min(1).optional(),
+  search: z.string().trim().min(2).optional(),
   status: leadStatusSchema.optional(),
+});
+
+export const globalSearchQuerySchema = z.object({
+  q: z.string().trim().min(2).max(120),
 });
 
 export const leadActivityCreateSchema = z.object({
   type: z.enum(["call", "sms", "note", "status"]),
-  notes: z.string().min(1).optional(),
+  notes: z.string().trim().min(1).optional(),
 });
 
 export const emptyBodySchema = z.object({}).passthrough();

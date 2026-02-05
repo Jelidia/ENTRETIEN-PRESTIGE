@@ -16,12 +16,12 @@ type UserProfile = {
 };
 
 const roleDisplayNames: Record<string, string> = {
-  admin: "Administrator",
-  manager: "Manager",
-  dispatcher: "Dispatcher",
-  sales_rep: "Sales Representative",
-  technician: "Technician",
-  customer: "Customer",
+  admin: "Administrateur",
+  manager: "Gestionnaire",
+  dispatcher: "Répartiteur",
+  sales_rep: "Représentant des ventes",
+  technician: "Technicien",
+  customer: "Client",
 };
 
 export default function TechnicianProfilePage() {
@@ -69,20 +69,20 @@ export default function TechnicianProfilePage() {
     return (
       <div className="page">
         <div className="card">
-          <div className="card-meta">Loading profile...</div>
+          <div className="card-meta">Chargement du profil...</div>
         </div>
       </div>
     );
   }
 
-  const roleDisplayName = role ? roleDisplayNames[role] || role : "User";
+  const roleDisplayName = role ? roleDisplayNames[role] || role : "Utilisateur";
 
   return (
     <div className="page">
       <div className="tech-header">
         <div>
-          <div className="card-label">Profile</div>
-          <div className="tech-title">{roleDisplayName} Account</div>
+          <div className="card-label">Profil</div>
+          <div className="tech-title">Compte {roleDisplayName}</div>
         </div>
       </div>
 
@@ -90,33 +90,33 @@ export default function TechnicianProfilePage() {
         {profile && (
           <>
             <div>
-              <div className="card-label">Name</div>
+              <div className="card-label">Nom</div>
               <div className="card-value">{profile.full_name}</div>
             </div>
             <div>
-              <div className="card-label">Email</div>
+              <div className="card-label">Courriel</div>
               <div className="card-value">{profile.email}</div>
             </div>
             <div>
-              <div className="card-label">Phone</div>
-              <div className="card-value">{profile.phone || "Not provided"}</div>
+              <div className="card-label">Téléphone</div>
+              <div className="card-value">{profile.phone || "Non fourni"}</div>
             </div>
           </>
         )}
         <div>
-          <div className="card-label">Role</div>
+          <div className="card-label">Rôle</div>
           <div className="card-value">{roleDisplayName}</div>
         </div>
         <div>
           <div className="card-label">Support</div>
-          <div className="card-meta">Need help? Contact your manager or admin.</div>
+          <div className="card-meta">Besoin d'aide? Contactez votre gestionnaire ou un administrateur.</div>
         </div>
         <div className="table-actions">
-          <button className="button-secondary" type="button" onClick={() => setStatus("Support ticket opened.")}>
-            Support
+          <button className="button-secondary" type="button" onClick={() => setStatus("Demande de support envoyée.")}> 
+            Contacter le support
           </button>
           <button className="button-primary" type="button" onClick={handleLogout}>
-            Logout
+            Déconnexion
           </button>
         </div>
       </div>

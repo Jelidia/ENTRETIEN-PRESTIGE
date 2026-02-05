@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { normalizePhoneE164 } from "@/lib/smsTemplates";
 import TopBar from "@/components/TopBar";
 import AvailabilityCalendar from "@/components/AvailabilityCalendar";
 
@@ -26,10 +27,10 @@ type TeamProfile = {
 };
 
 const docConfig = [
-  { key: "id_front", label: "ID front", hint: "Driver license or passport" },
-  { key: "id_back", label: "ID back", hint: "Back side if applicable" },
-  { key: "contract", label: "Contract file", hint: "Signed agreement PDF" },
-  { key: "signature", label: "Signature", hint: "Signature image" },
+  { key: "id_front", label: "ID avant", hint: "Permis de conduire ou passeport" },
+  { key: "id_back", label: "ID arrière", hint: "Arrière si applicable" },
+  { key: "contract", label: "Contrat", hint: "Entente signée (PDF)" },
+  { key: "signature", label: "Signature", hint: "Image de signature" },
 ];
 
 const docFieldMap: Record<string, keyof TeamProfile> = {
@@ -69,7 +70,7 @@ export default function TeamProfilePage() {
     const response = await fetch(`/api/users/${id}`);
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setStatus(json.error ?? "Unable to load team member");
+      setStatus(json.error ?? "Impossible de charger le membre d'équipe");
       return;
     }
     const data = json.data as TeamProfile;
@@ -93,18 +94,27 @@ export default function TeamProfilePage() {
     event.preventDefault();
     if (!userId) return;
     setStatus("");
+    const trimmedPhone = form.phone.trim();
+    const normalizedPhone = trimmedPhone ? normalizePhoneE164(trimmedPhone) : "";
+    if (trimmedPhone && !normalizedPhone) {
+      setStatus("Téléphone invalide. Utilisez le format (514) 555-0123.");
+      return;
+    }
     const response = await fetch(`/api/users/${userId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({
+        ...form,
+        phone: normalizedPhone ?? "",
+      }),
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setStatus(json.error ?? "Unable to save profile");
+      setStatus(json.error ?? "Impossible d'enregistrer le profil");
       return;
     }
     setProfile(json.data as TeamProfile);
-    setStatus("Profile saved.");
+    setStatus("Profil enregistré.");
   }
 
   async function uploadDocument(docType: string, file: File) {
@@ -117,7 +127,7 @@ export default function TeamProfilePage() {
     const response = await fetch("/api/uploads", { method: "POST", body: formData });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setStatus(json.error ?? "Unable to upload document");
+      setStatus(json.error ?? "Impossible de téléverser le document");
       return;
     }
     const field = docFieldMap[docType];
@@ -125,7 +135,7 @@ export default function TeamProfilePage() {
     if (docType === "signature") {
       setProfile((prev) => (prev ? { ...prev, contract_signed_at: new Date().toISOString() } : prev));
     }
-    setStatus("Document uploaded.");
+    setStatus("Document téléversé.");
   }
 
   async function openDocument(docType: string) {
@@ -133,7 +143,7 @@ export default function TeamProfilePage() {
     const response = await fetch(`/api/documents?userId=${userId}&docType=${docType}`);
     const json = await response.json().catch(() => ({}));
     if (!response.ok || !json.url) {
-      setStatus(json.error ?? "Unable to open document");
+      setStatus(json.error ?? "Impossible d'ouvrir le document");
       return;
     }
     window.open(json.url, "_blank", "noopener,noreferrer");
@@ -142,11 +152,11 @@ export default function TeamProfilePage() {
   return (
     <div className="page">
       <TopBar
-        title="Team profile"
-        subtitle="Identity, address, and contract documentation"
+        title="Profil d'équipe"
+        subtitle="Identité, coordonnées et documents contractuels"
         actions={
           <Link className="button-ghost" href="/settings">
-            Back to Settings
+            Retour aux paramètres
           </Link>
         }
       />
@@ -155,14 +165,14 @@ export default function TeamProfilePage() {
         <div className="card">
           <div className="card-header">
             <div>
-              <h3 className="card-title">Profile details</h3>
-              <div className="card-meta">Keep contact and address up to date.</div>
+              <h3 className="card-title">Détails du profil</h3>
+              <div className="card-meta">Gardez les coordonnées à jour.</div>
             </div>
           </div>
           <form className="form-grid" onSubmit={saveProfile}>
             <div className="grid-2">
               <div className="form-row">
-                <label className="label" htmlFor="profileName">Full name</label>
+                <label className="label" htmlFor="profileName">Nom complet</label>
                 <input
                   id="profileName"
                   className="input"
@@ -172,7 +182,7 @@ export default function TeamProfilePage() {
                 />
               </div>
               <div className="form-row">
-                <label className="label" htmlFor="profileEmail">Email</label>
+                <label className="label" htmlFor="profileEmail">Courriel</label>
                 <input
                   id="profileEmail"
                   className="input"
@@ -183,7 +193,7 @@ export default function TeamProfilePage() {
             </div>
             <div className="grid-2">
               <div className="form-row">
-                <label className="label" htmlFor="profilePhone">Phone</label>
+                <label className="label" htmlFor="profilePhone">Téléphone</label>
                 <input
                   id="profilePhone"
                   className="input"
@@ -192,7 +202,7 @@ export default function TeamProfilePage() {
                 />
               </div>
               <div className="form-row">
-                <label className="label" htmlFor="profileRole">Role</label>
+                <label className="label" htmlFor="profileRole">Rôle</label>
                 <input
                   id="profileRole"
                   className="input"
@@ -202,7 +212,7 @@ export default function TeamProfilePage() {
               </div>
             </div>
             <div className="form-row">
-              <label className="label" htmlFor="profileAddress">Address</label>
+              <label className="label" htmlFor="profileAddress">Adresse</label>
               <input
                 id="profileAddress"
                 className="input"
@@ -212,7 +222,7 @@ export default function TeamProfilePage() {
             </div>
             <div className="grid-2">
               <div className="form-row">
-                <label className="label" htmlFor="profileCity">City</label>
+                <label className="label" htmlFor="profileCity">Ville</label>
                 <input
                   id="profileCity"
                   className="input"
@@ -232,7 +242,7 @@ export default function TeamProfilePage() {
             </div>
             <div className="grid-2">
               <div className="form-row">
-                <label className="label" htmlFor="profilePostal">Postal code</label>
+                <label className="label" htmlFor="profilePostal">Code postal</label>
                 <input
                   id="profilePostal"
                   className="input"
@@ -241,7 +251,7 @@ export default function TeamProfilePage() {
                 />
               </div>
               <div className="form-row">
-                <label className="label" htmlFor="profileCountry">Country</label>
+                <label className="label" htmlFor="profileCountry">Pays</label>
                 <input
                   id="profileCountry"
                   className="input"
@@ -251,7 +261,7 @@ export default function TeamProfilePage() {
               </div>
             </div>
             <button className="button-primary" type="submit">
-              Save profile
+              Enregistrer le profil
             </button>
           </form>
         </div>
@@ -260,7 +270,7 @@ export default function TeamProfilePage() {
           <div className="card-header">
             <div>
               <h3 className="card-title">Documents</h3>
-              <div className="card-meta">Upload ID and contract files.</div>
+              <div className="card-meta">Téléversez les pièces d'identité et le contrat.</div>
             </div>
           </div>
           <div className="list">
@@ -275,7 +285,7 @@ export default function TeamProfilePage() {
                   </div>
                   <div className="table-actions">
                     <label className="button-secondary" style={{ cursor: "pointer" }}>
-                      Upload
+                      Téléverser
                       <input
                         type="file"
                         style={{ display: "none" }}
@@ -290,7 +300,7 @@ export default function TeamProfilePage() {
                     </label>
                     {hasFile ? (
                       <button className="button-ghost" type="button" onClick={() => openDocument(doc.key)}>
-                        View
+                        Voir
                       </button>
                     ) : null}
                   </div>
@@ -300,8 +310,8 @@ export default function TeamProfilePage() {
           </div>
           <div className="card-meta" style={{ marginTop: 12 }}>
             {profile?.contract_signed_at
-              ? `Signed on ${new Date(profile.contract_signed_at).toLocaleDateString()}`
-              : "Signature date will appear here once uploaded."}
+              ? `Signé le ${new Date(profile.contract_signed_at).toLocaleDateString("fr-CA")}`
+              : "La date de signature s'affichera après le téléversement."}
           </div>
         </div>
       </div>

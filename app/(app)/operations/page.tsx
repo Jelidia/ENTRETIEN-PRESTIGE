@@ -4,6 +4,45 @@ import TopBar from "@/components/TopBar";
 import StatusBadge from "@/components/StatusBadge";
 import { useEffect, useState } from "react";
 
+type QuickDateOption = { label: string; value: string };
+
+function toDateInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function addDays(baseDate: Date, days: number) {
+  const next = new Date(baseDate);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function getFirstMonday(baseDate: Date) {
+  const base = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate());
+  const year = base.getFullYear();
+  const month = base.getMonth();
+  const firstOfMonth = new Date(year, month, 1);
+  const offset = (8 - firstOfMonth.getDay()) % 7;
+  let firstMonday = new Date(year, month, 1 + offset);
+  if (firstMonday < base) {
+    const nextMonth = new Date(year, month + 1, 1);
+    const nextOffset = (8 - nextMonth.getDay()) % 7;
+    firstMonday = new Date(nextMonth.getFullYear(), nextMonth.getMonth(), 1 + nextOffset);
+  }
+  return firstMonday;
+}
+
+function getQuickDateOptions(baseDate = new Date()): QuickDateOption[] {
+  const base = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate());
+  return [
+    { label: "Demain", value: toDateInputValue(addDays(base, 1)) },
+    { label: "Semaine prochaine", value: toDateInputValue(addDays(base, 7)) },
+    { label: "Premier lundi du mois", value: toDateInputValue(getFirstMonday(base)) },
+  ];
+}
+
 type IncidentRow = {
   incident_id: string;
   description: string;
@@ -32,6 +71,7 @@ export default function OperationsPage() {
   const [incidentStatus, setIncidentStatus] = useState("");
   const [qualityStatus, setQualityStatus] = useState("");
   const [checklistStatus, setChecklistStatus] = useState("");
+  const quickDates = getQuickDateOptions();
   const [incidentForm, setIncidentForm] = useState({
     jobId: "",
     technicianId: "",
@@ -50,8 +90,8 @@ export default function OperationsPage() {
   const [checklistForm, setChecklistForm] = useState({
     technicianId: "",
     workDate: "",
-    startItems: "Ladder, Supplies, PPE",
-    endItems: "Vehicle clean, Tools stored",
+    startItems: "Echelle, fournitures, EPI",
+    endItems: "Vehicule propre, outils ranges",
     shiftStatus: "pending",
   });
 
@@ -90,10 +130,10 @@ export default function OperationsPage() {
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setIncidentStatus(json.error ?? "Unable to log incident");
+      setIncidentStatus(json.error ?? "Impossible d'enregistrer l'incident");
       return;
     }
-    setIncidentStatus("Incident logged.");
+    setIncidentStatus("Incident enregistre.");
     setIncidentForm({
       jobId: "",
       technicianId: "",
@@ -115,10 +155,10 @@ export default function OperationsPage() {
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setQualityStatus(json.error ?? "Unable to log issue");
+      setQualityStatus(json.error ?? "Impossible d'enregistrer le probleme");
       return;
     }
-    setQualityStatus("Quality issue logged.");
+    setQualityStatus("Probleme de qualite enregistre.");
     setQualityForm({ jobId: "", customerId: "", complaintType: "cleanliness", description: "", severity: "major" });
     void loadData();
   }
@@ -147,15 +187,15 @@ export default function OperationsPage() {
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setChecklistStatus(json.error ?? "Unable to save checklist");
+      setChecklistStatus(json.error ?? "Impossible d'enregistrer la checklist");
       return;
     }
-    setChecklistStatus("Checklist saved.");
+    setChecklistStatus("Checklist enregistree.");
     setChecklistForm({
       technicianId: "",
       workDate: "",
-      startItems: "Ladder, Supplies, PPE",
-      endItems: "Vehicle clean, Tools stored",
+      startItems: "Echelle, fournitures, EPI",
+      endItems: "Vehicule propre, outils ranges",
       shiftStatus: "pending",
     });
     void loadData();
@@ -165,8 +205,8 @@ export default function OperationsPage() {
     <div className="page">
       <TopBar
         title="Operations"
-        subtitle="Quality control, incidents, and shift readiness"
-        actions={<span className="pill">Safety first</span>}
+        subtitle="Controle qualite, incidents et preparation du quart"
+        actions={<span className="pill">Securite d'abord</span>}
       />
 
       <div className="grid-2">
@@ -177,7 +217,7 @@ export default function OperationsPage() {
               <div className="list-item" key={incident.incident_id}>
                 <div>
                   <strong>{incident.description}</strong>
-                  <div className="card-meta">Severity: {incident.severity}</div>
+                  <div className="card-meta">Gravite: {incident.severity}</div>
                 </div>
                 <StatusBadge status={incident.status} />
               </div>
@@ -185,13 +225,13 @@ export default function OperationsPage() {
           </div>
         </div>
         <div className="card">
-          <h3 className="card-title">Quality issues</h3>
+          <h3 className="card-title">Problemes de qualite</h3>
           <div className="list" style={{ marginTop: 12 }}>
             {qualityIssues.map((issue) => (
               <div className="list-item" key={issue.issue_id}>
                 <div>
                   <strong>{issue.description}</strong>
-                  <div className="card-meta">Severity: {issue.severity}</div>
+                  <div className="card-meta">Gravite: {issue.severity}</div>
                 </div>
                 <StatusBadge status={issue.status} />
               </div>
@@ -202,10 +242,10 @@ export default function OperationsPage() {
 
       <div className="grid-3">
         <div className="card">
-          <h3 className="card-title">Log incident</h3>
+          <h3 className="card-title">Declarer un incident</h3>
           <form className="form-grid" onSubmit={submitIncident}>
             <div className="form-row">
-              <label className="label" htmlFor="incidentJob">Job ID</label>
+              <label className="label" htmlFor="incidentJob">ID du travail</label>
               <input
                 id="incidentJob"
                 className="input"
@@ -214,7 +254,7 @@ export default function OperationsPage() {
               />
             </div>
             <div className="form-row">
-              <label className="label" htmlFor="incidentTech">Technician ID</label>
+              <label className="label" htmlFor="incidentTech">ID du technicien</label>
               <input
                 id="incidentTech"
                 className="input"
@@ -241,28 +281,28 @@ export default function OperationsPage() {
                   value={incidentForm.incidentType}
                   onChange={(event) => setIncidentForm({ ...incidentForm, incidentType: event.target.value })}
                 >
-                  <option value="property_damage">Property damage</option>
-                  <option value="injury">Injury</option>
-                  <option value="equipment">Equipment</option>
+                  <option value="property_damage">Dommages materiels</option>
+                  <option value="injury">Blessure</option>
+                  <option value="equipment">Equipement</option>
                 </select>
               </div>
               <div className="form-row">
-                <label className="label" htmlFor="incidentSeverity">Severity</label>
+                <label className="label" htmlFor="incidentSeverity">Gravite</label>
                 <select
                   id="incidentSeverity"
                   className="select"
                   value={incidentForm.severity}
                   onChange={(event) => setIncidentForm({ ...incidentForm, severity: event.target.value })}
                 >
-                  <option value="minor">Minor</option>
-                  <option value="moderate">Moderate</option>
+                  <option value="minor">Mineur</option>
+                  <option value="moderate">Modere</option>
                   <option value="severe">Severe</option>
-                  <option value="critical">Critical</option>
+                  <option value="critical">Critique</option>
                 </select>
               </div>
             </div>
             <div className="form-row">
-              <label className="label" htmlFor="incidentCost">Estimated cost</label>
+              <label className="label" htmlFor="incidentCost">Cout estime</label>
               <input
                 id="incidentCost"
                 className="input"
@@ -271,16 +311,16 @@ export default function OperationsPage() {
                 onChange={(event) => setIncidentForm({ ...incidentForm, estimatedCost: event.target.value })}
               />
             </div>
-            <button className="button-primary" type="submit">Save incident</button>
+            <button className="button-primary" type="submit">Enregistrer l'incident</button>
             {incidentStatus ? <div className="hint">{incidentStatus}</div> : null}
           </form>
         </div>
 
         <div className="card">
-          <h3 className="card-title">Log quality issue</h3>
+          <h3 className="card-title">Declarer un probleme de qualite</h3>
           <form className="form-grid" onSubmit={submitQuality}>
             <div className="form-row">
-              <label className="label" htmlFor="qualityJob">Job ID</label>
+              <label className="label" htmlFor="qualityJob">ID du travail</label>
               <input
                 id="qualityJob"
                 className="input"
@@ -290,7 +330,7 @@ export default function OperationsPage() {
               />
             </div>
             <div className="form-row">
-              <label className="label" htmlFor="qualityCustomer">Customer ID</label>
+              <label className="label" htmlFor="qualityCustomer">ID du client</label>
               <input
                 id="qualityCustomer"
                 className="input"
@@ -300,7 +340,7 @@ export default function OperationsPage() {
               />
             </div>
             <div className="form-row">
-              <label className="label" htmlFor="qualityType">Type</label>
+              <label className="label" htmlFor="qualityType">Type de plainte</label>
               <input
                 id="qualityType"
                 className="input"
@@ -319,28 +359,28 @@ export default function OperationsPage() {
               />
             </div>
             <div className="form-row">
-              <label className="label" htmlFor="qualitySeverity">Severity</label>
+              <label className="label" htmlFor="qualitySeverity">Gravite</label>
               <select
                 id="qualitySeverity"
                 className="select"
                 value={qualityForm.severity}
                 onChange={(event) => setQualityForm({ ...qualityForm, severity: event.target.value })}
               >
-                <option value="minor">Minor</option>
-                <option value="major">Major</option>
-                <option value="critical">Critical</option>
+                <option value="minor">Mineur</option>
+                <option value="major">Majeur</option>
+                <option value="critical">Critique</option>
               </select>
             </div>
-            <button className="button-primary" type="submit">Save issue</button>
+            <button className="button-primary" type="submit">Enregistrer le probleme</button>
             {qualityStatus ? <div className="hint">{qualityStatus}</div> : null}
           </form>
         </div>
 
         <div className="card">
-          <h3 className="card-title">Shift checklist</h3>
+          <h3 className="card-title">Checklist de quart</h3>
           <form className="form-grid" onSubmit={submitChecklist}>
             <div className="form-row">
-              <label className="label" htmlFor="checklistTech">Technician ID</label>
+              <label className="label" htmlFor="checklistTech">ID du technicien</label>
               <input
                 id="checklistTech"
                 className="input"
@@ -350,7 +390,7 @@ export default function OperationsPage() {
               />
             </div>
             <div className="form-row">
-              <label className="label" htmlFor="checklistDate">Work date</label>
+              <label className="label" htmlFor="checklistDate">Date de travail</label>
               <input
                 id="checklistDate"
                 className="input"
@@ -359,9 +399,21 @@ export default function OperationsPage() {
                 onChange={(event) => setChecklistForm({ ...checklistForm, workDate: event.target.value })}
                 required
               />
+              <div className="table-actions" style={{ marginTop: 6 }}>
+                {quickDates.map((option) => (
+                  <button
+                    key={option.label}
+                    className="tag"
+                    type="button"
+                    onClick={() => setChecklistForm({ ...checklistForm, workDate: option.value })}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="form-row">
-              <label className="label" htmlFor="checklistStart">Start items</label>
+              <label className="label" htmlFor="checklistStart">Elements de debut</label>
               <textarea
                 id="checklistStart"
                 className="textarea"
@@ -370,7 +422,7 @@ export default function OperationsPage() {
               />
             </div>
             <div className="form-row">
-              <label className="label" htmlFor="checklistEnd">End items</label>
+              <label className="label" htmlFor="checklistEnd">Elements de fin</label>
               <textarea
                 id="checklistEnd"
                 className="textarea"
@@ -379,33 +431,33 @@ export default function OperationsPage() {
               />
             </div>
             <div className="form-row">
-              <label className="label" htmlFor="checklistStatus">Shift status</label>
+              <label className="label" htmlFor="checklistStatus">Statut du quart</label>
               <select
                 id="checklistStatus"
                 className="select"
                 value={checklistForm.shiftStatus}
                 onChange={(event) => setChecklistForm({ ...checklistForm, shiftStatus: event.target.value })}
               >
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="incomplete">Incomplete</option>
+                <option value="pending">En attente</option>
+                <option value="approved">Approuve</option>
+                <option value="incomplete">Incomplet</option>
               </select>
             </div>
-            <button className="button-primary" type="submit">Save checklist</button>
+            <button className="button-primary" type="submit">Enregistrer la checklist</button>
             {checklistStatus ? <div className="hint">{checklistStatus}</div> : null}
           </form>
         </div>
       </div>
 
       <div className="card">
-        <h3 className="card-title">Shift checklist log</h3>
-        <table className="table">
+        <h3 className="card-title">Historique des checklists de quart</h3>
+        <table className="table table-desktop">
           <thead>
             <tr>
               <th>Checklist</th>
-              <th>Technician</th>
+              <th>Technicien</th>
               <th>Date</th>
-              <th>Status</th>
+              <th>Statut</th>
             </tr>
           </thead>
           <tbody>
@@ -419,6 +471,18 @@ export default function OperationsPage() {
             ))}
           </tbody>
         </table>
+        <div className="card-list-mobile" style={{ marginTop: 12 }}>
+          {checklists.map((checklist) => (
+            <div className="mobile-card" key={checklist.checklist_id}>
+              <div className="mobile-card-title">Checklist #{checklist.checklist_id}</div>
+              <div className="mobile-card-meta">Technicien : {checklist.technician_id}</div>
+              <div className="mobile-card-meta">Date : {checklist.work_date}</div>
+              <div className="table-actions">
+                <StatusBadge status={checklist.shift_status} />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
