@@ -3,7 +3,8 @@
 import TopBar from "@/components/TopBar";
 import StatusBadge from "@/components/StatusBadge";
 import InvoiceForm from "@/components/forms/InvoiceForm";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useCompany } from "@/contexts/company/CompanyContext";
 
 type InvoiceRow = {
   invoice_id: string;
@@ -14,14 +15,18 @@ type InvoiceRow = {
 };
 
 export default function InvoicesPage() {
+  const { company } = useCompany();
+  const companyName = company?.name ?? "Entreprise";
+  const defaultSubject = useMemo(() => `Facture de ${companyName}`, [companyName]);
+  const defaultBody = "Bonjour, votre facture est prete. Merci pour votre confiance.";
   const [invoices, setInvoices] = useState<InvoiceRow[]>([]);
   const [sendStatus, setSendStatus] = useState("");
   const [paymentStatus, setPaymentStatus] = useState("");
   const [sendForm, setSendForm] = useState({
     invoiceId: "",
     to: "",
-    subject: "Invoice from Entretien Prestige",
-    body: "Your invoice is ready. Thank you for your business.",
+    subject: "",
+    body: "",
     channel: "email",
   });
   const [paymentForm, setPaymentForm] = useState({
@@ -33,6 +38,14 @@ export default function InvoicesPage() {
   useEffect(() => {
     void loadInvoices();
   }, []);
+
+  useEffect(() => {
+    setSendForm((prev) => ({
+      ...prev,
+      subject: prev.subject || defaultSubject,
+      body: prev.body || defaultBody,
+    }));
+  }, [defaultSubject, defaultBody]);
 
   async function loadInvoices() {
     const response = await fetch("/api/invoices");
@@ -55,10 +68,10 @@ export default function InvoicesPage() {
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setSendStatus(json.error ?? "Unable to send invoice");
+      setSendStatus(json.error ?? "Impossible d'envoyer la facture");
       return;
     }
-    setSendStatus("Invoice sent.");
+    setSendStatus("Facture envoyee.");
     setSendForm({ invoiceId: "", to: "", subject: sendForm.subject, body: sendForm.body, channel: "email" });
     void loadInvoices();
   }
@@ -76,10 +89,10 @@ export default function InvoicesPage() {
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setPaymentStatus(json.error ?? "Unable to record payment");
+      setPaymentStatus(json.error ?? "Impossible d'enregistrer le paiement");
       return;
     }
-    setPaymentStatus("Payment recorded.");
+    setPaymentStatus("Paiement enregistre.");
     setPaymentForm({ invoiceId: "", status: "paid", paidAmount: "" });
     void loadInvoices();
   }
@@ -87,9 +100,9 @@ export default function InvoicesPage() {
   return (
     <div className="page">
       <TopBar
-        title="Invoices"
-        subtitle="Billing status and collections"
-        actions={<button className="button-primary" type="button">New invoice</button>}
+        title="Factures"
+        subtitle="Suivi de facturation et encaissements"
+        actions={<button className="button-primary" type="button">Nouvelle facture</button>}
       />
 
       <div className="grid-2">
@@ -97,9 +110,9 @@ export default function InvoicesPage() {
           <table className="table">
             <thead>
               <tr>
-                <th>Invoice</th>
-                <th>Due date</th>
-                <th>Status</th>
+                <th>Facture</th>
+                <th>Date d'echeance</th>
+                <th>Statut</th>
                 <th>Total</th>
                 <th>PDF</th>
               </tr>
@@ -115,7 +128,7 @@ export default function InvoicesPage() {
                   <td>{invoice.total_amount ? `$${invoice.total_amount}` : "$0"}</td>
                   <td>
                     <a className="button-ghost" href={`/api/invoices/${invoice.invoice_id}/pdf`}>
-                      Download
+                      Telecharger
                     </a>
                   </td>
                 </tr>
@@ -125,14 +138,14 @@ export default function InvoicesPage() {
         </div>
         <div className="stack">
           <div className="card">
-            <h3 className="card-title">Create invoice</h3>
+            <h3 className="card-title">Creer une facture</h3>
             <InvoiceForm />
           </div>
           <div className="card">
-            <h3 className="card-title">Send invoice</h3>
+            <h3 className="card-title">Envoyer une facture</h3>
             <form className="form-grid" onSubmit={submitSend}>
               <div className="form-row">
-                <label className="label" htmlFor="sendInvoiceId">Invoice ID</label>
+                <label className="label" htmlFor="sendInvoiceId">ID facture</label>
                 <input
                   id="sendInvoiceId"
                   className="input"
@@ -142,7 +155,7 @@ export default function InvoicesPage() {
                 />
               </div>
               <div className="form-row">
-                <label className="label" htmlFor="sendTo">To</label>
+                <label className="label" htmlFor="sendTo">Destinataire</label>
                 <input
                   id="sendTo"
                   className="input"
@@ -153,19 +166,19 @@ export default function InvoicesPage() {
               </div>
               <div className="grid-2">
                 <div className="form-row">
-                  <label className="label" htmlFor="sendChannel">Channel</label>
+                  <label className="label" htmlFor="sendChannel">Canal</label>
                   <select
                     id="sendChannel"
                     className="select"
                     value={sendForm.channel}
                     onChange={(event) => setSendForm({ ...sendForm, channel: event.target.value })}
                   >
-                    <option value="email">Email</option>
+                    <option value="email">Courriel</option>
                     <option value="sms">SMS</option>
                   </select>
                 </div>
                 <div className="form-row">
-                  <label className="label" htmlFor="sendSubject">Subject</label>
+                  <label className="label" htmlFor="sendSubject">Sujet</label>
                   <input
                     id="sendSubject"
                     className="input"
@@ -183,15 +196,15 @@ export default function InvoicesPage() {
                   onChange={(event) => setSendForm({ ...sendForm, body: event.target.value })}
                 />
               </div>
-              <button className="button-primary" type="submit">Send invoice</button>
+              <button className="button-primary" type="submit">Envoyer la facture</button>
               {sendStatus ? <div className="hint">{sendStatus}</div> : null}
             </form>
           </div>
           <div className="card">
-            <h3 className="card-title">Record payment</h3>
+            <h3 className="card-title">Enregistrer un paiement</h3>
             <form className="form-grid" onSubmit={submitPayment}>
               <div className="form-row">
-                <label className="label" htmlFor="paymentInvoiceId">Invoice ID</label>
+                <label className="label" htmlFor="paymentInvoiceId">ID facture</label>
                 <input
                   id="paymentInvoiceId"
                   className="input"
@@ -202,20 +215,20 @@ export default function InvoicesPage() {
               </div>
               <div className="grid-2">
                 <div className="form-row">
-                  <label className="label" htmlFor="paymentStatus">Status</label>
+                  <label className="label" htmlFor="paymentStatus">Statut</label>
                   <select
                     id="paymentStatus"
                     className="select"
                     value={paymentForm.status}
                     onChange={(event) => setPaymentForm({ ...paymentForm, status: event.target.value })}
                   >
-                    <option value="paid">Paid</option>
-                    <option value="partially_paid">Partial</option>
-                    <option value="overdue">Overdue</option>
+                    <option value="paid">Payee</option>
+                    <option value="partially_paid">Partielle</option>
+                    <option value="overdue">En retard</option>
                   </select>
                 </div>
                 <div className="form-row">
-                  <label className="label" htmlFor="paidAmount">Paid amount</label>
+                  <label className="label" htmlFor="paidAmount">Montant paye</label>
                   <input
                     id="paidAmount"
                     className="input"
@@ -225,7 +238,7 @@ export default function InvoicesPage() {
                   />
                 </div>
               </div>
-              <button className="button-primary" type="submit">Record payment</button>
+              <button className="button-primary" type="submit">Enregistrer le paiement</button>
               {paymentStatus ? <div className="hint">{paymentStatus}</div> : null}
             </form>
           </div>

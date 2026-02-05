@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server";
-import { requirePermission } from "@/lib/auth";
+import {
+  conflict,
+  ok,
+  okBody,
+  requirePermission,
+  serverError,
+  validationError,
+} from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { logAudit } from "@/lib/audit";
@@ -17,7 +24,7 @@ export async function POST(
   }
   const paramsResult = idParamSchema.safeParse(params);
   if (!paramsResult.success) {
-    return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
+    return validationError(paramsResult.error, "Invalid request");
   }
   const notifId = paramsResult.data.id;
   const { profile } = auth;
@@ -29,10 +36,10 @@ export async function POST(
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
+    return conflict("idempotency_conflict", "Idempotency key conflict");
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
+    return conflict("idempotency_in_progress", "Request already in progress");
   }
   const { error } = await client
     .from("notifications")
@@ -40,7 +47,7 @@ export async function POST(
     .eq("notif_id", notifId);
 
   if (error) {
-    return NextResponse.json({ success: false, error: "Unable to update" }, { status: 400 });
+    return serverError("Unable to update", "notification_update_failed");
   }
 
   await logAudit(client, profile.user_id, "notification_read", "notification", notifId, "success", {
@@ -48,7 +55,8 @@ export async function POST(
     userAgent: request.headers.get("user-agent") ?? null,
   });
 
-  const responseBody = { success: true, data: { ok: true }, ok: true };
-  await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
-  return NextResponse.json(responseBody);
+  const responseBody = { ok: true };
+  const storedBody = okBody(responseBody, { flatten: true });
+  await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, storedBody, 200);
+  return ok(responseBody, { flatten: true });
 }

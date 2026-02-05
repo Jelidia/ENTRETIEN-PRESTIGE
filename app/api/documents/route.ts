@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-import { requireRole } from "@/lib/auth";
+import { notFound, ok, requireRole, serverError, validationError } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabaseServer";
 import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
@@ -38,7 +37,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const queryResult = documentsQuerySchema.safeParse(Object.fromEntries(searchParams));
   if (!queryResult.success) {
-    return NextResponse.json({ success: false, error: "Invalid document request" }, { status: 400 });
+    return validationError(queryResult.error, "Invalid document request");
   }
   const { userId, docType } = queryResult.data;
   const column = docTypeMap[docType];
@@ -52,12 +51,12 @@ export async function GET(request: Request) {
     .single();
 
   if (error || !user) {
-    return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
+    return notFound("User not found", "user_not_found");
   }
 
   const path = user[column as keyof typeof user] as string | null;
   if (!path) {
-    return NextResponse.json({ success: false, error: "Document missing" }, { status: 404 });
+    return notFound("Document missing", "document_missing");
   }
 
   const storagePath = resolveStoragePath(path);
@@ -67,7 +66,7 @@ export async function GET(request: Request) {
     .createSignedUrl(storagePath, 300);
 
   if (signError || !signed?.signedUrl) {
-    return NextResponse.json({ success: false, error: "Unable to sign document" }, { status: 500 });
+    return serverError("Unable to sign document", "document_sign_failed");
   }
 
   await logAudit(admin, auth.profile.user_id, "document_access", "user", userId, "success", {
@@ -76,9 +75,5 @@ export async function GET(request: Request) {
     newValues: { doc_type: docType },
   });
 
-  return NextResponse.json({
-    success: true,
-    data: { url: signed.signedUrl },
-    url: signed.signedUrl,
-  });
+  return ok({ url: signed.signedUrl }, { flatten: true });
 }

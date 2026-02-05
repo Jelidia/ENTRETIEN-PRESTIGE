@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import TopBar from "@/components/TopBar";
@@ -703,6 +704,17 @@ export default function SettingsPage() {
               </button>
             </div>
           </div>
+          {user && ["admin", "manager"].includes(user.role) ? (
+            <div className="card" style={{ marginTop: 16 }}>
+              <h2 className="card-title">Administration entreprise</h2>
+              <div className="card-meta" style={{ marginBottom: 16 }}>
+                Gerer l'entreprise, les services, les acces et l'equipe.
+              </div>
+              <Link className="button-primary" href="/admin/manage">
+                Ouvrir le centre d'administration
+              </Link>
+            </div>
+          ) : null}
         </section>
       )}
 

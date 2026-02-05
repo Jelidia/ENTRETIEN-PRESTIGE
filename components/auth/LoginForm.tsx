@@ -99,7 +99,7 @@ export default function LoginForm({ redirect }: { redirect?: string }) {
       <div style={{ textAlign: "center", marginBottom: 32 }}>
         <Image
           src="/logo.png"
-          alt="Entretien Prestige"
+          alt="Logo de l'entreprise"
           width={180}
           height={50}
           priority
@@ -107,18 +107,18 @@ export default function LoginForm({ redirect }: { redirect?: string }) {
           style={{ objectFit: "contain", margin: "0 auto" }}
         />
         <h2 style={{ marginTop: 16, fontSize: "24px", fontWeight: "bold", color: "#1E40AF" }}>
-          Entretien Prestige
+          Portail de l'entreprise
         </h2>
         <p style={{ marginTop: 4, fontSize: "14px", color: "#6B7280" }}>
-          Faites briller votre maison
+          Accedez a votre espace de travail
         </p>
       </div>
-      <h1 className="auth-title">Sign in</h1>
-      <p className="card-meta">Enter your credentials to access your account.</p>
+      <h1 className="auth-title">Connexion</h1>
+      <p className="card-meta">Entrez vos identifiants pour acceder a votre compte.</p>
       {error ? <div className="alert" style={{ marginTop: 16 }}>{error}</div> : null}
       <form className="form-grid" style={{ marginTop: 20 }} onSubmit={handleSubmit}>
         <div className="form-row">
-          <label className="label" htmlFor="email">Email</label>
+          <label className="label" htmlFor="email">Courriel</label>
           <input
             id="email"
             className="input"
@@ -129,7 +129,7 @@ export default function LoginForm({ redirect }: { redirect?: string }) {
           />
         </div>
         <div className="form-row">
-          <label className="label" htmlFor="password">Password</label>
+          <label className="label" htmlFor="password">Mot de passe</label>
           <input
             id="password"
             className="input"
@@ -153,11 +153,11 @@ export default function LoginForm({ redirect }: { redirect?: string }) {
           </label>
         </div>
         <button className="button-primary" type="submit" disabled={loading}>
-          {loading ? "Signing in..." : "Sign in"}
+          {loading ? "Connexion..." : "Se connecter"}
         </button>
       </form>
       <div className="auth-links">
-        <Link href="/forgot-password">Forgot password?</Link>
+        <Link href="/forgot-password">Mot de passe oublie?</Link>
       </div>
     </div>
   );

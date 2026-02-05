@@ -1,5 +1,14 @@
 import { NextResponse } from "next/server";
-import { requireRole } from "@/lib/auth";
+import {
+  conflict,
+  forbidden,
+  notFound,
+  ok,
+  okBody,
+  requireRole,
+  serverError,
+  validationError,
+} from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { availabilityUpdateSchema } from "@/lib/validators";
@@ -14,7 +23,11 @@ export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  const auth = await requireRole(request, ["admin", "manager", "technician"], ["team"]);
+  const auth = await requireRole(request, ["admin", "manager", "technician", "sales_rep"], [
+    "team",
+    "sales",
+    "technician",
+  ]);
   if ("response" in auth) return auth.response;
 
   const { profile, user } = auth;
@@ -26,10 +39,11 @@ export async function GET(
     target_user_id: params.id,
   });
 
-  // Technicians can only view their own availability
-  if (profile.role === "technician" && params.id !== user.id) {
-    return NextResponse.json({ success: false, error: "Vous ne pouvez voir que votre propre disponibilité" },
-      { status: 403 }
+  // Sales reps and technicians can only view their own availability
+  if ((profile.role === "technician" || profile.role === "sales_rep") && params.id !== user.id) {
+    return forbidden(
+      "Vous ne pouvez voir que votre propre disponibilité",
+      "availability_forbidden"
     );
   }
 
@@ -41,15 +55,11 @@ export async function GET(
     .maybeSingle();
 
   if (userError || !targetUser) {
-    return NextResponse.json({ success: false, error: "Utilisateur introuvable" },
-      { status: 404 }
-    );
+    return notFound("Utilisateur introuvable", "user_not_found");
   }
 
   if (targetUser.company_id !== profile.company_id) {
-    return NextResponse.json({ success: false, error: "Utilisateur introuvable" },
-      { status: 404 }
-    );
+    return notFound("Utilisateur introuvable", "user_not_found");
   }
 
   // Get availability
@@ -66,16 +76,10 @@ export async function GET(
       ...requestContext,
       action: "fetch_availability",
     });
-    return NextResponse.json({ success: false, error: "Échec du chargement de la disponibilité" },
-      { status: 500 }
-    );
+    return serverError("Échec du chargement de la disponibilité", "availability_load_failed");
   }
 
-  return NextResponse.json({
-    success: true,
-    data: { availability: availability ?? [] },
-    availability: availability ?? [],
-  });
+  return ok({ availability: availability ?? [] }, { flatten: true });
 }
 
 // POST /api/users/[id]/availability - Update user's availability
@@ -83,7 +87,11 @@ export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  const auth = await requireRole(request, ["admin", "manager", "technician"], ["team"]);
+  const auth = await requireRole(request, ["admin", "manager", "technician", "sales_rep"], [
+    "team",
+    "sales",
+    "technician",
+  ]);
   if ("response" in auth) return auth.response;
 
   const { profile, user } = auth;
@@ -96,10 +104,11 @@ export async function POST(
     target_user_id: params.id,
   });
 
-  // Technicians can only update their own availability
-  if (profile.role === "technician" && params.id !== user.id) {
-    return NextResponse.json({ success: false, error: "Vous ne pouvez modifier que votre propre disponibilité" },
-      { status: 403 }
+  // Sales reps and technicians can only update their own availability
+  if ((profile.role === "technician" || profile.role === "sales_rep") && params.id !== user.id) {
+    return forbidden(
+      "Vous ne pouvez modifier que votre propre disponibilité",
+      "availability_forbidden"
     );
   }
 
@@ -111,15 +120,11 @@ export async function POST(
     .maybeSingle();
 
   if (userError || !targetUser) {
-    return NextResponse.json({ success: false, error: "Utilisateur introuvable" },
-      { status: 404 }
-    );
+    return notFound("Utilisateur introuvable", "user_not_found");
   }
 
   if (targetUser.company_id !== profile.company_id) {
-    return NextResponse.json({ success: false, error: "Utilisateur introuvable" },
-      { status: 404 }
-    );
+    return notFound("Utilisateur introuvable", "user_not_found");
   }
 
   // Validate input
@@ -127,9 +132,7 @@ export async function POST(
   const validation = availabilityUpdateSchema.safeParse(body);
 
   if (!validation.success) {
-    return NextResponse.json({ success: false, error: "Données invalides", details: validation.error.format() },
-      { status: 400 }
-    );
+    return validationError(validation.error, "Données invalides");
   }
 
   const { availability } = validation.data;
@@ -138,10 +141,10 @@ export async function POST(
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
+    return conflict("idempotency_conflict", "Idempotency key conflict");
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
+    return conflict("idempotency_in_progress", "Request already in progress");
   }
 
   // Delete existing availability
@@ -172,9 +175,7 @@ export async function POST(
         ...requestContext,
         action: "save_availability",
       });
-      return NextResponse.json({ success: false, error: "Échec de l'enregistrement de la disponibilité" },
-        { status: 500 }
-      );
+      return serverError("Échec de l'enregistrement de la disponibilité", "availability_save_failed");
     }
   }
 
@@ -184,11 +185,8 @@ export async function POST(
     newValues: { slots: availableSlots.length },
   });
 
-  const responseBody = {
-    success: true,
-    count: availableSlots.length,
-    data: { count: availableSlots.length },
-  };
-  await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
-  return NextResponse.json(responseBody);
+  const responseBody = { count: availableSlots.length };
+  const storedBody = okBody(responseBody, { flatten: true });
+  await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, storedBody, 200);
+  return ok(responseBody, { flatten: true });
 }

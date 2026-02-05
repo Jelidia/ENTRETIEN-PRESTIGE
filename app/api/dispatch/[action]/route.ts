@@ -2,25 +2,321 @@ import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
-import { dispatchReassignSchema, weatherCancelSchema, dispatchScheduleSchema } from "@/lib/validators";
+import {
+  dispatchReassignSchema,
+  weatherCancelSchema,
+  dispatchScheduleSchema,
+  salesDayCreateSchema,
+  salesDayAssignSchema,
+  salesDayAutoAssignSchema,
+  salesDayMasterZoneSchema,
+  salesDaySubZoneSchema,
+  salesDayAssignmentsQuerySchema,
+  salesDayAvailabilityQuerySchema,
+  salesDayQuerySchema,
+} from "@/lib/validators";
 import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
+
+type DayOfWeek = "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday";
+
+type SalesRepRow = {
+  user_id: string;
+  full_name: string | null;
+  email: string;
+};
+
+type SalesDayAssignmentInput = {
+  salesRepId: string;
+  overrideStartTime?: string;
+  overrideMeetingAddress?: string;
+  overrideMeetingCity?: string;
+  overrideMeetingPostalCode?: string;
+  notes?: string;
+};
+
+type SalesDayAssignmentRow = {
+  assignment_id: string;
+  sales_rep_id: string | null;
+  override_start_time?: string | null;
+  override_meeting_address?: string | null;
+  override_meeting_city?: string | null;
+  override_meeting_postal_code?: string | null;
+  notes_override?: string | null;
+  sub_polygon_coordinates?: unknown;
+};
+
+type SalesClient = ReturnType<typeof createUserClient>;
 
 export async function POST(
   request: Request,
   { params }: { params: { action: string } }
 ) {
   const action = params.action;
-  const auth = await requireRole(request, ["admin", "manager", "dispatcher"], "dispatch");
+  const isSalesDayAction = action.startsWith("sales-day");
+  const auth = await requireRole(
+    request,
+    isSalesDayAction ? ["admin", "manager"] : ["admin", "manager", "dispatcher"],
+    isSalesDayAction ? "sales" : "dispatch"
+  );
   if ("response" in auth) {
     return auth.response;
   }
-  const { profile } = auth;
+  const { profile, user } = auth;
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
   const body = await request.json().catch(() => null);
   const ip = getRequestIp(request);
+
+  if (action === "sales-day-create") {
+    const parsed = salesDayCreateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ success: false, error: "Invalid sales day" }, { status: 400 });
+    }
+    if (!isWithinNextWeek(parsed.data.salesDayDate)) {
+      return NextResponse.json({ success: false, error: "La date doit etre dans les 7 prochains jours" }, { status: 400 });
+    }
+    if (!isValidTimeRange(parsed.data.startTime, parsed.data.endTime)) {
+      return NextResponse.json({ success: false, error: "Les heures sont invalides" }, { status: 400 });
+    }
+
+    const idempotency = await beginIdempotency(client, request, profile.user_id, {
+      action: "sales-day-create",
+      payload: parsed.data,
+    });
+    if (idempotency.action === "replay") {
+      return NextResponse.json(idempotency.body, { status: idempotency.status });
+    }
+    if (idempotency.action === "conflict") {
+      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
+    }
+    if (idempotency.action === "in_progress") {
+      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
+    }
+
+    const { error, data } = await client
+      .from("sales_days")
+      .insert({
+        company_id: profile.company_id,
+        sales_day_date: parsed.data.salesDayDate,
+        start_time: parsed.data.startTime,
+        end_time: parsed.data.endTime,
+        meeting_address: parsed.data.meetingAddress ?? null,
+        meeting_city: parsed.data.meetingCity ?? null,
+        meeting_postal_code: parsed.data.meetingPostalCode ?? null,
+        notes: parsed.data.notes ?? null,
+        master_polygon_coordinates: parsed.data.masterPolygonCoordinates ?? null,
+        created_by: user.id,
+      })
+      .select()
+      .single();
+
+    if (error || !data) {
+      return NextResponse.json({ success: false, error: "Impossible de creer la journee" }, { status: 400 });
+    }
+
+    await logAudit(client, profile.user_id, "sales_day_create", "sales_day", data.sales_day_id, "success", {
+      ipAddress: ip,
+      userAgent: request.headers.get("user-agent") ?? null,
+      newValues: { sales_day_date: parsed.data.salesDayDate },
+    });
+
+    const responseBody = { success: true, data, ok: true };
+    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 201);
+    return NextResponse.json(responseBody, { status: 201 });
+  }
+
+  if (action === "sales-day-assign") {
+    const parsed = salesDayAssignSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ success: false, error: "Invalid assignment" }, { status: 400 });
+    }
+
+    const idempotency = await beginIdempotency(client, request, profile.user_id, {
+      action: "sales-day-assign",
+      payload: parsed.data,
+    });
+    if (idempotency.action === "replay") {
+      return NextResponse.json(idempotency.body, { status: idempotency.status });
+    }
+    if (idempotency.action === "conflict") {
+      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
+    }
+    if (idempotency.action === "in_progress") {
+      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
+    }
+
+    const assignments: SalesDayAssignmentInput[] = parsed.data.assignments;
+    const rows = assignments.map((assignment) => ({
+      company_id: profile.company_id,
+      sales_day_id: parsed.data.salesDayId,
+      sales_rep_id: assignment.salesRepId,
+      override_start_time: assignment.overrideStartTime ?? null,
+      override_meeting_address: assignment.overrideMeetingAddress ?? null,
+      override_meeting_city: assignment.overrideMeetingCity ?? null,
+      override_meeting_postal_code: assignment.overrideMeetingPostalCode ?? null,
+      notes_override: assignment.notes ?? null,
+    }));
+
+    const { error } = await client
+      .from("sales_day_assignments")
+      .upsert(rows, { onConflict: "sales_day_id,sales_rep_id" });
+
+    if (error) {
+      return NextResponse.json({ success: false, error: "Impossible d'assigner les vendeurs" }, { status: 400 });
+    }
+
+    await logAudit(client, profile.user_id, "sales_day_assign", "sales_day", parsed.data.salesDayId, "success", {
+      ipAddress: ip,
+      userAgent: request.headers.get("user-agent") ?? null,
+      newValues: { assignments: rows.length },
+    });
+
+    const responseBody = { success: true, data: { ok: true }, ok: true };
+    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+    return NextResponse.json(responseBody);
+  }
+
+  if (action === "sales-day-auto-assign") {
+    const parsed = salesDayAutoAssignSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
+    }
+
+    const idempotency = await beginIdempotency(client, request, profile.user_id, {
+      action: "sales-day-auto-assign",
+      payload: parsed.data,
+    });
+    if (idempotency.action === "replay") {
+      return NextResponse.json(idempotency.body, { status: idempotency.status });
+    }
+    if (idempotency.action === "conflict") {
+      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
+    }
+    if (idempotency.action === "in_progress") {
+      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
+    }
+
+    const { data: day } = await client
+      .from("sales_days")
+      .select("sales_day_date, start_time, end_time")
+      .eq("sales_day_id", parsed.data.salesDayId)
+      .eq("company_id", profile.company_id)
+      .single();
+
+    if (!day) {
+      return NextResponse.json({ success: false, error: "Journee introuvable" }, { status: 404 });
+    }
+    if (!isValidTimeRange(day.start_time, day.end_time)) {
+      return NextResponse.json({ success: false, error: "Les heures sont invalides" }, { status: 400 });
+    }
+
+    const available = await resolveAvailableSalesReps(client, profile.company_id, day.sales_day_date, day.start_time, day.end_time);
+    const rows = available.map((rep) => ({
+      company_id: profile.company_id,
+      sales_day_id: parsed.data.salesDayId,
+      sales_rep_id: rep.user_id,
+    }));
+
+    const { error } = await client
+      .from("sales_day_assignments")
+      .upsert(rows, { onConflict: "sales_day_id,sales_rep_id" });
+
+    if (error) {
+      return NextResponse.json({ success: false, error: "Impossible d'assigner les disponibilites" }, { status: 400 });
+    }
+
+    await logAudit(client, profile.user_id, "sales_day_auto_assign", "sales_day", parsed.data.salesDayId, "success", {
+      ipAddress: ip,
+      userAgent: request.headers.get("user-agent") ?? null,
+      newValues: { assigned: rows.length },
+    });
+
+    const responseBody = { success: true, data: { assigned: rows.length }, assigned: rows.length };
+    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+    return NextResponse.json(responseBody);
+  }
+
+  if (action === "sales-day-master-zone") {
+    const parsed = salesDayMasterZoneSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ success: false, error: "Invalid zone" }, { status: 400 });
+    }
+
+    const idempotency = await beginIdempotency(client, request, profile.user_id, {
+      action: "sales-day-master-zone",
+      payload: parsed.data,
+    });
+    if (idempotency.action === "replay") {
+      return NextResponse.json(idempotency.body, { status: idempotency.status });
+    }
+    if (idempotency.action === "conflict") {
+      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
+    }
+    if (idempotency.action === "in_progress") {
+      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
+    }
+
+    const { error } = await client
+      .from("sales_days")
+      .update({ master_polygon_coordinates: parsed.data.polygonCoordinates })
+      .eq("sales_day_id", parsed.data.salesDayId)
+      .eq("company_id", profile.company_id);
+
+    if (error) {
+      return NextResponse.json({ success: false, error: "Impossible de sauvegarder la zone" }, { status: 400 });
+    }
+
+    await logAudit(client, profile.user_id, "sales_day_master_zone", "sales_day", parsed.data.salesDayId, "success", {
+      ipAddress: ip,
+      userAgent: request.headers.get("user-agent") ?? null,
+    });
+
+    const responseBody = { success: true, data: { ok: true }, ok: true };
+    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+    return NextResponse.json(responseBody);
+  }
+
+  if (action === "sales-day-sub-zone") {
+    const parsed = salesDaySubZoneSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ success: false, error: "Invalid zone" }, { status: 400 });
+    }
+
+    const idempotency = await beginIdempotency(client, request, profile.user_id, {
+      action: "sales-day-sub-zone",
+      payload: parsed.data,
+    });
+    if (idempotency.action === "replay") {
+      return NextResponse.json(idempotency.body, { status: idempotency.status });
+    }
+    if (idempotency.action === "conflict") {
+      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
+    }
+    if (idempotency.action === "in_progress") {
+      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
+    }
+
+    const { error } = await client
+      .from("sales_day_assignments")
+      .update({ sub_polygon_coordinates: parsed.data.polygonCoordinates })
+      .eq("assignment_id", parsed.data.assignmentId)
+      .eq("company_id", profile.company_id);
+
+    if (error) {
+      return NextResponse.json({ success: false, error: "Impossible de sauvegarder la zone" }, { status: 400 });
+    }
+
+    await logAudit(client, profile.user_id, "sales_day_sub_zone", "sales_day_assignment", parsed.data.assignmentId, "success", {
+      ipAddress: ip,
+      userAgent: request.headers.get("user-agent") ?? null,
+    });
+
+    const responseBody = { success: true, data: { ok: true }, ok: true };
+    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
+    return NextResponse.json(responseBody);
+  }
 
   if (action === "reassign") {
     const parsed = dispatchReassignSchema.safeParse(body);
@@ -207,17 +503,256 @@ export async function POST(
   return NextResponse.json({ success: false, error: "Unsupported action" }, { status: 400 });
 }
 
+const dayOrder: DayOfWeek[] = [
+  "sunday",
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+];
+
+function resolveDayOfWeek(value: string): DayOfWeek | null {
+  const parsed = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+  return dayOrder[parsed.getDay()] ?? null;
+}
+
+function parseHour(value: string) {
+  const hourString = value.split(":")[0];
+  if (!hourString) {
+    return null;
+  }
+  const hour = Number(hourString);
+  if (Number.isNaN(hour)) {
+    return null;
+  }
+  return hour;
+}
+
+function isValidTimeRange(startTime: string, endTime: string) {
+  const startHour = parseHour(startTime);
+  const endHour = parseHour(endTime);
+  if (startHour === null || endHour === null) {
+    return false;
+  }
+  return endHour > startHour;
+}
+
+function buildHourRange(startTime: string, endTime: string) {
+  const startHour = parseHour(startTime);
+  const endHour = parseHour(endTime);
+  if (startHour === null || endHour === null || endHour <= startHour) {
+    return [] as number[];
+  }
+  const hours: number[] = [];
+  for (let hour = startHour; hour < endHour; hour += 1) {
+    hours.push(hour);
+  }
+  return hours;
+}
+
+function isWithinNextWeek(value: string) {
+  const target = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(target.getTime())) {
+    return false;
+  }
+  const today = new Date();
+  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const diffMs = target.getTime() - start.getTime();
+  const diffDays = diffMs / (24 * 60 * 60 * 1000);
+  return diffDays >= 0 && diffDays <= 7;
+}
+
+async function resolveAvailableSalesReps(
+  client: SalesClient,
+  companyId: string,
+  date: string,
+  startTime: string,
+  endTime: string
+): Promise<SalesRepRow[]> {
+  const dayOfWeek = resolveDayOfWeek(date);
+  if (!dayOfWeek) {
+    return [];
+  }
+  const hours = buildHourRange(startTime, endTime);
+  const { data: reps } = await client
+    .from("users")
+    .select("user_id, full_name, email")
+    .eq("company_id", companyId)
+    .eq("role", "sales_rep");
+
+  if (!reps?.length) {
+    return [];
+  }
+
+  if (!hours.length) {
+    return reps as SalesRepRow[];
+  }
+
+  const repIds = reps.map((rep) => rep.user_id);
+  const { data: slots } = await client
+    .from("employee_availability")
+    .select("user_id, hour, is_available")
+    .eq("company_id", companyId)
+    .eq("day_of_week", dayOfWeek)
+    .in("user_id", repIds)
+    .in("hour", hours);
+
+  const availabilityMap = new Map<string, Set<number>>();
+  (slots ?? []).forEach((slot) => {
+    if (!slot.is_available) {
+      return;
+    }
+    const existing = availabilityMap.get(slot.user_id) ?? new Set<number>();
+    existing.add(slot.hour);
+    availabilityMap.set(slot.user_id, existing);
+  });
+
+  return reps.filter((rep) => {
+    const availableHours = availabilityMap.get(rep.user_id);
+    if (!availableHours) {
+      return false;
+    }
+    return hours.every((hour) => availableHours.has(hour));
+  }) as SalesRepRow[];
+}
+
 export async function GET(
   request: Request,
   { params }: { params: { action: string } }
 ) {
   const action = params.action;
-  const auth = await requireRole(request, ["admin", "manager", "dispatcher"], "dispatch");
+  const isSalesDayAction = action.startsWith("sales-day") || action === "sales-availability";
+  const auth = await requireRole(
+    request,
+    isSalesDayAction ? ["admin", "manager", "sales_rep"] : ["admin", "manager", "dispatcher"],
+    isSalesDayAction ? "sales" : "dispatch"
+  );
   if ("response" in auth) {
     return auth.response;
   }
+  const { profile, user } = auth;
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
+
+  if (action === "sales-days") {
+    const queryResult = salesDayQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
+    if (!queryResult.success) {
+      return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
+    }
+
+    if (profile.role === "sales_rep") {
+      const { data, error } = await client
+        .from("sales_day_assignments")
+        .select(
+          "assignment_id, sales_rep_id, override_start_time, override_meeting_address, override_meeting_city, override_meeting_postal_code, notes_override, sub_polygon_coordinates, sales_days (sales_day_id, sales_day_date, start_time, end_time, meeting_address, meeting_city, meeting_postal_code, notes, master_polygon_coordinates)"
+        )
+        .eq("company_id", profile.company_id)
+        .eq("sales_rep_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        return NextResponse.json({ success: false, error: "Impossible de charger les journees" }, { status: 400 });
+      }
+
+      return NextResponse.json({ success: true, data: data ?? [] });
+    }
+
+    let query = client.from("sales_days").select("*").eq("company_id", profile.company_id);
+    if (queryResult.data.from) {
+      query = query.gte("sales_day_date", queryResult.data.from);
+    }
+    if (queryResult.data.to) {
+      query = query.lte("sales_day_date", queryResult.data.to);
+    }
+    const { data, error } = await query.order("sales_day_date", { ascending: true });
+    if (error) {
+      return NextResponse.json({ success: false, error: "Impossible de charger les journees" }, { status: 400 });
+    }
+    return NextResponse.json({ success: true, data: data ?? [] });
+  }
+
+  if (action === "sales-day-assignments") {
+    if (profile.role === "sales_rep") {
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    }
+    const queryResult = salesDayAssignmentsQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
+    if (!queryResult.success) {
+      return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
+    }
+
+    const { data: assignments, error } = await client
+      .from("sales_day_assignments")
+      .select("assignment_id, sales_rep_id, override_start_time, override_meeting_address, override_meeting_city, override_meeting_postal_code, notes_override, sub_polygon_coordinates")
+      .eq("company_id", profile.company_id)
+      .eq("sales_day_id", queryResult.data.salesDayId)
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      return NextResponse.json({ success: false, error: "Impossible de charger les assignations" }, { status: 400 });
+    }
+
+    const rawAssignments = (assignments ?? []) as SalesDayAssignmentRow[];
+    const repIds = rawAssignments
+      .map((assignment) => assignment.sales_rep_id)
+      .filter((value): value is string => Boolean(value));
+    const { data: reps } = repIds.length
+      ? await client.from("users").select("user_id, full_name, email").in("user_id", repIds)
+      : { data: [] };
+    const repMap = new Map((reps ?? []).map((rep) => [rep.user_id, rep]));
+
+    const enriched = rawAssignments.map((assignment) => ({
+      ...assignment,
+      sales_rep: repMap.get(assignment.sales_rep_id ?? "") ?? null,
+    }));
+
+    return NextResponse.json({ success: true, data: enriched });
+  }
+
+  if (action === "sales-availability") {
+    if (profile.role === "sales_rep") {
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+    }
+    const queryResult = salesDayAvailabilityQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
+    if (!queryResult.success) {
+      return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
+    }
+    if (!isWithinNextWeek(queryResult.data.date)) {
+      return NextResponse.json({ success: false, error: "La date doit etre dans les 7 prochains jours" }, { status: 400 });
+    }
+    if (!isValidTimeRange(queryResult.data.startTime, queryResult.data.endTime)) {
+      return NextResponse.json({ success: false, error: "Les heures sont invalides" }, { status: 400 });
+    }
+
+    const { data: reps } = await client
+      .from("users")
+      .select("user_id, full_name, email")
+      .eq("company_id", profile.company_id)
+      .eq("role", "sales_rep")
+      .order("full_name", { ascending: true });
+
+    const available = await resolveAvailableSalesReps(
+      client,
+      profile.company_id,
+      queryResult.data.date,
+      queryResult.data.startTime,
+      queryResult.data.endTime
+    );
+    const availableIds = new Set(available.map((rep) => rep.user_id));
+
+    const payload = (reps ?? []).map((rep) => ({
+      user_id: rep.user_id,
+      full_name: rep.full_name,
+      email: rep.email,
+      available: availableIds.has(rep.user_id),
+    }));
+
+    return NextResponse.json({ success: true, data: payload });
+  }
 
   if (action === "conflicts") {
     const { data, error } = await client

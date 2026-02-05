@@ -1,5 +1,13 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import {
+  badRequest,
+  conflict,
+  ok,
+  okBody,
+  requireUser,
+  serverError,
+  validationError,
+} from "@/lib/auth";
 import { createAdminClient, createAnonClient, createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { changePasswordSchema } from "@/lib/validators";
@@ -25,9 +33,7 @@ export async function PATCH(request: Request) {
     const result = changePasswordSchema.safeParse(body);
 
     if (!result.success) {
-      return NextResponse.json({ success: false, error: "Invalid input", details: result.error.format() },
-        { status: 400 }
-      );
+      return validationError(result.error, "Invalid input");
     }
 
     const { currentPassword, newPassword } = result.data;
@@ -39,9 +45,7 @@ export async function PATCH(request: Request) {
     });
 
     if (signInError) {
-      return NextResponse.json({ success: false, error: "Mot de passe actuel incorrect" },
-        { status: 400 }
-      );
+      return badRequest("invalid_password", "Mot de passe actuel incorrect");
     }
 
     const client = createUserClient(getAccessTokenFromRequest(request) ?? "");
@@ -52,10 +56,10 @@ export async function PATCH(request: Request) {
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
+      return conflict("idempotency_conflict", "Idempotency key conflict");
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
+      return conflict("idempotency_in_progress", "Request already in progress");
     }
     const { error: updateError } = await client.auth.updateUser({
       password: newPassword,
@@ -66,9 +70,7 @@ export async function PATCH(request: Request) {
         ...requestContext,
         action: "update_password",
       });
-      return NextResponse.json({ success: false, error: "Failed to change password" },
-        { status: 500 }
-      );
+      return serverError("Failed to change password", "password_update_failed");
     }
 
     const admin = createAdminClient();
@@ -77,20 +79,15 @@ export async function PATCH(request: Request) {
       userAgent: request.headers.get("user-agent") ?? null,
     });
 
-    const responseBody = {
-      success: true,
-      message: "Password changed successfully",
-      data: { message: "Password changed successfully" },
-    };
-    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
-    return NextResponse.json(responseBody);
+    const responseBody = { message: "Password changed successfully" };
+    const storedBody = okBody(responseBody, { flatten: true });
+    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, storedBody, 200);
+    return ok(responseBody, { flatten: true });
   } catch (err) {
     await captureError(err, {
       ...requestContext,
       action: "change_password",
     });
-    return NextResponse.json({ success: false, error: "An error occurred" },
-      { status: 500 }
-    );
+    return serverError("An error occurred", "password_update_failed");
   }
 }

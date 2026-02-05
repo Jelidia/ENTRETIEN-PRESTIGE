@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server";
+import {
+  conflict,
+  notFound,
+  ok,
+  okBody,
+  requirePermission,
+  serverError,
+  validationError,
+} from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { customerUpdateSchema } from "@/lib/validators";
-import { requirePermission } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
@@ -19,10 +27,10 @@ export async function GET(
   const client = createUserClient(token ?? "");
   const { data, error } = await client.from("customers").select("*").eq("customer_id", params.id).single();
   if (error || !data) {
-    return NextResponse.json({ success: false, error: "Customer not found" }, { status: 404 });
+    return notFound("Customer not found", "customer_not_found");
   }
 
-  return NextResponse.json({ success: true, data });
+  return ok(data);
 }
 
 export async function PATCH(
@@ -38,7 +46,7 @@ export async function PATCH(
   const body = await request.json().catch(() => null);
   const parsed = customerUpdateSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ success: false, error: "Invalid update" }, { status: 400 });
+    return validationError(parsed.error, "Invalid update");
   }
 
   const token = getAccessTokenFromRequest(request);
@@ -48,10 +56,10 @@ export async function PATCH(
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
+    return conflict("idempotency_conflict", "Idempotency key conflict");
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
+    return conflict("idempotency_in_progress", "Request already in progress");
   }
   const { data, error } = await client
     .from("customers")
@@ -61,7 +69,7 @@ export async function PATCH(
     .single();
 
   if (error || !data) {
-    return NextResponse.json({ success: false, error: "Unable to update customer" }, { status: 400 });
+    return serverError("Unable to update customer", "customer_update_failed");
   }
 
   await logAudit(client, profile.user_id, "customer_update", "customer", params.id, "success", {
@@ -70,7 +78,7 @@ export async function PATCH(
     newValues: parsed.data,
   });
 
-  const responseBody = { success: true, data };
-  await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
-  return NextResponse.json(responseBody);
+  const storedBody = okBody(data);
+  await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, storedBody, 200);
+  return ok(data);
 }

@@ -301,7 +301,27 @@ export const companyUpdateSchema = z.object({
   province: z.string().optional(),
   postal_code: z.string().optional(),
   timezone: z.string().optional(),
+  gst_number: z.string().optional(),
+  qst_number: z.string().optional(),
   rolePermissions: rolePermissionsSchema.optional(),
+});
+
+export const companyServiceCreateSchema = z.object({
+  name: z.string().min(2),
+  description: z.string().optional(),
+  defaultDurationMinutes: z.number().int().min(0).optional(),
+  defaultPrice: z.number().min(0).optional(),
+  active: z.boolean().optional(),
+  sortOrder: z.number().int().optional(),
+});
+
+export const companyServiceUpdateSchema = z.object({
+  name: z.string().min(2).optional(),
+  description: z.string().optional(),
+  defaultDurationMinutes: z.number().int().min(0).optional(),
+  defaultPrice: z.number().min(0).optional(),
+  active: z.boolean().optional(),
+  sortOrder: z.number().int().optional(),
 });
 
 export const notificationSettingsSchema = z.object({
@@ -402,6 +422,60 @@ export const dispatchScheduleSchema = z.object({
   scheduledEndTime: z.string().min(4),
 });
 
+export const salesDayCreateSchema = z.object({
+  salesDayDate: z.string().min(6),
+  startTime: z.string().min(4),
+  endTime: z.string().min(4),
+  meetingAddress: z.string().optional(),
+  meetingCity: z.string().optional(),
+  meetingPostalCode: z.string().optional(),
+  notes: z.string().optional(),
+  masterPolygonCoordinates: z.array(polygonCoordinateSchema).optional(),
+});
+
+export const salesDayAssignSchema = z.object({
+  salesDayId: z.string().min(1),
+  assignments: z.array(
+    z.object({
+      salesRepId: z.string().min(1),
+      overrideStartTime: z.string().optional(),
+      overrideMeetingAddress: z.string().optional(),
+      overrideMeetingCity: z.string().optional(),
+      overrideMeetingPostalCode: z.string().optional(),
+      notes: z.string().optional(),
+    })
+  ).min(1),
+});
+
+export const salesDayAutoAssignSchema = z.object({
+  salesDayId: z.string().min(1),
+});
+
+export const salesDayMasterZoneSchema = z.object({
+  salesDayId: z.string().min(1),
+  polygonCoordinates: z.array(polygonCoordinateSchema).min(3),
+});
+
+export const salesDaySubZoneSchema = z.object({
+  assignmentId: z.string().min(1),
+  polygonCoordinates: z.array(polygonCoordinateSchema).min(3),
+});
+
+export const salesDayAssignmentsQuerySchema = z.object({
+  salesDayId: z.string().min(1),
+});
+
+export const salesDayAvailabilityQuerySchema = z.object({
+  date: z.string().min(6),
+  startTime: z.string().min(4),
+  endTime: z.string().min(4),
+});
+
+export const salesDayQuerySchema = z.object({
+  from: z.string().optional(),
+  to: z.string().optional(),
+});
+
 export const photoUploadSchema = z.object({
   photo_type: z.enum(["before", "after"]),
   side: z.enum(["front", "back", "left", "right"]),
@@ -496,6 +570,25 @@ export const notificationDeleteQuerySchema = z.object({
 
 export const ratingsValidateQuerySchema = z.object({
   token: z.string().min(1),
+});
+
+export const portalTokenPayloadSchema = z.object({
+  customer_id: uuidSchema,
+  company_id: uuidSchema,
+  expires_at: z.string().min(1),
+});
+
+export const portalTokenParamSchema = z.object({
+  token: z.string().min(10),
+});
+
+export const portalInvoiceParamSchema = z.object({
+  token: z.string().min(10),
+  invoiceId: uuidSchema,
+});
+
+export const portalLinkQuerySchema = z.object({
+  expires_in_days: z.coerce.number().int().min(1).max(90).optional(),
 });
 
 export const settingsDocumentQuerySchema = z.object({

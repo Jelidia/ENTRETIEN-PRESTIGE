@@ -1,18 +1,19 @@
 import { NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabaseServer";
+import { createAdminClient, createUserClient } from "@/lib/supabaseServer";
 import { requireRole } from "@/lib/auth";
 import { generateAuthenticatorSecret } from "@/lib/security";
 import { getRequestIp, rateLimit } from "@/lib/rateLimit";
 import { logAudit } from "@/lib/audit";
 import { beginIdempotency, completeIdempotency } from "@/lib/idempotency";
 import { emptyBodySchema, emptyQuerySchema } from "@/lib/validators";
+import { getAccessTokenFromRequest } from "@/lib/session";
 
 export async function POST(request: Request) {
   const auth = await requireRole(request, ["admin"]);
   if ("response" in auth) {
     return auth.response;
   }
-  const { user } = auth;
+  const { user, profile } = auth;
 
   const queryResult = emptyQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
   if (!queryResult.success) {
@@ -46,7 +47,15 @@ export async function POST(request: Request) {
   if (idempotency.action === "in_progress") {
     return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
   }
-  const secret = generateAuthenticatorSecret(user.email ?? "user");
+  const token = getAccessTokenFromRequest(request);
+  const client = createUserClient(token ?? "");
+  const { data: company } = await client
+    .from("companies")
+    .select("name")
+    .eq("company_id", profile.company_id)
+    .single();
+  const issuer = company?.name ?? "Entreprise";
+  const secret = generateAuthenticatorSecret(user.email ?? "user", issuer);
 
   const { error } = await admin
     .from("users")

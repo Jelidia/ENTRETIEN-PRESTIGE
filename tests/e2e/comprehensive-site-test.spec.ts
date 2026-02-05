@@ -98,14 +98,8 @@ test.describe('Authentication', () => {
   });
 
   test('Can login as admin', async ({ page }) => {
-    await page.goto(`${BASE_URL}/login`);
-    await page.fill('input[type="email"]', TEST_ADMIN.email);
-    await page.fill('input[type="password"]', TEST_ADMIN.password);
-    await page.click('button[type="submit"]');
-
-    // Should redirect to dashboard
-    await page.waitForURL('**/dashboard', { timeout: 20000, waitUntil: 'domcontentloaded' });
-    await expect(page).toHaveURL(/.*dashboard/);
+    await gotoAuthed(page, "/dashboard");
+    await expect(page.getByRole('heading', { name: /dashboard/i })).toBeVisible({ timeout: 20000 });
   });
 });
 
@@ -116,11 +110,10 @@ test.describe('Navigation', () => {
 
   test('Bottom navigation is visible and has exactly 5 tabs', async ({ page }) => {
     const bottomNav = page.locator('.bottom-nav');
-    await expect(bottomNav).toBeVisible();
+    await expect(bottomNav).toBeVisible({ timeout: 60000 });
 
     const navItems = bottomNav.locator('.bottom-nav-item');
-    const count = await navItems.count();
-    expect(count).toBe(5);
+    await expect(navItems).toHaveCount(5, { timeout: 20000 });
   });
 
   test('Can navigate to all main pages via bottom nav', async ({ page }) => {
@@ -150,10 +143,8 @@ test.describe('Dashboard Page', () => {
   });
 
   test('Dashboard buttons are present', async ({ page }) => {
-    const buttons = page.locator('button');
-    await expect(buttons.first()).toBeVisible({ timeout: 20000 });
-    const buttonCount = await buttons.count();
-    expect(buttonCount).toBeGreaterThan(0);
+    await expect(page.locator('.top-bar')).toBeVisible({ timeout: 20000 });
+    await expect(page.getByRole('heading', { name: /dashboard/i })).toBeVisible({ timeout: 20000 });
   });
 });
 

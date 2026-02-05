@@ -1,4 +1,10 @@
-import { NextResponse } from "next/server";
+import {
+  errorResponse,
+  notFound,
+  ok,
+  tooManyRequests,
+  validationError,
+} from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabaseServer";
 import { hashCode, timingSafeEqualHex } from "@/lib/crypto";
 import { getRequestIp, rateLimit } from "@/lib/rateLimit";
@@ -8,17 +14,13 @@ export async function GET(request: Request) {
   const ip = getRequestIp(request);
   const limit = rateLimit(`ratings:validate:${ip}`, 30, 15 * 60 * 1000);
   if (!limit.allowed) {
-    return NextResponse.json({ success: false, error: "Trop de tentatives. Réessayez plus tard." },
-      { status: 429 }
-    );
+    return tooManyRequests("Trop de tentatives. Réessayez plus tard.");
   }
 
   const { searchParams } = new URL(request.url);
   const queryResult = ratingsValidateQuerySchema.safeParse(Object.fromEntries(searchParams));
   if (!queryResult.success) {
-    return NextResponse.json({ success: false, error: "Token manquant" },
-      { status: 400 }
-    );
+    return validationError(queryResult.error, "Token manquant");
   }
   const { token } = queryResult.data;
   const tokenHash = hashCode(token);
@@ -33,15 +35,11 @@ export async function GET(request: Request) {
     .maybeSingle();
 
   if (tokenError || !ratingToken) {
-    return NextResponse.json({ success: false, error: "Token invalide" },
-      { status: 404 }
-    );
+    return notFound("Token invalide", "token_invalid");
   }
 
   if (!timingSafeEqualHex(tokenHash, ratingToken.token_hash)) {
-    return NextResponse.json({ success: false, error: "Token invalide" },
-      { status: 404 }
-    );
+    return notFound("Token invalide", "token_invalid");
   }
 
   // Check if token is expired
@@ -49,16 +47,12 @@ export async function GET(request: Request) {
   const expiresAt = new Date(ratingToken.expires_at);
 
   if (now > expiresAt) {
-    return NextResponse.json({ success: false, error: "Ce lien a expiré" },
-      { status: 410 }
-    );
+    return errorResponse(410, "token_expired", "Ce lien a expiré");
   }
 
   // Check if already used
   if (ratingToken.used_at) {
-    return NextResponse.json({ success: false, error: "Ce lien a déjà été utilisé" },
-      { status: 410 }
-    );
+    return errorResponse(410, "token_used", "Ce lien a déjà été utilisé");
   }
 
   // Get job details
@@ -66,6 +60,7 @@ export async function GET(request: Request) {
     .from("jobs")
     .select(`
       job_id,
+      company_id,
       service_type,
       scheduled_date,
       customer_id,
@@ -77,15 +72,14 @@ export async function GET(request: Request) {
     .single();
 
   if (jobError || !job) {
-    return NextResponse.json({ success: false, error: "Service introuvable" },
-      { status: 404 }
-    );
+    return notFound("Service introuvable", "service_not_found");
   }
 
   type CustomerRow = { first_name?: string | null; last_name?: string | null };
   type TechnicianRow = { full_name?: string | null };
   type JobRecord = {
     job_id: string;
+    company_id?: string | null;
     service_type?: string | null;
     scheduled_date?: string | null;
     customers?: CustomerRow | CustomerRow[] | null;
@@ -99,14 +93,24 @@ export async function GET(request: Request) {
   const technician = getFirst(jobRecord.technician);
   const customerName = `${customer?.first_name ?? ""} ${customer?.last_name ?? ""}`.trim();
   const technicianName = technician?.full_name ?? "Technicien";
+  let companyName: string | null = null;
+  if (jobRecord.company_id) {
+    const { data: company } = await admin
+      .from("companies")
+      .select("name")
+      .eq("company_id", jobRecord.company_id)
+      .single();
+    companyName = company?.name ?? null;
+  }
 
   const data = {
     job_id: jobRecord.job_id,
+    company_name: companyName,
     customer_name: customerName,
     service_type: jobRecord.service_type ?? "Service",
     service_date: jobRecord.scheduled_date ?? "",
     technician_name: technicianName,
   };
 
-  return NextResponse.json({ success: true, data, ...data });
+  return ok(data, { flatten: true });
 }

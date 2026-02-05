@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import {
+  conflict,
+  ok,
+  okBody,
+  requireUser,
+  serverError,
+  validationError,
+} from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { profileUpdateSchema } from "@/lib/validators";
@@ -26,9 +33,7 @@ export async function PATCH(request: Request) {
     const result = profileUpdateSchema.safeParse(body);
 
     if (!result.success) {
-      return NextResponse.json({ success: false, error: "Invalid input", details: result.error.format() },
-        { status: 400 }
-      );
+      return validationError(result.error, "Invalid input");
     }
 
     const { fullName, email, phone } = result.data;
@@ -39,10 +44,10 @@ export async function PATCH(request: Request) {
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
+      return conflict("idempotency_conflict", "Idempotency key conflict");
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
+      return conflict("idempotency_in_progress", "Request already in progress");
     }
 
     // Build update object with only provided fields
@@ -64,9 +69,7 @@ export async function PATCH(request: Request) {
         ...requestContext,
         action: "update_profile",
       });
-      return NextResponse.json({ success: false, error: "Failed to update profile" },
-        { status: 500 }
-      );
+      return serverError("Failed to update profile", "profile_update_failed");
     }
 
     await logAudit(client, profile.user_id, "profile_update", "user", profile.user_id, "success", {
@@ -75,19 +78,14 @@ export async function PATCH(request: Request) {
       newValues: updateData,
     });
 
-    const responseBody = {
-      success: true,
-      data: updatedUser,
-    };
-    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
-    return NextResponse.json(responseBody);
+    const storedBody = okBody(updatedUser);
+    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, storedBody, 200);
+    return ok(updatedUser);
   } catch (err) {
     await captureError(err, {
       ...requestContext,
       action: "update_profile",
     });
-    return NextResponse.json({ success: false, error: "An error occurred" },
-      { status: 500 }
-    );
+    return serverError("An error occurred", "profile_update_failed");
   }
 }

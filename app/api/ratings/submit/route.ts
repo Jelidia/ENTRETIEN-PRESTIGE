@@ -1,4 +1,14 @@
 import { NextResponse } from "next/server";
+import {
+  conflict,
+  errorResponse,
+  notFound,
+  ok,
+  okBody,
+  serverError,
+  tooManyRequests,
+  validationError,
+} from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabaseServer";
 import { ratingSubmitSchema } from "@/lib/validators";
 import { getRequestIp, rateLimit } from "@/lib/rateLimit";
@@ -30,18 +40,14 @@ export async function POST(request: Request) {
   const requestContext = getRequestContext(request);
   const limit = rateLimit(`ratings:submit:${ip}`, 10, 15 * 60 * 1000);
   if (!limit.allowed) {
-    return NextResponse.json({ success: false, error: "Trop de tentatives. Réessayez plus tard." },
-      { status: 429 }
-    );
+    return tooManyRequests("Trop de tentatives. Réessayez plus tard.");
   }
 
   const body = await request.json();
   const validation = ratingSubmitSchema.safeParse(body);
 
   if (!validation.success) {
-    return NextResponse.json({ success: false, error: "Données invalides", details: validation.error.format() },
-      { status: 400 }
-    );
+    return validationError(validation.error, "Données invalides");
   }
 
   const { token, rating_score, feedback, technician_mentioned } = validation.data;
@@ -53,10 +59,10 @@ export async function POST(request: Request) {
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
+    return conflict("idempotency_conflict", "Idempotency key conflict");
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
+    return conflict("idempotency_in_progress", "Request already in progress");
   }
 
   // Validate token
@@ -67,15 +73,11 @@ export async function POST(request: Request) {
     .maybeSingle();
 
   if (tokenError || !ratingToken) {
-    return NextResponse.json({ success: false, error: "Token invalide" },
-      { status: 404 }
-    );
+    return notFound("Token invalide", "token_invalid");
   }
 
   if (!timingSafeEqualHex(tokenHash, ratingToken.token_hash)) {
-    return NextResponse.json({ success: false, error: "Token invalide" },
-      { status: 404 }
-    );
+    return notFound("Token invalide", "token_invalid");
   }
 
   // Check if token is expired
@@ -84,16 +86,12 @@ export async function POST(request: Request) {
   const expiresAt = new Date(ratingToken.expires_at);
 
   if (now > expiresAt) {
-    return NextResponse.json({ success: false, error: "Ce lien a expiré" },
-      { status: 410 }
-    );
+    return errorResponse(410, "token_expired", "Ce lien a expiré");
   }
 
   // Check if already used
   if (ratingToken.used_at) {
-    return NextResponse.json({ success: false, error: "Ce lien a déjà été utilisé" },
-      { status: 410 }
-    );
+    return errorResponse(410, "token_used", "Ce lien a déjà été utilisé");
   }
 
   const { data: consumedToken, error: consumeError } = await admin
@@ -105,9 +103,7 @@ export async function POST(request: Request) {
     .maybeSingle();
 
   if (consumeError || !consumedToken) {
-    return NextResponse.json({ success: false, error: "Ce lien a déjà été utilisé" },
-      { status: 410 }
-    );
+    return errorResponse(410, "token_used", "Ce lien a déjà été utilisé");
   }
 
   // Get job details
@@ -122,9 +118,7 @@ export async function POST(request: Request) {
       .from("customer_rating_tokens")
       .update({ used_at: null })
       .eq("token_id", ratingToken.token_id);
-    return NextResponse.json({ success: false, error: "Service introuvable" },
-      { status: 404 }
-    );
+    return notFound("Service introuvable", "service_not_found");
   }
 
   // Insert rating
@@ -150,9 +144,7 @@ export async function POST(request: Request) {
       job_id: job.job_id,
       company_id: job.company_id,
     });
-    return NextResponse.json({ success: false, error: "Échec de l'enregistrement de l'évaluation" },
-      { status: 500 }
-    );
+    return serverError("Échec de l'enregistrement de l'évaluation", "rating_create_failed");
   }
 
   // If 4-5 stars and technician mentioned, create bonus record
@@ -180,14 +172,10 @@ export async function POST(request: Request) {
   }
 
   const responseBody = {
-    success: true,
     rating_id: rating.rating_id,
     google_review_url: googleReviewUrl,
-    data: {
-      rating_id: rating.rating_id,
-      google_review_url: googleReviewUrl,
-    },
   };
-  await completeIdempotency(admin, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
-  return NextResponse.json(responseBody);
+  const storedBody = okBody(responseBody, { flatten: true });
+  await completeIdempotency(admin, request, idempotency.scope, idempotency.requestHash, storedBody, 200);
+  return ok(responseBody, { flatten: true });
 }

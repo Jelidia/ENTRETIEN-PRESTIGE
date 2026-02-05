@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import TopBar from "@/components/TopBar";
+import AvailabilityCalendar from "@/components/AvailabilityCalendar";
 import { useLanguage } from "@/contexts/LanguageContext";
 import type { Language } from "@/lib/i18n";
 
@@ -20,31 +21,182 @@ type Territory = {
   total_customers?: number;
   active_customers?: number;
   monthly_revenue?: number;
-  day_of_week?: string | null;
-  polygon?: unknown;
+  polygon_coordinates?: unknown;
 };
 
-const daysOfWeek = [
-  { value: "monday", label: "Lundi" },
-  { value: "tuesday", label: "Mardi" },
-  { value: "wednesday", label: "Mercredi" },
-  { value: "thursday", label: "Jeudi" },
-  { value: "friday", label: "Vendredi" },
-  { value: "saturday", label: "Samedi" },
-  { value: "sunday", label: "Dimanche" },
-];
+type MapCenter = { lat: number; lng: number };
+
+type GoogleMapInstance = {
+  setCenter: (center: MapCenter) => void;
+};
+
+type GooglePolygonInstance = {
+  setMap: (map: GoogleMapInstance | null) => void;
+  setPath: (path: MapCenter[]) => void;
+};
+
+type GoogleMapsApi = {
+  maps?: {
+    Map: new (
+      element: HTMLDivElement | null,
+      options: {
+        center: MapCenter;
+        zoom: number;
+        mapTypeControl: boolean;
+        fullscreenControl: boolean;
+        streetViewControl: boolean;
+      }
+    ) => GoogleMapInstance;
+    Polygon: new (options: {
+      paths: MapCenter[];
+      map: GoogleMapInstance | null;
+      strokeColor: string;
+      strokeOpacity: number;
+      strokeWeight: number;
+      fillColor: string;
+      fillOpacity: number;
+    }) => GooglePolygonInstance;
+  };
+};
+
+const isMapPoint = (value: unknown): value is MapCenter => {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as { lat?: unknown; lng?: unknown };
+  return typeof candidate.lat === "number" && typeof candidate.lng === "number";
+};
 
 export default function SalesSettingsPage() {
   const { language, setLanguage: changeLanguage, t } = useLanguage();
   const [user, setUser] = useState<User | null>(null);
   const [territories, setTerritories] = useState<Territory[]>([]);
-  const [selectedDay, setSelectedDay] = useState<string>("");
+  const [selectedTerritoryId, setSelectedTerritoryId] = useState<string>("");
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
+  const [mapReady, setMapReady] = useState(false);
+  const [mapError, setMapError] = useState("");
+  const mapRef = useRef<HTMLDivElement | null>(null);
+  const mapInstance = useRef<GoogleMapInstance | null>(null);
+  const polygonInstance = useRef<GooglePolygonInstance | null>(null);
+  const mapsKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
+
+  const selectedTerritory = useMemo(() => {
+    if (!territories.length) return null;
+    return territories.find((item) => item.territory_id === selectedTerritoryId) ?? territories[0];
+  }, [territories, selectedTerritoryId]);
+
+  const polygonPoints = useMemo(() => {
+    if (!selectedTerritory?.polygon_coordinates) return [];
+    if (!Array.isArray(selectedTerritory.polygon_coordinates)) return [];
+    return selectedTerritory.polygon_coordinates
+      .map((point) => {
+        if (Array.isArray(point) && point.length >= 2) {
+          const [lat, lng] = point;
+          if (typeof lat === "number" && typeof lng === "number") {
+            return { lat, lng };
+          }
+        }
+        return isMapPoint(point) ? point : null;
+      })
+      .filter(Boolean) as MapCenter[];
+  }, [selectedTerritory]);
+
+  const getGoogle = useCallback(() => {
+    return (window as unknown as { google?: GoogleMapsApi }).google ?? null;
+  }, []);
+
+  const loadGoogleMaps = useCallback(
+    (key: string) =>
+      new Promise<void>((resolve, reject) => {
+        const google = getGoogle();
+        if (google?.maps) {
+          resolve();
+          return;
+        }
+        const script = document.createElement("script");
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${key}`;
+        script.async = true;
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error("Map script failed"));
+        document.body.appendChild(script);
+      }),
+    [getGoogle]
+  );
+
+  const initMap = useCallback(() => {
+    const google = getGoogle();
+    const maps = google?.maps;
+    if (!maps) {
+      return;
+    }
+    mapInstance.current = new maps.Map(mapRef.current, {
+      center: { lat: 45.5017, lng: -73.5673 },
+      zoom: 11,
+      mapTypeControl: false,
+      fullscreenControl: false,
+      streetViewControl: false,
+    });
+    setMapReady(true);
+  }, [getGoogle]);
+
+  const renderPolygon = useCallback(() => {
+    const google = getGoogle();
+    const maps = google?.maps;
+    if (!maps || !mapInstance.current) {
+      return;
+    }
+
+    if (polygonPoints.length < 3) {
+      if (polygonInstance.current) {
+        polygonInstance.current.setMap(null);
+        polygonInstance.current = null;
+      }
+      return;
+    }
+
+    if (!polygonInstance.current) {
+      polygonInstance.current = new maps.Polygon({
+        paths: polygonPoints,
+        map: mapInstance.current,
+        strokeColor: "#1e40af",
+        strokeOpacity: 0.9,
+        strokeWeight: 2,
+        fillColor: "#93c5fd",
+        fillOpacity: 0.3,
+      });
+    } else {
+      polygonInstance.current.setPath(polygonPoints);
+    }
+    mapInstance.current.setCenter(polygonPoints[0]);
+  }, [getGoogle, polygonPoints]);
+
+  const mapMessage = useMemo(() => {
+    if (!mapsKey) return "Carte désactivée. Ajoutez NEXT_PUBLIC_GOOGLE_MAPS_API_KEY.";
+    if (mapError) return mapError;
+    if (!mapReady) return "Chargement de la carte...";
+    if (polygonPoints.length < 3) return "Aucun polygone disponible.";
+    return "";
+  }, [mapsKey, mapError, mapReady, polygonPoints.length]);
 
   useEffect(() => {
     void loadData();
   }, []);
+
+  useEffect(() => {
+    if (!mapsKey || !mapRef.current) {
+      return;
+    }
+    if (mapInstance.current) {
+      return;
+    }
+    void loadGoogleMaps(mapsKey)
+      .then(() => initMap())
+      .catch(() => setMapError("Impossible de charger la carte"));
+  }, [initMap, loadGoogleMaps, mapsKey, territories.length]);
+
+  useEffect(() => {
+    if (!mapReady) return;
+    renderPolygon();
+  }, [mapReady, renderPolygon]);
 
   async function loadData() {
     setStatus("");
@@ -58,7 +210,7 @@ export default function SalesSettingsPage() {
     }
     setUser(profileJson as User);
 
-    const territoryRes = await fetch("/api/reports/territories");
+    const territoryRes = await fetch("/api/maps/territory");
     const territoryJson = await territoryRes.json().catch(() => ({ data: [] }));
     if (!territoryRes.ok) {
       setError(territoryJson.error ?? "Impossible de charger le territoire");
@@ -68,48 +220,8 @@ export default function SalesSettingsPage() {
       (row: Territory) => row.sales_rep_id === profileJson.user_id
     );
     setTerritories(list);
-
-    // Set selected day if territory has one
-    if (list.length > 0 && list[0].day_of_week) {
-      setSelectedDay(list[0].day_of_week);
-    }
-  }
-
-  async function updateDayOfWeek() {
-    if (!selectedDay || territories.length === 0) {
-      setError("Veuillez sélectionner un jour");
-      return;
-    }
-
-    setError("");
-    setStatus("Mise à jour...");
-
-    try {
-      const res = await fetch("/api/reports/territories", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          territory_id: territories[0].territory_id,
-          day_of_week: selectedDay,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || "Échec de la mise à jour");
-        setStatus("");
-        return;
-      }
-
-      setStatus("Jour de la semaine mis à jour avec succès");
-      setTimeout(() => {
-        loadData();
-        setStatus("");
-      }, 2000);
-    } catch (err) {
-      setError("Une erreur s'est produite");
-      setStatus("");
+    if (!selectedTerritoryId && list.length > 0) {
+      setSelectedTerritoryId(list[0].territory_id);
     }
   }
 
@@ -188,46 +300,51 @@ export default function SalesSettingsPage() {
                       {new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD" }).format(territory.monthly_revenue ?? 0)}
                     </span>
                   </div>
-                  {territory.day_of_week && (
-                    <div className="card-meta">
-                      Jour assigné: <strong>{daysOfWeek.find(d => d.value === territory.day_of_week)?.label || territory.day_of_week}</strong>
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
 
-            {/* Day of Week Selector */}
-            <div style={{ marginTop: 16 }}>
-              <h4 className="card-label" style={{ marginBottom: 8 }}>
-                Jour de la semaine préféré
-              </h4>
-              <div className="form-row">
-                <label className="label">Choisir un jour</label>
+            {territories.length > 1 ? (
+              <div className="form-row" style={{ marginTop: 16 }}>
+                <label className="label" htmlFor="territorySelect">Territoire à afficher</label>
                 <select
+                  id="territorySelect"
                   className="select"
-                  value={selectedDay}
-                  onChange={(e) => setSelectedDay(e.target.value)}
+                  value={selectedTerritoryId}
+                  onChange={(event) => setSelectedTerritoryId(event.target.value)}
                 >
-                  <option value="">Sélectionner un jour</option>
-                  {daysOfWeek.map((day) => (
-                    <option key={day.value} value={day.value}>
-                      {day.label}
+                  {territories.map((territory) => (
+                    <option key={territory.territory_id} value={territory.territory_id}>
+                      {territory.territory_name}
                     </option>
                   ))}
                 </select>
               </div>
-              <button
-                onClick={updateDayOfWeek}
-                className="button-primary"
-                style={{ marginTop: 12 }}
-                disabled={!selectedDay}
-              >
-                Mettre à jour le jour
-              </button>
+            ) : null}
+
+            <div style={{ marginTop: 16 }}>
+              <div className="card-label">Carte du territoire</div>
+              <div className="card-meta">Zone assignée pour vos visites.</div>
+              <div className="map-shell" style={{ marginTop: 12 }}>
+                <div className="map-canvas" ref={mapRef} />
+                {mapMessage ? <div className="map-overlay">{mapMessage}</div> : null}
+              </div>
             </div>
           </div>
         )}
+      </section>
+
+      <section style={{ marginTop: 16 }}>
+        {user ? (
+          <AvailabilityCalendar userId={user.user_id} />
+        ) : (
+          <div className="card">
+            <div className="card-meta">Chargement de la disponibilité...</div>
+          </div>
+        )}
+        <div className="card-meta" style={{ marginTop: 8 }}>
+          Mettez à jour votre disponibilité pour la semaine prochaine (max 7 jours d'avance).
+        </div>
       </section>
 
       {/* Language Preference */}

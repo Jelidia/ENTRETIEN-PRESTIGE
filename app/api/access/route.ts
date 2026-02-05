@@ -22,7 +22,7 @@ export async function GET(request: Request) {
 
   const { data: company } = await client
     .from("companies")
-    .select("role_permissions")
+    .select("role_permissions, name")
     .eq("company_id", profile.company_id)
     .single();
 
@@ -35,6 +35,7 @@ export async function GET(request: Request) {
   const data = {
     userId: profile.user_id,
     companyId: profile.company_id,
+    companyName: company?.name ?? null,
     permissions,
     rolePermissions: company?.role_permissions ?? {},
     userPermissions: profile.access_permissions ?? {},

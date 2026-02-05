@@ -1,5 +1,13 @@
 import { NextResponse } from "next/server";
-import { requirePermission } from "@/lib/auth";
+import {
+  badRequest,
+  conflict,
+  ok,
+  okBody,
+  requirePermission,
+  serverError,
+  validationError,
+} from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { blacklistSchema, complaintSchema } from "@/lib/validators";
@@ -25,7 +33,7 @@ export async function POST(
   if (action === "blacklist") {
     const parsed = blacklistSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
+      return validationError(parsed.error, "Invalid request");
     }
 
     const idempotency = await beginIdempotency(client, request, profile.user_id, {
@@ -36,10 +44,10 @@ export async function POST(
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
+      return conflict("idempotency_conflict", "Idempotency key conflict");
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
+      return conflict("idempotency_in_progress", "Request already in progress");
     }
 
     const { error } = await client.from("customer_blacklist").insert({
@@ -54,7 +62,7 @@ export async function POST(
     });
 
     if (error) {
-      return NextResponse.json({ success: false, error: "Unable to blacklist" }, { status: 400 });
+      return serverError("Unable to blacklist", "customer_blacklist_failed");
     }
 
     await logAudit(client, user.id, "customer_blacklist", "customer", params.id, "success", {
@@ -63,15 +71,16 @@ export async function POST(
       newValues: { risk_level: parsed.data.riskLevel },
     });
 
-    const responseBody = { success: true, data: { ok: true }, ok: true };
-    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
-    return NextResponse.json(responseBody);
+    const responseBody = { ok: true };
+    const storedBody = okBody(responseBody, { flatten: true });
+    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, storedBody, 200);
+    return ok(responseBody, { flatten: true });
   }
 
   if (action === "complaint") {
     const parsed = complaintSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ success: false, error: "Invalid complaint" }, { status: 400 });
+      return validationError(parsed.error, "Invalid complaint");
     }
 
     const idempotency = await beginIdempotency(client, request, profile.user_id, {
@@ -82,10 +91,10 @@ export async function POST(
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
+      return conflict("idempotency_conflict", "Idempotency key conflict");
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
+      return conflict("idempotency_in_progress", "Request already in progress");
     }
 
     const { error } = await client.from("job_quality_issues").insert({
@@ -100,7 +109,7 @@ export async function POST(
     });
 
     if (error) {
-      return NextResponse.json({ success: false, error: "Unable to file complaint" }, { status: 400 });
+      return serverError("Unable to file complaint", "customer_complaint_failed");
     }
 
     await logAudit(client, user.id, "customer_complaint", "customer", params.id, "success", {
@@ -109,12 +118,13 @@ export async function POST(
       newValues: { job_id: parsed.data.jobId, complaint_type: parsed.data.complaintType },
     });
 
-    const responseBody = { success: true, data: { ok: true }, ok: true };
-    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
-    return NextResponse.json(responseBody);
+    const responseBody = { ok: true };
+    const storedBody = okBody(responseBody, { flatten: true });
+    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, storedBody, 200);
+    return ok(responseBody, { flatten: true });
   }
 
-  return NextResponse.json({ success: false, error: "Unsupported action" }, { status: 400 });
+  return badRequest("unsupported_action", "Unsupported action");
 }
 
 export async function GET(
@@ -135,9 +145,9 @@ export async function GET(
       .select("job_id, service_type, status, scheduled_date")
       .eq("customer_id", params.id);
     if (error) {
-      return NextResponse.json({ success: false, error: "Unable to load jobs" }, { status: 400 });
+      return serverError("Unable to load jobs", "customer_jobs_load_failed");
     }
-    return NextResponse.json({ success: true, data });
+    return ok(data);
   }
 
   if (action === "invoices") {
@@ -146,10 +156,10 @@ export async function GET(
       .select("invoice_id, invoice_number, payment_status, total_amount, due_date")
       .eq("customer_id", params.id);
     if (error) {
-      return NextResponse.json({ success: false, error: "Unable to load invoices" }, { status: 400 });
+      return serverError("Unable to load invoices", "customer_invoices_load_failed");
     }
-    return NextResponse.json({ success: true, data });
+    return ok(data);
   }
 
-  return NextResponse.json({ success: false, error: "Unsupported action" }, { status: 400 });
+  return badRequest("unsupported_action", "Unsupported action");
 }

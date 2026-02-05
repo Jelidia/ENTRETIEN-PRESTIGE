@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import { notificationSettingsSchema } from "@/lib/validators";
-import { requirePermission } from "@/lib/auth";
+import {
+  conflict,
+  ok,
+  okBody,
+  requirePermission,
+  serverError,
+  validationError,
+} from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { logAudit } from "@/lib/audit";
@@ -17,7 +24,7 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const parsed = notificationSettingsSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ success: false, error: "Invalid settings" }, { status: 400 });
+    return validationError(parsed.error, "Invalid settings");
   }
 
   const token = getAccessTokenFromRequest(request);
@@ -27,10 +34,10 @@ export async function POST(request: Request) {
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
+    return conflict("idempotency_conflict", "Idempotency key conflict");
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
+    return conflict("idempotency_in_progress", "Request already in progress");
   }
   const { error } = await client
     .from("users")
@@ -38,7 +45,7 @@ export async function POST(request: Request) {
     .eq("user_id", user.id);
 
   if (error) {
-    return NextResponse.json({ success: false, error: "Unable to save settings" }, { status: 400 });
+    return serverError("Unable to save settings", "notification_settings_save_failed");
   }
 
   await logAudit(client, user.id, "notification_settings_update", "user", user.id, "success", {
@@ -46,9 +53,10 @@ export async function POST(request: Request) {
     userAgent: request.headers.get("user-agent") ?? null,
   });
 
-  const responseBody = { success: true, data: { ok: true }, ok: true };
-  await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
-  return NextResponse.json(responseBody);
+  const responseBody = { ok: true };
+  const storedBody = okBody(responseBody, { flatten: true });
+  await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, storedBody, 200);
+  return ok(responseBody, { flatten: true });
 }
 
 export async function GET(request: Request) {
@@ -66,8 +74,8 @@ export async function GET(request: Request) {
     .single();
 
   if (error) {
-    return NextResponse.json({ success: false, error: "Unable to load settings" }, { status: 400 });
+    return serverError("Unable to load settings", "notification_settings_load_failed");
   }
 
-  return NextResponse.json({ success: true, data: data?.notification_settings ?? {} });
+  return ok(data?.notification_settings ?? {});
 }

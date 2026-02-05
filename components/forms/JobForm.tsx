@@ -1,11 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+type CompanyService = {
+  service_id: string;
+  name: string;
+  active: boolean;
+};
 
 export default function JobForm() {
   const [form, setForm] = useState({
     customerId: "",
-    serviceType: "window_cleaning",
+    serviceType: "",
     servicePackage: "premium",
     scheduledDate: "",
     scheduledStartTime: "",
@@ -17,10 +23,29 @@ export default function JobForm() {
     description: "",
   });
   const [status, setStatus] = useState("");
+  const [services, setServices] = useState<CompanyService[]>([]);
 
   function updateField(key: string, value: string) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
+
+  useEffect(() => {
+    let mounted = true;
+    fetch("/api/company/services")
+      .then((res) => res.json())
+      .then((json) => {
+        if (!mounted) return;
+        const data = Array.isArray(json?.data) ? json.data : [];
+        setServices(data.filter((service: CompanyService) => service.active !== false));
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setServices([]);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -33,18 +58,18 @@ export default function JobForm() {
 
     const data = await response.json();
     if (!response.ok) {
-      setStatus(data.error ?? "Unable to create job");
+      setStatus(data.error ?? "Impossible de créer le travail");
       return;
     }
 
-    setStatus("Job created.");
+    setStatus("Travail créé.");
     window.location.reload();
   }
 
   return (
     <form className="form-grid" onSubmit={handleSubmit}>
       <div className="form-row">
-        <label className="label" htmlFor="customerId">Customer ID</label>
+        <label className="label" htmlFor="customerId">ID client</label>
         <input
           id="customerId"
           className="input"
@@ -54,21 +79,24 @@ export default function JobForm() {
         />
       </div>
       <div className="form-row">
-        <label className="label" htmlFor="serviceType">Service</label>
-        <select
+        <label className="label" htmlFor="serviceType">Type de service</label>
+        <input
           id="serviceType"
-          className="select"
+          className="input"
           value={form.serviceType}
           onChange={(event) => updateField("serviceType", event.target.value)}
-        >
-          <option value="window_cleaning">Window cleaning</option>
-          <option value="gutter_cleaning">Gutter cleaning</option>
-          <option value="pressure_wash">Pressure wash</option>
-          <option value="roof_cleaning">Roof cleaning</option>
-        </select>
+          placeholder="Ex. Lavage de vitres"
+          required
+          list="company-service-types"
+        />
+        <datalist id="company-service-types">
+          {services.map((service) => (
+            <option key={service.service_id} value={service.name} />
+          ))}
+        </datalist>
       </div>
       <div className="form-row">
-        <label className="label" htmlFor="servicePackage">Package</label>
+        <label className="label" htmlFor="servicePackage">Forfait</label>
         <select
           id="servicePackage"
           className="select"
@@ -93,7 +121,7 @@ export default function JobForm() {
           />
         </div>
         <div className="form-row">
-          <label className="label" htmlFor="start">Start</label>
+          <label className="label" htmlFor="start">Début</label>
           <input
             id="start"
             className="input"
@@ -103,7 +131,7 @@ export default function JobForm() {
           />
         </div>
         <div className="form-row">
-          <label className="label" htmlFor="end">End</label>
+          <label className="label" htmlFor="end">Fin</label>
           <input
             id="end"
             className="input"
@@ -114,7 +142,7 @@ export default function JobForm() {
         </div>
       </div>
       <div className="form-row">
-        <label className="label" htmlFor="address">Address</label>
+        <label className="label" htmlFor="address">Adresse</label>
         <input
           id="address"
           className="input"
@@ -124,7 +152,7 @@ export default function JobForm() {
       </div>
       <div className="grid-2">
         <div className="form-row">
-          <label className="label" htmlFor="city">City</label>
+          <label className="label" htmlFor="city">Ville</label>
           <input
             id="city"
             className="input"
@@ -133,7 +161,7 @@ export default function JobForm() {
           />
         </div>
         <div className="form-row">
-          <label className="label" htmlFor="postalCode">Postal code</label>
+          <label className="label" htmlFor="postalCode">Code postal</label>
           <input
             id="postalCode"
             className="input"
@@ -143,7 +171,7 @@ export default function JobForm() {
         </div>
       </div>
       <div className="form-row">
-        <label className="label" htmlFor="estimatedRevenue">Estimated revenue</label>
+        <label className="label" htmlFor="estimatedRevenue">Revenu estimé</label>
         <input
           id="estimatedRevenue"
           className="input"
@@ -162,7 +190,7 @@ export default function JobForm() {
         />
       </div>
       <button className="button-primary" type="submit">
-        Save job
+        Enregistrer le travail
       </button>
       {status ? <div className="hint">{status}</div> : null}
     </form>

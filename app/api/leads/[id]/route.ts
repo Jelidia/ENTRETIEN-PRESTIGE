@@ -1,6 +1,15 @@
 
 import { NextResponse } from "next/server";
-import { requirePermission } from "@/lib/auth";
+import {
+  conflict,
+  forbidden,
+  notFound,
+  ok,
+  okBody,
+  requirePermission,
+  serverError,
+  validationError,
+} from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { leadUpdateSchema } from "@/lib/validators";
@@ -46,11 +55,11 @@ export async function GET(
   const { data, error } = await fetchLead(client, params.id, profile.company_id, salesRepId);
 
   if (error || !data) {
-    return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+    return notFound("Lead not found", "lead_not_found");
   }
 
   const lead = mapLeadRow(data as LeadRow);
-  return NextResponse.json({ success: true, data: { lead }, lead });
+  return ok({ lead }, { flatten: true });
 }
 
 export async function PATCH(
@@ -67,11 +76,11 @@ export async function PATCH(
   const parsed = leadUpdateSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid update" }, { status: 400 });
+    return validationError(parsed.error, "Invalid update");
   }
 
   if (profile.role === "sales_rep" && parsed.data.sales_rep_id !== undefined) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return forbidden("Forbidden", "field_forbidden", { field: "sales_rep_id" });
   }
 
   const token = getAccessTokenFromRequest(request);
@@ -85,7 +94,7 @@ export async function PATCH(
   );
 
   if (existingError || !existing) {
-    return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+    return notFound("Lead not found", "lead_not_found");
   }
 
   const idempotency = await beginIdempotency(client, request, user.id, parsed.data);
@@ -93,10 +102,10 @@ export async function PATCH(
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    return conflict("idempotency_conflict", "Idempotency key conflict");
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    return conflict("idempotency_in_progress", "Request already in progress");
   }
 
   const updates: Record<string, unknown> = {
@@ -149,7 +158,7 @@ export async function PATCH(
   const { data: updated, error } = await updateQuery.select(leadSelect).single();
 
   if (error || !updated) {
-    return NextResponse.json({ error: "Unable to update lead" }, { status: 400 });
+    return serverError("Unable to update lead", "lead_update_failed");
   }
 
   const action =
@@ -171,8 +180,9 @@ export async function PATCH(
 
   const lead = mapLeadRow(updated as LeadRow);
   const responseBody = { lead };
-  await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
-  return NextResponse.json({ success: true, data: responseBody, ...responseBody });
+  const storedBody = okBody(responseBody, { flatten: true });
+  await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, storedBody, 200);
+  return ok(responseBody, { flatten: true });
 }
 
 export async function DELETE(
@@ -193,10 +203,10 @@ export async function DELETE(
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    return conflict("idempotency_conflict", "Idempotency key conflict");
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    return conflict("idempotency_in_progress", "Request already in progress");
   }
 
   const { data: existing, error: existingError } = await fetchLead(
@@ -207,7 +217,7 @@ export async function DELETE(
   );
 
   if (existingError || !existing) {
-    return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+    return notFound("Lead not found", "lead_not_found");
   }
 
   let deleteQuery = client
@@ -222,7 +232,7 @@ export async function DELETE(
 
   const { error } = await deleteQuery;
   if (error) {
-    return NextResponse.json({ error: "Unable to delete lead" }, { status: 400 });
+    return serverError("Unable to delete lead", "lead_delete_failed");
   }
 
   await logAudit(client, profile.user_id, "lead_delete", "lead", params.id, "success", {
@@ -231,7 +241,8 @@ export async function DELETE(
     oldValues: { status: existing.status },
   });
 
-  const responseBody = { success: true, data: { ok: true }, ok: true };
-  await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
-  return NextResponse.json(responseBody);
+  const responseBody = { ok: true };
+  const storedBody = okBody(responseBody, { flatten: true });
+  await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, storedBody, 200);
+  return ok(responseBody, { flatten: true });
 }

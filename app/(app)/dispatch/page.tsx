@@ -105,6 +105,12 @@ type DragPreview = {
   endMinutes: number;
 };
 
+type CompanyService = {
+  service_id: string;
+  name: string;
+  active: boolean;
+};
+
 const START_HOUR = 7;
 const END_HOUR = 19;
 const HOUR_HEIGHT = 72;
@@ -133,7 +139,7 @@ export default function DispatchPage() {
   const [activeTechKey, setActiveTechKey] = useState("");
   const [quickCreateForm, setQuickCreateForm] = useState({
     customerId: "",
-    serviceType: "window_cleaning",
+    serviceType: "",
     servicePackage: "premium",
     scheduledDate: "",
     scheduledStartTime: "",
@@ -144,6 +150,7 @@ export default function DispatchPage() {
     estimatedRevenue: "",
     description: "",
   });
+  const [services, setServices] = useState<CompanyService[]>([]);
 
   const boardRef = useRef<DispatchColumnType[]>([]);
   const columnRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -338,6 +345,24 @@ export default function DispatchPage() {
   useEffect(() => {
     void loadDispatch();
   }, [loadDispatch]);
+
+  useEffect(() => {
+    let mounted = true;
+    fetch("/api/company/services")
+      .then((res) => res.json())
+      .then((json) => {
+        if (!mounted) return;
+        const data = Array.isArray(json?.data) ? json.data : [];
+        setServices(data.filter((service: CompanyService) => service.active !== false));
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setServices([]);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!mapsKey || !mapRef.current) {
@@ -724,6 +749,7 @@ export default function DispatchPage() {
     setQuickCreateForm((prev) => ({
       ...prev,
       customerId: "",
+      serviceType: "",
       address: "",
       city: "",
       postalCode: "",
@@ -974,7 +1000,7 @@ export default function DispatchPage() {
                         <div className="calendar-event-time">
                           {formatTime(start)} - {formatTime(end)}
                         </div>
-                        <div className="calendar-event-title">{job.service}</div>
+                        <div className="calendar-event-title">{formatServiceLabel(job.service)}</div>
                         <div className="calendar-event-meta">{job.address}</div>
                         <div
                           className="calendar-event-handle"
@@ -1054,20 +1080,23 @@ export default function DispatchPage() {
               </div>
               <div className="grid-2">
                 <div className="form-row">
-                  <label className="label" htmlFor="qcService">Service</label>
-                  <select
+                  <label className="label" htmlFor="qcService">Type de service</label>
+                  <input
                     id="qcService"
-                    className="select"
+                    className="input"
                     value={quickCreateForm.serviceType}
                     onChange={(event) =>
                       setQuickCreateForm((prev) => ({ ...prev, serviceType: event.target.value }))
                     }
-                  >
-                    <option value="window_cleaning">Nettoyage de vitres</option>
-                    <option value="gutter_cleaning">Nettoyage de gouttières</option>
-                    <option value="pressure_wash">Nettoyage à pression</option>
-                    <option value="roof_cleaning">Nettoyage de toiture</option>
-                  </select>
+                    placeholder="Ex. Lavage de vitres"
+                    required
+                    list="dispatch-service-types"
+                  />
+                  <datalist id="dispatch-service-types">
+                    {services.map((service) => (
+                      <option key={service.service_id} value={service.name} />
+                    ))}
+                  </datalist>
                 </div>
                 <div className="form-row">
                   <label className="label" htmlFor="qcPackage">Forfait</label>
@@ -1446,6 +1475,11 @@ function formatConflictDate(value?: string) {
 function formatConflictWindow(start?: string, end?: string) {
   if (start && end) return `${start} - ${end}`;
   return start ?? end ?? "";
+}
+
+function formatServiceLabel(value?: string) {
+  if (!value) return "";
+  return value.replace(/_/g, " ");
 }
 
 function getJobTimes(job: DispatchJob) {

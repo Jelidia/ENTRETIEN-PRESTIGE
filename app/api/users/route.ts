@@ -1,5 +1,14 @@
 import { NextResponse } from "next/server";
-import { requireRole } from "@/lib/auth";
+import {
+  badRequest,
+  conflict,
+  ok,
+  okBody,
+  requireRole,
+  serverError,
+  unauthorized,
+  validationError,
+} from "@/lib/auth";
 import { createAdminClient, createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { userCreateSchema } from "@/lib/validators";
@@ -53,7 +62,7 @@ export async function GET(request: Request) {
   const { profile } = auth;
   const token = getAccessTokenFromRequest(request);
   if (!token) {
-    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    return unauthorized();
   }
   const client = createUserClient(token);
   const { data, error } = await client
@@ -72,10 +81,10 @@ export async function GET(request: Request) {
         error,
       })
     );
-    return NextResponse.json({ success: false, error: "Unable to load users" }, { status: 400 });
+    return serverError("Unable to load users", "users_load_failed");
   }
 
-  return NextResponse.json({ success: true, data });
+  return ok(data);
 }
 
 export async function POST(request: Request) {
@@ -88,7 +97,7 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const parsed = userCreateSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ success: false, error: "Invalid user" }, { status: 400 });
+    return validationError(parsed.error, "Invalid user");
   }
 
   const normalized = normalizeDocumentFields(parsed.data);
@@ -99,10 +108,10 @@ export async function POST(request: Request) {
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
+    return conflict("idempotency_conflict", "Idempotency key conflict");
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
+    return conflict("idempotency_in_progress", "Request already in progress");
   }
 
   const admin = createAdminClient();
@@ -119,9 +128,7 @@ export async function POST(request: Request) {
   });
 
   if (authError || !userData.user) {
-    return NextResponse.json({ success: false, error: authError?.message ?? "Unable to create auth user" },
-      { status: 400 }
-    );
+    return badRequest("auth_create_failed", authError?.message ?? "Unable to create auth user");
   }
 
   const { error } = await admin.from("users").insert({
@@ -148,9 +155,7 @@ export async function POST(request: Request) {
   });
 
   if (error) {
-    return NextResponse.json({ success: false, error: error.message ?? "Unable to store user profile" },
-      { status: 400 }
-    );
+    return badRequest("user_profile_create_failed", error.message ?? "Unable to store user profile");
   }
 
   await logAudit(admin, profile.user_id, "admin_create_user", "user", userData.user.id, "success", {
@@ -163,7 +168,8 @@ export async function POST(request: Request) {
     },
   });
 
-  const responseBody = { success: true, data: { ok: true }, ok: true };
-  await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 201);
-  return NextResponse.json(responseBody, { status: 201 });
+  const responseBody = { ok: true };
+  const storedBody = okBody(responseBody, { flatten: true });
+  await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, storedBody, 201);
+  return ok(responseBody, { status: 201, flatten: true });
 }

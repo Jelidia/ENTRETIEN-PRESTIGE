@@ -1,5 +1,13 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import {
+  badRequest,
+  conflict,
+  ok,
+  okBody,
+  requireUser,
+  serverError,
+  validationError,
+} from "@/lib/auth";
 import { createAdminClient, createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { logAudit } from "@/lib/audit";
@@ -33,8 +41,9 @@ export async function POST(request: Request) {
   const { searchParams } = new URL(request.url);
   const queryResult = settingsUploadQuerySchema.safeParse(Object.fromEntries(searchParams));
   if (!queryResult.success) {
-    return NextResponse.json({ success: false, error: "Invalid type. Must be: contract, id_photo, or profile_photo" },
-      { status: 400 }
+    return validationError(
+      queryResult.error,
+      "Invalid type. Must be: contract, id_photo, or profile_photo"
     );
   }
   const { type } = queryResult.data;
@@ -44,28 +53,22 @@ export async function POST(request: Request) {
     const file = formData.get("file") as File;
 
     if (!file) {
-      return NextResponse.json({ success: false, error: "No file provided" }, { status: 400 });
+      return badRequest("file_missing", "No file provided");
     }
 
     // Validate file size (5MB max)
     if (file.size > 5 * 1024 * 1024) {
-      return NextResponse.json({ success: false, error: "Fichier trop volumineux (max 5MB)" },
-        { status: 400 }
-      );
+      return badRequest("file_too_large", "Fichier trop volumineux (max 5MB)");
     }
 
     // Validate file type
     if (type === "contract") {
       if (file.type !== "application/pdf") {
-        return NextResponse.json({ success: false, error: "Format non supporté. PDF uniquement." },
-          { status: 400 }
-        );
+        return badRequest("file_invalid_type", "Format non supporté. PDF uniquement.");
       }
     } else {
       if (!["image/jpeg", "image/jpg", "image/png"].includes(file.type)) {
-        return NextResponse.json({ success: false, error: "Format non supporté. JPG ou PNG uniquement." },
-          { status: 400 }
-        );
+        return badRequest("file_invalid_type", "Format non supporté. JPG ou PNG uniquement.");
       }
     }
 
@@ -79,10 +82,10 @@ export async function POST(request: Request) {
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
+      return conflict("idempotency_conflict", "Idempotency key conflict");
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
+      return conflict("idempotency_in_progress", "Request already in progress");
     }
 
     // Generate unique filename
@@ -94,7 +97,7 @@ export async function POST(request: Request) {
     const createResult = await admin.storage.createBucket(bucketName, { public: false });
     const createError = createResult.error?.message?.toLowerCase() ?? "";
     if (createResult.error && !createError.includes("already exists")) {
-      return NextResponse.json({ success: false, error: "Unable to prepare storage" }, { status: 500 });
+      return serverError("Unable to prepare storage", "storage_prepare_failed");
     }
 
     // Upload to Supabase Storage
@@ -112,9 +115,7 @@ export async function POST(request: Request) {
         action: "upload_document",
         document_type: type,
       });
-      return NextResponse.json({ success: false, error: "Failed to upload file" },
-        { status: 500 }
-      );
+      return serverError("Failed to upload file", "document_upload_failed");
     }
 
     const { data: signed, error: signError } = await admin.storage
@@ -122,9 +123,7 @@ export async function POST(request: Request) {
       .createSignedUrl(storagePath, 300);
 
     if (signError || !signed?.signedUrl) {
-      return NextResponse.json({ success: false, error: "Failed to sign document" },
-        { status: 500 }
-      );
+      return serverError("Failed to sign document", "document_sign_failed");
     }
 
     // Update user record with file URL
@@ -148,9 +147,7 @@ export async function POST(request: Request) {
         action: "update_document_reference",
         document_type: type,
       });
-      return NextResponse.json({ success: false, error: "Failed to update profile" },
-        { status: 500 }
-      );
+      return serverError("Failed to update profile", "document_reference_update_failed");
     }
 
     await logAudit(client, profile.user_id, "document_upload", "user", profile.user_id, "success", {
@@ -159,23 +156,16 @@ export async function POST(request: Request) {
       newValues: { type },
     });
 
-    const responseBody = {
-      success: true,
-      data: {
-        url: signed.signedUrl,
-        path: storagePath,
-      },
-    };
-    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
-    return NextResponse.json(responseBody);
+    const responseBody = { url: signed.signedUrl, path: storagePath };
+    const storedBody = okBody(responseBody, { flatten: true });
+    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, storedBody, 200);
+    return ok(responseBody, { flatten: true });
   } catch (err) {
     await captureError(err, {
       ...requestContext,
       action: "upload_document",
       document_type: type,
     });
-    return NextResponse.json({ success: false, error: "An error occurred" },
-      { status: 500 }
-    );
+    return serverError("An error occurred", "document_upload_failed");
   }
 }

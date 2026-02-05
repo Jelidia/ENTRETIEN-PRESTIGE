@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 type RatingData = {
   job_id: string;
+  company_name?: string | null;
   customer_name: string;
   service_type: string;
   service_date: string;
@@ -136,7 +137,7 @@ export default function PublicRatingPage({ params }: { params: { token: string }
     <div style={styles.container}>
       <div style={styles.card}>
         <div style={styles.logo}>
-          <h1 style={styles.logoText}>Entretien Prestige</h1>
+          <h1 style={styles.logoText}>{ratingData?.company_name ?? "Entreprise"}</h1>
         </div>
 
         <h2 style={styles.subtitle}>Évaluez votre service</h2>

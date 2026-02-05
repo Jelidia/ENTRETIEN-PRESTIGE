@@ -89,13 +89,22 @@ export async function GET(
     return auth.response;
   }
 
+  const token = getAccessTokenFromRequest(_request);
+  const client = createUserClient(token ?? "");
+  const { data: company } = await client
+    .from("companies")
+    .select("name")
+    .eq("company_id", auth.profile.company_id)
+    .single();
+  const companyName = company?.name ?? "Entreprise";
+
   if (params.action !== "template") {
     return NextResponse.json({ success: false, error: "Unsupported action" }, { status: 400 });
   }
 
   const data = {
-    subject: "Your invoice from Entretien Prestige",
-    body: "Hello, your invoice is ready. Thank you for your business.",
+    subject: `Votre facture - ${companyName}`,
+    body: "Bonjour, votre facture est prete. Merci pour votre confiance.",
   };
 
   return NextResponse.json({ success: true, data, ...data });

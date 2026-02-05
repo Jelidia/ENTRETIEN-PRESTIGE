@@ -1,5 +1,13 @@
 import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import {
+  conflict,
+  notFound,
+  ok,
+  okBody,
+  requireUser,
+  serverError,
+  validationError,
+} from "@/lib/auth";
 import { createAdminClient, createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { logAudit } from "@/lib/audit";
@@ -32,8 +40,9 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const queryResult = settingsDocumentQuerySchema.safeParse(Object.fromEntries(searchParams));
   if (!queryResult.success) {
-    return NextResponse.json({ success: false, error: "Invalid type. Must be: contract, id_photo, or profile_photo" },
-      { status: 400 }
+    return validationError(
+      queryResult.error,
+      "Invalid type. Must be: contract, id_photo, or profile_photo"
     );
   }
 
@@ -46,12 +55,12 @@ export async function GET(request: Request) {
     .single();
 
   if (error || !user) {
-    return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
+    return notFound("User not found", "user_not_found");
   }
 
   const rawPath = user[field as keyof typeof user] as string | null;
   if (!rawPath) {
-    return NextResponse.json({ success: false, error: "Document missing" }, { status: 404 });
+    return notFound("Document missing", "document_missing");
   }
 
   const admin = createAdminClient();
@@ -61,10 +70,10 @@ export async function GET(request: Request) {
     .createSignedUrl(storagePath, 300);
 
   if (signError || !signed?.signedUrl) {
-    return NextResponse.json({ success: false, error: "Unable to sign document" }, { status: 500 });
+    return serverError("Unable to sign document", "document_sign_failed");
   }
 
-  return NextResponse.json({ success: true, data: { url: signed.signedUrl }, url: signed.signedUrl });
+  return ok({ url: signed.signedUrl }, { flatten: true });
 }
 
 // DELETE /api/settings/document?type=contract|id_photo|profile_photo
@@ -81,8 +90,9 @@ export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url);
   const queryResult = settingsDocumentQuerySchema.safeParse(Object.fromEntries(searchParams));
   if (!queryResult.success) {
-    return NextResponse.json({ success: false, error: "Invalid type. Must be: contract, id_photo, or profile_photo" },
-      { status: 400 }
+    return validationError(
+      queryResult.error,
+      "Invalid type. Must be: contract, id_photo, or profile_photo"
     );
   }
   const { type } = queryResult.data;
@@ -97,10 +107,10 @@ export async function DELETE(request: Request) {
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
+      return conflict("idempotency_conflict", "Idempotency key conflict");
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
+      return conflict("idempotency_in_progress", "Request already in progress");
     }
 
     // Get current file URL
@@ -112,7 +122,7 @@ export async function DELETE(request: Request) {
       .single();
 
     if (!user) {
-      return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
+      return notFound("User not found", "user_not_found");
     }
 
     const fileUrl = user[field as keyof typeof user] as string | null;
@@ -145,9 +155,7 @@ export async function DELETE(request: Request) {
         action: "update_user_document",
         document_type: type,
       });
-      return NextResponse.json({ success: false, error: "Failed to delete document" },
-        { status: 500 }
-      );
+      return serverError("Failed to delete document", "document_delete_failed");
     }
 
     await logAudit(client, profile.user_id, "document_delete", "user", profile.user_id, "success", {
@@ -156,21 +164,16 @@ export async function DELETE(request: Request) {
       newValues: { type },
     });
 
-    const responseBody = {
-      success: true,
-      message: "Document deleted",
-      data: { message: "Document deleted" },
-    };
-    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
-    return NextResponse.json(responseBody);
+    const responseBody = { message: "Document deleted" };
+    const storedBody = okBody(responseBody, { flatten: true });
+    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, storedBody, 200);
+    return ok(responseBody, { flatten: true });
   } catch (err) {
     await captureError(err, {
       ...requestContext,
       action: "delete_document",
       document_type: type,
     });
-    return NextResponse.json({ success: false, error: "An error occurred" },
-      { status: 500 }
-    );
+    return serverError("An error occurred", "document_delete_failed");
   }
 }

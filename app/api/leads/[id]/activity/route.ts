@@ -1,6 +1,14 @@
 
 import { NextResponse } from "next/server";
-import { requirePermission } from "@/lib/auth";
+import {
+  conflict,
+  notFound,
+  ok,
+  okBody,
+  requirePermission,
+  serverError,
+  validationError,
+} from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { leadActivityCreateSchema } from "@/lib/validators";
@@ -50,7 +58,7 @@ export async function GET(
   );
 
   if (leadError || !lead) {
-    return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+    return notFound("Lead not found", "lead_not_found");
   }
 
   const { data, error } = await client
@@ -62,12 +70,12 @@ export async function GET(
     .limit(100);
 
   if (error) {
-    return NextResponse.json({ error: "Unable to load activity" }, { status: 400 });
+    return serverError("Unable to load activity", "lead_activity_load_failed");
   }
 
   const activities = data ?? [];
   const responseBody = { activities };
-  return NextResponse.json({ success: true, data: responseBody, ...responseBody });
+  return ok(responseBody, { flatten: true });
 }
 
 export async function POST(
@@ -84,7 +92,7 @@ export async function POST(
   const parsed = leadActivityCreateSchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid activity" }, { status: 400 });
+    return validationError(parsed.error, "Invalid activity");
   }
 
   const token = getAccessTokenFromRequest(request);
@@ -98,7 +106,7 @@ export async function POST(
   );
 
   if (leadError || !lead) {
-    return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+    return notFound("Lead not found", "lead_not_found");
   }
 
   const idempotency = await beginIdempotency(client, request, user.id, {
@@ -110,10 +118,10 @@ export async function POST(
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ error: "Idempotency key conflict" }, { status: 409 });
+    return conflict("idempotency_conflict", "Idempotency key conflict");
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ error: "Request already in progress" }, { status: 409 });
+    return conflict("idempotency_in_progress", "Request already in progress");
   }
 
   const action = "lead_" + parsed.data.type;
@@ -126,7 +134,8 @@ export async function POST(
     },
   });
 
-  const responseBody = { success: true, data: { ok: true }, ok: true };
-  await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 201);
-  return NextResponse.json(responseBody, { status: 201 });
+  const responseBody = { ok: true };
+  const storedBody = okBody(responseBody, { flatten: true });
+  await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, storedBody, 201);
+  return ok(responseBody, { status: 201, flatten: true });
 }

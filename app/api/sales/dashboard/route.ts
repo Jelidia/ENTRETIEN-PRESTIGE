@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-import { requireRole } from "@/lib/auth";
+import { ok, requireRole, serverError, validationError } from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { buildSalesStats, type LeadRow, type LeaderboardRow } from "@/lib/salesDashboard";
@@ -16,7 +15,7 @@ export async function GET(request: Request) {
 
   const queryResult = emptyQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
   if (!queryResult.success) {
-    return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
+    return validationError(queryResult.error, "Invalid request");
   }
 
   const { profile, user } = auth;
@@ -43,7 +42,7 @@ export async function GET(request: Request) {
       leadsError,
       ...requestContext,
     });
-    return NextResponse.json({ success: false, error: "Unable to load sales dashboard" }, { status: 500 });
+    return serverError("Unable to load sales dashboard", "sales_dashboard_load_failed");
   }
 
   // Leaderboard is optional - if it fails or is empty, continue with empty array
@@ -69,5 +68,5 @@ export async function GET(request: Request) {
     now,
   });
 
-  return NextResponse.json({ success: true, data: stats, ...stats });
+  return ok(stats, { flatten: true });
 }

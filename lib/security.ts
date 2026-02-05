@@ -1,6 +1,7 @@
 import { authenticator } from "otplib";
 import type { Session } from "@supabase/supabase-js";
 import { encryptPayload, decryptPayload, hashCode } from "./crypto";
+import { portalTokenPayloadSchema } from "./validators";
 import { createAdminClient } from "./supabaseServer";
 import { sendSms } from "./twilio";
 
@@ -15,9 +16,9 @@ type ChallengePayload = {
 
 const MAX_CHALLENGE_ATTEMPTS = 5;
 
-export function generateAuthenticatorSecret(label: string) {
+export function generateAuthenticatorSecret(label: string, issuer = "Entreprise") {
   const secret = authenticator.generateSecret();
-  const otpauth = authenticator.keyuri(label, "Entretien Prestige", secret);
+  const otpauth = authenticator.keyuri(label, issuer, secret);
   return { secret: encryptPayload(secret), otpauth };
 }
 
@@ -60,7 +61,7 @@ export async function createChallenge(
       .eq("user_id", userId)
       .single();
     if (profile?.phone) {
-      await sendSms(profile.phone, `Your verification code is ${code}`);
+      await sendSms(profile.phone, `Votre code de verification est ${code}`);
     }
   }
 
@@ -81,7 +82,7 @@ export async function sendTwoFactorCode(
     .eq("user_id", userId)
     .single();
   if (profile?.phone) {
-    await sendSms(profile.phone, "Your login verification code was sent.");
+    await sendSms(profile.phone, "Votre code de verification a ete envoye.");
   }
 }
 
@@ -159,4 +160,61 @@ export async function consumeChallenge(
   }
 
   return JSON.parse(sessionRaw) as Session;
+}
+
+type PortalTokenPayload = {
+  customer_id: string;
+  company_id: string;
+  expires_at: string;
+};
+
+type PortalTokenValidation =
+  | { ok: true; payload: PortalTokenPayload; expiresAt: Date }
+  | { ok: false; reason: "invalid" | "expired" };
+
+export function createPortalToken(payload: PortalTokenPayload) {
+  const raw = JSON.stringify(payload);
+  const encrypted = encryptPayload(raw);
+  return Buffer.from(encrypted, "utf8").toString("base64url");
+}
+
+export function validatePortalToken(token: string): PortalTokenValidation {
+  if (!token) {
+    return { ok: false, reason: "invalid" };
+  }
+
+  let decoded: string;
+  try {
+    decoded = Buffer.from(token, "base64url").toString("utf8");
+  } catch {
+    return { ok: false, reason: "invalid" };
+  }
+
+  const decrypted = decryptPayload(decoded);
+  if (!decrypted) {
+    return { ok: false, reason: "invalid" };
+  }
+
+  let payload: unknown;
+  try {
+    payload = JSON.parse(decrypted);
+  } catch {
+    return { ok: false, reason: "invalid" };
+  }
+
+  const parsed = portalTokenPayloadSchema.safeParse(payload);
+  if (!parsed.success) {
+    return { ok: false, reason: "invalid" };
+  }
+
+  const expiresAt = new Date(parsed.data.expires_at);
+  if (Number.isNaN(expiresAt.getTime())) {
+    return { ok: false, reason: "invalid" };
+  }
+
+  if (expiresAt.getTime() < Date.now()) {
+    return { ok: false, reason: "expired" };
+  }
+
+  return { ok: true, payload: parsed.data, expiresAt };
 }

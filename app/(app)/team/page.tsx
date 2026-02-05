@@ -1,6 +1,7 @@
 "use client";
 
 import TopBar from "@/components/TopBar";
+import AvailabilityCalendar from "@/components/AvailabilityCalendar";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { permissionKeys, type PermissionKey, type PermissionMap, defaultRolePermissions, mergeRolePermissions } from "@/lib/permissions";
@@ -50,6 +51,7 @@ export default function TeamPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [availabilityMemberId, setAvailabilityMemberId] = useState("");
 
   // Edit permissions modal
   const [showPermissionsModal, setShowPermissionsModal] = useState(false);
@@ -68,7 +70,11 @@ export default function TeamPage() {
       const res = await fetch("/api/users");
       if (!res.ok) throw new Error("Failed to load team");
       const data = await res.json();
-      setMembers((data.data || []) as TeamMember[]);
+      const nextMembers = (data.data || []) as TeamMember[];
+      setMembers(nextMembers);
+      if (!availabilityMemberId && nextMembers.length > 0) {
+        setAvailabilityMemberId(nextMembers[0].user_id);
+      }
     } catch (err) {
       setError("Impossible de charger l'équipe");
     } finally {
@@ -255,6 +261,46 @@ export default function TeamPage() {
             ))
           )}
         </div>
+      </section>
+
+      <section className="card" style={{ marginTop: 24 }}>
+        <div className="card-header">
+          <div>
+            <h3 className="card-title">Disponibilites</h3>
+            <div className="card-meta">Selectionnez un membre pour voir sa grille.</div>
+          </div>
+        </div>
+        {members.length === 0 ? (
+          <div className="card-meta" style={{ marginTop: 12 }}>
+            Aucun membre d'equipe disponible.
+          </div>
+        ) : (
+          <>
+            <div className="form-row" style={{ marginTop: 16 }}>
+              <label className="label" htmlFor="availabilityMember">Membre</label>
+              <select
+                id="availabilityMember"
+                className="select"
+                value={availabilityMemberId}
+                onChange={(event) => setAvailabilityMemberId(event.target.value)}
+              >
+                {members.map((member) => (
+                  <option key={member.user_id} value={member.user_id}>
+                    {member.full_name || member.email}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {availabilityMemberId ? (
+              <div style={{ marginTop: 16 }}>
+                <AvailabilityCalendar userId={availabilityMemberId} />
+                <div className="card-meta" style={{ marginTop: 8 }}>
+                  Disponibilite hebdomadaire (max 7 jours d'avance).
+                </div>
+              </div>
+            ) : null}
+          </>
+        )}
       </section>
 
       {/* Edit Permissions Modal */}

@@ -12,6 +12,16 @@ import VerifyTwoFactorPage from "@/app/(auth)/verify-2fa/page";
 import ForgotPasswordPage from "@/app/(auth)/forgot-password/page";
 import { sanitizeRedirect } from "@/lib/types";
 
+const redirectMock = vi.fn();
+
+vi.mock("next/navigation", () => ({
+  redirect: (path: string) => redirectMock(path),
+}));
+
+beforeEach(() => {
+  redirectMock.mockClear();
+});
+
 vi.mock("next/link", () => ({
   default: ({ href, children, ...rest }: { href: string; children: ReactNode }) => (
     <a href={href} {...rest}>
@@ -71,8 +81,7 @@ describe("TopBar", () => {
 describe("core pages", () => {
   it("renders the home page content", () => {
     render(<HomePage />);
-    expect(screen.getByText("Entretien Prestige")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login");
+    expect(redirectMock).toHaveBeenCalledWith("/login");
   });
 
   it("renders the not found page content", () => {
@@ -119,8 +128,8 @@ describe("forgot password page", () => {
 
     render(<ForgotPasswordPage />);
     const user = userEvent.setup();
-    await user.type(screen.getByLabelText("Email"), "user@example.com");
-    await user.click(screen.getByRole("button", { name: "Send reset link" }));
+    await user.type(screen.getByLabelText("Courriel"), "user@example.com");
+    await user.click(screen.getByRole("button", { name: "Envoyer le lien" }));
 
     expect(await screen.findByText("Erreur")).toBeInTheDocument();
   });
@@ -133,8 +142,8 @@ describe("forgot password page", () => {
 
     render(<ForgotPasswordPage />);
     const user = userEvent.setup();
-    await user.type(screen.getByLabelText("Email"), "user@example.com");
-    await user.click(screen.getByRole("button", { name: "Send reset link" }));
+    await user.type(screen.getByLabelText("Courriel"), "user@example.com");
+    await user.click(screen.getByRole("button", { name: "Envoyer le lien" }));
 
     expect(await screen.findByText("Unable to send reset link")).toBeInTheDocument();
   });
@@ -149,13 +158,13 @@ describe("forgot password page", () => {
 
     render(<ForgotPasswordPage />);
     const user = userEvent.setup();
-    await user.type(screen.getByLabelText("Email"), "user@example.com");
-    await user.click(screen.getByRole("button", { name: "Send reset link" }));
+    await user.type(screen.getByLabelText("Courriel"), "user@example.com");
+    await user.click(screen.getByRole("button", { name: "Envoyer le lien" }));
 
     expect(screen.getByRole("button", { name: "Sending..." })).toBeInTheDocument();
 
     resolveFetch({ ok: true, json: async () => ({}) });
-    expect(await screen.findByText("Reset link sent. Check your inbox.")).toBeInTheDocument();
+    expect(await screen.findByText("Lien envoye. Verifiez votre courriel.")).toBeInTheDocument();
   });
 
   it("shows success message on completion", async () => {
@@ -166,10 +175,10 @@ describe("forgot password page", () => {
 
     render(<ForgotPasswordPage />);
     const user = userEvent.setup();
-    await user.type(screen.getByLabelText("Email"), "user@example.com");
-    await user.click(screen.getByRole("button", { name: "Send reset link" }));
+    await user.type(screen.getByLabelText("Courriel"), "user@example.com");
+    await user.click(screen.getByRole("button", { name: "Envoyer le lien" }));
 
-    expect(await screen.findByText("Reset link sent. Check your inbox.")).toBeInTheDocument();
+    expect(await screen.findByText("Lien envoye. Verifiez votre courriel.")).toBeInTheDocument();
   });
 });
 

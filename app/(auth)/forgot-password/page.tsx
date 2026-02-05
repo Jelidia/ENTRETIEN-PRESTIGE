@@ -23,24 +23,24 @@ export default function ForgotPasswordPage() {
 
     const data = await response.json();
     if (!response.ok) {
-      setError(data.error ?? "Unable to send reset link");
+      setError(data.error ?? "Impossible d'envoyer le lien");
       setLoading(false);
       return;
     }
 
-    setMessage("Reset link sent. Check your inbox.");
+    setMessage("Lien envoye. Verifiez votre courriel.");
     setLoading(false);
   }
 
   return (
     <div className="auth-card">
-      <h1 className="auth-title">Reset password</h1>
-      <p className="card-meta">We will email a secure reset link.</p>
+      <h1 className="auth-title">Reinitialiser le mot de passe</h1>
+      <p className="card-meta">Nous envoyons un lien securise par courriel.</p>
       {error ? <div className="alert" style={{ marginTop: 16 }}>{error}</div> : null}
       {message ? <div className="card" style={{ marginTop: 16 }}>{message}</div> : null}
       <form className="form-grid" style={{ marginTop: 20 }} onSubmit={handleSubmit}>
         <div className="form-row">
-          <label className="label" htmlFor="email">Email</label>
+          <label className="label" htmlFor="email">Courriel</label>
           <input
             id="email"
             className="input"
@@ -51,11 +51,11 @@ export default function ForgotPasswordPage() {
           />
         </div>
         <button className="button-primary" type="submit" disabled={loading}>
-          {loading ? "Sending..." : "Send reset link"}
+          {loading ? "Envoi..." : "Envoyer le lien"}
         </button>
       </form>
       <div className="auth-links">
-        <Link href="/login">Return to sign in</Link>
+        <Link href="/login">Retour a la connexion</Link>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireRole } from "@/lib/auth";
+import { conflict, ok, okBody, requireRole, serverError, validationError } from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { userUpdateSchema } from "@/lib/validators";
@@ -56,7 +56,7 @@ export async function PATCH(
   const body = await request.json().catch(() => null);
   const parsed = userUpdateSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ success: false, error: "Invalid update" }, { status: 400 });
+    return validationError(parsed.error, "Invalid update");
   }
 
   const normalized = normalizeDocumentFields(parsed.data);
@@ -68,10 +68,10 @@ export async function PATCH(
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
+    return conflict("idempotency_conflict", "Idempotency key conflict");
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
+    return conflict("idempotency_in_progress", "Request already in progress");
   }
   const { data, error } = await client
     .from("users")
@@ -82,7 +82,7 @@ export async function PATCH(
     .single();
 
   if (error || !data) {
-    return NextResponse.json({ success: false, error: "Unable to update user" }, { status: 400 });
+    return serverError("Unable to update user", "user_update_failed");
   }
 
   await logAudit(client, profile.user_id, "user_update", "user", params.id, "success", {
@@ -91,9 +91,9 @@ export async function PATCH(
     newValues: normalized,
   });
 
-  const responseBody = { success: true, data };
+  const responseBody = okBody(data);
   await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
-  return NextResponse.json(responseBody);
+  return ok(data);
 }
 
 export async function GET(
@@ -118,8 +118,8 @@ export async function GET(
     .single();
 
   if (error || !data) {
-    return NextResponse.json({ success: false, error: "Unable to load user" }, { status: 400 });
+    return serverError("Unable to load user", "user_load_failed");
   }
 
-  return NextResponse.json({ success: true, data });
+  return ok(data);
 }

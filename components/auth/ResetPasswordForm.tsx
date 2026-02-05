@@ -22,24 +22,24 @@ export default function ResetPasswordForm({ code }: { code?: string }) {
 
     const data = await response.json();
     if (!response.ok) {
-      setError(data.error ?? "Unable to reset password");
+      setError(data.error ?? "Impossible de reinitialiser le mot de passe");
       setLoading(false);
       return;
     }
 
-    setMessage("Password updated. You can sign in now.");
+    setMessage("Mot de passe mis a jour. Vous pouvez vous connecter.");
     setLoading(false);
   }
 
   return (
     <div className="auth-card">
-      <h1 className="auth-title">Set new password</h1>
-      <p className="card-meta">Choose a strong password to continue.</p>
+      <h1 className="auth-title">Nouveau mot de passe</h1>
+      <p className="card-meta">Choisissez un mot de passe securise.</p>
       {error ? <div className="alert" style={{ marginTop: 16 }}>{error}</div> : null}
       {message ? <div className="card" style={{ marginTop: 16 }}>{message}</div> : null}
       <form className="form-grid" style={{ marginTop: 20 }} onSubmit={handleSubmit}>
         <div className="form-row">
-          <label className="label" htmlFor="password">New password</label>
+          <label className="label" htmlFor="password">Nouveau mot de passe</label>
           <input
             id="password"
             className="input"
@@ -50,7 +50,7 @@ export default function ResetPasswordForm({ code }: { code?: string }) {
           />
         </div>
         <button className="button-primary" type="submit" disabled={loading}>
-          {loading ? "Updating..." : "Update password"}
+          {loading ? "Mise a jour..." : "Mettre a jour"}
         </button>
       </form>
     </div>

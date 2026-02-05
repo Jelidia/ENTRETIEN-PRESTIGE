@@ -21,6 +21,48 @@ type TerritoryRow = {
   active_customers?: number;
 };
 
+type SalesRepRow = {
+  user_id: string;
+  full_name?: string | null;
+  email: string;
+  role: string;
+};
+
+type SalesDay = {
+  sales_day_id: string;
+  sales_day_date: string;
+  start_time: string;
+  end_time: string;
+  meeting_address?: string | null;
+  meeting_city?: string | null;
+  meeting_postal_code?: string | null;
+  notes?: string | null;
+  master_polygon_coordinates?: unknown;
+};
+
+type SalesDayAssignment = {
+  assignment_id: string;
+  sales_rep_id: string | null;
+  override_start_time?: string | null;
+  override_meeting_address?: string | null;
+  override_meeting_city?: string | null;
+  override_meeting_postal_code?: string | null;
+  notes_override?: string | null;
+  sub_polygon_coordinates?: unknown;
+  sales_rep?: {
+    user_id: string;
+    full_name: string | null;
+    email: string;
+  } | null;
+};
+
+type SalesAvailability = {
+  user_id: string;
+  full_name: string | null;
+  email: string;
+  available: boolean;
+};
+
 type MapCenter = { lat: number; lng: number };
 
 type GoogleMapInstance = {
@@ -60,12 +102,6 @@ type GoogleMapsApi = {
   };
 };
 
-const isMapPoint = (value: unknown): value is MapCenter => {
-  if (!value || typeof value !== "object") return false;
-  const candidate = value as { lat?: unknown; lng?: unknown };
-  return typeof candidate.lat === "number" && typeof candidate.lng === "number";
-};
-
 type LeaderboardRow = {
   rank: number;
   total_revenue?: number;
@@ -73,14 +109,61 @@ type LeaderboardRow = {
   conversion_rate?: number;
 };
 
+function normalizePolygon(value: unknown): MapCenter[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((point) => {
+      if (Array.isArray(point) && point.length >= 2) {
+        const [lat, lng] = point;
+        if (typeof lat === "number" && typeof lng === "number") {
+          return { lat, lng };
+        }
+      }
+      if (!point || typeof point !== "object") return null;
+      const candidate = point as { lat?: unknown; lng?: unknown };
+      if (typeof candidate.lat === "number" && typeof candidate.lng === "number") {
+        return { lat: candidate.lat, lng: candidate.lng };
+      }
+      return null;
+    })
+    .filter(Boolean) as MapCenter[];
+}
+
+function formatSalesDayDate(value: string) {
+  const parsed = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+  return parsed.toLocaleDateString("fr-CA", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function formatTimeShort(value?: string | null) {
+  if (!value) return "";
+  return value.length >= 5 ? value.slice(0, 5) : value;
+}
+
 export default function SalesPage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
   const [leads, setLeads] = useState<LeadRow[]>([]);
   const [territories, setTerritories] = useState<TerritoryRow[]>([]);
+  const [salesReps, setSalesReps] = useState<SalesRepRow[]>([]);
+  const [salesDays, setSalesDays] = useState<SalesDay[]>([]);
+  const [salesDayAssignments, setSalesDayAssignments] = useState<SalesDayAssignment[]>([]);
+  const [salesDayAvailability, setSalesDayAvailability] = useState<SalesAvailability[]>([]);
   const [leadStatus, setLeadStatus] = useState("");
   const [territoryStatus, setTerritoryStatus] = useState("");
+  const [salesDayStatus, setSalesDayStatus] = useState("");
   const [polygonPoints, setPolygonPoints] = useState<MapCenter[]>([]);
+  const [salesDayPolygonPoints, setSalesDayPolygonPoints] = useState<MapCenter[]>([]);
   const [mapReady, setMapReady] = useState(false);
+  const [salesDayMapReady, setSalesDayMapReady] = useState(false);
+  const [selectedSalesDayId, setSelectedSalesDayId] = useState("");
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState("");
+  const [salesDayZoneType, setSalesDayZoneType] = useState<"master" | "sub">("master");
   const [leadForm, setLeadForm] = useState({
     firstName: "",
     lastName: "",
@@ -95,13 +178,40 @@ export default function SalesPage() {
     territoryName: "",
     salesRepId: "",
     neighborhoods: "",
-    polygonCoordinates: "",
+  });
+  const [salesDayForm, setSalesDayForm] = useState({
+    date: "",
+    startTime: "",
+    endTime: "",
+    meetingAddress: "",
+    meetingCity: "",
+    meetingPostalCode: "",
+    notes: "",
+  });
+  const [salesDayAssignForm, setSalesDayAssignForm] = useState({
+    salesRepId: "",
+    overrideStartTime: "",
+    overrideMeetingAddress: "",
+    overrideMeetingCity: "",
+    overrideMeetingPostalCode: "",
+    notes: "",
   });
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapInstance = useRef<GoogleMapInstance | null>(null);
   const polygonInstance = useRef<GooglePolygonInstance | null>(null);
   const mapClickListener = useRef<{ remove: () => void } | null>(null);
+  const salesDayMapRef = useRef<HTMLDivElement | null>(null);
+  const salesDayMapInstance = useRef<GoogleMapInstance | null>(null);
+  const salesDayMasterPolygonInstance = useRef<GooglePolygonInstance | null>(null);
+  const salesDaySubPolygonInstance = useRef<GooglePolygonInstance | null>(null);
+  const salesDayClickListener = useRef<{ remove: () => void } | null>(null);
   const mapsKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? "";
+  const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const maxSalesDayDate = useMemo(() => {
+    const date = new Date();
+    date.setDate(date.getDate() + 7);
+    return date.toISOString().slice(0, 10);
+  }, []);
 
   const getGoogle = useCallback(() => {
     return (window as unknown as { google?: GoogleMapsApi }).google ?? null;
@@ -143,12 +253,7 @@ export default function SalesPage() {
       const latLng = event.latLng;
       if (!latLng) return;
       setPolygonPoints((prev) => {
-        const next = [...prev, { lat: latLng.lat(), lng: latLng.lng() }];
-        setTerritoryForm((form) => ({
-          ...form,
-          polygonCoordinates: JSON.stringify(next),
-        }));
-        return next;
+        return [...prev, { lat: latLng.lat(), lng: latLng.lng() }];
       });
     });
     setMapReady(true);
@@ -183,12 +288,130 @@ export default function SalesPage() {
     mapInstance.current.setCenter(polygonPoints[0]);
   }, [getGoogle, polygonPoints]);
 
+  const initSalesDayMap = useCallback(() => {
+    const google = getGoogle();
+    const maps = google?.maps;
+    if (!maps) {
+      return;
+    }
+    salesDayMapInstance.current = new maps.Map(salesDayMapRef.current, {
+      center: { lat: 45.5017, lng: -73.5673 },
+      zoom: 11,
+      mapTypeControl: false,
+      fullscreenControl: false,
+      streetViewControl: false,
+    });
+    if (salesDayClickListener.current) {
+      salesDayClickListener.current.remove();
+    }
+    salesDayClickListener.current = salesDayMapInstance.current.addListener("click", (event) => {
+      const latLng = event.latLng;
+      if (!latLng) return;
+      setSalesDayPolygonPoints((prev) => [...prev, { lat: latLng.lat(), lng: latLng.lng() }]);
+    });
+    setSalesDayMapReady(true);
+  }, [getGoogle]);
+
+  const selectedSalesDay = useMemo(() => {
+    if (!selectedSalesDayId) return null;
+    return salesDays.find((day) => day.sales_day_id === selectedSalesDayId) ?? null;
+  }, [salesDays, selectedSalesDayId]);
+
+  const selectedAssignment = useMemo(() => {
+    if (!selectedAssignmentId) return null;
+    return salesDayAssignments.find((assignment) => assignment.assignment_id === selectedAssignmentId) ?? null;
+  }, [salesDayAssignments, selectedAssignmentId]);
+
+  const salesDayMasterPoints = useMemo(() => {
+    return normalizePolygon(selectedSalesDay?.master_polygon_coordinates);
+  }, [selectedSalesDay]);
+
+  const renderSalesDayPolygons = useCallback(() => {
+    const google = getGoogle();
+    const maps = google?.maps;
+    if (!maps || !salesDayMapInstance.current) {
+      return;
+    }
+    const masterPoints = salesDayZoneType === "sub" ? salesDayMasterPoints : salesDayPolygonPoints;
+    const subPoints = salesDayZoneType === "sub" ? salesDayPolygonPoints : [];
+
+    if (masterPoints.length < 3) {
+      if (salesDayMasterPolygonInstance.current) {
+        salesDayMasterPolygonInstance.current.setMap(null);
+        salesDayMasterPolygonInstance.current = null;
+      }
+    } else if (!salesDayMasterPolygonInstance.current) {
+      salesDayMasterPolygonInstance.current = new maps.Polygon({
+        paths: masterPoints,
+        map: salesDayMapInstance.current,
+        strokeColor: "#1e3a8a",
+        strokeOpacity: 0.9,
+        strokeWeight: 2,
+        fillColor: "#bfdbfe",
+        fillOpacity: 0.25,
+      });
+    } else {
+      salesDayMasterPolygonInstance.current.setPath(masterPoints);
+    }
+
+    if (subPoints.length < 3) {
+      if (salesDaySubPolygonInstance.current) {
+        salesDaySubPolygonInstance.current.setMap(null);
+        salesDaySubPolygonInstance.current = null;
+      }
+    } else if (!salesDaySubPolygonInstance.current) {
+      salesDaySubPolygonInstance.current = new maps.Polygon({
+        paths: subPoints,
+        map: salesDayMapInstance.current,
+        strokeColor: "#0f766e",
+        strokeOpacity: 0.9,
+        strokeWeight: 2,
+        fillColor: "#5eead4",
+        fillOpacity: 0.3,
+      });
+    } else {
+      salesDaySubPolygonInstance.current.setPath(subPoints);
+    }
+
+    if (subPoints.length) {
+      salesDayMapInstance.current.setCenter(subPoints[0]);
+    } else if (masterPoints.length) {
+      salesDayMapInstance.current.setCenter(masterPoints[0]);
+    }
+  }, [getGoogle, salesDayMasterPoints, salesDayPolygonPoints, salesDayZoneType]);
+
   const mapMessage = useMemo(() => {
     if (!mapsKey) return "Carte désactivée. Ajoutez NEXT_PUBLIC_GOOGLE_MAPS_API_KEY.";
     if (!mapReady) return "Chargement de la carte...";
     if (!polygonPoints.length) return "Cliquez sur la carte pour tracer le territoire.";
     return "";
   }, [mapReady, mapsKey, polygonPoints.length]);
+
+  const salesDayMapMessage = useMemo(() => {
+    if (!mapsKey) return "Carte désactivée. Ajoutez NEXT_PUBLIC_GOOGLE_MAPS_API_KEY.";
+    if (!salesDayMapReady) return "Chargement de la carte...";
+    if (!selectedSalesDayId) return "Selectionnez une journee.";
+    if (salesDayZoneType === "sub" && !selectedAssignmentId) {
+      return "Selectionnez un vendeur pour la zone.";
+    }
+    if (!salesDayPolygonPoints.length) {
+      return "Cliquez sur la carte pour dessiner la zone.";
+    }
+    return "";
+  }, [mapsKey, salesDayMapReady, salesDayPolygonPoints.length, salesDayZoneType, selectedAssignmentId, selectedSalesDayId]);
+
+  const selectedSalesDayLabel = useMemo(() => {
+    if (!selectedSalesDay) return "";
+    return `${formatSalesDayDate(selectedSalesDay.sales_day_date)} · ${formatTimeShort(selectedSalesDay.start_time)} - ${formatTimeShort(selectedSalesDay.end_time)}`;
+  }, [selectedSalesDay]);
+
+  const selectedSalesDayMeeting = useMemo(() => {
+    if (!selectedSalesDay) return "";
+    const parts = [selectedSalesDay.meeting_address, selectedSalesDay.meeting_city, selectedSalesDay.meeting_postal_code]
+      .filter(Boolean)
+      .join(", ");
+    return parts || "Adresse a confirmer";
+  }, [selectedSalesDay]);
 
   useEffect(() => {
     void loadData();
@@ -209,38 +432,80 @@ export default function SalesPage() {
   }, [mapReady, renderPolygon]);
 
   useEffect(() => {
-    if (!territoryForm.polygonCoordinates) {
-      setPolygonPoints([]);
+    if (!selectedSalesDayId) {
+      setSalesDayPolygonPoints([]);
       return;
     }
-    try {
-      const parsed = JSON.parse(territoryForm.polygonCoordinates);
-      if (!Array.isArray(parsed)) {
-        return;
-      }
-      const points = parsed.filter(isMapPoint) as MapCenter[];
-      if (points.length) {
-        setPolygonPoints(points);
-      }
-    } catch {
-      // ignore parsing errors until submit
+    if (salesDayZoneType === "master") {
+      setSalesDayPolygonPoints(normalizePolygon(selectedSalesDay?.master_polygon_coordinates));
+      return;
     }
-  }, [territoryForm.polygonCoordinates]);
+    setSalesDayPolygonPoints(normalizePolygon(selectedAssignment?.sub_polygon_coordinates));
+  }, [selectedAssignment, selectedSalesDay, selectedSalesDayId, salesDayZoneType]);
+
+  useEffect(() => {
+    if (!mapsKey || !salesDayMapRef.current) {
+      return;
+    }
+    if (salesDayMapInstance.current) {
+      return;
+    }
+    void loadGoogleMaps(mapsKey)
+      .then(() => initSalesDayMap())
+      .catch(() => setSalesDayStatus("Impossible de charger la carte"));
+  }, [initSalesDayMap, loadGoogleMaps, mapsKey]);
+
+  useEffect(() => {
+    if (!salesDayMapReady) return;
+    renderSalesDayPolygons();
+  }, [renderSalesDayPolygons, salesDayMapReady]);
+
+  useEffect(() => {
+    if (!selectedSalesDayId || !selectedSalesDay) {
+      setSalesDayAssignments([]);
+      setSalesDayAvailability([]);
+      return;
+    }
+    void loadSalesDayAssignments(selectedSalesDayId);
+    void loadSalesDayAvailability(selectedSalesDay);
+  }, [selectedSalesDay, selectedSalesDayId]);
 
   async function loadData() {
-    const [leaderboardRes, leadsRes, territoriesRes] = await Promise.all([
+    const [leaderboardRes, leadsRes, territoriesRes, usersRes, salesDaysRes] = await Promise.all([
       fetch("/api/reports/leaderboard"),
       fetch("/api/reports/leads"),
-      fetch("/api/reports/territories"),
+      fetch("/api/maps/territory"),
+      fetch("/api/users"),
+      fetch("/api/dispatch/sales-days"),
     ]);
 
     const leaderboardJson = await leaderboardRes.json().catch(() => ({ data: [] }));
     const leadsJson = await leadsRes.json().catch(() => ({ data: [] }));
     const territoriesJson = await territoriesRes.json().catch(() => ({ data: [] }));
+    const usersJson = await usersRes.json().catch(() => ({ data: [] }));
+    const salesDaysJson = await salesDaysRes.json().catch(() => ({ data: [] }));
 
     setLeaderboard(leaderboardJson.data ?? []);
     setLeads(leadsJson.data ?? []);
     setTerritories(territoriesJson.data ?? []);
+    const reps = (usersJson.data ?? []).filter((item: SalesRepRow) => item.role === "sales_rep");
+    setSalesReps(reps);
+    if (!territoryForm.salesRepId && reps.length > 0) {
+      setTerritoryForm((form) => ({ ...form, salesRepId: reps[0].user_id }));
+    }
+    if (!salesDayAssignForm.salesRepId && reps.length > 0) {
+      setSalesDayAssignForm((form) => ({ ...form, salesRepId: reps[0].user_id }));
+    }
+    const days = (salesDaysJson.data ?? []) as SalesDay[];
+    setSalesDays(days);
+    if (days.length === 0) {
+      setSelectedSalesDayId("");
+      return;
+    }
+    const hasSelection = days.some((day) => day.sales_day_id === selectedSalesDayId);
+    if (!hasSelection) {
+      setSelectedSalesDayId(days[0].sales_day_id);
+    }
   }
 
   async function submitLead(event: React.FormEvent<HTMLFormElement>) {
@@ -256,10 +521,10 @@ export default function SalesPage() {
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setLeadStatus(json.error ?? "Unable to create lead");
+      setLeadStatus(json.error ?? "Impossible de creer le prospect");
       return;
     }
-    setLeadStatus("Lead created.");
+    setLeadStatus("Prospect cree.");
     setLeadForm({
       firstName: "",
       lastName: "",
@@ -280,52 +545,224 @@ export default function SalesPage() {
       .split(",")
       .map((item) => item.trim())
       .filter(Boolean);
-    let polygonCoordinates: unknown = undefined;
-    if (territoryForm.polygonCoordinates) {
-      try {
-        polygonCoordinates = JSON.parse(territoryForm.polygonCoordinates);
-      } catch (error) {
-        setTerritoryStatus("Polygon JSON is invalid.");
-        return;
-      }
+    if (polygonPoints.length < 3) {
+      setTerritoryStatus("Veuillez dessiner un polygone.");
+      return;
     }
-    const response = await fetch("/api/reports/territories", {
+    const response = await fetch("/api/maps/territory", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         territoryName: territoryForm.territoryName,
         salesRepId: territoryForm.salesRepId,
         neighborhoods,
-        polygonCoordinates,
+        polygonCoordinates: polygonPoints,
       }),
     });
     const json = await response.json().catch(() => ({}));
     if (!response.ok) {
-      setTerritoryStatus(json.error ?? "Unable to create territory");
+      setTerritoryStatus(json.error ?? "Impossible de créer le territoire");
       return;
     }
-    setTerritoryStatus("Territory saved.");
-    setTerritoryForm({ territoryName: "", salesRepId: "", neighborhoods: "", polygonCoordinates: "" });
+    setTerritoryStatus("Territoire enregistré.");
+    setTerritoryForm({ territoryName: "", salesRepId: "", neighborhoods: "" });
+    setPolygonPoints([]);
     void loadData();
+  }
+
+  async function loadSalesDayAssignments(dayId: string) {
+    setSalesDayStatus("");
+    const response = await fetch(`/api/dispatch/sales-day-assignments?salesDayId=${dayId}`);
+    const json = await response.json().catch(() => ({ data: [] }));
+    if (!response.ok) {
+      setSalesDayStatus(json.error ?? "Impossible de charger les assignations");
+      return;
+    }
+    const assignments = (json.data ?? []) as SalesDayAssignment[];
+    setSalesDayAssignments(assignments);
+    if (assignments.length === 0) {
+      setSelectedAssignmentId("");
+      return;
+    }
+    const hasSelection = assignments.some((assignment) => assignment.assignment_id === selectedAssignmentId);
+    if (!hasSelection) {
+      setSelectedAssignmentId(assignments[0].assignment_id);
+    }
+  }
+
+  async function loadSalesDayAvailability(day: SalesDay) {
+    if (!day.sales_day_date || !day.start_time || !day.end_time) {
+      setSalesDayAvailability([]);
+      return;
+    }
+    const params = new URLSearchParams({
+      date: day.sales_day_date,
+      startTime: day.start_time,
+      endTime: day.end_time,
+    });
+    const response = await fetch(`/api/dispatch/sales-availability?${params.toString()}`);
+    const json = await response.json().catch(() => ({ data: [] }));
+    if (!response.ok) {
+      setSalesDayStatus(json.error ?? "Impossible de charger les disponibilites");
+      return;
+    }
+    setSalesDayAvailability(json.data ?? []);
+  }
+
+  async function submitSalesDay(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSalesDayStatus("");
+    const response = await fetch("/api/dispatch/sales-day-create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        salesDayDate: salesDayForm.date,
+        startTime: salesDayForm.startTime,
+        endTime: salesDayForm.endTime,
+        meetingAddress: salesDayForm.meetingAddress || undefined,
+        meetingCity: salesDayForm.meetingCity || undefined,
+        meetingPostalCode: salesDayForm.meetingPostalCode || undefined,
+        notes: salesDayForm.notes || undefined,
+      }),
+    });
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setSalesDayStatus(json.error ?? "Impossible de creer la journee");
+      return;
+    }
+    setSalesDayStatus("Journee creee.");
+    setSalesDayForm({
+      date: "",
+      startTime: "",
+      endTime: "",
+      meetingAddress: "",
+      meetingCity: "",
+      meetingPostalCode: "",
+      notes: "",
+    });
+    const createdId = json.data?.sales_day_id as string | undefined;
+    void loadData();
+    if (createdId) {
+      setSelectedSalesDayId(createdId);
+    }
+  }
+
+  async function submitSalesDayAssign(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selectedSalesDayId) {
+      setSalesDayStatus("Selectionnez une journee.");
+      return;
+    }
+    setSalesDayStatus("");
+    const response = await fetch("/api/dispatch/sales-day-assign", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        salesDayId: selectedSalesDayId,
+        assignments: [
+          {
+            salesRepId: salesDayAssignForm.salesRepId,
+            overrideStartTime: salesDayAssignForm.overrideStartTime || undefined,
+            overrideMeetingAddress: salesDayAssignForm.overrideMeetingAddress || undefined,
+            overrideMeetingCity: salesDayAssignForm.overrideMeetingCity || undefined,
+            overrideMeetingPostalCode: salesDayAssignForm.overrideMeetingPostalCode || undefined,
+            notes: salesDayAssignForm.notes || undefined,
+          },
+        ],
+      }),
+    });
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setSalesDayStatus(json.error ?? "Impossible d'assigner le vendeur");
+      return;
+    }
+    setSalesDayStatus("Assignation enregistree.");
+    setSalesDayAssignForm({
+      salesRepId: salesDayAssignForm.salesRepId,
+      overrideStartTime: "",
+      overrideMeetingAddress: "",
+      overrideMeetingCity: "",
+      overrideMeetingPostalCode: "",
+      notes: "",
+    });
+    void loadSalesDayAssignments(selectedSalesDayId);
+  }
+
+  async function autoAssignSalesDay() {
+    if (!selectedSalesDayId) {
+      setSalesDayStatus("Selectionnez une journee.");
+      return;
+    }
+    setSalesDayStatus("");
+    const response = await fetch("/api/dispatch/sales-day-auto-assign", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ salesDayId: selectedSalesDayId }),
+    });
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setSalesDayStatus(json.error ?? "Impossible d'assigner les disponibilites");
+      return;
+    }
+    setSalesDayStatus("Assignations automatiques appliquees.");
+    void loadSalesDayAssignments(selectedSalesDayId);
+  }
+
+  async function saveSalesDayZone() {
+    if (!selectedSalesDayId) {
+      setSalesDayStatus("Selectionnez une journee.");
+      return;
+    }
+    if (salesDayPolygonPoints.length < 3) {
+      setSalesDayStatus("Veuillez dessiner un polygone.");
+      return;
+    }
+    if (salesDayZoneType === "sub" && !selectedAssignmentId) {
+      setSalesDayStatus("Selectionnez un vendeur.");
+      return;
+    }
+
+    const endpoint = salesDayZoneType === "master"
+      ? "/api/dispatch/sales-day-master-zone"
+      : "/api/dispatch/sales-day-sub-zone";
+    const body = salesDayZoneType === "master"
+      ? { salesDayId: selectedSalesDayId, polygonCoordinates: salesDayPolygonPoints }
+      : { assignmentId: selectedAssignmentId, polygonCoordinates: salesDayPolygonPoints };
+
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setSalesDayStatus(json.error ?? "Impossible de sauvegarder la zone");
+      return;
+    }
+    setSalesDayStatus("Zone enregistree.");
+    void loadData();
+    if (salesDayZoneType === "sub") {
+      void loadSalesDayAssignments(selectedSalesDayId);
+    }
   }
 
   return (
     <div className="page">
       <TopBar
-        title="Sales"
-        subtitle="Territory performance and lead pipeline"
-        actions={<span className="pill">Live pipeline</span>}
+        title="Ventes"
+        subtitle="Performance des territoires et pipeline"
+        actions={<span className="pill">Pipeline en direct</span>}
       />
 
       <div className="grid-2">
         <div className="card">
-          <h3 className="card-title">Leaderboard</h3>
+          <h3 className="card-title">Classement</h3>
           <table className="table">
             <thead>
               <tr>
-                <th>Rank</th>
-                <th>Revenue</th>
-                <th>Leads</th>
+                <th>Rang</th>
+                <th>Revenus</th>
+                <th>Prospects</th>
                 <th>Conversion</th>
               </tr>
             </thead>
@@ -343,11 +780,11 @@ export default function SalesPage() {
         </div>
 
         <div className="card">
-          <h3 className="card-title">New lead</h3>
+          <h3 className="card-title">Nouveau prospect</h3>
           <form className="form-grid" onSubmit={submitLead}>
             <div className="grid-2">
               <div className="form-row">
-                <label className="label" htmlFor="firstName">First name</label>
+                <label className="label" htmlFor="firstName">Prenom</label>
                 <input
                   id="firstName"
                   className="input"
@@ -357,7 +794,7 @@ export default function SalesPage() {
                 />
               </div>
               <div className="form-row">
-                <label className="label" htmlFor="lastName">Last name</label>
+                <label className="label" htmlFor="lastName">Nom</label>
                 <input
                   id="lastName"
                   className="input"
@@ -368,7 +805,7 @@ export default function SalesPage() {
               </div>
             </div>
             <div className="form-row">
-              <label className="label" htmlFor="leadEmail">Email</label>
+              <label className="label" htmlFor="leadEmail">Courriel</label>
               <input
                 id="leadEmail"
                 className="input"
@@ -379,7 +816,7 @@ export default function SalesPage() {
             </div>
             <div className="grid-2">
               <div className="form-row">
-                <label className="label" htmlFor="leadPhone">Phone</label>
+                <label className="label" htmlFor="leadPhone">Telephone</label>
                 <input
                   id="leadPhone"
                   className="input"
@@ -388,7 +825,7 @@ export default function SalesPage() {
                 />
               </div>
               <div className="form-row">
-                <label className="label" htmlFor="leadCity">City</label>
+                <label className="label" htmlFor="leadCity">Ville</label>
                 <input
                   id="leadCity"
                   className="input"
@@ -399,7 +836,7 @@ export default function SalesPage() {
             </div>
             <div className="grid-2">
               <div className="form-row">
-                <label className="label" htmlFor="leadValue">Estimated value</label>
+                <label className="label" htmlFor="leadValue">Valeur estimee</label>
                 <input
                   id="leadValue"
                   className="input"
@@ -409,7 +846,7 @@ export default function SalesPage() {
                 />
               </div>
               <div className="form-row">
-                <label className="label" htmlFor="followUp">Follow up date</label>
+                <label className="label" htmlFor="followUp">Date de relance</label>
                 <input
                   id="followUp"
                   className="input"
@@ -428,7 +865,7 @@ export default function SalesPage() {
                 onChange={(event) => setLeadForm({ ...leadForm, notes: event.target.value })}
               />
             </div>
-            <button className="button-primary" type="submit">Save lead</button>
+            <button className="button-primary" type="submit">Enregistrer le prospect</button>
             {leadStatus ? <div className="hint">{leadStatus}</div> : null}
           </form>
         </div>
@@ -436,14 +873,14 @@ export default function SalesPage() {
 
       <div className="grid-2">
         <div className="card">
-          <h3 className="card-title">Territories</h3>
+          <h3 className="card-title">Territoires</h3>
           <table className="table">
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Revenue</th>
-                <th>Customers</th>
-                <th>Active</th>
+                <th>Nom</th>
+                <th>Revenus</th>
+                <th>Clients</th>
+                <th>Actifs</th>
               </tr>
             </thead>
             <tbody>
@@ -460,10 +897,10 @@ export default function SalesPage() {
         </div>
 
         <div className="card">
-          <h3 className="card-title">Assign territory</h3>
+          <h3 className="card-title">Assigner un territoire</h3>
           <form className="form-grid" onSubmit={submitTerritory}>
             <div className="form-row">
-              <label className="label" htmlFor="territoryName">Territory name</label>
+              <label className="label" htmlFor="territoryName">Nom du territoire</label>
               <input
                 id="territoryName"
                 className="input"
@@ -475,34 +912,35 @@ export default function SalesPage() {
               />
             </div>
             <div className="form-row">
-              <label className="label" htmlFor="salesRepId">Sales rep ID</label>
-              <input
+              <label className="label" htmlFor="salesRepId">Représentant</label>
+              <select
                 id="salesRepId"
-                className="input"
+                className="select"
                 value={territoryForm.salesRepId}
                 onChange={(event) => setTerritoryForm({ ...territoryForm, salesRepId: event.target.value })}
                 required
-              />
+              >
+                <option value="">Choisir un représentant</option>
+                {salesReps.map((rep) => (
+                  <option key={rep.user_id} value={rep.user_id}>
+                    {rep.full_name || rep.email}
+                  </option>
+                ))}
+              </select>
+              {salesReps.length === 0 ? (
+                <div className="card-meta" style={{ marginTop: 6 }}>
+                  Aucun représentant disponible.
+                </div>
+              ) : null}
             </div>
             <div className="form-row">
-              <label className="label" htmlFor="neighborhoods">Neighborhoods (comma)</label>
+              <label className="label" htmlFor="neighborhoods">Quartiers (séparés par des virgules)</label>
               <input
                 id="neighborhoods"
                 className="input"
                 value={territoryForm.neighborhoods}
                 onChange={(event) =>
                   setTerritoryForm({ ...territoryForm, neighborhoods: event.target.value })
-                }
-              />
-            </div>
-            <div className="form-row">
-              <label className="label" htmlFor="polygon">Polygon JSON</label>
-              <textarea
-                id="polygon"
-                className="textarea"
-                value={territoryForm.polygonCoordinates}
-                onChange={(event) =>
-                  setTerritoryForm({ ...territoryForm, polygonCoordinates: event.target.value })
                 }
               />
             </div>
@@ -519,29 +957,367 @@ export default function SalesPage() {
                   type="button"
                   onClick={() => {
                     setPolygonPoints([]);
-                    setTerritoryForm((form) => ({ ...form, polygonCoordinates: "" }));
                   }}
                 >
                   Effacer le polygone
                 </button>
               </div>
             </div>
-            <button className="button-primary" type="submit">Save territory</button>
+            <button className="button-primary" type="submit">Enregistrer le territoire</button>
             {territoryStatus ? <div className="hint">{territoryStatus}</div> : null}
           </form>
         </div>
       </div>
 
+      <div className="grid-2">
+        <div className="card">
+          <h3 className="card-title">Creer une journee de vente</h3>
+          <form className="form-grid" onSubmit={submitSalesDay}>
+            <div className="grid-2">
+              <div className="form-row">
+                <label className="label" htmlFor="salesDayDate">Date</label>
+                <input
+                  id="salesDayDate"
+                  className="input"
+                  type="date"
+                  min={today}
+                  max={maxSalesDayDate}
+                  value={salesDayForm.date}
+                  onChange={(event) => setSalesDayForm({ ...salesDayForm, date: event.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-row">
+                <label className="label" htmlFor="salesDayStart">Heure de debut</label>
+                <input
+                  id="salesDayStart"
+                  className="input"
+                  type="time"
+                  value={salesDayForm.startTime}
+                  onChange={(event) => setSalesDayForm({ ...salesDayForm, startTime: event.target.value })}
+                  required
+                />
+              </div>
+            </div>
+            <div className="grid-2">
+              <div className="form-row">
+                <label className="label" htmlFor="salesDayEnd">Heure de fin</label>
+                <input
+                  id="salesDayEnd"
+                  className="input"
+                  type="time"
+                  value={salesDayForm.endTime}
+                  onChange={(event) => setSalesDayForm({ ...salesDayForm, endTime: event.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-row">
+                <label className="label" htmlFor="salesDayMeeting">Adresse de depart</label>
+                <input
+                  id="salesDayMeeting"
+                  className="input"
+                  value={salesDayForm.meetingAddress}
+                  onChange={(event) => setSalesDayForm({ ...salesDayForm, meetingAddress: event.target.value })}
+                />
+              </div>
+            </div>
+            <div className="grid-2">
+              <div className="form-row">
+                <label className="label" htmlFor="salesDayCity">Ville</label>
+                <input
+                  id="salesDayCity"
+                  className="input"
+                  value={salesDayForm.meetingCity}
+                  onChange={(event) => setSalesDayForm({ ...salesDayForm, meetingCity: event.target.value })}
+                />
+              </div>
+              <div className="form-row">
+                <label className="label" htmlFor="salesDayPostal">Code postal</label>
+                <input
+                  id="salesDayPostal"
+                  className="input"
+                  value={salesDayForm.meetingPostalCode}
+                  onChange={(event) => setSalesDayForm({ ...salesDayForm, meetingPostalCode: event.target.value })}
+                />
+              </div>
+            </div>
+            <div className="form-row">
+              <label className="label" htmlFor="salesDayNotes">Consignes</label>
+              <textarea
+                id="salesDayNotes"
+                className="textarea"
+                value={salesDayForm.notes}
+                onChange={(event) => setSalesDayForm({ ...salesDayForm, notes: event.target.value })}
+              />
+            </div>
+            <div className="card-meta">
+              Planification max 7 jours a l'avance.
+            </div>
+            <button className="button-primary" type="submit">Creer la journee</button>
+          </form>
+        </div>
+
+        <div className="card">
+          <h3 className="card-title">Assignations des vendeurs</h3>
+          {salesDays.length === 0 ? (
+            <div className="card-meta" style={{ marginTop: 12 }}>
+              Aucune journee planifiee.
+            </div>
+          ) : (
+            <div className="form-grid">
+              <div className="form-row">
+                <label className="label" htmlFor="salesDaySelect">Journee</label>
+                <select
+                  id="salesDaySelect"
+                  className="select"
+                  value={selectedSalesDayId}
+                  onChange={(event) => setSelectedSalesDayId(event.target.value)}
+                >
+                  {salesDays.map((day) => (
+                    <option key={day.sales_day_id} value={day.sales_day_id}>
+                      {formatSalesDayDate(day.sales_day_date)} {formatTimeShort(day.start_time)}-{formatTimeShort(day.end_time)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {selectedSalesDay ? (
+                <div className="card-meta">
+                  {selectedSalesDayLabel} • {selectedSalesDayMeeting}
+                </div>
+              ) : null}
+
+              <div>
+                <div className="card-label">Disponibilites</div>
+                {salesDayAvailability.length === 0 ? (
+                  <div className="card-meta" style={{ marginTop: 8 }}>
+                    Aucune disponibilite chargee.
+                  </div>
+                ) : (
+                  <div className="list" style={{ marginTop: 8 }}>
+                    {salesDayAvailability.map((rep) => (
+                      <div className="list-item" key={rep.user_id}>
+                        <div>
+                          <strong>{rep.full_name || rep.email}</strong>
+                          <div className="card-meta">{rep.email}</div>
+                        </div>
+                        <span
+                          className="pill"
+                          style={{
+                            backgroundColor: rep.available ? "#dcfce7" : "#fee2e2",
+                            color: rep.available ? "#166534" : "#991b1b",
+                          }}
+                        >
+                          {rep.available ? "Disponible" : "Indisponible"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <button
+                  className="button-secondary"
+                  type="button"
+                  onClick={autoAssignSalesDay}
+                  style={{ marginTop: 8 }}
+                >
+                  Assigner tous les disponibles
+                </button>
+              </div>
+
+              <form className="form-grid" onSubmit={submitSalesDayAssign}>
+                <div className="form-row">
+                  <label className="label" htmlFor="assignRep">Représentant</label>
+                  <select
+                    id="assignRep"
+                    className="select"
+                    value={salesDayAssignForm.salesRepId}
+                    onChange={(event) =>
+                      setSalesDayAssignForm({ ...salesDayAssignForm, salesRepId: event.target.value })
+                    }
+                    required
+                  >
+                    <option value="">Choisir un représentant</option>
+                    {salesReps.map((rep) => (
+                      <option key={rep.user_id} value={rep.user_id}>
+                        {rep.full_name || rep.email}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid-2">
+                  <div className="form-row">
+                    <label className="label" htmlFor="overrideTime">Heure de depart (optionnel)</label>
+                    <input
+                      id="overrideTime"
+                      className="input"
+                      type="time"
+                      value={salesDayAssignForm.overrideStartTime}
+                      onChange={(event) =>
+                        setSalesDayAssignForm({ ...salesDayAssignForm, overrideStartTime: event.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="form-row">
+                    <label className="label" htmlFor="overrideAddress">Adresse de depart (optionnel)</label>
+                    <input
+                      id="overrideAddress"
+                      className="input"
+                      value={salesDayAssignForm.overrideMeetingAddress}
+                      onChange={(event) =>
+                        setSalesDayAssignForm({ ...salesDayAssignForm, overrideMeetingAddress: event.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+                <div className="grid-2">
+                  <div className="form-row">
+                    <label className="label" htmlFor="overrideCity">Ville (optionnel)</label>
+                    <input
+                      id="overrideCity"
+                      className="input"
+                      value={salesDayAssignForm.overrideMeetingCity}
+                      onChange={(event) =>
+                        setSalesDayAssignForm({ ...salesDayAssignForm, overrideMeetingCity: event.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="form-row">
+                    <label className="label" htmlFor="overridePostal">Code postal (optionnel)</label>
+                    <input
+                      id="overridePostal"
+                      className="input"
+                      value={salesDayAssignForm.overrideMeetingPostalCode}
+                      onChange={(event) =>
+                        setSalesDayAssignForm({ ...salesDayAssignForm, overrideMeetingPostalCode: event.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <label className="label" htmlFor="assignNotes">Notes (optionnel)</label>
+                  <textarea
+                    id="assignNotes"
+                    className="textarea"
+                    value={salesDayAssignForm.notes}
+                    onChange={(event) =>
+                      setSalesDayAssignForm({ ...salesDayAssignForm, notes: event.target.value })
+                    }
+                  />
+                </div>
+                <button className="button-primary" type="submit">Assigner le vendeur</button>
+              </form>
+
+              <div>
+                <div className="card-label">Vendeurs assignes</div>
+                {salesDayAssignments.length === 0 ? (
+                  <div className="card-meta" style={{ marginTop: 8 }}>
+                    Aucune assignation pour cette journee.
+                  </div>
+                ) : (
+                  <div className="list" style={{ marginTop: 8 }}>
+                    {salesDayAssignments.map((assignment) => {
+                      const rep = assignment.sales_rep;
+                      const label = rep?.full_name || rep?.email || assignment.sales_rep_id || "Vendeur";
+                      return (
+                        <div className="list-item list-item-stack" key={assignment.assignment_id}>
+                          <div style={{ width: "100%" }}>
+                            <strong>{label}</strong>
+                          <div className="card-meta">
+                              {assignment.override_start_time
+                                ? `Depart: ${formatTimeShort(assignment.override_start_time)}`
+                                : "Depart par defaut"}
+                            </div>
+                          </div>
+                          <button
+                            className="button-ghost"
+                            type="button"
+                            onClick={() => {
+                              setSalesDayZoneType("sub");
+                              setSelectedAssignmentId(assignment.assignment_id);
+                            }}
+                          >
+                            Modifier zone
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <div className="card-label">Zones de vente</div>
+                <div className="table-actions" style={{ marginTop: 8 }}>
+                  <button
+                    className={salesDayZoneType === "master" ? "button-primary" : "button-secondary"}
+                    type="button"
+                    onClick={() => setSalesDayZoneType("master")}
+                  >
+                    Zone equipe
+                  </button>
+                  <button
+                    className={salesDayZoneType === "sub" ? "button-primary" : "button-secondary"}
+                    type="button"
+                    onClick={() => setSalesDayZoneType("sub")}
+                  >
+                    Zone vendeur
+                  </button>
+                </div>
+                {salesDayZoneType === "sub" ? (
+                  <div className="form-row" style={{ marginTop: 12 }}>
+                    <label className="label" htmlFor="zoneAssignment">Vendeur</label>
+                    <select
+                      id="zoneAssignment"
+                      className="select"
+                      value={selectedAssignmentId}
+                      onChange={(event) => setSelectedAssignmentId(event.target.value)}
+                    >
+                      <option value="">Choisir un vendeur</option>
+                      {salesDayAssignments.map((assignment) => {
+                        const rep = assignment.sales_rep;
+                        const label = rep?.full_name || rep?.email || assignment.sales_rep_id || "Vendeur";
+                        return (
+                          <option key={assignment.assignment_id} value={assignment.assignment_id}>
+                            {label}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+                ) : null}
+                <div className="map-shell" style={{ marginTop: 12 }}>
+                  <div className="map-canvas" ref={salesDayMapRef} />
+                  {salesDayMapMessage ? <div className="map-overlay">{salesDayMapMessage}</div> : null}
+                </div>
+                <div className="table-actions" style={{ marginTop: 12 }}>
+                  <button className="button-primary" type="button" onClick={saveSalesDayZone}>
+                    Enregistrer la zone
+                  </button>
+                  <button
+                    className="button-ghost"
+                    type="button"
+                    onClick={() => setSalesDayPolygonPoints([])}
+                  >
+                    Effacer le polygone
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {salesDayStatus ? <div className="hint" style={{ marginTop: 12 }}>{salesDayStatus}</div> : null}
+
       <div className="card">
-        <h3 className="card-title">Lead pipeline</h3>
+        <h3 className="card-title">Pipeline des prospects</h3>
         <table className="table">
           <thead>
             <tr>
-              <th>Lead</th>
-              <th>Status</th>
-              <th>Value</th>
-              <th>City</th>
-              <th>Follow up</th>
+              <th>Prospect</th>
+              <th>Statut</th>
+              <th>Valeur</th>
+              <th>Ville</th>
+              <th>Relance</th>
             </tr>
           </thead>
           <tbody>

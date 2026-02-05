@@ -1,5 +1,13 @@
 import { NextResponse } from "next/server";
-import { requireRole } from "@/lib/auth";
+import {
+  badRequest,
+  conflict,
+  ok,
+  okBody,
+  requireRole,
+  serverError,
+  validationError,
+} from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabaseServer";
 import { logAudit } from "@/lib/audit";
 import { getRequestIp } from "@/lib/rateLimit";
@@ -31,8 +39,11 @@ export async function POST(request: Request) {
   const file = formData.get("file");
 
   const formResult = uploadsFormSchema.safeParse({ userId, docType });
-  if (!formResult.success || !(file instanceof File)) {
-    return NextResponse.json({ success: false, error: "Invalid upload request" }, { status: 400 });
+  if (!formResult.success) {
+    return validationError(formResult.error, "Invalid upload request");
+  }
+  if (!(file instanceof File)) {
+    return badRequest("file_missing", "Invalid upload request");
   }
 
   const { userId: safeUserId, docType: safeDocType } = formResult.data;
@@ -48,15 +59,15 @@ export async function POST(request: Request) {
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
+    return conflict("idempotency_conflict", "Idempotency key conflict");
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
+    return conflict("idempotency_in_progress", "Request already in progress");
   }
   const createResult = await admin.storage.createBucket(bucketName, { public: false });
   const createError = createResult.error?.message?.toLowerCase() ?? "";
   if (createResult.error && !createError.includes("already exists")) {
-    return NextResponse.json({ success: false, error: "Unable to prepare storage" }, { status: 500 });
+    return serverError("Unable to prepare storage", "storage_prepare_failed");
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
@@ -68,7 +79,7 @@ export async function POST(request: Request) {
     .upload(storagePath, buffer, { contentType: file.type || "application/octet-stream", upsert: true });
 
   if (uploadError) {
-    return NextResponse.json({ success: false, error: "Unable to upload file" }, { status: 500 });
+    return serverError("Unable to upload file", "upload_failed");
   }
 
   const updates: Record<string, string> = { [column]: storagePath };
@@ -83,7 +94,7 @@ export async function POST(request: Request) {
     .eq("company_id", auth.profile.company_id);
 
   if (updateError) {
-    return NextResponse.json({ success: false, error: "Unable to update user" }, { status: 400 });
+    return serverError("Unable to update user", "user_update_failed");
   }
 
   await logAudit(admin, auth.profile.user_id, "document_upload", "user", safeUserId, "success", {
@@ -92,20 +103,15 @@ export async function POST(request: Request) {
     newValues: { doc_type: safeDocType, path: storagePath },
   });
 
-  const responseBody = {
-    success: true,
-    data: { ok: true, path: storagePath, field: column },
-    ok: true,
-    path: storagePath,
-    field: column,
-  };
+  const responseBody = { ok: true, path: storagePath, field: column };
+  const storedBody = okBody(responseBody, { flatten: true });
   await completeIdempotency(
     admin,
     request,
     idempotency.scope,
     idempotency.requestHash,
-    responseBody,
+    storedBody,
     200
   );
-  return NextResponse.json(responseBody);
+  return ok(responseBody, { flatten: true });
 }

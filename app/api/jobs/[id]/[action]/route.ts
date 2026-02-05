@@ -1,5 +1,13 @@
 import { NextResponse } from "next/server";
-import { requirePermission } from "@/lib/auth";
+import {
+  badRequest,
+  conflict,
+  ok,
+  okBody,
+  requirePermission,
+  serverError,
+  validationError,
+} from "@/lib/auth";
 import { createUserClient, createAdminClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import {
@@ -32,7 +40,7 @@ export async function POST(
   if (action === "assign") {
     const parsed = jobAssignSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ success: false, error: "Invalid assignment" }, { status: 400 });
+      return validationError(parsed.error, "Invalid assignment");
     }
 
     const idempotency = await beginIdempotency(client, request, user.id, {
@@ -43,10 +51,10 @@ export async function POST(
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
+      return conflict("idempotency_conflict", "Idempotency key conflict");
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
+      return conflict("idempotency_in_progress", "Request already in progress");
     }
 
     const { error } = await client
@@ -55,7 +63,7 @@ export async function POST(
       .eq("job_id", params.id);
 
     if (error) {
-      return NextResponse.json({ success: false, error: "Unable to assign job" }, { status: 400 });
+      return serverError("Unable to assign job", "job_assign_failed");
     }
 
     await client.from("job_assignments").insert({
@@ -79,15 +87,16 @@ export async function POST(
       newValues: { technician_id: parsed.data.technicianId },
     });
 
-    const responseBody = { success: true, data: { ok: true }, ok: true };
-    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
-    return NextResponse.json(responseBody);
+    const responseBody = { ok: true };
+    const storedBody = okBody(responseBody, { flatten: true });
+    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, storedBody, 200);
+    return ok(responseBody, { flatten: true });
   }
 
   if (action === "check-in") {
     const parsed = jobCheckInSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ success: false, error: "Invalid check-in" }, { status: 400 });
+      return validationError(parsed.error, "Invalid check-in");
     }
 
     const idempotency = await beginIdempotency(client, request, user.id, {
@@ -98,10 +107,10 @@ export async function POST(
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
+      return conflict("idempotency_conflict", "Idempotency key conflict");
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
+      return conflict("idempotency_in_progress", "Request already in progress");
     }
 
     await client.from("gps_locations").insert({
@@ -125,15 +134,16 @@ export async function POST(
       userAgent: request.headers.get("user-agent") ?? null,
     });
 
-    const responseBody = { success: true, data: { ok: true }, ok: true };
-    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
-    return NextResponse.json(responseBody);
+    const responseBody = { ok: true };
+    const storedBody = okBody(responseBody, { flatten: true });
+    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, storedBody, 200);
+    return ok(responseBody, { flatten: true });
   }
 
   if (action === "check-out") {
     const parsed = jobCheckOutSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ success: false, error: "Invalid check-out" }, { status: 400 });
+      return validationError(parsed.error, "Invalid check-out");
     }
 
     const idempotency = await beginIdempotency(client, request, user.id, {
@@ -144,10 +154,10 @@ export async function POST(
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
+      return conflict("idempotency_conflict", "Idempotency key conflict");
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
+      return conflict("idempotency_in_progress", "Request already in progress");
     }
 
     await client.from("gps_locations").insert({
@@ -171,9 +181,10 @@ export async function POST(
       userAgent: request.headers.get("user-agent") ?? null,
     });
 
-    const responseBody = { success: true, data: { ok: true }, ok: true };
-    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
-    return NextResponse.json(responseBody);
+    const responseBody = { ok: true };
+    const storedBody = okBody(responseBody, { flatten: true });
+    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, storedBody, 200);
+    return ok(responseBody, { flatten: true });
   }
 
   if (action === "complete") {
@@ -182,10 +193,10 @@ export async function POST(
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
+      return conflict("idempotency_conflict", "Idempotency key conflict");
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
+      return conflict("idempotency_in_progress", "Request already in progress");
     }
     await client
       .from("jobs")
@@ -215,9 +226,10 @@ export async function POST(
       newValues: { invoice_number: invoiceNumber },
     });
 
-    const responseBody = { success: true, data: { ok: true }, ok: true };
-    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
-    return NextResponse.json(responseBody);
+    const responseBody = { ok: true };
+    const storedBody = okBody(responseBody, { flatten: true });
+    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, storedBody, 200);
+    return ok(responseBody, { flatten: true });
   }
 
   if (action === "no-show") {
@@ -226,10 +238,10 @@ export async function POST(
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
+      return conflict("idempotency_conflict", "Idempotency key conflict");
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
+      return conflict("idempotency_in_progress", "Request already in progress");
     }
     await client
       .from("jobs")
@@ -249,15 +261,16 @@ export async function POST(
       userAgent: request.headers.get("user-agent") ?? null,
     });
 
-    const responseBody = { success: true, data: { ok: true }, ok: true };
-    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
-    return NextResponse.json(responseBody);
+    const responseBody = { ok: true };
+    const storedBody = okBody(responseBody, { flatten: true });
+    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, storedBody, 200);
+    return ok(responseBody, { flatten: true });
   }
 
   if (action === "upsell") {
     const parsed = jobUpsellSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ success: false, error: "Invalid upsell" }, { status: 400 });
+      return validationError(parsed.error, "Invalid upsell");
     }
 
     const idempotency = await beginIdempotency(client, request, user.id, {
@@ -268,10 +281,10 @@ export async function POST(
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
+      return conflict("idempotency_conflict", "Idempotency key conflict");
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
+      return conflict("idempotency_in_progress", "Request already in progress");
     }
 
     await client
@@ -285,10 +298,11 @@ export async function POST(
       newValues: { actual_revenue: parsed.data.actualRevenue },
     });
 
-    const responseBody = { success: true, data: { ok: true }, ok: true };
-    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
-    return NextResponse.json(responseBody);
+    const responseBody = { ok: true };
+    const storedBody = okBody(responseBody, { flatten: true });
+    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, storedBody, 200);
+    return ok(responseBody, { flatten: true });
   }
 
-  return NextResponse.json({ success: false, error: "Unsupported action" }, { status: 400 });
+  return badRequest("unsupported_action", "Unsupported action");
 }

@@ -8,7 +8,7 @@ permission:
   bash: allow
   webfetch: allow
   task: allow
-steps: 100
+steps: 1000
 ---
 
 You are the default coding agent for the Entretien Prestige repo.

@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { ok, requireUser, validationError } from "@/lib/auth";
 import { emptyQuerySchema } from "@/lib/validators";
 
 export async function GET(request: Request) {
@@ -10,8 +9,8 @@ export async function GET(request: Request) {
 
   const queryResult = emptyQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
   if (!queryResult.success) {
-    return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
+    return validationError(queryResult.error, "Invalid request");
   }
 
-  return NextResponse.json({ success: true, data: auth.profile, ...auth.profile });
+  return ok(auth.profile, { flatten: true });
 }

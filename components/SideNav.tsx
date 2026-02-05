@@ -5,6 +5,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import clsx from "clsx";
 import { useEffect, useMemo, useState } from "react";
+import { useCompany } from "@/contexts/company/CompanyContext";
 import type { ReactNode } from "react";
 import {
   CustomersOutlineIcon,
@@ -152,6 +153,8 @@ export default function SideNav() {
   const router = useRouter();
   const [permissions, setPermissions] = useState<PermissionMap | null>(null);
   const [role, setRole] = useState("");
+  const { company } = useCompany();
+  const companyName = company?.name ?? "Entreprise";
 
   useEffect(() => {
     let isActive = true;
@@ -189,7 +192,7 @@ export default function SideNav() {
       <div className="brand">
         <Image
           src="/logo.png"
-          alt="Entretien Prestige"
+          alt={`Logo de ${companyName}`}
           width={140}
           height={40}
           priority
@@ -216,12 +219,12 @@ export default function SideNav() {
         {role === "technician" ? (
           <Link href="/technician" className="nav-item">
             <span className="nav-dot" style={{ background: "#10b981" }} aria-hidden="true" />
-            <span>Technician view</span>
+            <span>Vue technicien</span>
           </Link>
         ) : null}
         <button className="nav-item" type="button" onClick={handleLogout}>
           <span className="nav-dot" style={{ background: "#ef4444" }} aria-hidden="true" />
-          <span>Sign out</span>
+          <span>Deconnexion</span>
         </button>
       </div>
     </aside>

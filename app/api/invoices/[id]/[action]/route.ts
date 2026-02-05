@@ -1,5 +1,16 @@
 import { NextResponse } from "next/server";
-import { requirePermission } from "@/lib/auth";
+import {
+  badRequest,
+  conflict,
+  errorBody,
+  notFound,
+  ok,
+  okBody,
+  requirePermission,
+  serverError,
+  serviceUnavailable,
+  validationError,
+} from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { invoicePaymentSchema, invoiceSendSchema } from "@/lib/validators";
@@ -58,12 +69,12 @@ const formatDate = (value?: string | null): string =>
 
 function emailUnavailable(error: unknown, requestContext: Record<string, unknown>) {
   logger.error("Email is unavailable", { ...requestContext, error });
-  return NextResponse.json({ success: false, error: "Email is unavailable" }, { status: 503 });
+  return serviceUnavailable("Email is unavailable", "email_unavailable");
 }
 
 function smsUnavailable(error: unknown, requestContext: Record<string, unknown>) {
   logger.error("SMS is unavailable", { ...requestContext, error });
-  return NextResponse.json({ success: false, error: "SMS is unavailable" }, { status: 503 });
+  return serviceUnavailable("SMS is unavailable", "sms_unavailable");
 }
 
 export async function POST(
@@ -91,7 +102,7 @@ export async function POST(
   if (action === "send") {
     const parsed = invoiceSendSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ success: false, error: "Invalid send request" }, { status: 400 });
+      return validationError(parsed.error, "Invalid send request");
     }
 
     const idempotency = await beginIdempotency(client, request, user.id, {
@@ -102,10 +113,10 @@ export async function POST(
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
+      return conflict("idempotency_conflict", "Idempotency key conflict");
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
+      return conflict("idempotency_in_progress", "Request already in progress");
     }
 
     let providerId: string | null = null;
@@ -120,7 +131,7 @@ export async function POST(
           userAgent: request.headers.get("user-agent") ?? null,
           newValues: { channel: parsed.data.channel, to: parsed.data.to, error: errorMessage },
         });
-        const responseBody = { success: false, error: "Email is unavailable" };
+        const responseBody = errorBody("email_unavailable", "Email is unavailable");
         await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 503);
         return emailUnavailable(error, requestContext);
       }
@@ -143,15 +154,16 @@ export async function POST(
       newValues: { channel: parsed.data.channel, to: parsed.data.to, provider_id: providerId },
     });
 
-    const responseBody = { success: true, data: { ok: true }, ok: true };
-    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
-    return NextResponse.json(responseBody);
+    const responseBody = { ok: true };
+    const storedBody = okBody(responseBody, { flatten: true });
+    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, storedBody, 200);
+    return ok(responseBody, { flatten: true });
   }
 
   if (action === "payment") {
     const parsed = invoicePaymentSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ success: false, error: "Invalid payment" }, { status: 400 });
+      return validationError(parsed.error, "Invalid payment");
     }
 
     const idempotency = await beginIdempotency(client, request, user.id, {
@@ -162,10 +174,10 @@ export async function POST(
       return NextResponse.json(idempotency.body, { status: idempotency.status });
     }
     if (idempotency.action === "conflict") {
-      return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
+      return conflict("idempotency_conflict", "Idempotency key conflict");
     }
     if (idempotency.action === "in_progress") {
-      return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
+      return conflict("idempotency_in_progress", "Request already in progress");
     }
 
     await client
@@ -183,9 +195,10 @@ export async function POST(
       newValues: { status: parsed.data.status, paid_amount: parsed.data.paidAmount },
     });
 
-    const responseBody = { success: true, data: { ok: true }, ok: true };
-    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
-    return NextResponse.json(responseBody);
+    const responseBody = { ok: true };
+    const storedBody = okBody(responseBody, { flatten: true });
+    await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, storedBody, 200);
+    return ok(responseBody, { flatten: true });
   }
 
   if (action === "pdf") {
@@ -226,7 +239,7 @@ export async function POST(
       .single();
 
     if (error || !data) {
-      return NextResponse.json({ success: false, error: "Invoice not found" }, { status: 404 });
+      return notFound("Invoice not found", "invoice_not_found");
     }
 
     const invoiceRecord = data as InvoiceRecord;
@@ -244,7 +257,7 @@ export async function POST(
       subtotal: invoiceRecord.subtotal ?? 0,
       notes: toOptionalString(invoiceRecord.notes),
       company: {
-        name: company?.name ?? "Entretien Prestige",
+        name: company?.name ?? "Entreprise",
         address: toOptionalString(company?.address),
         city: toOptionalString(company?.city),
         province: toOptionalString(company?.province),
@@ -275,7 +288,7 @@ export async function POST(
     });
   }
 
-  return NextResponse.json({ success: false, error: "Unsupported action" }, { status: 400 });
+  return badRequest("unsupported_action", "Unsupported action");
 }
 
 export async function GET(
@@ -283,7 +296,7 @@ export async function GET(
   { params }: { params: { id: string; action: string } }
 ) {
   if (params.action !== "pdf") {
-    return NextResponse.json({ success: false, error: "Unsupported action" }, { status: 400 });
+    return badRequest("unsupported_action", "Unsupported action");
   }
 
   const auth = await requirePermission(request, "invoices");
@@ -328,7 +341,7 @@ export async function GET(
     .single();
 
   if (error || !data) {
-    return NextResponse.json({ success: false, error: "Invoice not found" }, { status: 404 });
+    return notFound("Invoice not found", "invoice_not_found");
   }
 
   const invoiceRecord = data as InvoiceRecord;
@@ -346,7 +359,7 @@ export async function GET(
     subtotal: invoiceRecord.subtotal ?? 0,
     notes: toOptionalString(invoiceRecord.notes),
     company: {
-      name: company?.name ?? "Entretien Prestige",
+      name: company?.name ?? "Entreprise",
       address: toOptionalString(company?.address),
       city: toOptionalString(company?.city),
       province: toOptionalString(company?.province),

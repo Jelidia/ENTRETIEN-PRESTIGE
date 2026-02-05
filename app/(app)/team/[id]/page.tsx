@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import TopBar from "@/components/TopBar";
+import AvailabilityCalendar from "@/components/AvailabilityCalendar";
 
 type TeamProfile = {
   user_id: string;
@@ -304,6 +305,19 @@ export default function TeamProfilePage() {
           </div>
         </div>
       </div>
+
+      <section style={{ marginTop: 16 }}>
+        {userId ? (
+          <AvailabilityCalendar userId={userId} />
+        ) : (
+          <div className="card">
+            <div className="card-meta">Chargement de la disponibilité...</div>
+          </div>
+        )}
+        <div className="card-meta" style={{ marginTop: 8 }}>
+          Disponibilité hebdomadaire (max 7 jours d'avance).
+        </div>
+      </section>
 
       {status ? <div className="hint">{status}</div> : null}
     </div>

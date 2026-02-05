@@ -23,8 +23,8 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Entretien Prestige",
-  description: "Operations platform for Entretien Prestige",
+  title: "Plateforme d'entreprise",
+  description: "Plateforme d'operations pour equipes de service",
 };
 
 export const viewport: Viewport = {

@@ -19,7 +19,7 @@ export default function VerifyTwoFactorForm({
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!challengeId) {
-      setError("Missing verification context.");
+      setError("Contexte de verification manquant.");
       return;
     }
     setLoading(true);
@@ -33,7 +33,7 @@ export default function VerifyTwoFactorForm({
 
     const data = await response.json();
     if (!response.ok) {
-      setError(data.error ?? "Unable to verify code");
+      setError(data.error ?? "Impossible de verifier le code");
       setLoading(false);
       return;
     }
@@ -45,12 +45,12 @@ export default function VerifyTwoFactorForm({
 
   return (
     <div className="auth-card">
-      <h1 className="auth-title">Verify two-factor</h1>
-      <p className="card-meta">Enter the code from SMS or authenticator.</p>
+      <h1 className="auth-title">Verification 2FA</h1>
+      <p className="card-meta">Entrez le code SMS ou authentificateur.</p>
       {error ? <div className="alert" style={{ marginTop: 16 }}>{error}</div> : null}
       <form className="form-grid" style={{ marginTop: 20 }} onSubmit={handleSubmit}>
         <div className="form-row">
-          <label className="label" htmlFor="code">Verification code</label>
+          <label className="label" htmlFor="code">Code de verification</label>
           <input
             id="code"
             className="input"
@@ -60,7 +60,7 @@ export default function VerifyTwoFactorForm({
           />
         </div>
         <button className="button-primary" type="submit" disabled={loading}>
-          {loading ? "Verifying..." : "Verify"}
+          {loading ? "Verification..." : "Verifier"}
         </button>
       </form>
     </div>

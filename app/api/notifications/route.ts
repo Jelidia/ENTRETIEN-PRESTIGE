@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server";
-import { requirePermission } from "@/lib/auth";
+import {
+  conflict,
+  ok,
+  okBody,
+  requirePermission,
+  serverError,
+  validationError,
+} from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { logAudit } from "@/lib/audit";
@@ -14,7 +21,7 @@ export async function GET(request: Request) {
   }
   const queryResult = emptyQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
   if (!queryResult.success) {
-    return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
+    return validationError(queryResult.error, "Invalid request");
   }
   const { user } = auth;
   const token = getAccessTokenFromRequest(request);
@@ -26,10 +33,10 @@ export async function GET(request: Request) {
     .order("created_at", { ascending: false });
 
   if (error) {
-    return NextResponse.json({ success: false, error: "Unable to load notifications" }, { status: 400 });
+    return serverError("Unable to load notifications", "notifications_load_failed");
   }
 
-  return NextResponse.json({ success: true, data });
+  return ok(data);
 }
 
 export async function DELETE(request: Request) {
@@ -42,7 +49,7 @@ export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url);
   const queryResult = notificationDeleteQuerySchema.safeParse(Object.fromEntries(searchParams));
   if (!queryResult.success) {
-    return NextResponse.json({ success: false, error: "Invalid notification id" }, { status: 400 });
+    return validationError(queryResult.error, "Invalid notification id");
   }
   const { id } = queryResult.data;
 
@@ -53,21 +60,22 @@ export async function DELETE(request: Request) {
     return NextResponse.json(idempotency.body, { status: idempotency.status });
   }
   if (idempotency.action === "conflict") {
-    return NextResponse.json({ success: false, error: "Idempotency key conflict" }, { status: 409 });
+    return conflict("idempotency_conflict", "Idempotency key conflict");
   }
   if (idempotency.action === "in_progress") {
-    return NextResponse.json({ success: false, error: "Request already in progress" }, { status: 409 });
+    return conflict("idempotency_in_progress", "Request already in progress");
   }
   const { error } = await client.from("notifications").delete().eq("notif_id", id);
   if (error) {
-    return NextResponse.json({ success: false, error: "Unable to delete" }, { status: 400 });
+    return serverError("Unable to delete", "notification_delete_failed");
   }
 
   await logAudit(client, profile.user_id, "notification_delete", "notification", id, "success", {
     ipAddress: ip,
     userAgent: request.headers.get("user-agent") ?? null,
   });
-  const responseBody = { success: true, data: { ok: true }, ok: true };
-  await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, responseBody, 200);
-  return NextResponse.json(responseBody);
+  const responseBody = { ok: true };
+  const storedBody = okBody(responseBody, { flatten: true });
+  await completeIdempotency(client, request, idempotency.scope, idempotency.requestHash, storedBody, 200);
+  return ok(responseBody, { flatten: true });
 }

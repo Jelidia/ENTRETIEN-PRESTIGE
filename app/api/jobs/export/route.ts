@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireRole } from "@/lib/auth";
+import { ok, requireRole, serverError, validationError } from "@/lib/auth";
 import { createUserClient } from "@/lib/supabaseServer";
 import { getAccessTokenFromRequest } from "@/lib/session";
 import { emptyQuerySchema } from "@/lib/validators";
@@ -12,20 +12,20 @@ export async function GET(request: Request) {
 
   const queryResult = emptyQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
   if (!queryResult.success) {
-    return NextResponse.json({ success: false, error: "Invalid request" }, { status: 400 });
+    return validationError(queryResult.error, "Invalid request");
   }
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
 
   const { data, error } = await client.from("jobs").select("job_id, service_type, status, scheduled_date, estimated_revenue");
   if (error || !data) {
-    return NextResponse.json({ success: false, error: "Unable to export" }, { status: 400 });
+    return serverError("Unable to export", "jobs_export_failed");
   }
 
   const { searchParams } = new URL(request.url);
   const format = searchParams.get("format")?.toLowerCase();
   if (format === "json") {
-    return NextResponse.json({ success: true, data });
+    return ok(data);
   }
 
   const header = "job_id,service_type,status,scheduled_date,estimated_revenue";

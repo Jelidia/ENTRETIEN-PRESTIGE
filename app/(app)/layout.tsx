@@ -19,6 +19,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
   let initialRole: string | null = null;
   let initialPermissions = null;
+  let initialCompany: { name?: string | null } | null = null;
   const { data: profile } = await client
     .from("users")
     .select("user_id, company_id, role, access_permissions")
@@ -29,7 +30,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     initialRole = profile.role;
     const { data: company } = await client
       .from("companies")
-      .select("role_permissions")
+      .select("role_permissions, name")
       .eq("company_id", profile.company_id)
       .single();
     initialPermissions = resolvePermissions(
@@ -37,10 +38,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       company?.role_permissions ?? null,
       profile.access_permissions ?? null
     );
+    initialCompany = { name: company?.name ?? null };
   }
 
   return (
-    <AppShell initialRole={initialRole} initialPermissions={initialPermissions}>
+    <AppShell
+      initialRole={initialRole}
+      initialPermissions={initialPermissions}
+      initialCompany={initialCompany}
+    >
       {children}
     </AppShell>
   );

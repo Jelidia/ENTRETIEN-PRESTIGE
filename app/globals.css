@@ -1052,11 +1052,15 @@ code {
 .calendar-event-title {
   font-size: 12px;
   font-weight: 600;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .calendar-event-meta {
   font-size: 11px;
   color: var(--ink-500);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .calendar-event-handle {
