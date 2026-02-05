@@ -75,10 +75,22 @@ export async function POST(
         const intent = event.data.object as Stripe.PaymentIntent;
         const invoiceId = intent.metadata?.invoiceId;
         if (invoiceId) {
-          await admin
+          const { data: invoice } = await admin
             .from("invoices")
-            .update({ payment_status: "paid", paid_amount: intent.amount_received / 100, paid_date: new Date().toISOString() })
-            .eq("invoice_id", invoiceId);
+            .select("company_id")
+            .eq("invoice_id", invoiceId)
+            .maybeSingle();
+          if (invoice?.company_id) {
+            await admin
+              .from("invoices")
+              .update({
+                payment_status: "paid",
+                paid_amount: intent.amount_received / 100,
+                paid_date: new Date().toISOString(),
+              })
+              .eq("invoice_id", invoiceId)
+              .eq("company_id", invoice.company_id);
+          }
           await logAudit(admin, null, "payment_webhook", "invoice", invoiceId, "success", {
             ipAddress: ip,
             userAgent: request.headers.get("user-agent") ?? null,
@@ -167,7 +179,8 @@ export async function POST(
     await client
       .from("invoices")
       .update({ payment_status: "paid", paid_amount: amount, paid_date: new Date().toISOString() })
-      .eq("invoice_id", invoiceId);
+      .eq("invoice_id", invoiceId)
+      .eq("company_id", profile.company_id);
     await logAudit(client, auth.profile.user_id, "payment_interac", "invoice", invoiceId ?? null, "success", {
       ipAddress: ip,
       userAgent: request.headers.get("user-agent") ?? null,
@@ -234,11 +247,13 @@ export async function GET(
   if ("response" in auth) {
     return auth.response;
   }
+  const { profile } = auth;
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
   const { data, error } = await client
     .from("invoices")
     .select("invoice_id, invoice_number, payment_status, total_amount, paid_date")
+    .eq("company_id", profile.company_id)
     .order("issued_date", { ascending: false });
 
   if (error) {

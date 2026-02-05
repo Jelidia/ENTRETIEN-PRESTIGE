@@ -36,6 +36,22 @@ async function resolveThreadId(
   return data?.thread_id ?? randomUUID();
 }
 
+async function resolveThreadAssignee(
+  client: ReturnType<typeof createUserClient>,
+  threadId: string,
+  companyId: string
+) {
+  const { data } = await client
+    .from("sms_messages")
+    .select("assigned_to")
+    .eq("thread_id", threadId)
+    .eq("company_id", companyId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data?.assigned_to ?? null;
+}
+
 const DEFAULT_TIMEZONE = "America/Montreal";
 const QUIET_HOURS_START = 21;
 const QUIET_HOURS_END = 8;
@@ -302,6 +318,7 @@ export async function POST(request: Request) {
         phoneNumber,
         profile.company_id
       );
+      const assignedTo = await resolveThreadAssignee(client, threadId, profile.company_id);
       const createdAt = new Date().toISOString();
       const { data: messageRecord, error: insertError } = await client
         .from("sms_messages")
@@ -314,6 +331,7 @@ export async function POST(request: Request) {
           status: "queued",
           related_job_id: jobId,
           thread_id: threadId,
+          assigned_to: assignedTo ?? profile.user_id,
           created_at: createdAt,
         })
         .select("sms_id")

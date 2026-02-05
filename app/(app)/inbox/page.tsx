@@ -5,13 +5,15 @@ import TopBar from "@/components/TopBar";
 
 type SMSThread = {
   thread_id: string;
-  customer_id: string;
+  customer_id: string | null;
   customer_name: string;
-  customer_phone: string;
+  customer_phone: string | null;
   last_message: string;
   last_message_at: string;
   unread_count: number;
   messages: SMSMessage[];
+  assigned_to: string | null;
+  assigned_name: string | null;
 };
 
 type SMSMessage = {
@@ -29,6 +31,7 @@ export default function InboxPage() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
+  const [currentUserId, setCurrentUserId] = useState("");
 
   useEffect(() => {
     loadThreads();
@@ -50,31 +53,46 @@ export default function InboxPage() {
     if (res.ok) {
       const data = await res.json();
       setThreads(data.threads || []);
+      setCurrentUserId(data.userId ?? "");
     }
     setLoading(false);
   }
 
   async function loadMessages(thread: SMSThread) {
     const res = await fetch(`/api/sms/inbox/${thread.thread_id}`);
-    if (res.ok) {
-      const data = await res.json();
-      setSelectedThread({
-        ...thread,
-        messages: data.messages || [],
-      });
-
-      // Mark as read
-      await fetch(`/api/sms/inbox/${thread.thread_id}/read`, {
-        method: "POST",
-      });
-
-      // Refresh threads to update unread count
-      loadThreads();
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      showToast(data.error ?? "Conversation verrouillée.", "error");
+      return;
     }
+    setSelectedThread({
+      ...thread,
+      messages: data.messages || [],
+    });
+
+    // Mark as read
+    const readRes = await fetch(`/api/sms/inbox/${thread.thread_id}/read`, {
+      method: "POST",
+    });
+    if (!readRes.ok) {
+      const readData = await readRes.json().catch(() => ({}));
+      showToast(readData.error ?? "Impossible de marquer comme lu.", "error");
+    }
+
+    // Refresh threads to update unread count
+    loadThreads();
   }
 
   async function sendReply() {
     if (!selectedThread || !replyMessage.trim()) return;
+    if (selectedThread.assigned_to && selectedThread.assigned_to !== currentUserId) {
+      showToast("Conversation assignée à un autre membre.", "error");
+      return;
+    }
+    if (!selectedThread.customer_phone) {
+      showToast("Numéro de téléphone manquant.", "error");
+      return;
+    }
 
     setSending(true);
     const res = await fetch("/api/sms/send", {
@@ -88,15 +106,18 @@ export default function InboxPage() {
       }),
     });
 
+    const data = await res.json().catch(() => ({}));
     if (res.ok) {
       setReplyMessage("");
       // Reload messages
       await loadMessages(selectedThread);
     } else {
-      showToast("Échec de l'envoi du message.", "error");
+      showToast(data.error ?? "Échec de l'envoi du message.", "error");
     }
     setSending(false);
   }
+
+  const isSelectedLocked = Boolean(selectedThread?.assigned_to && selectedThread.assigned_to !== currentUserId);
 
   return (
     <div className="page">
@@ -125,38 +146,65 @@ export default function InboxPage() {
           )}
 
           <div className="list">
-            {threads.map((thread) => (
-              <div
-                key={thread.thread_id}
-                className="list-item"
-                onClick={() => loadMessages(thread)}
-                style={{
-                  cursor: "pointer",
-                  background: selectedThread?.thread_id === thread.thread_id ? "var(--surface-muted)" : undefined,
-                }}
-              >
-                <div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <strong>{thread.customer_name}</strong>
-                    {thread.unread_count > 0 && (
-                      <span
-                        className="badge badge-warning"
-                        style={{ fontSize: "11px", padding: "4px 8px" }}
-                      >
-                        {thread.unread_count}
-                      </span>
-                    )}
-                  </div>
-                  <div className="card-meta">{thread.customer_phone}</div>
-                  <div style={{ marginTop: "8px", fontSize: "14px", color: "var(--ink-700)" }}>
-                    {thread.last_message.substring(0, 60)}...
-                  </div>
-                  <div className="card-meta" style={{ marginTop: "4px" }}>
-                    {new Date(thread.last_message_at).toLocaleString("fr-CA")}
+            {threads.map((thread) => {
+              const isLocked = Boolean(thread.assigned_to && thread.assigned_to !== currentUserId);
+              const assignmentLabel = thread.assigned_to
+                ? isLocked
+                  ? `Assignée à ${thread.assigned_name ?? "un collègue"}`
+                  : "Assignée à vous"
+                : "";
+              return (
+                <div
+                  key={thread.thread_id}
+                  className="list-item"
+                  onClick={() => {
+                    if (isLocked) {
+                      showToast(assignmentLabel || "Conversation assignée à un autre membre.", "error");
+                      return;
+                    }
+                    void loadMessages(thread);
+                  }}
+                  style={{
+                    cursor: isLocked ? "not-allowed" : "pointer",
+                    opacity: isLocked ? 0.7 : 1,
+                    background: selectedThread?.thread_id === thread.thread_id ? "var(--surface-muted)" : undefined,
+                  }}
+                  aria-disabled={isLocked}
+                >
+                  <div>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        gap: "8px",
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <strong>{thread.customer_name}</strong>
+                      <div className="table-actions" style={{ justifyContent: "flex-end" }}>
+                        {thread.unread_count > 0 && (
+                          <span
+                            className="badge badge-warning"
+                            style={{ fontSize: "11px", padding: "4px 8px" }}
+                          >
+                            {thread.unread_count}
+                          </span>
+                        )}
+                        {assignmentLabel ? <span className="tag">{assignmentLabel}</span> : null}
+                      </div>
+                    </div>
+                    <div className="card-meta">{thread.customer_phone ?? ""}</div>
+                    <div style={{ marginTop: "8px", fontSize: "14px", color: "var(--ink-700)" }}>
+                      {thread.last_message.substring(0, 60)}...
+                    </div>
+                    <div className="card-meta" style={{ marginTop: "4px" }}>
+                      {new Date(thread.last_message_at).toLocaleString("fr-CA")}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -173,7 +221,7 @@ export default function InboxPage() {
               {/* Thread Header */}
               <div style={{ padding: "16px", borderBottom: "1px solid var(--line)" }}>
                 <strong>{selectedThread.customer_name}</strong>
-                <div className="card-meta">{selectedThread.customer_phone}</div>
+                <div className="card-meta">{selectedThread.customer_phone ?? ""}</div>
               </div>
 
               {/* Messages */}
@@ -223,6 +271,7 @@ export default function InboxPage() {
                     onChange={(e) => setReplyMessage(e.target.value)}
                     rows={2}
                     style={{ minHeight: "auto" }}
+                    disabled={isSelectedLocked}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
@@ -233,11 +282,16 @@ export default function InboxPage() {
                   <button
                     className="button-primary"
                     onClick={sendReply}
-                    disabled={sending || !replyMessage.trim()}
+                    disabled={sending || !replyMessage.trim() || isSelectedLocked}
                   >
                     {sending ? "Envoi..." : "Envoyer"}
                   </button>
                 </div>
+                {selectedThread.assigned_to && selectedThread.assigned_to !== currentUserId ? (
+                  <div className="hint" style={{ marginTop: "8px" }}>
+                    Conversation assignée à un autre membre.
+                  </div>
+                ) : null}
               </div>
             </>
           )}

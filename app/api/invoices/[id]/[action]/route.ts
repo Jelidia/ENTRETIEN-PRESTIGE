@@ -156,7 +156,8 @@ export async function POST(
     await client
       .from("invoices")
       .update({ payment_status: "sent", email_sent_date: new Date().toISOString() })
-      .eq("invoice_id", params.id);
+      .eq("invoice_id", params.id)
+      .eq("company_id", profile.company_id);
 
     await logAudit(client, user.id, "invoice_send", "invoice", params.id, "success", {
       ipAddress: ip,
@@ -197,7 +198,8 @@ export async function POST(
         paid_amount: parsed.data.paidAmount,
         paid_date: new Date().toISOString(),
       })
-      .eq("invoice_id", params.id);
+      .eq("invoice_id", params.id)
+      .eq("company_id", profile.company_id);
 
     await logAudit(client, user.id, "invoice_payment_update", "invoice", params.id, "success", {
       ipAddress: ip,
@@ -246,6 +248,7 @@ export async function POST(
         )
       `)
       .eq("invoice_id", params.id)
+      .eq("company_id", profile.company_id)
       .single();
 
     if (error || !data) {
@@ -313,6 +316,7 @@ export async function GET(
   if ("response" in auth) {
     return auth.response;
   }
+  const { profile } = auth;
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
   const { data, error } = await client
@@ -348,6 +352,7 @@ export async function GET(
       )
     `)
     .eq("invoice_id", params.id)
+    .eq("company_id", profile.company_id)
     .single();
 
   if (error || !data) {

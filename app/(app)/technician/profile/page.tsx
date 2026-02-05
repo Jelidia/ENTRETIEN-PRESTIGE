@@ -56,7 +56,7 @@ export default function TechnicianProfilePage() {
         }
       }
     } catch (error) {
-      logger.error("Failed to load profile", { error });
+      logger.error("Impossible de charger le profil", { error });
     } finally {
       setLoading(false);
     }

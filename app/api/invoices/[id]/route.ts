@@ -23,9 +23,15 @@ export async function GET(
   if ("response" in auth) {
     return auth.response;
   }
+  const { profile } = auth;
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
-  const { data, error } = await client.from("invoices").select("*").eq("invoice_id", params.id).single();
+  const { data, error } = await client
+    .from("invoices")
+    .select("*")
+    .eq("invoice_id", params.id)
+    .eq("company_id", profile.company_id)
+    .single();
   if (error || !data) {
     return notFound("Invoice not found", "invoice_not_found");
   }
@@ -64,6 +70,7 @@ export async function PATCH(
     .from("invoices")
     .update(parsed.data)
     .eq("invoice_id", params.id)
+    .eq("company_id", profile.company_id)
     .select()
     .single();
 

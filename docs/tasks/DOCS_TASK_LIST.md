@@ -9,18 +9,18 @@ Many ai work on this at the same time so never forget that
 
 List of name available (take a name from here) : 
   
-  - AI - 4
-  - AI - 8
-  - AI - 9
+ - AI - 1
+ - AI - 2
+ - AI - 3
+ - AI - 4
+ - AI - 5
+ - AI - 6
+ - AI - 7
+ - AI - 8
+ - AI - 9
 
 List of name taken (put the name you choose here) : 
 
-  - AI - 1
-  - AI - 2
-  - AI - 3
-  - AI - 5
-  - AI - 6
-  - AI - 7
 
 How to use
 - Chose a task yourself and claim it by appending it with: " [: <your name> <YYYY-MM-DD-HOURS-MINUTES>]" to that line.
@@ -55,7 +55,7 @@ Notes
 - EP-P0-SEC-09 Optional SSO (SAML/OIDC) design & implementation for enterprise tenants.
 
 ### Engineering & data quality
-- EP-P0-ENG-10 Fix npm build errors. [WIP: AI - 3 2026-02-04]
+- EP-P0-ENG-10 Fix npm build errors.
 - EP-P0-ENG-11 CI gating: require typecheck, lint, unit tests and security checks before merge.
 - EP-P0-ENG-12 Add dependency license & SCA policy (allowed licenses).
 - EP-P0-ENG-13 Accessibility (WCAG) audit & remediation plan for public pages and admin UI.
@@ -142,7 +142,7 @@ Notes
 - EP-P1-DISP-11 Reschedule flow: send SMS link → customer selects new slot → confirm + update job.
 
 ### Sales workflow
-- EP-P1-SALES-02 Implémenter l'Expiration des Devis: date de validité sur Leads/Devis ; empêcher conversion si expiré.
+- EP-P1-SALES-02 Implémenter l'Expiration des Devis: date de validité sur Leads/Devis ; empêcher conversion si expiré. 
 
 ### Ops & restrictions
 - EP-P1-OPS-04 Implémenter les Restrictions Technicien-Client: liste "Techniciens Exclus" sur profil client.
@@ -173,7 +173,6 @@ Notes
 - EP-P2-GPS-02 Implement "Lien de Suivi Client" (public temporary URL).
 
 ### Messaging
-- EP-P2-MSG-03 Implement SMS Access Locking. [WIP: AI - 1 2026-02-04]
 
 ### Payments
 - EP-P2-PAY-05 Implémenter les Pourboires Numériques (balance "Pourboires à verser").
@@ -201,9 +200,8 @@ Notes
 ### Dispatch enhancements
 
 ### UX & UI
-- EP-P2-UX-04 Quick Actions (Call/SMS) in lists. [WIP: AI - 2 2026-02-04]
-- EP-P2-UI-02 Mobile UI audit (iOS/Android). [WIP: AI - 1 2026-02-04]
-- EP-P2-I18N-36 Traduire le log de chargement profil technicien. [WIP: AI - 7 2026-02-04]
+- EP-P2-UX-04 Quick Actions (Call/SMS) in lists. 
+- EP-P2-UI-02 Mobile UI audit (iOS/Android). 
 ---
 
 ## P3 - Product expansion

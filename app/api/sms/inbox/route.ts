@@ -50,8 +50,8 @@ export async function GET(request: Request) {
       is_read,
       customer_id,
       assigned_to,
-      customer:customers!customer_id(first_name, last_name, phone)
-      ,assignee:users!sms_messages_assigned_to_fkey(full_name)
+      customer:customers!customer_id(first_name, last_name, phone),
+      assignee:users!sms_messages_assigned_to_fkey(full_name)
     `)
     .eq("company_id", profile.company_id)
     .not("thread_id", "is", null)
@@ -117,7 +117,7 @@ export async function GET(request: Request) {
       const customer = Array.isArray(msg.customer) ? msg.customer[0] : msg.customer;
       const firstName = (customer as { first_name?: string } | null | undefined)?.first_name ?? "";
       const lastName = (customer as { last_name?: string } | null | undefined)?.last_name ?? "";
-      const customerName = `${firstName} ${lastName}`.trim() || "Unknown";
+      const customerName = `${firstName} ${lastName}`.trim() || "Client";
       const customerPhone = (customer as { phone?: string } | null | undefined)?.phone || msg.phone_number;
       const assignee = Array.isArray(msg.assignee) ? msg.assignee[0] : msg.assignee;
 

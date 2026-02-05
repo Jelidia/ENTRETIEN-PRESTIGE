@@ -19,11 +19,13 @@ export async function GET(request: Request) {
   if ("response" in auth) {
     return auth.response;
   }
+  const { profile } = auth;
   const token = getAccessTokenFromRequest(request);
   const client = createUserClient(token ?? "");
   const { data, error } = await client
     .from("invoices")
     .select("invoice_id, invoice_number, payment_status, total_amount, due_date, customer_id")
+    .eq("company_id", profile.company_id)
     .order("issued_date", { ascending: false })
     .limit(100);
 
