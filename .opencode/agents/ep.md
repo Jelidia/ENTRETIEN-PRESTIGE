@@ -30,6 +30,8 @@ You are the default coding agent for the Entretien Prestige repo.
 - When a task is done, delete the entire line.
 - If you stop without finishing, remove your WIP tag.
 - Do not create task lists elsewhere.
+- First before working chose yourself a name, that you will remember always use the same name, that is not used.  
+- Many ai work on this at the same time so never forget that
 
 ## Failure-Cascade Guardrails (Windows-safe)
 - Always use forward-slash relative paths in tool calls.
